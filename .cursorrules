@@ -1,0 +1,36 @@
+# Project: TALIS Board Game Design
+
+This repository represents the design and development of **TALIS**, a strategic board game where players command champions to explore a dangerous island, gather resources, and ultimately defeat a dragon.
+
+## Project Structure
+
+- **Rules**: Complete game rules are documented in `docs/game-rules.md`
+- **Simulation**: Implementation and testing components in the `simulation/` directory
+- **Documentation**: Additional design documents in the `docs/` folder
+
+## Game Overview
+
+TALIS is a 4-player strategic board game featuring:
+
+- Resource management and trading
+- Champion-based exploration mechanics
+- Combat system with dice rolling
+- Territory claiming and building construction
+- Multiple victory conditions (defeat dragon OR reach 10 Fame)
+
+## Development Focus
+
+When working on this project:
+
+- Refer to `docs/game-rules.md` for authoritative game mechanics
+- Maintain consistency with established game balance and rules
+- Consider both digital simulation and physical board game constraints
+- Focus on clear, testable implementations of game mechanics
+
+## Context for AI Assistants
+
+This is a board game design project, not a software application. Code in the simulation directory should accurately reflect the game mechanics described in the rulebook. Any changes to game mechanics should be carefully considered for their impact on game balance and player experience.
+
+## Coding guidelines
+
+Keep the code as simple as possible. This is just a prototype simulation, so performance doesn't matter at all. Keep the whole simulation as a single-page frontend app as much as possible, so we don't need to worry about routing or navigation.
