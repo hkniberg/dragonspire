@@ -2,6 +2,7 @@ import Head from "next/head";
 import { useState } from "react";
 import { BoardComponent } from "../components/BoardComponent";
 import { GameState, rollMultipleD3 } from "../lib/gameState";
+import { templateProcessor } from "../lib/templateProcessor";
 
 // Spinner component
 const Spinner = ({ size = 20 }: { size?: number }) => (
@@ -50,64 +51,26 @@ export default function Home() {
       const validActions = gameState.getValidActions(diceRolls);
       const boardState = JSON.stringify(gameState.toJSON(), null, 2);
 
-      // Create game rules summary
-      const gameRules = `
-LORDS OF DRAGONSPIRE - Game Rules Summary:
+      // Process system prompt template (includes game rules dynamically)
+      const systemPrompt = await templateProcessor.processTemplate(
+        "SystemPrompt",
+        {
+          playerId: currentPlayer.id,
+        }
+      );
 
-OBJECTIVE: Defeat the dragon at Doomspire, reach 10 Fame and travel to Doomspire, or control all starred resource tiles and travel to Doomspire.
-
-BOARD: 8x8 grid with Tier 1 (outer, explored), Tier 2 (middle, unexplored), and Tier 3 (center, most dangerous) tiles.
-
-RESOURCES: Food, Wood, Ore, Gold. You start with 1 Food and 1 Wood.
-
-ACTIONS (each die = one action):
-1. Move & Act: Move champion up to die value in tiles, then perform tile action (explore, claim resource, fight monster)
-2. Harvest: Collect resources equal to die value from tiles you've claimed with flags
-3. Build: Construct buildings in your castle (costs resources)
-4. Boat Travel: Move boat between water zones and transport champion
-
-MOVEMENT: Horizontal/vertical only, can pass through other champions, cannot end on occupied tile.
-
-COMBAT: Roll D3 + your Might vs Monster Strength. Victory = gain rewards/Fame. Defeat = return to castle, lose Gold or Fame.
-
-FAME & MIGHT: Fame tracks victory progress. Might helps in combat. Both gained through exploration and defeating monsters.
-
-CLAIMING TILES: Place flag on resource tile to claim it. Can challenge other players' claims through combat.
-      `;
-
-      // Create AI prompt
-      const systemPrompt = `You are Player ${currentPlayer.id} in Lords of Dragonspire, a strategic board game. You are an experienced strategist focused on winning efficiently.`;
-
-      const userMessage = `This is round ${gameState.currentRound}. 
-
-CURRENT SITUATION:
-- You have rolled: ${diceRolls.join(" and ")}
-- Your Fame: ${currentPlayer.fame}
-- Your Might: ${currentPlayer.might}
-- Your Resources: ${JSON.stringify(currentPlayer.resources)}
-- Your Champion Position: Row ${currentPlayer.champions[0].position.row}, Col ${
-        currentPlayer.champions[0].position.col
-      }
-
-GAME RULES:
-${gameRules}
-
-CURRENT BOARD STATE:
-${boardState}
-
-VALID ACTIONS:
-${validActions.join("\n")}
-
-What do you want to do with your dice rolls of ${diceRolls.join(" and ")}? 
-
-Please analyze the board state and explain your strategic reasoning. Consider:
-1. Your current position and nearby opportunities
-2. Resource tiles you could claim
-3. Unexplored tiles that might have valuable rewards
-4. Your path toward victory (combat, diplomatic, or economic)
-5. How to use each die effectively
-
-Provide a detailed plan for your turn.`;
+      // Process user message template
+      const userMessage = await templateProcessor.processTemplate("makeMove", {
+        currentRound: gameState.currentRound,
+        diceRolls: diceRolls.join(" and "),
+        fame: currentPlayer.fame,
+        might: currentPlayer.might,
+        resources: JSON.stringify(currentPlayer.resources),
+        championRow: currentPlayer.champions[0].position.row,
+        championCol: currentPlayer.champions[0].position.col,
+        boardState: boardState,
+        validActions: validActions.join("\n"),
+      });
 
       const res = await fetch("/api/ai-chat", {
         method: "POST",
