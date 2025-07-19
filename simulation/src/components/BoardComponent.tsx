@@ -102,9 +102,9 @@ const OceanZoneComponent = ({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        height: "320px",
-        width: "320px",
-        fontSize: "16px",
+        height: "640px",
+        width: "640px",
+        fontSize: "32px",
         fontWeight: "bold",
         border: "2px solid #4682B4",
         position: "relative",
@@ -116,7 +116,7 @@ const OceanZoneComponent = ({
           position: "absolute",
           top: "10px",
           left: "10px",
-          fontSize: "24px",
+          fontSize: "48px",
           fontWeight: "bold",
           color: "#000080",
         }}
@@ -125,7 +125,7 @@ const OceanZoneComponent = ({
       </div>
 
       {boatsInZone.length > 0 && (
-        <div style={{ fontSize: "16px", marginTop: "10px" }}>
+        <div style={{ fontSize: "32px", marginTop: "20px" }}>
           🛥️ {boatsInZone.length}
         </div>
       )}
@@ -151,20 +151,20 @@ const TileComponent = ({
   return (
     <div
       style={{
-        width: "60px",
-        height: "60px",
+        width: "120px",
+        height: "120px",
         backgroundColor: getTileColor(tile),
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: "12px",
+        fontSize: "24px",
         fontWeight: "bold",
         color: tile.explored ? "#000" : "#fff",
         border: `2px solid ${
           tile.tier === 1 ? "#4CAF50" : tile.tier === 2 ? "#FF9800" : "#F44336"
         }`,
-        borderRadius: "4px",
+        borderRadius: "8px",
         cursor: "pointer",
         transition: "transform 0.1s",
         position: "relative",
@@ -189,13 +189,13 @@ ${tile.claimedBy ? `Claimed by Player ${tile.claimedBy}` : ""}`}
       }}
     >
       {/* Main tile symbol */}
-      <div style={{ fontSize: "16px" }}>{getTileSymbol(tile)}</div>
+      <div style={{ fontSize: "32px" }}>{getTileSymbol(tile)}</div>
 
       {/* Resource symbol */}
       {tile.resources &&
         Object.keys(tile.resources).length > 0 &&
         tile.explored && (
-          <div style={{ fontSize: "8px", marginTop: "2px" }}>
+          <div style={{ fontSize: "16px", marginTop: "4px" }}>
             {getResourceSymbol(tile)}
             {Object.entries(tile.resources)
               .filter(([_, amount]) => amount > 0)
@@ -210,9 +210,9 @@ ${tile.claimedBy ? `Claimed by Player ${tile.claimedBy}` : ""}`}
         <div
           style={{
             position: "absolute",
-            top: "2px",
-            left: "2px",
-            fontSize: "8px",
+            top: "4px",
+            left: "4px",
+            fontSize: "16px",
             color: `hsl(${(tile.claimedBy - 1) * 90}, 70%, 50%)`,
           }}
         >
@@ -225,9 +225,9 @@ ${tile.claimedBy ? `Claimed by Player ${tile.claimedBy}` : ""}`}
         <div
           style={{
             position: "absolute",
-            bottom: "2px",
-            right: "2px",
-            fontSize: "8px",
+            bottom: "4px",
+            right: "4px",
+            fontSize: "16px",
             display: "flex",
             flexDirection: "column",
           }}
@@ -249,9 +249,9 @@ ${tile.claimedBy ? `Claimed by Player ${tile.claimedBy}` : ""}`}
       <div
         style={{
           position: "absolute",
-          top: "2px",
-          right: "2px",
-          fontSize: "8px",
+          top: "4px",
+          right: "4px",
+          fontSize: "16px",
           color:
             tile.tier === 1
               ? "#4CAF50"
@@ -318,19 +318,19 @@ export const BoardComponent = ({ gameState }: BoardComponentProps) => {
       <div
         style={{
           position: "relative",
-          width: "640px",
-          height: "640px",
+          width: "1280px",
+          height: "1280px",
         }}
       >
         {/* Ocean layer - 2x2 grid */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(2, 320px)",
-            gridTemplateRows: "repeat(2, 320px)",
+            gridTemplateColumns: "repeat(2, 640px)",
+            gridTemplateRows: "repeat(2, 640px)",
             gap: "0px",
-            width: "640px",
-            height: "640px",
+            width: "1280px",
+            height: "1280px",
           }}
         >
           {oceanZones.map((zone) => (
@@ -351,13 +351,13 @@ export const BoardComponent = ({ gameState }: BoardComponentProps) => {
             transform: "translate(-50%, -50%)",
             display: "grid",
             gridTemplateColumns: "repeat(8, 1fr)",
-            gap: "1px",
+            gap: "2px",
             backgroundColor: "#333",
-            padding: "8px",
-            borderRadius: "10px",
+            padding: "16px",
+            borderRadius: "20px",
             boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-            width: "520px",
-            height: "520px",
+            width: "1040px",
+            height: "1040px",
           }}
         >
           {gameState.board.map((row, rowIndex) =>
