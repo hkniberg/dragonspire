@@ -1,0 +1,41 @@
+import { Anthropic } from "@anthropic-ai/sdk";
+
+export interface LLM {
+    simpleChat(systemPrompt: string | null, userMessage: string): Promise<string>;
+}
+
+export class Claude implements LLM {
+    private anthropic: Anthropic;
+    private model: string;
+
+    constructor(apiKey: string, model: string = "claude-sonnet-4-0") {
+        this.anthropic = new Anthropic({ apiKey });
+        this.model = model;
+    }
+
+    async simpleChat(systemPrompt: string | null, userMessage: string): Promise<string> {
+        const messages: Anthropic.Messages.MessageParam[] = [
+            { role: "user", content: userMessage }
+        ];
+
+        const params: Anthropic.Messages.MessageCreateParamsNonStreaming = {
+            model: this.model,
+            messages,
+            max_tokens: 1024,
+        };
+
+        if (systemPrompt) {
+            params.system = systemPrompt;
+        }
+
+        const response = await this.anthropic.messages.create(params);
+
+        // Extract text content from response
+        const textContent = response.content
+            .filter(block => block.type === 'text')
+            .map(block => block.text)
+            .join('');
+
+        return textContent;
+    }
+} 

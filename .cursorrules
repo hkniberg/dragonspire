@@ -31,6 +31,18 @@ When working on this project:
 
 This is a board game design project, not a software application. Code in the simulation directory should accurately reflect the game mechanics described in the rulebook. Any changes to game mechanics should be carefully considered for their impact on game balance and player experience.
 
+## AI Integration
+
+The simulation includes AI functionality for decision-making assistance:
+
+- **AI Endpoint**: `/api/ai-chat` (POST) - Accepts `systemPrompt` and `userMessage`, returns AI response
+- **LLM Interface**: Simple `Claude` class implementing `LLM` interface with `simpleChat` method
+- **Test Page**: `/ai-test` - Basic UI for testing AI functionality
+- **Environment**: Requires `ANTHROPIC_API_KEY` in `.env.local`
+- **Implementation**: Located in `src/lib/llm.ts` and `src/pages/api/ai-chat.ts`
+
+The AI integration is designed to help with game decision-making and will be used for automated player moves in future development.
+
 ## Coding guidelines
 
 Keep the code as simple as possible. This is just a prototype simulation, so performance doesn't matter at all. Keep the whole simulation as a single-page frontend app as much as possible, so we don't need to worry about routing or navigation.
