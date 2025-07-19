@@ -187,8 +187,11 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>TALIS Board Game Simulator</title>
-        <meta name="description" content="TALIS Board Game AI Simulation" />
+        <title>Lords of Dragonspire Board Game Simulator</title>
+        <meta
+          name="description"
+          content="Lords of Dragonspire Board Game AI Simulation"
+        />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -210,7 +213,7 @@ export default function Home() {
             fontFamily: "serif",
           }}
         >
-          TALIS Board Game Simulator
+          Lords of Dragonspire Board Game Simulator
         </h1>
 
         <div
