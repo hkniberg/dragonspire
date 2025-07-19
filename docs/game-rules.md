@@ -354,26 +354,6 @@ Multiple champions may occupy these tiles.
 
 ---
 
-## Event Cards
-
-Event cards are found mixed among explore cards and are drawn when exploring certain tiles.
-
-### Market Day
-
-When a player draws the Market Day event card:
-
-1. The drawing player chooses whether to activate Market Day or not
-2. **If activated**:
-   - All players must immediately go to the Marketplace tile
-   - Players can pay 1 Gold to opt out and stay where they are
-   - At the Marketplace: Resources cost 1 Gold instead of the usual 2 Gold
-   - Players can freely trade resources with each other
-3. **If not activated**: Discard the card with no effect
-
-Other event cards have various effects as described on each individual card.
-
----
-
 ## Fame
 
 Fame tracks your reputation and progress toward victory.
@@ -397,7 +377,6 @@ Fame tracks your reputation and progress toward victory.
 ### Negative Fame
 
 - Fame can go below 0
-- Negative Fame (≤-2) allows Mercenary Camp access
 - Chapel can reset negative Fame to 0
 
 ---
@@ -424,39 +403,5 @@ The game ends immediately when a player achieves any of the following victory co
 - You win immediately upon reaching Doomspire while controlling all starred resources
 
 **Note**: Multiple victory paths can be pursued simultaneously. The first player to reach Doomspire while meeting any victory condition wins!
-
----
-
-## Quick Reference
-
-### Turn Sequence
-
-1. Roll all D3 dice
-2. Use each die for one action:
-   - Move & Act
-   - Harvest (collect die value in resources)
-   - Build (construct in castle)
-   - Boat Travel
-3. Pass turn
-
-### Combat Formula
-
-- **You**: D3 + Might + Support (+2 if any)
-- **Monster**: Fixed Might value
-- **Other Player**: D3 + Their Might + Support
-
-### Tile Control Priority
-
-1. Champion on tile = controls it
-2. Flag on tile = owner controls it
-3. Champion protects 4 adjacent tiles
-
-### Resource Conversion
-
-- Market: Any resource → 1 Gold
-- Trader: Any resource (Food, Wood, Ore) → 1 Gold
-- Blacksmith: 2 Gold + 2 Ore → 1 Might
-
----
 
 _May fortune favor your quest to Doomspire!_

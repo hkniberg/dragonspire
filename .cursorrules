@@ -45,6 +45,6 @@ The AI integration is designed to help with game decision-making and will be use
 
 ## Coding guidelines
 
-Keep the code as simple as possible. This is just a prototype simulation, so performance doesn't matter at all. Keep the whole simulation as a single-page frontend app as much as possible, so we don't need to worry about routing or navigation.
+Keep the code as simple as possible. This is just a prototype simulation, so performance doesn't matter at all. Keep the whole simulation as a single-page frontend app as much as possible, so we don't need to worry about routing or navigation. But do break out components into separate files whenever feasible.
 
 Don't run or build the game automatically when making changes.

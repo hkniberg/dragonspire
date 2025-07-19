@@ -19,9 +19,12 @@
 </available-actions>
 
 <decision-prompt>
-What do you want to do with your dice rolls of {{diceRolls}}?
+What do you want to do with one of your dice rolls from {{diceRolls}}?
 
-Please analyze the board state and explain your strategic reasoning. Consider:
+Please analyze the board state and provide your decision in the following format:
+
+<analysis>
+Provide your strategic reasoning here. Consider:
 
 1. **Current Position & Opportunities:** What tiles are within reach? What actions are available at your current location?
 
@@ -31,9 +34,47 @@ Please analyze the board state and explain your strategic reasoning. Consider:
 
 4. **Victory Path Analysis:** Are you pursuing combat victory (defeat dragon), diplomatic victory (10 Fame + reach Doomspire), or economic victory (control starred resource tiles)?
 
-5. **Dice Efficiency:** How can you use each die roll most effectively? Should you split actions or focus on one major move?
+5. **Dice Efficiency:** How can you use this die roll most effectively?
 
-6. **Risk Assessment:** What are the potential consequences of each action? Are there safer alternatives that still advance your strategy?
+6. **Risk Assessment:** What are the potential consequences of this action? Are there safer alternatives that still advance your strategy?
+   </analysis>
 
-Provide a detailed plan for your turn, explaining your reasoning for each action.
+<action>
+Provide a JSON formatted DiceAction for ONE of your dice. The action must follow one of these formats:
+
+For moving a champion:
+
+```json
+{
+  "type": "moveChampion",
+  "playerId": {{playerId}},
+  "championId": [champion ID number],
+  "path": [{"row": [number], "col": [number]}, ...]
+}
+```
+
+For moving a boat (with optional champion pickup/dropoff):
+
+```json
+{
+  "type": "moveBoat",
+  "playerId": {{playerId}},
+  "boatId": [boat ID number],
+  "path": ["ocean position strings"],
+  "championId": [optional champion ID to pick up],
+  "championDropPosition": {"row": [number], "col": [number]}
+}
+```
+
+For harvesting resources:
+
+```json
+{
+  "type": "harvest",
+  "playerId": {{playerId}},
+  "resources": {"food": [number], "wood": [number], "ore": [number], "gold": [number]}
+}
+```
+
+</action>
 </decision-prompt>

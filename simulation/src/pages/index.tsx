@@ -1,10 +1,12 @@
 import Head from "next/head";
 import { useEffect, useState } from "react";
+import { AIMoveResult } from "../components/AIMoveResult";
 import { GameBoard } from "../components/GameBoard";
+import { PromptViewer } from "../components/PromptViewer";
 import { GameState, rollMultipleD3 } from "../lib/gameState";
 import { templateProcessor } from "../lib/templateProcessor";
 
-// Spinner component
+// Simple spinner for other loading states
 const Spinner = ({ size = 20 }: { size?: number }) => (
   <div
     style={{
@@ -261,164 +263,20 @@ export default function Home() {
           </button>
         </div>
 
-        {/* AI Move Results */}
-        {(loading || lastDiceRolls.length > 0 || aiResponse || error) && (
-          <div
-            style={{
-              marginBottom: "20px",
-              padding: "15px",
-              backgroundColor: "rgba(255, 255, 255, 0.9)",
-              borderRadius: "8px",
-              maxWidth: "800px",
-              width: "100%",
-            }}
-          >
-            <h3 style={{ margin: "0 0 10px 0", color: "#2c3e50" }}>
-              🎯 AI Move Analysis
-            </h3>
+        {/* AI Move Results Component */}
+        <AIMoveResult
+          loading={loading}
+          lastDiceRolls={lastDiceRolls}
+          aiResponse={aiResponse}
+          error={error}
+        />
 
-            {loading && (
-              <div
-                style={{
-                  padding: "20px",
-                  textAlign: "center",
-                  color: "#2c3e50",
-                  fontSize: "16px",
-                }}
-              >
-                <Spinner size={24} />
-                <strong>
-                  Claude Sonnet 4.0 is analyzing the board state...
-                </strong>
-                <div
-                  style={{ marginTop: "8px", fontSize: "14px", color: "#666" }}
-                >
-                  Rolling dice and evaluating strategic options
-                </div>
-              </div>
-            )}
-
-            {!loading && lastDiceRolls.length > 0 && (
-              <div style={{ marginBottom: "10px" }}>
-                <strong>Dice Rolled:</strong> {lastDiceRolls.join(", ")} (D3
-                dice showing values 1-3)
-              </div>
-            )}
-
-            {error && (
-              <div
-                style={{
-                  padding: "10px",
-                  backgroundColor: "#fee",
-                  border: "1px solid #f00",
-                  borderRadius: "4px",
-                  color: "#d00",
-                  marginBottom: "10px",
-                }}
-              >
-                <strong>Error:</strong> {error}
-              </div>
-            )}
-
-            {!loading && aiResponse && (
-              <div
-                style={{
-                  padding: "15px",
-                  backgroundColor: "#f8f9fa",
-                  border: "1px solid #dee2e6",
-                  borderRadius: "6px",
-                  whiteSpace: "pre-wrap",
-                  fontFamily: "monospace",
-                  fontSize: "14px",
-                  lineHeight: "1.4",
-                  maxHeight: "400px",
-                  overflowY: "auto",
-                }}
-              >
-                <strong style={{ fontFamily: "sans-serif", color: "#2c3e50" }}>
-                  AI Strategic Analysis:
-                </strong>
-                <br />
-                <br />
-                {aiResponse}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Prompts Display */}
-        {showPrompts && (
-          <div
-            style={{
-              marginBottom: "20px",
-              padding: "15px",
-              backgroundColor: "rgba(255, 255, 255, 0.9)",
-              borderRadius: "8px",
-              maxWidth: "800px",
-              width: "100%",
-              whiteSpace: "pre-wrap",
-              fontFamily: "monospace",
-              fontSize: "14px",
-              lineHeight: "1.4",
-              maxHeight: "400px",
-              overflowY: "auto",
-            }}
-          >
-            <h3 style={{ margin: "0 0 15px 0", color: "#2c3e50" }}>
-              💬 Latest AI Prompts
-            </h3>
-
-            <div style={{ marginBottom: "20px" }}>
-              <strong
-                style={{
-                  fontFamily: "sans-serif",
-                  color: "#2c3e50",
-                  fontSize: "16px",
-                }}
-              >
-                System Prompt:
-              </strong>
-              <div
-                style={{
-                  marginTop: "8px",
-                  padding: "12px",
-                  backgroundColor: "#f8f9fa",
-                  border: "1px solid #dee2e6",
-                  borderRadius: "6px",
-                  maxHeight: "200px",
-                  overflowY: "auto",
-                }}
-              >
-                {lastSystemPrompt || "No system prompt available"}
-              </div>
-            </div>
-
-            <div>
-              <strong
-                style={{
-                  fontFamily: "sans-serif",
-                  color: "#2c3e50",
-                  fontSize: "16px",
-                }}
-              >
-                User Message:
-              </strong>
-              <div
-                style={{
-                  marginTop: "8px",
-                  padding: "12px",
-                  backgroundColor: "#f0f8ff",
-                  border: "1px solid #b8daff",
-                  borderRadius: "6px",
-                  maxHeight: "200px",
-                  overflowY: "auto",
-                }}
-              >
-                {lastUserMessage || "No user message available"}
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Prompts Display Component */}
+        <PromptViewer
+          showPrompts={showPrompts}
+          lastSystemPrompt={lastSystemPrompt}
+          lastUserMessage={lastUserMessage}
+        />
 
         <div
           style={{

@@ -2,7 +2,7 @@
 import { Anthropic } from "@anthropic-ai/sdk";
 
 const DEFAULT_MODEL = "claude-sonnet-4-0";
-//const DEFAULT_MODEL = 1024;
+//const DEFAULT_MODEL = "claude-3-5-haiku-latest"
 
 export interface LLM {
     simpleChat(systemPrompt: string | null, userMessage: string): Promise<string>;
@@ -26,7 +26,11 @@ export class Claude implements LLM {
         const params: Anthropic.Messages.MessageCreateParamsNonStreaming = {
             model: this.model,
             messages,
-            max_tokens: 1024,
+            max_tokens: 16000,
+            thinking: {
+                type: "enabled",
+                budget_tokens: 5000
+            },
         };
 
         if (systemPrompt) {

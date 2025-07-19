@@ -58,6 +58,8 @@ export interface Player {
     homePosition: Position;
 }
 
+export type DiceAction = MoveChampionAction | MoveBoatAction | HarvestAction;
+
 export interface MoveChampionAction {
     type: 'moveChampion';
     playerId: number;
