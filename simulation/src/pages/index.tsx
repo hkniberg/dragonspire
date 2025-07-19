@@ -18,6 +18,18 @@ interface Tile {
   special?: string; // For special locations like Dragon's Den, Chapel, etc.
 }
 
+interface OceanTile {
+  type: "ocean";
+  position: "northwest" | "northeast" | "southwest" | "southeast";
+  label: string;
+}
+
+// Simple seeded random number generator for deterministic results
+const seededRandom = (seed: number) => {
+  let x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
 // Create initial board state
 const createInitialBoard = (): Tile[][] => {
   const board: Tile[][] = [];
@@ -36,14 +48,12 @@ const createInitialBoard = (): Tile[][] => {
       if (distanceFromCenter >= 2.5) {
         // Tier 1 - outer tiles
         tier = 1;
-        // Mix of terrain types for Tier 1
-        const terrainTypes: TileType[] = [
-          "plains",
-          "mountains",
-          "woodlands",
-          "water",
-        ];
-        type = terrainTypes[Math.floor(Math.random() * terrainTypes.length)];
+        // Mix of terrain types for Tier 1 (no water on main board now)
+        const terrainTypes: TileType[] = ["plains", "mountains", "woodlands"];
+        // Use deterministic seeded random based on position with hardcoded seed
+        const seed = 12345 + row * 8 + col;
+        const randomValue = seededRandom(seed);
+        type = terrainTypes[Math.floor(randomValue * terrainTypes.length)];
       } else if (distanceFromCenter >= 1.5) {
         // Tier 2 - middle tiles
         tier = 2;
@@ -68,6 +78,16 @@ const createInitialBoard = (): Tile[][] => {
   }
 
   return board;
+};
+
+// Create ocean tiles
+const createOceanTiles = (): OceanTile[] => {
+  return [
+    { type: "ocean", position: "northwest", label: "A" },
+    { type: "ocean", position: "northeast", label: "B" },
+    { type: "ocean", position: "southwest", label: "C" },
+    { type: "ocean", position: "southeast", label: "D" },
+  ];
 };
 
 const getTileColor = (tile: Tile): string => {
@@ -112,8 +132,57 @@ const getTileSymbol = (tile: Tile): string => {
   }
 };
 
+const OceanTileComponent = ({ oceanTile }: { oceanTile: OceanTile }) => {
+  const getOceanStyle = () => {
+    const baseStyle = {
+      backgroundColor: "#1E90FF", // Deep sky blue
+      color: "white",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: "24px",
+      fontWeight: "bold",
+      border: "3px solid #0066CC",
+      borderRadius: "8px",
+      position: "relative" as const,
+    };
+
+    // All corner ocean tiles are larger to extend beyond the island
+    return {
+      ...baseStyle,
+      width: "320px",
+      height: "320px",
+    };
+  };
+
+  const getSeaName = () => {
+    switch (oceanTile.position) {
+      case "northwest":
+        return "Northwest sea";
+      case "northeast":
+        return "Northeast sea";
+      case "southwest":
+        return "Southwest sea";
+      case "southeast":
+        return "Southeast sea";
+    }
+  };
+
+  return (
+    <div style={getOceanStyle()}>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: "32px", marginBottom: "10px" }}>
+          {oceanTile.label}
+        </div>
+        <div style={{ fontSize: "12px", opacity: 0.8 }}>{getSeaName()}</div>
+      </div>
+    </div>
+  );
+};
+
 export default function Home() {
   const [board] = useState<Tile[][]>(createInitialBoard());
+  const [oceanTiles] = useState<OceanTile[]>(createOceanTiles());
 
   return (
     <>
@@ -167,80 +236,128 @@ export default function Home() {
             <span>🌾 Plains</span>
             <span>⛰️ Mountains</span>
             <span>🌲 Woodlands</span>
-            <span>💧 Water</span>
+            <span>🌊 Ocean</span>
             <span>🐉 Dragon's Den</span>
             <span style={{ color: "#8B4513" }}>? Unexplored</span>
           </div>
         </div>
 
+        {/* Board layout with ocean tiles in 2x2 grid behind island */}
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(8, 1fr)",
-            gap: "2px",
-            backgroundColor: "#333",
-            padding: "10px",
-            borderRadius: "10px",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            position: "relative",
+            display: "inline-block",
           }}
         >
-          {board.map((row, rowIndex) =>
-            row.map((tile, colIndex) => (
-              <div
-                key={`${rowIndex}-${colIndex}`}
-                style={{
-                  width: "60px",
-                  height: "60px",
-                  backgroundColor: getTileColor(tile),
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "20px",
-                  fontWeight: "bold",
-                  color: tile.explored ? "#000" : "#fff",
-                  border: `2px solid ${
-                    tile.tier === 1
-                      ? "#4CAF50"
-                      : tile.tier === 2
-                      ? "#FF9800"
-                      : "#F44336"
-                  }`,
-                  borderRadius: "4px",
-                  cursor: "pointer",
-                  transition: "transform 0.1s",
-                  position: "relative",
-                }}
-                title={`${tile.special || tile.type} (Tier ${
-                  tile.tier
-                }) - Position: ${rowIndex + 1}, ${colIndex + 1}`}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "scale(1.1)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "scale(1)";
-                }}
-              >
-                {getTileSymbol(tile)}
+          {/* Ocean layer - 2x2 grid */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(2, 320px)",
+              gridTemplateRows: "repeat(2, 320px)",
+              gap: "0px",
+            }}
+          >
+            {/* Northwest Ocean */}
+            <OceanTileComponent
+              oceanTile={
+                oceanTiles.find((tile) => tile.position === "northwest")!
+              }
+            />
+            {/* Northeast Ocean */}
+            <OceanTileComponent
+              oceanTile={
+                oceanTiles.find((tile) => tile.position === "northeast")!
+              }
+            />
+            {/* Southwest Ocean */}
+            <OceanTileComponent
+              oceanTile={
+                oceanTiles.find((tile) => tile.position === "southwest")!
+              }
+            />
+            {/* Southeast Ocean */}
+            <OceanTileComponent
+              oceanTile={
+                oceanTiles.find((tile) => tile.position === "southeast")!
+              }
+            />
+          </div>
+
+          {/* Island layer - positioned on top of ocean */}
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              display: "grid",
+              gridTemplateColumns: "repeat(8, 1fr)",
+              gap: "2px",
+              backgroundColor: "#333",
+              padding: "10px",
+              borderRadius: "10px",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            {board.map((row, rowIndex) =>
+              row.map((tile, colIndex) => (
                 <div
+                  key={`${rowIndex}-${colIndex}`}
                   style={{
-                    position: "absolute",
-                    top: "2px",
-                    right: "2px",
-                    fontSize: "8px",
-                    color:
+                    width: "60px",
+                    height: "60px",
+                    backgroundColor: getTileColor(tile),
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "20px",
+                    fontWeight: "bold",
+                    color: tile.explored ? "#000" : "#fff",
+                    border: `2px solid ${
                       tile.tier === 1
                         ? "#4CAF50"
                         : tile.tier === 2
                         ? "#FF9800"
-                        : "#F44336",
-                    fontWeight: "bold",
+                        : "#F44336"
+                    }`,
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    transition: "transform 0.1s",
+                    position: "relative",
+                  }}
+                  title={`${tile.special || tile.type} (Tier ${
+                    tile.tier
+                  }) - Position: ${rowIndex + 1}, ${colIndex + 1}`}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "scale(1.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
                   }}
                 >
-                  T{tile.tier}
+                  {getTileSymbol(tile)}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "2px",
+                      right: "2px",
+                      fontSize: "8px",
+                      color:
+                        tile.tier === 1
+                          ? "#4CAF50"
+                          : tile.tier === 2
+                          ? "#FF9800"
+                          : "#F44336",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    T{tile.tier}
+                  </div>
                 </div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
         </div>
 
         <div
@@ -255,8 +372,14 @@ export default function Home() {
         >
           <h3>Board Layout</h3>
           <p>
+            <strong style={{ color: "#1E90FF" }}>
+              Ocean Tiles (A, B, C, D)
+            </strong>
+            : Large ocean areas surrounding the main island
+          </p>
+          <p>
             <strong style={{ color: "#4CAF50" }}>Tier 1 (T1)</strong>: Outer
-            layer - explored terrain (Plains, Mountains, Woodlands, Water)
+            layer - explored terrain (Plains, Mountains, Woodlands)
           </p>
           <p>
             <strong style={{ color: "#FF9800" }}>Tier 2 (T2)</strong>: Middle
