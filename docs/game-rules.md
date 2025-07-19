@@ -15,8 +15,9 @@
 7. [Resources & Trading](#resources--trading)
 8. [Buildings](#buildings)
 9. [Special Locations](#special-locations)
-10. [Fame](#fame)
-11. [Victory](#victory)
+10. [Event Cards](#event-cards)
+11. [Fame](#fame)
+12. [Victory](#victory)
 
 ---
 
@@ -38,21 +39,26 @@ In Talis, you are a lord commanding champions from your island castle to explore
 
 ### Player Components (per player)
 
-- 1 Castle board (individual player board)
+- 1 Castle board (individual player board with 4 building slots, upgradeable to 8)
+- 1 Plastic castle model
 - 3 Champion figures
 - 10 Flag tokens
-- 3 Boat tokens
+- 3 Boat tokens (upgradeable to warships)
 - 1 Champion card (to track treasures)
 
 ### Main Board
 
 - 8x8 grid representing the exploration island
 - Water zones surrounding the island (4 sea areas)
+- Fame track (shared board track)
+- Might track (shared board track)
 
 ### Tiles
 
 - **Tier 1 tiles** (outer 2 layers - 48 tiles): Plains, Mountains, Woodlands, Water
+  - Some tier-2 resource tiles guarded by wolves (Might 2)
 - **Tier 2 tiles** (next inner layer - 12 tiles): Higher risk/reward versions
+  - Resource tiles guarded by bandits (Might 3)
 - **Tier 3 tiles** (center 4 tiles): Including the Dragon's Den
 
 ### Cards
@@ -61,15 +67,18 @@ In Talis, you are a lord commanding champions from your island castle to explore
   - Plains cards
   - Mountain cards
   - Woodland cards
-- Each card type includes: Monsters, Events, and Treasures
+- **Event cards** (including Market Day)
+- **Building cards** (for reference when constructing)
+- Each explore card type includes: Monsters, Events, and Treasures
 
 ### Resources
 
-- Food tokens
-- Wood tokens
-- Ore tokens
-- Gold tokens
-- Fame track (ranging from negative to 10+)
+- Food tokens (colored tokens)
+- Wood tokens (colored tokens)
+- Ore tokens (colored tokens)
+- Gold tokens (colored tokens)
+- Fame markers (on shared board track)
+- Might markers (on shared board track)
 
 ### Special Location Tiles
 
@@ -132,10 +141,11 @@ Each die can be used for ONE of the following:
 **Movement Rules:**
 
 - Move horizontally or vertically (no diagonal movement)
-- Movement = die value in tiles
+- Movement = die value in tiles (can move 0 to die value steps)
 - Cannot end on a tile with another champion (except special locations)
 - Can pass through other champions (opponent may choose to initiate combat)
-- Multiple dice can be combined for longer movement
+- **Important**: Movement and action are combined - once you perform an action, you cannot move again that turn
+- Multiple dice can be combined for longer movement (but each action ends that champion's turn)
 
 **Tile Actions:**
 
@@ -143,6 +153,11 @@ Each die can be used for ONE of the following:
 - **Resource Tile**: Claim with flag (if unclaimed) OR challenge existing claim
 - **Special Location**: Use location ability
 - **Monster Tile**: Fight the monster
+
+**Auto-Claiming Resource Tiles:**
+
+- If a champion ends their turn on an unoccupied resource tile (no cards or monsters), they automatically claim it with a flag without requiring a separate action
+- This happens after completing your chosen action on that tile
 
 ### Harvest Resources
 
@@ -161,9 +176,14 @@ Each die can be used for ONE of the following:
 
 ### Boat Travel
 
-- Move boat between water zones (4 zones around island)
-- Transport one champion from any coastal tile in starting zone to any coastal tile in destination zone
-- Die value determines movement: 1 = adjacent water zone only, 2-3 = any water zone
+- Move boat between water zones and transport one champion between coastal tiles
+- This costs one die regardless of boat movement distance
+- Die value determines boat movement: 1 = adjacent water zone only, 2-3 = any water zone
+- **Transportation**: Pick up a champion from any coastal tile in the starting zone and deposit them on any coastal tile in the destination zone
+- **Forced Actions**: If the destination tile has exploration cards, the champion must take a card
+- **Resource Tiles**: If the destination is a resource tile, the champion can choose to stay (automatically claiming it) or spend another die to move and act elsewhere
+
+**Example**: With a die roll of 3, a boat can move 2 sea zones, pick up a champion, and deposit them on a coastal tile in the destination zone.
 
 ---
 
@@ -177,6 +197,11 @@ Each die can be used for ONE of the following:
 4. **Victory**: Remove monster, gain rewards and Fame (amount varies per monster card)
 5. **Defeat**: Return to castle, pay 1 Gold to heal (or lose 1 Fame if no Gold)
 
+**Resource Tile Guards:**
+
+- **Wolves** (Tier-2 resource tiles in outer zone): Might 2, victory gives 1 Fame + 2 Food
+- **Bandits** (Tier-2 resource tiles in middle area): Might 3, victory gives 1 Fame + 2 Gold
+
 ### Fighting Other Champions
 
 1. Both players roll 1D3 + Might
@@ -185,10 +210,14 @@ Each die can be used for ONE of the following:
 4. **Winner**: Gains 1 Fame
 5. **Loser**: Returns to castle, pays 1 Gold to heal (or loses 1 Fame)
 
+### Combat Bonuses
+
+- **Warships**: Upgraded boats provide +2 Might to any battle in a coastal area
+- **Support**: Champions in adjacent tiles can support for +2 to roll (negotiate terms)
+
 ### Combat Options
 
 - **Flee**: Return to castle without fighting, lose 1 Fame
-- **Support**: Champions in adjacent tiles can support for +2 to roll (negotiate terms)
 
 ### Special Combat Rules
 
@@ -232,7 +261,23 @@ Players may freely trade resources at any time
 
 ## Buildings
 
-All buildings require spending a die to construct (value doesn't matter).
+All buildings require spending a die to construct (value doesn't matter). Buildings are represented as cards that you place in your castle slots.
+
+### Castle Upgrades
+
+**Castle Expansion**
+
+- **Cost**: 6 Wood, 4 Gold, 2 Ore
+- **Benefit**: Flip castle board to gain 8 building slots instead of 4
+
+### Boat Upgrades
+
+**Warship Upgrade**
+
+- **Cost**: 2 Ore, 3 Gold
+- **Benefit**: Upgraded boat provides +2 Might to any battle in coastal areas
+
+### Standard Buildings
 
 ### Market
 
@@ -274,13 +319,21 @@ Multiple champions may occupy these tiles.
 
 - **Action**: Reset Fame to 0 (useful if Fame is negative)
 
+### Marketplace
+
+- **Action**: Purchase any resource for 2 Gold
+- **Market Day Event**: When Market Day event card is drawn, the drawing player chooses whether to activate Market Day
+  - If activated: All players must go to Marketplace (can pay 1 Gold to opt out)
+  - During Market Day: Resources cost 1 Gold instead of 2
+  - Players can freely trade with each other at the Marketplace
+
 ### Trader
 
 - **Action**: Exchange any resource (Food, Wood, or Ore) for Gold at 1:1 rate
 
 ### Mercenary Camp
 
-- **Requirement**: Fame ≥2 OR Fame ≤-2
+- **Requirement**: Fame ≥2
 - **Action**: Buy 1 Might for 3 Gold
 
 ### Dragon's Den
@@ -288,6 +341,26 @@ Multiple champions may occupy these tiles.
 - **The Final Challenge**: Dragon with 12-16 Might
 - **Victory**: Win the game!
 - **Defeat**: Champion is eaten (removed from game)
+
+---
+
+## Event Cards
+
+Event cards are found mixed among explore cards and are drawn when exploring certain tiles.
+
+### Market Day
+
+When a player draws the Market Day event card:
+
+1. The drawing player chooses whether to activate Market Day or not
+2. **If activated**:
+   - All players must immediately go to the Marketplace tile
+   - Players can pay 1 Gold to opt out and stay where they are
+   - At the Marketplace: Resources cost 1 Gold instead of the usual 2 Gold
+   - Players can freely trade resources with each other
+3. **If not activated**: Discard the card with no effect
+
+Other event cards have various effects as described on each individual card.
 
 ---
 
