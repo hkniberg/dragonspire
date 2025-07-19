@@ -1,4 +1,4 @@
-# TALIS
+# LORDS OF DOOMSPIRE
 
 ## Complete Player Rulebook
 
@@ -23,11 +23,11 @@
 
 ## Overview
 
-In Talis, you are a lord commanding champions from your island castle to explore a dangerous neighboring island. Your goal is to accumulate fame and resources while ultimately seeking to defeat the dragon lurking at the island's heart.
+In Lords of Doomspire, you are a lord commanding champions from your island castle to explore a dangerous neighboring island. Your goal is to accumulate fame and resources while ultimately seeking to reach the dragon at Doomspire, the ancient mountain where the great dragon rules.
 
 **Players:** 4  
 **Playing Time:** 60-90 minutes  
-**Victory:** First player to defeat the dragon OR reach 10 Fame wins
+**Victory:** Multiple paths to victory - defeat the dragon, achieve diplomatic victory with 10 Fame, or claim economic dominance through starred resource tiles
 
 ---
 
@@ -59,7 +59,8 @@ In Talis, you are a lord commanding champions from your island castle to explore
   - Some tier-2 resource tiles guarded by wolves (Might 2)
 - **Tier 2 tiles** (next inner layer - 12 tiles): Higher risk/reward versions
   - Resource tiles guarded by bandits (Might 3)
-- **Tier 3 tiles** (center 4 tiles): Including the Dragon's Den
+- **Tier 3 tiles** (center 4 tiles): Including Doomspire
+- **Starred Resource Tiles**: Strategic resource locations marked with stars (all gold resource tiles and select other high-value resources)
 
 ### Cards
 
@@ -85,7 +86,7 @@ In Talis, you are a lord commanding champions from your island castle to explore
 - Chapel
 - Trader
 - Mercenary Camp
-- Dragon's Den
+- Doomspire
 
 ---
 
@@ -94,9 +95,9 @@ In Talis, you are a lord commanding champions from your island castle to explore
 ### Main Board Setup
 
 1. Place the 8x8 grid board in the center of the table
-2. **Tier 1 tiles** (outer 48 tiles): Place face-up, showing resource types
+2. **Tier 1 tiles** (outer 48 tiles): Place face-up, showing resource types (mark starred resource tiles with star tokens)
 3. **Tier 2 tiles** (next 12 tiles): Place face-down with 2 explore cards each (matching tier, random biome)
-4. **Tier 3 tiles** (center 4 tiles): Place face-down with 2 explore cards each, one must be the Dragon's Den
+4. **Tier 3 tiles** (center 4 tiles): Place face-down with 2 explore cards each, one must be Doomspire
 5. Place special location tiles (Chapel, Trader, Mercenary Camp) on designated spaces
 
 ### Player Setup
@@ -235,6 +236,14 @@ Each die can be used for ONE of the following:
 - **Ore**: Common in Mountains
 - **Gold**: Rare, valuable for purchases
 
+### Starred Resource Tiles
+
+Some resource tiles are marked with stars, indicating their strategic importance:
+
+- **All gold resource tiles** are starred
+- **Select high-value tiles** of other resources are also starred
+- Controlling all starred resource tiles enables the **Economic Victory** path
+
 ### Claiming Resource Tiles
 
 - Enter unclaimed tile and place flag
@@ -336,11 +345,13 @@ Multiple champions may occupy these tiles.
 - **Requirement**: Fame ≥2
 - **Action**: Buy 1 Might for 3 Gold
 
-### Dragon's Den
+### Doomspire
 
-- **The Final Challenge**: Dragon with 12-16 Might
-- **Victory**: Win the game!
-- **Defeat**: Champion is eaten (removed from game)
+- **The Ancient Mountain**: Home of the great dragon
+- **Multiple Victory Paths**:
+  - **Combat Victory**: Dragon with 12-16 Might. Victory wins the game! Defeat = champion is eaten (removed from game)
+  - **Diplomatic Victory**: If you have 10+ Fame and visit the dragon, the dragon takes human shape and becomes your advisor. You win immediately!
+  - **Economic Victory**: If you control all starred resource tiles and visit the dragon, the dragon agrees to let you rule the island in exchange for tributes. You win immediately!
 
 ---
 
@@ -394,12 +405,26 @@ Fame tracks your reputation and progress toward victory.
 
 ## Victory
 
-The game ends immediately when a player:
+The game ends immediately when a player achieves any of the following victory conditions:
 
-- **Defeats the Dragon** in combat, OR
-- **Reaches 10 Fame**
+### Combat Victory
 
-That player wins!
+- **Defeats the Dragon** at Doomspire in combat
+
+### Diplomatic Victory
+
+- **Reaches 10 Fame**, then travels to Doomspire
+- The dragon recognizes your reputation and takes human shape to serve as your advisor
+- No combat required - you win immediately upon reaching Doomspire with 10+ Fame
+
+### Economic Victory
+
+- **Claims all starred resource tiles** (all gold resource tiles plus select strategic resources marked with stars)
+- Then travels to Doomspire
+- The dragon acknowledges your economic dominance and agrees to let you control the island in exchange for regular tributes
+- You win immediately upon reaching Doomspire while controlling all starred resources
+
+**Note**: Multiple victory paths can be pursued simultaneously. The first player to reach Doomspire while meeting any victory condition wins!
 
 ---
 
@@ -435,4 +460,4 @@ That player wins!
 
 ---
 
-_May fortune favor your exploration of Talis!_
+_May fortune favor your quest to Doomspire!_
