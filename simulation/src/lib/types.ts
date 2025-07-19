@@ -2,6 +2,7 @@
 
 export type ResourceType = 'food' | 'wood' | 'ore' | 'gold';
 export type TileTier = 1 | 2 | 3;
+export type BiomeType = 'plains' | 'mountains' | 'woodlands';
 export type TileType = 'plains' | 'mountains' | 'woodlands' | 'water';
 export type OceanPosition = 'nw' | 'ne' | 'sw' | 'se';
 export type TreasureType = 'rustyShield' | 'brokenSword';
@@ -23,11 +24,12 @@ export interface Monster {
 export interface Tile {
     position: Position;
     tier: TileTier;
-    explored: boolean;
-    resources?: Record<ResourceType, number>;
-    isStarred?: boolean; // For victory condition
-    claimedBy?: number; // Player ID who claimed this tile
-    monster?: Monster;
+    explored: boolean; // starts true for all tier 1 tiles, and false for all other tiles
+    resources?: Record<ResourceType, number>; // only applicable for resource tiles
+    isStarred?: boolean; // For victory condition. Only applicable for resource tiles
+    claimedBy?: number; // Player ID who claimed this tile. Only applicable for resource tiles
+    monster?: Monster; // only applicable for adventure tiles
+    adventureTokens?: number; // Number of adventure tokens on the tile. Only applicable for adventure tiles
     tileType?: 'home' | 'resource' | 'adventure' | 'chapel' | 'trader' | 'mercenary' | 'doomspire';
 }
 

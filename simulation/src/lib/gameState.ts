@@ -1,12 +1,11 @@
 // Lords of Doomspire Game State Model
 
+import { RandomMapGenerator } from './randomMapGenerator';
 import type {
     Champion,
     Player,
     Position,
-    ResourceType,
-    Tile,
-    TileTier
+    Tile
 } from './types';
 
 export class GameState {
@@ -18,66 +17,11 @@ export class GameState {
     public winner?: number;
 
     constructor() {
-        this.board = this.initializeBoard();
+        this.board = RandomMapGenerator.generateBoard();
         this.players = this.initializePlayers();
         this.currentPlayerIndex = 0;
         this.currentRound = 1;
         this.gameEnded = false;
-    }
-
-    private initializeBoard(): Tile[][] {
-        const board: Tile[][] = [];
-
-        for (let row = 0; row < 8; row++) {
-            board[row] = [];
-            for (let col = 0; col < 8; col++) {
-                const position: Position = { row, col };
-                const distanceFromCenter = Math.max(Math.abs(row - 3.5), Math.abs(col - 3.5));
-
-                let tier: TileTier;
-                let explored = false;
-
-                if (distanceFromCenter >= 2.5) {
-                    tier = 1;
-                    explored = true; // Tier 1 tiles start explored
-                } else if (distanceFromCenter >= 1.5) {
-                    tier = 2;
-                } else {
-                    tier = 3;
-                }
-
-                // Simplified tile generation for the model
-                const tile: Tile = {
-                    position,
-                    tier,
-                    explored,
-                    resources: Math.random() < 0.6 ? this.randomResources() : undefined,
-                    isStarred: Math.random() < 0.1, // 10% chance of starred resource
-                };
-
-                // Add special locations
-                if (tier === 3 && row === 3 && col === 3) {
-                    tile.tileType = 'doomspire';
-                }
-
-                board[row].push(tile);
-            }
-        }
-
-        return board;
-    }
-
-    private randomResources(): Record<ResourceType, number> {
-        const resourceTypes: ResourceType[] = ['food', 'wood', 'ore', 'gold'];
-        const randomType = resourceTypes[Math.floor(Math.random() * resourceTypes.length)];
-        const amount = Math.floor(Math.random() * 3) + 1;
-
-        return {
-            food: randomType === 'food' ? amount : 0,
-            wood: randomType === 'wood' ? amount : 0,
-            ore: randomType === 'ore' ? amount : 0,
-            gold: randomType === 'gold' ? amount : 0
-        };
     }
 
     private initializePlayers(): Player[] {
@@ -134,6 +78,38 @@ export class GameState {
     public toJSON() {
         return {
             board: this.board,
+            players: this.players,
+            currentPlayerIndex: this.currentPlayerIndex,
+            currentRound: this.currentRound,
+            gameEnded: this.gameEnded,
+            winner: this.winner
+        };
+    }
+
+    /**
+ * Returns a filtered version of the game state for AI consumption.
+ * Unexplored tiles only show position, tier, and explored: false.
+ */
+    public toAIJSON() {
+        const filteredBoard = this.board.map(row =>
+            row.map(tile => {
+                if (!tile.explored) {
+                    // For unexplored tiles, only show position, tier, and explored status
+                    return {
+                        position: tile.position,
+                        tier: tile.tier,
+                        explored: false
+                        // Note: intentionally omitting adventureTokens, resources, monster, etc.
+                    };
+                } else {
+                    // For explored tiles, show all information
+                    return tile;
+                }
+            })
+        );
+
+        return {
+            board: filteredBoard,
             players: this.players,
             currentPlayerIndex: this.currentPlayerIndex,
             currentRound: this.currentRound,

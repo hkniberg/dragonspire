@@ -27,7 +27,7 @@ In Lords of Doomspire, you are a lord commanding champions from your island cast
 
 **Players:** 4  
 **Playing Time:** 60-90 minutes  
-**Victory:** Multiple paths to victory - defeat the dragon, achieve diplomatic victory with 10 Fame, or claim economic dominance through starred resource tiles
+**Victory:** Multiple paths to victory - defeat the dragon, achieve diplomatic victory with 20 Fame, or claim economic dominance through starred resource tiles
 
 ---
 
@@ -39,54 +39,65 @@ In Lords of Doomspire, you are a lord commanding champions from your island cast
 
 ### Player Components (per player)
 
-- 1 Castle board (individual player board with 4 building slots, upgradeable to 8)
-- 1 Plastic castle model
-- 3 Champion figures
-- 10 Flag tokens
-- 3 Boat tokens (upgradeable to warships)
-- 1 Champion card (to track treasures)
+- 1 Castle board (individual player board with 4 building slots on one side and 8 on the other)
+- 1 Plastic castle model, place in the center of your castle board.
+- 3 Champion figures per player.
+- 10 Flag tokens per player.
+- 3 boat figures per player, and 1 warship figure per player.
+- 3 Champion cards per player, to track treasures held by each champion.
+- 1 cheat sheet per player, to track the rules.
+
+### Resource tokens
+
+- Food tokens
+- Wood tokens
+- Ore tokens
+- Gold tokens
 
 ### Main Board
 
 - 8x8 grid representing the exploration island
-- Water zones surrounding the island (4 sea areas)
-- Fame track (shared board track)
-- Might track (shared board track)
+- 4 L-shaped Water zones surrounding the island (northwest, northeast, southwest, southeast).
+- Fame track, and a fame marker per player.
+- Might track, and a might marker per player.
 
-### Tiles
+### Land tiles
 
-- **Tier 1 tiles** (outer 2 layers - 48 tiles): Plains, Mountains, Woodlands, Water
-  - Some tier-2 resource tiles guarded by wolves (Might 2)
-- **Tier 2 tiles** (next inner layer - 12 tiles): Higher risk/reward versions
-  - Resource tiles guarded by bandits (Might 3)
-- **Tier 3 tiles** (center 4 tiles): Including Doomspire
-- **Starred Resource Tiles**: Strategic resource locations marked with stars (all gold resource tiles and select other high-value resources)
+The board is organized into 3 tiers. The outer two layers are Tier 1, the inner middle layer is Tier 2, and the center 4 tiles are Tier 3. High tier means higher risk but higher reward. The dragon lives in one of the Tier 3 tiles.
 
-### Cards
+- **Home tiles** (4 tiles): These are corner tiles that representing the home of the player, the landing spot where the player's champions start. They are non-combat zones, and permanently owned (claimed) by the player.
+- **Special locations**:
+  - **Chapel tile**: Pray at the chapel to reset your fame to 0. This is a non-combat zone.
+  - **Trader tile**: Purchase any resource for 2 gold per resource. This is a non-combat zone.
+  - **Mercenary Camp tile**: Buy 1 might for 3 gold. But the mercenaries refuse to talk to you unless you have 2 or more fame. This is a non-combat zone.
+  - **Doomspire tile**: The ancient mountain where the great dragon rules. Defeat, impress, or bribe the dragon to win the game.
+- **Resource tiles**: A resource tile provides specific types of resources such as food, wood, ore, or gold. A player must claim it first, and can then start harvesting resources on the next turn. Starred resource tiles are strategically important, a player who owns all starred resource tiles wins the game if they visit the dragon and bribe it.
+- **Adventure tiles**: These tiles contain adventure cards such as monsters, events, and treasures. Any champion landing on an adventure tile must draw a card (if there are any cards left). When all adventure cards are done they tile is considered to be barren.
 
-- **Explore cards** (sorted by Tier and Biome)
-  - Plains cards
-  - Mountain cards
-  - Woodland cards
-- **Event cards** (including Market Day)
-- **Building cards** (for reference when constructing)
-- Each explore card type includes: Monsters, Events, and Treasures
+### Adventure cards
 
-### Resources
+Adventure cards represent things the player can encounter on a tile. Each adventure tile has a marker for how many adventures remain there. When landing on an adventure tile, the player reduces the counter and draws a card. The player can choose from 3 different piles of cards within that tier.
 
-- Food tokens (colored tokens)
-- Wood tokens (colored tokens)
-- Ore tokens (colored tokens)
-- Gold tokens (colored tokens)
-- Fame markers (on shared board track)
-- Might markers (on shared board track)
+Each card has a biome printed on the back, giving a hint as to what type of encounters it may contain.
 
-### Special Location Tiles
+- Plains: More likely to provide food
+- Woodlands: More likely to provide wood
+- Mountains: More likely to provide ore
 
-- Chapel
-- Trader
-- Mercenary Camp
-- Doomspire
+Cards are organized by tier - so each of the three tiers has its own set of cards. Each tier is in turn randomly split into 3 decks.
+
+> Example: A player lands on a Tier 2 adventure tile. Is has 2 adventure counters left on it, so the player can carry out an adventure. He looks at the three piles of Tier 2 adventure cards, and sees the top card of pile 1 is a Plains card, the top card on pile 2 is also a Plains card, while the top card on pile 3 is a Mountain card. The player is hoping to find some ore, so he draws from pile 3.
+
+If an adventure tile counter is reduced to 0 on a tile, then no more adventures are found there, so the tile is considered to be barren.
+
+When turning a card, there are three types:
+
+- **Monsters cards**: Fight the monster, and if victorious, gain fame and resources. The card has three numbers:
+  - Might: The monster's might. This is the number you need to match or exceeed, using a D3 roll + your might + 2 might for any supporting champions from neighbouring tiles.
+  - Fame: The amount of fame you gain if you defeat the monster.
+  - Resources: The amount of resources you gain if you defeat the monster.
+- **Events cards**: Each event card is unique, so read and follow the instructions.
+- **Treasures cards**: Gain the treasure, add it to the inventory of your champion. The champion can only carry 2 treasures at a time, so if you find a third treasure, you must leave one treasure in the tile, which can be picked up by another champion.
 
 ---
 
@@ -95,21 +106,20 @@ In Lords of Doomspire, you are a lord commanding champions from your island cast
 ### Main Board Setup
 
 1. Place the 8x8 grid board in the center of the table
-2. **Tier 1 tiles** (outer 48 tiles): Place face-up, showing resource types (mark starred resource tiles with star tokens)
-3. **Tier 2 tiles** (next 12 tiles): Place face-down with 2 explore cards each (matching tier, random biome)
-4. **Tier 3 tiles** (center 4 tiles): Place face-down with 2 explore cards each, one must be Doomspire
-5. Place special location tiles (Chapel, Trader, Mercenary Camp) on designated spaces
+2. Place the 4 home tiles in the corners of the board.
+3. Randomly place Tier 1 tiles face up in the outer two layers. 44 tiles in total.
+4. Randomly place Tier 2 tiles face down in the inner middle layer. 12 tiles in total.
+5. Randomly place Tier 3 tiles face down in the center. 4 tiles in total.
 
 ### Player Setup
 
 1. Each player takes:
    - 1 Castle board
-   - 1 Champion figure (place on corner tile of main board)
+   - 1 Champion figure (place on the home tile)
    - 1 Boat token (place in adjacent water zone)
-   - 10 Flag tokens
+   - Flag tokens
    - 2 D3 dice
-   - Starting resources: 1 Food, 1 Wood
-2. Place Fame marker at 0 on Fame track
+2. Place each player's fame marker at 0 on Fame track and might marker at 0 on Might track.
 3. Determine first player randomly
 
 ---
@@ -120,33 +130,33 @@ In Lords of Doomspire, you are a lord commanding champions from your island cast
 
 Players take turns in clockwise order. Each turn:
 
-1. **Roll Dice**: Roll all your D3 dice (start with 2, gain more with additional champions)
-2. **Take Actions**: Use each die to perform one action (dice can be used in any order)
+1. **Roll Action Dice**: Roll all your D3 dice (start with 2, gain more with additional champions)
+2. **Take Actions**: Use each action die one at a time to perform one action, in any order.
 3. **End Turn**: Pass to next player
 
 ### Available Actions
 
-Each die can be used for ONE of the following:
+Each action die can be used for ONE of the following:
 
-- **Move & Act**: Move a champion and perform tile action
+- **Move & Act**: Move a champion and perform tile action.
 - **Harvest**: Collect resources from claimed tiles
-- **Build**: Construct a building in your castle
+- **Build**: Construct a building in your castle, or recruit a new champion.
 - **Boat Travel**: Move boat and transport a champion
 
 ---
 
 ## Actions
 
-### Move & Act
+### Action: Move & Act
 
 **Movement Rules:**
 
-- Move horizontally or vertically (no diagonal movement)
-- Movement = die value in tiles (can move 0 to die value steps)
-- Cannot end on a tile with another champion (except special locations)
-- Can pass through other champions (opponent may choose to initiate combat)
-- **Important**: Movement and action are combined - once you perform an action, you cannot move again that turn
-- Multiple dice can be combined for longer movement (but each action ends that champion's turn)
+- Spend an action die to move horizontally or vertically (no diagonal movement), up to the number of steps indicated by the die. You can also move 0 steps if you want to stay in the same tile and interact with it (for example to draw another adventure card).
+- You cannot have multiple champions in the same tile (except when respawning in the home tile).
+- If you end your movement in a tile with another champion, battle will ensue, unless it is a non-combat zone (such as the chapel, trader, mercenary camp).
+- You cannot enter another player's home tile.
+- You can pass through other champions, but when passing another player's champion, they may choose to initiate combat, in which case your champion is forced to stop and fight and cannot pass through.
+- A knight can use multiple dice to move further. But once a knight stops and carries out an action, they can no longer move or act.
 
 **Tile Actions:**
 
@@ -157,34 +167,37 @@ Each die can be used for ONE of the following:
 
 **Auto-Claiming Resource Tiles:**
 
-- If a champion ends their turn on an unoccupied resource tile (no cards or monsters), they automatically claim it with a flag without requiring a separate action
-- This happens after completing your chosen action on that tile
+- If a champion ends their turn on an unoccupied resource tile (no adventure tokens or monsters), they automatically claim it with a flag without requiring a separate action.
 
-### Harvest Resources
+### Action: Harvest Resources
 
-- Use die to collect resources from tiles you've claimed
+- Spend an action die to collect resources from tiles you own (tiles with your flag on it).
 - Die value = total resources you can collect
-- Can collect from multiple tiles
-- Can only harvest from tiles showing your flag
+- You can collect from multiple tiles, up to the amount printed on each tile.
+- You can't harvest from tiles that you claimed during this turn - it takes one turn for a newly claimed tile to start producing resources.
+- If an opposing champion is on one of your tiles, you cannot harvest from it.
+- Your starting tile is a special resource til. It can always provide a wood OR a food, but not both, and it can't be blockaded or conqured by another champion.
 
-**Example**: Roll a 2, own a x1 Food tile and a x1 Gold tile = collect 1 Food + 1 Gold
+**Examples**:
 
-### Build
+- Player 1 owns a 1x food tile and a 2x gold tile. They roll a 2 and use that die to harvest. So they can either harvest 1 food and 1 gold, or 2 gold.
+- Player 1 owns a 1x wood tile and a 1x ore tile. They roll a 3 and use that die to harvest. They can harvest 1 wood and 1 ore, but no more, since you can't harvest more than the tile's value.
 
-- Spend resources to construct buildings in your castle
-- Die value doesn't matter for building
-- See [Buildings](#buildings) section for costs and benefits
+### Action: Build & Recruit
 
-### Boat Travel
+- Spend an action die to construct a building or upgrade your castle, or buy more knights or boats.
+- A castle is limited to 4 buildings. If you upgrade it, you can add 4 more buildings.
+- The die value doesn't matter for building.
+- See [Buildings](#buildings) section for costs and benefits.
 
-- Move boat between water zones and transport one champion between coastal tiles
-- This costs one die regardless of boat movement distance
-- Die value determines boat movement: 1 = adjacent water zone only, 2-3 = any water zone
-- **Transportation**: Pick up a champion from any coastal tile in the starting zone and deposit them on any coastal tile in the destination zone
-- **Forced Actions**: If the destination tile has exploration cards, the champion must take a card
-- **Resource Tiles**: If the destination is a resource tile, the champion can choose to stay (automatically claiming it) or spend another die to move and act elsewhere
+### Action:Boat Travel
 
-**Example**: With a die roll of 3, a boat can move 2 sea zones, pick up a champion, and deposit them on a coastal tile in the destination zone.
+- Spend an action die to move a boat between water zones and transport one champion between coastal tiles.
+- A boat can pick up a champion in any adjacent coastal tile, and drop it off in any other adjacent coastal tile.
+- A boat can also stay in the same water zone and transport a champion from one coastal tile to another within that zone. That still costs a die.
+- When the knight is moved in this way, it is treated in the same way as if the knight moved there on foot. So the knight will be forced to interact with any adventure tokens there, and can claim a resource tile.
+
+**Example**: With a die roll of 3, a boat can move 2 water zones away, pick up a champion, move to an adjacent water zone and deposit them on a coastal tile there.
 
 ---
 
@@ -192,75 +205,61 @@ Each die can be used for ONE of the following:
 
 ### Fighting Monsters
 
-1. Roll 1D3
-2. Add your Might
-3. Compare to monster's strength
-4. **Victory**: Remove monster, gain rewards and Fame (amount varies per monster card)
-5. **Defeat**: Return to castle, pay 1 Gold to heal (or lose 1 Fame if no Gold)
+- When a champion draws a monster card in an adventure tile, they must choose to flee or fight.
+- If they flee, they return to their home tile and lose 1 fame.
+- If they fight, they roll a D3 and add their might to the score.
+  - Champions or warshops in adjacent tiles may choose to support the fight (regardless of player). If so, +2 might is added per supporting champion or warship.
+  - This decision is made after the dice roll. So a player can offer support, and then choose to betray their support after the dice roll.
+- If the attack score is equal to or greater than the monster's might, they defeat the monster and gain the rewards printed on the card.
+- If the attack score is less than the monster's might, they lose and are chased back home. They must pay a gold to heal up, or lose 1 fame if don't have any gold. Note that trade can happen at any point, so a player may beg another player to contribute gold, or offer to trade for it.
+- If a champion loses a fight, the monster card is left in the tile, face up, and any other champion who enters the tile must fight or flee.
 
 **Resource Tile Guards:**
 
-- **Wolves** (Tier-2 resource tiles in outer zone): Might 2, victory gives 1 Fame + 2 Food
-- **Bandits** (Tier-2 resource tiles in middle area): Might 3, victory gives 1 Fame + 2 Gold
+- Some resource tiles are guarded by monsters. Those tiles are marked with one or two sword icons.
+  - One sword icon means the monster is a wolf. Place a wolf card there as soon as the card is turned up. For Tier 1 tiles that means the card is there from start, while for Tier 2 tiles it will be discovered later when a player enters the tile.
 
 ### Fighting Other Champions
 
-1. Both players roll 1D3 + Might
-2. Higher total wins
-3. **Tie**: Standoff, attacker must retreat
-4. **Winner**: Gains 1 Fame
-5. **Loser**: Returns to castle, pays 1 Gold to heal (or loses 1 Fame)
+- A champion can attack another champion by entering the same tile, or in response to another champion attempting to pass through their tile.
+- Both players roll a D3 and add their might to the score. Champions and warship from adjacent tiles can provide support, similar to when fighting monsters.
+- Highest score wins. On even scores, keep rerolling until a winner is found.
+- The winner gains 1 Fame and stays in the tile.
+- The loser returns to their home tile, pays 1 Gold to heal (or loses 1 Fame if don't have any gold).
 
 ### Combat Bonuses
 
-- **Warships**: Upgraded boats provide +2 Might to any battle in a coastal area
+- **Warships**: Upgraded boats (warships) provide +2 Might to any battle in a coastal area
 - **Support**: Champions in adjacent tiles can support for +2 to roll (negotiate terms)
-
-### Combat Options
-
-- **Flee**: Return to castle without fighting, lose 1 Fame
 
 ### Special Combat Rules
 
 - **Dragon**: Has 12-16 Might (determined when revealed). Losing = champion is eaten (removed from game)
-- **Passing Through**: When moving through occupied tiles, either player may initiate combat
 
 ---
 
 ## Resources & Trading
 
-### Resource Types
+- The stockpilable resources are food, wood, ore, and gold.
+- Resources are collected by harvesting from resource tiles, or gained from adventure cards.
+- Resources are used to upgrade the castle, trade for gold, buy might, and other things.
+- Resources can be freely traded with other players at any point. Only the current player can initiate trade with other players.
 
-- **Food**: Common in Plains
-- **Wood**: Common in Woodlands
-- **Ore**: Common in Mountains
-- **Gold**: Rare, valuable for purchases
+## Conquering another player's tile
 
-### Starred Resource Tiles
+- A champion can use an action die to enter another player's tile and conquer it, replacing the flag with one of their own.
+- The conquering player can choose to use military might or treachery to conquer the tile. If they use military might, they will pay 1 might (= move down one step on the might track). If they use treachery, they will pay 1 fame instead. They must have positive might or fame to do this.
+- If the player who owns the resource tile has a champion in a neighbouring tile, then that champion will passively protect the resource tile from conquest.
+- Conquering a tile does not require an extra action. As long as the champion ends their turn in an unoccupied tile, they can conquer it and replace the flag.
 
-Some resource tiles are marked with stars, indicating their strategic importance:
+## Blockading another player's tile
 
-- **All gold resource tiles** are starred
-- **Select high-value tiles** of other resources are also starred
-- Controlling all starred resource tiles enables the **Economic Victory** path
-
-### Claiming Resource Tiles
-
-- Enter unclaimed tile and place flag
-- Maximum 10 flags per player
-- Claimed tiles provide resources when harvesting
-
-### Challenging Claims
-
-When entering another player's claimed tile:
-
-- **Blockade**: Tile counts as yours while you occupy it
-- **Incite Revolt**: Remove their claim, lose 1 Fame
-- **Conquer**: Claim becomes yours, lose 1 Might
+- A champion that is in another player's resource tile will blockade it. That means the tile temporarily belongs to the blockading player, and they can harvest from it. To stop a blockade, the owning player needs to place a chamion in a neighbouring tile, or attack the blockader.
+- The blockader must still use a die to harvest from the tile, like when harvesting from their own resource tiles.
 
 ### Protection
 
-Champions protect all 4 adjacent tiles from blockade, revolt, or conquest
+Champions protect all 4 adjacent tiles from blockade or conquering.
 
 ### Trading
 
@@ -270,7 +269,7 @@ Players may freely trade resources at any time
 
 ## Buildings
 
-All buildings require spending a die to construct (value doesn't matter). Buildings are represented as cards that you place in your castle slots.
+All castle buildings and projects require spending a die to construct (die value doesn't matter). Buildings are represented as cards that you place in your castle slots.
 
 ### Castle Upgrades
 
@@ -284,7 +283,7 @@ All buildings require spending a die to construct (value doesn't matter). Buildi
 **Warship Upgrade**
 
 - **Cost**: 2 Ore, 3 Gold
-- **Benefit**: Upgraded boat provides +2 Might to any battle in coastal areas
+- **Benefit**: Upgrades one boat to a warshop, which allows it to provide +2 Might to any battle in coastal area it is in.
 
 ### Standard Buildings
 
@@ -350,7 +349,7 @@ Multiple champions may occupy these tiles.
 - **The Ancient Mountain**: Home of the great dragon
 - **Multiple Victory Paths**:
   - **Combat Victory**: Dragon with 12-16 Might. Victory wins the game! Defeat = champion is eaten (removed from game)
-  - **Diplomatic Victory**: If you have 10+ Fame and visit the dragon, the dragon takes human shape and becomes your advisor. You win immediately!
+  - **Diplomatic Victory**: If you have 20+ Fame and visit the dragon, the dragon takes human shape and becomes your advisor. You win immediately!
   - **Economic Victory**: If you control all starred resource tiles and visit the dragon, the dragon agrees to let you rule the island in exchange for tributes. You win immediately!
 
 ---
@@ -413,9 +412,9 @@ The game ends immediately when a player achieves any of the following victory co
 
 ### Diplomatic Victory
 
-- **Reaches 10 Fame**, then travels to Doomspire
+- **Reaches 20 Fame**, then travels to Doomspire
 - The dragon recognizes your reputation and takes human shape to serve as your advisor
-- No combat required - you win immediately upon reaching Doomspire with 10+ Fame
+- No combat required - you win immediately upon reaching Doomspire with 20+ Fame
 
 ### Economic Victory
 

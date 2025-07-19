@@ -1,6 +1,6 @@
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import { BoardComponent } from "../components/BoardComponent";
+import { GameBoard } from "../components/GameBoard";
 import { GameState, rollMultipleD3 } from "../lib/gameState";
 import { templateProcessor } from "../lib/templateProcessor";
 
@@ -39,6 +39,14 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
+  // Debug mode for revealing all tiles
+  const [debugMode, setDebugMode] = useState<boolean>(false);
+
+  // Prompt tracking and display
+  const [lastSystemPrompt, setLastSystemPrompt] = useState<string>("");
+  const [lastUserMessage, setLastUserMessage] = useState<string>("");
+  const [showPrompts, setShowPrompts] = useState<boolean>(false);
+
   // Initialize game state only on client side
   useEffect(() => {
     setGameState(new GameState());
@@ -60,7 +68,7 @@ export default function Home() {
       // Get current game state
       const currentPlayer = gameState.getCurrentPlayer();
       const validActions = gameState.getValidActions(diceRolls);
-      const boardState = JSON.stringify(gameState.toJSON(), null, 2);
+      const boardState = JSON.stringify(gameState.toAIJSON(), null, 2);
 
       // Process system prompt template (includes game rules dynamically)
       const systemPrompt = await templateProcessor.processTemplate(
@@ -82,6 +90,9 @@ export default function Home() {
         boardState: boardState,
         validActions: validActions.join("\n"),
       });
+
+      setLastSystemPrompt(systemPrompt);
+      setLastUserMessage(userMessage);
 
       const res = await fetch("/api/ai-chat", {
         method: "POST",
@@ -203,6 +214,7 @@ export default function Home() {
               borderRadius: "4px",
               fontSize: "14px",
               cursor: loading ? "not-allowed" : "pointer",
+              marginRight: "10px",
             }}
           >
             {loading ? (
@@ -213,6 +225,39 @@ export default function Home() {
             ) : (
               "🎲 AI Move"
             )}
+          </button>
+
+          <button
+            onClick={() => setDebugMode(!debugMode)}
+            style={{
+              display: "inline-block",
+              padding: "8px 16px",
+              backgroundColor: debugMode ? "#dc3545" : "#6c757d",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              fontSize: "14px",
+              cursor: "pointer",
+            }}
+          >
+            {debugMode ? "🔍 Debug: ON" : "🔍 Debug: OFF"}
+          </button>
+
+          <button
+            onClick={() => setShowPrompts(!showPrompts)}
+            style={{
+              display: "inline-block",
+              padding: "8px 16px",
+              backgroundColor: showPrompts ? "#17a2b8" : "#6c757d",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              fontSize: "14px",
+              cursor: "pointer",
+              marginLeft: "10px",
+            }}
+          >
+            {showPrompts ? "💬 Prompts: ON" : "💬 Prompts: OFF"}
           </button>
         </div>
 
@@ -301,6 +346,80 @@ export default function Home() {
           </div>
         )}
 
+        {/* Prompts Display */}
+        {showPrompts && (
+          <div
+            style={{
+              marginBottom: "20px",
+              padding: "15px",
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              borderRadius: "8px",
+              maxWidth: "800px",
+              width: "100%",
+              whiteSpace: "pre-wrap",
+              fontFamily: "monospace",
+              fontSize: "14px",
+              lineHeight: "1.4",
+              maxHeight: "400px",
+              overflowY: "auto",
+            }}
+          >
+            <h3 style={{ margin: "0 0 15px 0", color: "#2c3e50" }}>
+              💬 Latest AI Prompts
+            </h3>
+
+            <div style={{ marginBottom: "20px" }}>
+              <strong
+                style={{
+                  fontFamily: "sans-serif",
+                  color: "#2c3e50",
+                  fontSize: "16px",
+                }}
+              >
+                System Prompt:
+              </strong>
+              <div
+                style={{
+                  marginTop: "8px",
+                  padding: "12px",
+                  backgroundColor: "#f8f9fa",
+                  border: "1px solid #dee2e6",
+                  borderRadius: "6px",
+                  maxHeight: "200px",
+                  overflowY: "auto",
+                }}
+              >
+                {lastSystemPrompt || "No system prompt available"}
+              </div>
+            </div>
+
+            <div>
+              <strong
+                style={{
+                  fontFamily: "sans-serif",
+                  color: "#2c3e50",
+                  fontSize: "16px",
+                }}
+              >
+                User Message:
+              </strong>
+              <div
+                style={{
+                  marginTop: "8px",
+                  padding: "12px",
+                  backgroundColor: "#f0f8ff",
+                  border: "1px solid #b8daff",
+                  borderRadius: "6px",
+                  maxHeight: "200px",
+                  overflowY: "auto",
+                }}
+              >
+                {lastUserMessage || "No user message available"}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div
           style={{
             marginBottom: "20px",
@@ -330,8 +449,26 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Debug mode indicator */}
+        {debugMode && (
+          <div
+            style={{
+              marginBottom: "20px",
+              padding: "10px",
+              backgroundColor: "#fff3cd",
+              border: "1px solid #ffeaa7",
+              borderRadius: "8px",
+              textAlign: "center",
+              color: "#856404",
+              fontWeight: "bold",
+            }}
+          >
+            🔍 DEBUG MODE ACTIVE - All tiles revealed
+          </div>
+        )}
+
         {/* Board layout with ocean tiles in 2x2 grid behind island */}
-        <BoardComponent gameState={gameState} />
+        <GameBoard gameState={gameState} debugMode={debugMode} />
 
         <div
           style={{

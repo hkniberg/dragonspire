@@ -1,4 +1,8 @@
+
 import { Anthropic } from "@anthropic-ai/sdk";
+
+const DEFAULT_MODEL = "claude-sonnet-4-0";
+//const DEFAULT_MODEL = 1024;
 
 export interface LLM {
     simpleChat(systemPrompt: string | null, userMessage: string): Promise<string>;
@@ -8,12 +12,13 @@ export class Claude implements LLM {
     private anthropic: Anthropic;
     private model: string;
 
-    constructor(apiKey: string, model: string = "claude-sonnet-4-0") {
+    constructor(apiKey: string, model: string = DEFAULT_MODEL) {
         this.anthropic = new Anthropic({ apiKey });
         this.model = model;
     }
 
     async simpleChat(systemPrompt: string | null, userMessage: string): Promise<string> {
+
         const messages: Anthropic.Messages.MessageParam[] = [
             { role: "user", content: userMessage }
         ];
