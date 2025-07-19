@@ -1,5 +1,5 @@
 import type { GameState } from "../lib/gameState";
-import type { Champion, Player, Tile } from "../lib/types";
+import type { Champion, Player, ResourceType, Tile } from "../lib/types";
 
 interface BoardComponentProps {
   gameState: GameState;
@@ -18,17 +18,14 @@ const getTileColor = (tile: Tile): string => {
     return "#8B4513"; // Brown for unexplored
   }
 
-  switch (tile.type) {
-    case "plains":
-      return "#90EE90"; // Light green
-    case "mountains":
-      return "#A0A0A0"; // Gray
-    case "woodlands":
-      return "#228B22"; // Forest green
-    case "water":
-      return "#4169E1"; // Royal blue
-    case "special":
-      return "#DC143C"; // Crimson for special locations
+  // Since we no longer have tile.type, use tier for basic coloring
+  switch (tile.tier) {
+    case 1:
+      return "#90EE90"; // Light green for tier 1
+    case 2:
+      return "#A0A0A0"; // Gray for tier 2
+    case 3:
+      return "#DC143C"; // Crimson for tier 3
     default:
       return "#DDD";
   }
@@ -40,8 +37,8 @@ const getTileSymbol = (tile: Tile): string => {
   }
 
   // Special locations
-  if (tile.specialLocation) {
-    switch (tile.specialLocation) {
+  if (tile.tileType) {
+    switch (tile.tileType) {
       case "doomspire":
         return "🐉";
       case "chapel":
@@ -53,24 +50,29 @@ const getTileSymbol = (tile: Tile): string => {
     }
   }
 
-  // Regular terrain
-  switch (tile.type) {
-    case "plains":
-      return "🌾";
-    case "mountains":
-      return "⛰️";
-    case "woodlands":
-      return "🌲";
-    case "water":
-      return "💧";
+  // Default terrain based on tier
+  switch (tile.tier) {
+    case 1:
+      return "🌾"; // Plains for tier 1
+    case 2:
+      return "⛰️"; // Mountains for tier 2
+    case 3:
+      return "🌲"; // Forest for tier 3
     default:
       return "";
   }
 };
 
 const getResourceSymbol = (tile: Tile): string => {
-  if (!tile.resourceType || !tile.explored) return "";
+  if (!tile.resources || !tile.explored) return "";
 
+  // Find the first resource with a positive amount
+  const resourceEntries = Object.entries(tile.resources);
+  const activeResource = resourceEntries.find(([_, amount]) => amount > 0);
+
+  if (!activeResource) return "";
+
+  const [resourceType] = activeResource;
   const resourceSymbols = {
     food: "🥖",
     wood: "🪵",
@@ -78,7 +80,7 @@ const getResourceSymbol = (tile: Tile): string => {
     gold: "🪙",
   };
 
-  return resourceSymbols[tile.resourceType];
+  return resourceSymbols[resourceType as ResourceType];
 };
 
 const OceanZoneComponent = ({
@@ -88,48 +90,45 @@ const OceanZoneComponent = ({
   zone: (typeof oceanZones)[0];
   players: Player[];
 }) => {
-  const boatsInZone = players.filter(
-    (player) => player.boatPosition === zone.id
-  );
+  // For now, since boats don't have zone mapping, show empty boats
+  const boatsInZone: Player[] = [];
 
   return (
     <div
       style={{
-        backgroundColor: "#1E90FF", // Deep sky blue
-        color: "white",
+        backgroundColor: "#87CEEB", // Sky blue for ocean
+        color: "#000080", // Dark blue text
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: "24px",
-        fontWeight: "bold",
-        border: "3px solid #0066CC",
-        borderRadius: "8px",
-        width: "320px",
         height: "320px",
+        width: "320px",
+        fontSize: "16px",
+        fontWeight: "bold",
+        border: "2px solid #4682B4",
         position: "relative",
       }}
     >
-      <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: "32px", marginBottom: "10px" }}>
-          {zone.label}
-        </div>
-        <div style={{ fontSize: "12px", opacity: 0.8, marginBottom: "10px" }}>
-          {zone.name}
-        </div>
-        {boatsInZone.length > 0 && (
-          <div style={{ fontSize: "16px" }}>
-            {boatsInZone.map((player) => (
-              <div
-                key={player.id}
-                style={{ color: `hsl(${(player.id - 1) * 90}, 70%, 80%)` }}
-              >
-                🚢 P{player.id}
-              </div>
-            ))}
-          </div>
-        )}
+      {/* Zone label in corner */}
+      <div
+        style={{
+          position: "absolute",
+          top: "10px",
+          left: "10px",
+          fontSize: "24px",
+          fontWeight: "bold",
+          color: "#000080",
+        }}
+      >
+        {zone.label}
       </div>
+
+      {boatsInZone.length > 0 && (
+        <div style={{ fontSize: "16px", marginTop: "10px" }}>
+          🛥️ {boatsInZone.length}
+        </div>
+      )}
     </div>
   );
 };
@@ -170,14 +169,15 @@ const TileComponent = ({
         transition: "transform 0.1s",
         position: "relative",
       }}
-      title={`${tile.specialLocation || tile.type} (Tier ${
-        tile.tier
-      }) - Position: ${tile.position.row + 1}, ${tile.position.col + 1}
+      title={`${tile.tileType || "Terrain"} (Tier ${tile.tier}) - Position: ${
+        tile.position.row + 1
+      }, ${tile.position.col + 1}
 ${
-  tile.resourceType
-    ? `Resource: ${tile.resourceType} (${tile.resourceAmount})${
-        tile.isStarred ? " ⭐" : ""
-      }`
+  tile.resources && Object.keys(tile.resources).length > 0
+    ? `Resources: ${Object.entries(tile.resources)
+        .filter(([_, amount]) => amount > 0)
+        .map(([type, amount]) => `${type}: ${amount}`)
+        .join(", ")}${tile.isStarred ? " ⭐" : ""}`
     : ""
 }
 ${tile.claimedBy ? `Claimed by Player ${tile.claimedBy}` : ""}`}
@@ -192,13 +192,18 @@ ${tile.claimedBy ? `Claimed by Player ${tile.claimedBy}` : ""}`}
       <div style={{ fontSize: "16px" }}>{getTileSymbol(tile)}</div>
 
       {/* Resource symbol */}
-      {tile.resourceType && tile.explored && (
-        <div style={{ fontSize: "8px", marginTop: "2px" }}>
-          {getResourceSymbol(tile)}
-          {tile.resourceAmount}
-          {tile.isStarred && "⭐"}
-        </div>
-      )}
+      {tile.resources &&
+        Object.keys(tile.resources).length > 0 &&
+        tile.explored && (
+          <div style={{ fontSize: "8px", marginTop: "2px" }}>
+            {getResourceSymbol(tile)}
+            {Object.entries(tile.resources)
+              .filter(([_, amount]) => amount > 0)
+              .map(([type, amount]) => `${type}: ${amount}`)
+              .join(", ")}
+            {tile.isStarred && "⭐"}
+          </div>
+        )}
 
       {/* Flag indicator */}
       {tile.claimedBy && (
@@ -263,105 +268,110 @@ ${tile.claimedBy ? `Claimed by Player ${tile.claimedBy}` : ""}`}
 };
 
 export const BoardComponent = ({ gameState }: BoardComponentProps) => {
-  const allChampions = gameState.players.flatMap((player) => player.champions);
-  const currentPlayer = gameState.getCurrentPlayer();
+  const currentPlayer = gameState.players[gameState.currentPlayerIndex];
+
+  // Calculate claimed tiles for current player
+  const claimedTiles = gameState.board
+    .flat()
+    .filter((tile) => tile.claimedBy === currentPlayer.id).length;
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
-        Lords of Doomspire - Round {gameState.currentRound}
-      </h2>
-
-      <div style={{ display: "flex", gap: "20px", justifyContent: "center" }}>
-        {/* Game Board */}
-        <div
-          style={{
-            position: "relative",
-            display: "inline-block",
-          }}
-        >
-          {/* Ocean layer - 2x2 grid */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 320px)",
-              gridTemplateRows: "repeat(2, 320px)",
-              gap: "0px",
-            }}
-          >
-            {oceanZones.map((zone) => (
-              <OceanZoneComponent
-                key={zone.id}
-                zone={zone}
-                players={gameState.players}
-              />
-            ))}
-          </div>
-
-          {/* Island layer - positioned on top of ocean */}
-          <div
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              display: "grid",
-              gridTemplateColumns: "repeat(8, 1fr)",
-              gap: "2px",
-              backgroundColor: "#333",
-              padding: "10px",
-              borderRadius: "10px",
-              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-            }}
-          >
-            {gameState.board.map((row, rowIndex) =>
-              row.map((tile, colIndex) => (
-                <TileComponent
-                  key={`${rowIndex}-${colIndex}`}
-                  tile={tile}
-                  champions={allChampions}
-                  currentPlayer={currentPlayer}
-                />
-              ))
-            )}
+    <div style={{ display: "flex", gap: "20px", padding: "20px" }}>
+      {/* Left Panel - Player Info */}
+      <div style={{ width: "200px" }}>
+        <h3>Current Player: {currentPlayer.name}</h3>
+        <div style={{ marginBottom: "20px" }}>
+          <div>Fame: {currentPlayer.fame}</div>
+          <div>Might: {currentPlayer.might}</div>
+          <div>
+            Claims: {claimedTiles}/{currentPlayer.maxClaims}
           </div>
         </div>
 
-        {/* Game Status */}
-        <div style={{ minWidth: "300px" }}>
-          <h3>Current Player: {currentPlayer.name}</h3>
-          <div style={{ marginBottom: "20px" }}>
-            <div>Fame: {currentPlayer.fame}</div>
-            <div>Might: {currentPlayer.might}</div>
-            <div>
-              Flags: {currentPlayer.flagsPlaced}/{currentPlayer.maxFlags}
-            </div>
-          </div>
+        <h4>Resources:</h4>
+        <div style={{ marginBottom: "20px" }}>
+          <div>Food: {currentPlayer.resources.food} 🥖</div>
+          <div>Wood: {currentPlayer.resources.wood} 🪵</div>
+          <div>Ore: {currentPlayer.resources.ore} ⛏️</div>
+          <div>Gold: {currentPlayer.resources.gold} 🪙</div>
+        </div>
 
-          <h4>Resources:</h4>
-          <div style={{ marginBottom: "20px" }}>
-            <div>Food: {currentPlayer.resources.food} 🥖</div>
-            <div>Wood: {currentPlayer.resources.wood} 🪵</div>
-            <div>Ore: {currentPlayer.resources.ore} ⛏️</div>
-            <div>Gold: {currentPlayer.resources.gold} 🪙</div>
+        <h4>All Players:</h4>
+        {gameState.players.map((player) => (
+          <div
+            key={player.id}
+            style={{
+              padding: "5px",
+              backgroundColor:
+                player.id === currentPlayer.id ? "#e6f3ff" : "transparent",
+              borderRadius: "4px",
+              marginBottom: "5px",
+            }}
+          >
+            <strong>{player.name}</strong> - Fame: {player.fame}, Might:{" "}
+            {player.might}
           </div>
+        ))}
+      </div>
 
-          <h4>All Players:</h4>
-          {gameState.players.map((player) => (
-            <div
-              key={player.id}
-              style={{
-                padding: "5px",
-                backgroundColor:
-                  player.id === currentPlayer.id ? "#e6f3ff" : "transparent",
-                borderRadius: "4px",
-                marginBottom: "5px",
-              }}
-            >
-              <strong>{player.name}</strong> - Fame: {player.fame}, Might:{" "}
-              {player.might}
-            </div>
+      {/* Game Board */}
+      <div
+        style={{
+          position: "relative",
+          width: "640px",
+          height: "640px",
+        }}
+      >
+        {/* Ocean layer - 2x2 grid */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, 320px)",
+            gridTemplateRows: "repeat(2, 320px)",
+            gap: "0px",
+            width: "640px",
+            height: "640px",
+          }}
+        >
+          {oceanZones.map((zone) => (
+            <OceanZoneComponent
+              key={zone.id}
+              zone={zone}
+              players={gameState.players}
+            />
           ))}
+        </div>
+
+        {/* Island layer - positioned on top of ocean */}
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            display: "grid",
+            gridTemplateColumns: "repeat(8, 1fr)",
+            gap: "1px",
+            backgroundColor: "#333",
+            padding: "8px",
+            borderRadius: "10px",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+            width: "520px",
+            height: "520px",
+          }}
+        >
+          {gameState.board.map((row, rowIndex) =>
+            row.map((tile, colIndex) => (
+              <TileComponent
+                key={`${rowIndex}-${colIndex}`}
+                tile={tile}
+                champions={gameState.players.flatMap(
+                  (player) => player.champions
+                )}
+                currentPlayer={currentPlayer}
+              />
+            ))
+          )}
         </div>
       </div>
     </div>

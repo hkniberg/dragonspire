@@ -1,32 +1,47 @@
 // Lords of Doomspire Game Types
 
 export type ResourceType = 'food' | 'wood' | 'ore' | 'gold';
-export type TileType = 'plains' | 'mountains' | 'woodlands' | 'water' | 'special';
 export type TileTier = 1 | 2 | 3;
+export type TileType = 'plains' | 'mountains' | 'woodlands' | 'water';
+export type OceanPosition = 'nw' | 'ne' | 'sw' | 'se';
+export type TreasureType = 'rustyShield' | 'brokenSword';
 
 export interface Position {
     row: number;
     col: number;
 }
 
+export interface Monster {
+    name: string;
+    tier: TileTier;
+    icon: string;
+    might: number; // Might needed to beat it
+    fame: number; // Fame gained for winning
+    resources: Record<ResourceType, number>; // Resources gained for beating it
+}
+
 export interface Tile {
     position: Position;
-    type: TileType;
     tier: TileTier;
     explored: boolean;
-    resourceType?: ResourceType;
-    resourceAmount?: number;
+    resources?: Record<ResourceType, number>;
     isStarred?: boolean; // For victory condition
     claimedBy?: number; // Player ID who claimed this tile
-    hasMonster?: boolean;
-    monsterStrength?: number;
-    specialLocation?: 'chapel' | 'trader' | 'mercenary' | 'doomspire';
+    monster?: Monster;
+    tileType?: 'home' | 'resource' | 'adventure' | 'chapel' | 'trader' | 'mercenary' | 'doomspire';
 }
 
 export interface Champion {
     id: number;
     position: Position;
     playerId: number;
+    treasures: TreasureType[];
+}
+
+export interface Boat {
+    id: number;
+    playerId: number;
+    position: OceanPosition;
 }
 
 export interface Player {
@@ -35,18 +50,37 @@ export interface Player {
     fame: number;
     might: number;
     resources: Record<ResourceType, number>;
-    flagsPlaced: number;
-    maxFlags: number;
+    maxClaims: number;
     champions: Champion[];
-    boatPosition: number; // Water zone 0-3 (NW, NE, SW, SE)
+    boats: Boat[];
+    homePosition: Position;
 }
 
-export interface GameAction {
-    type: 'move_and_act' | 'harvest' | 'build' | 'boat_travel';
+export interface MoveChampionAction {
+    type: 'moveChampion';
     playerId: number;
-    dieValue: number;
-    championId?: number;
-    targetPosition?: Position;
-    resourcesCollected?: Record<ResourceType, number>;
-    buildingType?: string;
+    championId: number;
+    path: Position[];
+}
+
+export interface MoveBoatAction {
+    type: 'moveBoat';
+    playerId: number;
+    boatId: number;
+    path: string[]; // Ocean tiles as strings
+    championId?: number; // Optional champion being picked up
+    championDropPosition?: Position; // Where to drop off the champion
+}
+
+export interface HarvestAction {
+    type: 'harvest';
+    playerId: number;
+    resources: Record<ResourceType, number>; // Resources and amounts to harvest
+}
+
+export type GameAction = MoveChampionAction | MoveBoatAction | HarvestAction;
+
+export interface DiceUsage {
+    diceNumber: number;
+    action: GameAction;
 } 

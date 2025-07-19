@@ -6,8 +6,7 @@ import type {
     Position,
     ResourceType,
     Tile,
-    TileTier,
-    TileType
+    TileTier
 } from './types';
 
 export class GameState {
@@ -50,17 +49,15 @@ export class GameState {
                 // Simplified tile generation for the model
                 const tile: Tile = {
                     position,
-                    type: this.randomTileType(tier),
                     tier,
                     explored,
-                    resourceType: Math.random() < 0.6 ? this.randomResourceType() : undefined,
-                    resourceAmount: Math.random() < 0.6 ? Math.floor(Math.random() * 3) + 1 : undefined,
+                    resources: Math.random() < 0.6 ? this.randomResources() : undefined,
                     isStarred: Math.random() < 0.1, // 10% chance of starred resource
                 };
 
                 // Add special locations
                 if (tier === 3 && row === 3 && col === 3) {
-                    tile.specialLocation = 'doomspire';
+                    tile.tileType = 'doomspire';
                 }
 
                 board[row].push(tile);
@@ -70,15 +67,17 @@ export class GameState {
         return board;
     }
 
-    private randomTileType(tier: TileTier): TileType {
-        const types: TileType[] = ['plains', 'mountains', 'woodlands'];
-        if (tier === 1) types.push('water');
-        return types[Math.floor(Math.random() * types.length)];
-    }
+    private randomResources(): Record<ResourceType, number> {
+        const resourceTypes: ResourceType[] = ['food', 'wood', 'ore', 'gold'];
+        const randomType = resourceTypes[Math.floor(Math.random() * resourceTypes.length)];
+        const amount = Math.floor(Math.random() * 3) + 1;
 
-    private randomResourceType(): ResourceType {
-        const types: ResourceType[] = ['food', 'wood', 'ore', 'gold'];
-        return types[Math.floor(Math.random() * types.length)];
+        return {
+            food: randomType === 'food' ? amount : 0,
+            wood: randomType === 'wood' ? amount : 0,
+            ore: randomType === 'ore' ? amount : 0,
+            gold: randomType === 'gold' ? amount : 0
+        };
     }
 
     private initializePlayers(): Player[] {
@@ -94,7 +93,8 @@ export class GameState {
             const champion: Champion = {
                 id: 1,
                 position: startingPositions[i],
-                playerId: i + 1
+                playerId: i + 1,
+                treasures: []
             };
 
             players.push({
@@ -103,10 +103,10 @@ export class GameState {
                 fame: 0,
                 might: 0,
                 resources: { food: 1, wood: 1, ore: 0, gold: 0 },
-                flagsPlaced: 0,
-                maxFlags: 10,
+                maxClaims: 10,
                 champions: [champion],
-                boatPosition: i // Each player starts in a different water zone
+                boats: [],
+                homePosition: startingPositions[i]
             });
         }
 
