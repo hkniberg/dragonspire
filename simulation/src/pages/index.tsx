@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BoardComponent } from "../components/BoardComponent";
 import { GameState, rollMultipleD3 } from "../lib/gameState";
 import { templateProcessor } from "../lib/templateProcessor";
@@ -29,14 +29,25 @@ const spinnerStyles = `
 `;
 
 export default function Home() {
+  // Client-side rendering state
+  const [mounted, setMounted] = useState(false);
+
   // AI Move functionality
-  const [gameState] = useState<GameState>(new GameState());
+  const [gameState, setGameState] = useState<GameState | null>(null);
   const [aiResponse, setAiResponse] = useState<string>("");
   const [lastDiceRolls, setLastDiceRolls] = useState<number[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
+  // Initialize game state only on client side
+  useEffect(() => {
+    setGameState(new GameState());
+    setMounted(true);
+  }, []);
+
   const handleAIMove = async () => {
+    if (!gameState) return;
+
     setLoading(true);
     setError("");
     setAiResponse("");
@@ -97,13 +108,46 @@ export default function Home() {
     }
   };
 
+  // Show loading state until client-side rendering is ready
+  if (!mounted || !gameState) {
+    return (
+      <>
+        <Head>
+          <title>Lords of Doomspire Board Game Simulator</title>
+          <meta
+            name="description"
+            content="Lords of Doomspire Board Game AI Simulation"
+          />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+          <link rel="icon" href="/favicon.ico" />
+          <style dangerouslySetInnerHTML={{ __html: spinnerStyles }} />
+        </Head>
+        <div
+          style={{
+            minHeight: "100vh",
+            backgroundColor: "#f0f8ff",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            flexDirection: "column",
+          }}
+        >
+          <Spinner size={40} />
+          <p style={{ marginTop: "20px", fontSize: "18px", color: "#2c3e50" }}>
+            Initializing Lords of Doomspire...
+          </p>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Head>
-        <title>Lords of Dragonspire Board Game Simulator</title>
+        <title>Lords of Doomspire Board Game Simulator</title>
         <meta
           name="description"
-          content="Lords of Dragonspire Board Game AI Simulation"
+          content="Lords of Doomspire Board Game AI Simulation"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -127,7 +171,7 @@ export default function Home() {
             fontFamily: "serif",
           }}
         >
-          Lords of Dragonspire Board Game Simulator
+          Lords of Doomspire Board Game Simulator
         </h1>
 
         <div style={{ marginBottom: "20px", textAlign: "center" }}>
@@ -281,13 +325,13 @@ export default function Home() {
             <span>⛰️ Mountains</span>
             <span>🌲 Woodlands</span>
             <span>🌊 Ocean</span>
-            <span>🐉 Dragon's Den</span>
+            <span>🐉 Doomspire</span>
             <span style={{ color: "#8B4513" }}>? Unexplored</span>
           </div>
         </div>
 
         {/* Board layout with ocean tiles in 2x2 grid behind island */}
-        <BoardComponent />
+        <BoardComponent gameState={gameState} />
 
         <div
           style={{
@@ -316,11 +360,11 @@ export default function Home() {
           </p>
           <p>
             <strong style={{ color: "#F44336" }}>Tier 3 (T3)</strong>: Center -
-            most dangerous areas including Dragon's Den
+            most dangerous areas including Doomspire
           </p>
           <p style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>
-            This is a placeholder visualization. Champions, resources, and game
-            state will be added in future steps.
+            The board displays live game state including champion positions,
+            resource tiles, claimed territories, and boat positions.
           </p>
         </div>
       </div>

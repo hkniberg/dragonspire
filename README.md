@@ -1,10 +1,10 @@
-# Lords of Dragonspire
+# Lords of Doomspire
 
 A work-in-progress strategic board game design project featuring digital simulation and AI-powered gameplay assistance.
 
 ## Overview
 
-**Lords of Dragonspire** is a 2-8 player (4 players for now) strategic board game where players command champions to explore a dangerous island, gather resources, and ultimately seek to defeat the ancient dragon at Doomspire. It is inspired by games like Talisman, Catan, Agricola, and Game of Thrones (the board game).
+**Lords of Doomspire** is a 2-8 player (4 players for now) strategic board game where players command champions to explore a dangerous island, gather resources, and ultimately seek to defeat the ancient dragon at Doomspire. It is inspired by games like Talisman, Catan, Agricola, and Game of Thrones (the board game).
 
 This repository contains both the complete game design documentation and a work-in-progress digital simulation for playtesting and development. Assets will be added as the game is developed.
 
@@ -22,7 +22,7 @@ This repository contains both the complete game design documentation and a work-
 ## Project Structure
 
 ```
-dragonspire/
+doomspire/
 ├── docs/                          # Game Design Documentation│
 └── simulation/                    # Digital Game Simulation
 ```
@@ -41,7 +41,7 @@ dragonspire/
 
    ```bash
    git clone <repository-url>
-   cd dragonspire
+   cd doomspire
    ```
 
 2. **Set up the simulation**:
@@ -74,4 +74,4 @@ The complete game rules are documented in [`docs/game-rules.md`](./docs/game-rul
 
 ## Simulation
 
-The simulation is auto-deployed to https://dragonspire.vercel.app/
+The simulation is auto-deployed to https://doomspire.vercel.app/

@@ -40,7 +40,7 @@ export default function AITest() {
   return (
     <>
       <Head>
-        <title>AI Test - Lords of Dragonspire</title>
+        <title>AI Test - Lords of Doomspire</title>
         <meta name="description" content="AI functionality test page" />
       </Head>
 

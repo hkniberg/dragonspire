@@ -1,55 +1,14 @@
-// Lords of Dragonspire Game State Model
+// Lords of Doomspire Game State Model
 
-export type ResourceType = 'food' | 'wood' | 'ore' | 'gold';
-export type TileType = 'plains' | 'mountains' | 'woodlands' | 'water' | 'ocean' | 'special';
-export type TileTier = 1 | 2 | 3;
-
-export interface Position {
-    row: number;
-    col: number;
-}
-
-export interface Tile {
-    position: Position;
-    type: TileType;
-    tier: TileTier;
-    explored: boolean;
-    resourceType?: ResourceType;
-    resourceAmount?: number;
-    isStarred?: boolean; // For victory condition
-    claimedBy?: number; // Player ID who claimed this tile
-    hasMonster?: boolean;
-    monsterStrength?: number;
-    specialLocation?: 'chapel' | 'trader' | 'mercenary' | 'doomspire';
-}
-
-export interface Champion {
-    id: number;
-    position: Position;
-    playerId: number;
-}
-
-export interface Player {
-    id: number;
-    name: string;
-    fame: number;
-    might: number;
-    resources: Record<ResourceType, number>;
-    flagsPlaced: number;
-    maxFlags: number;
-    champions: Champion[];
-    boatPosition: number; // Water zone 0-3 (NW, NE, SW, SE)
-}
-
-export interface GameAction {
-    type: 'move_and_act' | 'harvest' | 'build' | 'boat_travel';
-    playerId: number;
-    dieValue: number;
-    championId?: number;
-    targetPosition?: Position;
-    resourcesCollected?: Record<ResourceType, number>;
-    buildingType?: string;
-}
+import type {
+    Champion,
+    Player,
+    Position,
+    ResourceType,
+    Tile,
+    TileTier,
+    TileType
+} from './types';
 
 export class GameState {
     public board: Tile[][];
@@ -100,7 +59,7 @@ export class GameState {
                 };
 
                 // Add special locations
-                if (tier === 3 && row === 3 && col === 4) {
+                if (tier === 3 && row === 3 && col === 3) {
                     tile.specialLocation = 'doomspire';
                 }
 
@@ -172,27 +131,15 @@ export class GameState {
         return actions;
     }
 
-    public toJSON(): any {
+    public toJSON() {
         return {
             board: this.board,
             players: this.players,
             currentPlayerIndex: this.currentPlayerIndex,
             currentRound: this.currentRound,
             gameEnded: this.gameEnded,
-            winner: this.winner,
-            currentPlayer: this.getCurrentPlayer().name
+            winner: this.winner
         };
-    }
-
-    public static fromJSON(data: any): GameState {
-        const gameState = new GameState();
-        gameState.board = data.board;
-        gameState.players = data.players;
-        gameState.currentPlayerIndex = data.currentPlayerIndex;
-        gameState.currentRound = data.currentRound;
-        gameState.gameEnded = data.gameEnded;
-        gameState.winner = data.winner;
-        return gameState;
     }
 }
 

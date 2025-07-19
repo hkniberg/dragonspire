@@ -1,6 +1,6 @@
-# Project: Lords of Dragonspire Board Game Design
+# Project: Lords of Doomspire Board Game Design
 
-This repository represents the design and development of **Lords of Dragonspire**, a strategic board game where players command champions to explore a dangerous island, gather resources, and ultimately defeat a dragon.
+This repository represents the design and development of **Lords of Doomspire**, a strategic board game where players command champions to explore a dangerous island, gather resources, and ultimately defeat a dragon.
 
 ## Project Structure
 
@@ -10,7 +10,7 @@ This repository represents the design and development of **Lords of Dragonspire*
 
 ## Game Overview
 
-Lords of Dragonspire is a 4-player strategic board game featuring:
+Lords of Doomspire is a 4-player strategic board game featuring:
 
 - Resource management and trading
 - Champion-based exploration mechanics
