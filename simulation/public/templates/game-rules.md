@@ -135,7 +135,7 @@ When turning a card, there are three types:
 Players take turns in clockwise order. Each turn:
 
 1. **Roll Action Dice**: Roll all your D3 dice (start with 2, gain more with additional champions)
-2. **Take Actions**: Use each action die one at a time to perform one action, in any order.
+2. **Take Actions**: Use dice to perform actions. Once a champion performs any non-movement action, they cannot use any remaining dice that turn.
 3. **End Turn**: Pass to next player
 
 ### Available Actions
@@ -160,7 +160,7 @@ Each action die can be used for ONE of the following:
 - If you end your movement in a tile with another champion, battle will ensue, unless it is a non-combat zone (such as the chapel, trader, mercenary camp).
 - You cannot enter another player's home tile.
 - You can pass through other champions, but when passing another player's champion, they may choose to initiate combat, in which case your champion is forced to stop and fight and cannot pass through.
-- A knight can use multiple dice to move further. But once a knight stops and carries out an action, they can no longer move or act.
+- A champion can combine multiple dice to move further in a single action. However, once a champion performs any tile action (other than movement), they cannot use any remaining dice that turn.
 
 **Tile Actions:**
 
@@ -168,10 +168,6 @@ Each action die can be used for ONE of the following:
 - **Resource Tile**: Claim with flag (if unclaimed) OR challenge existing claim
 - **Special Location**: Use location ability
 - **Monster Tile**: Fight the monster
-
-**Auto-Claiming Resource Tiles:**
-
-- If a champion ends their turn on an unoccupied resource tile (no adventure tokens or monsters), they automatically claim it with a flag without requiring a separate action.
 
 ### Action: Harvest Resources
 
@@ -230,6 +226,7 @@ Each action die can be used for ONE of the following:
 - Highest score wins. On even scores, keep rerolling until a winner is found.
 - The winner gains 1 Fame and stays in the tile.
 - The loser returns to their home tile, pays 1 Gold to heal (or loses 1 Fame if don't have any gold).
+- If the tile is a resource tile, the winner has the option to spend another die to claim or conquer it after the battle. This is an exception to the rule that a champion only can carry out one action per turn.
 
 ### Combat Bonuses
 
@@ -254,7 +251,6 @@ Each action die can be used for ONE of the following:
 - A champion can use an action die to enter another player's tile and conquer it, replacing the flag with one of their own.
 - The conquering player can choose to use military might or treachery to conquer the tile. If they use military might, they will pay 1 might (= move down one step on the might track). If they use treachery, they will pay 1 fame instead. They must have positive might or fame to do this.
 - If the player who owns the resource tile has a champion in a neighbouring tile, then that champion will passively protect the resource tile from conquest.
-- Conquering a tile does not require an extra action. As long as the champion ends their turn in an unoccupied tile, they can conquer it and replace the flag.
 
 ## Blockading another player's tile
 
