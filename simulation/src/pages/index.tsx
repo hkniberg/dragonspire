@@ -92,14 +92,13 @@ export default function Home() {
       // Process system prompt template (includes game rules dynamically)
       const systemPrompt = await templateProcessor.processTemplate(
         "SystemPrompt",
-        {
-          playerId: currentPlayer.id,
-        }
+        {}
       );
 
       // Process user message template
       const userMessage = await templateProcessor.processTemplate("makeMove", {
         currentRound: gameState.currentRound,
+        playerId: currentPlayer.id,
         diceRolls: diceRolls.join(" and "),
         fame: currentPlayer.fame,
         might: currentPlayer.might,
