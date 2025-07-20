@@ -74,6 +74,10 @@ The board is organized into 3 tiers. The outer two layers are Tier 1, the inner 
 - **Resource tiles**: A resource tile provides specific types of resources such as food, wood, ore, or gold. A player must claim it first, and can then start harvesting resources on the next turn. Starred resource tiles are strategically important, a player who owns all starred resource tiles wins the game if they visit the dragon and bribe it.
 - **Adventure tiles**: These tiles contain adventure cards such as monsters, events, and treasures. Any champion landing on an adventure tile must draw a card (if there are any cards left). When all adventure cards are done they tile is considered to be barren.
 
+### Ocean tiles
+
+- Each ocean tile covers one corner of the board, touching 7 coastal tiles in total. For example the northwest ocean tile touches the home tile in the corner, and the 3 tiles to the east of the home tile and 3 tiles to the south of the home tile.
+
 ### Adventure cards
 
 Adventure cards represent things the player can encounter on a tile. Each adventure tile has a marker for how many adventures remain there. When landing on an adventure tile, the player reduces the counter and draws a card. The player can choose from 3 different piles of cards within that tier.
