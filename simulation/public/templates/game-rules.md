@@ -135,7 +135,7 @@ When turning a card, there are three types:
 Players take turns in clockwise order. Each turn:
 
 1. **Roll Action Dice**: Roll all your D3 dice (start with 2, gain more with additional champions)
-2. **Take Actions**: Use dice to perform actions. Once a champion performs any non-movement action, they cannot use any remaining dice that turn.
+2. **Take Actions**: Use dice to perform actions. Once a champion performs any tile interaction (drawing cards, claiming tiles, using special locations, fighting monsters, etc), that champion cannot carry out any more actions or use any more dice that turn.
 3. **End Turn**: Pass to next player
 
 ### Available Actions
@@ -160,7 +160,8 @@ Each action die can be used for ONE of the following:
 - If you end your movement in a tile with another champion, battle will ensue, unless it is a non-combat zone (such as the chapel, trader, mercenary camp).
 - You cannot enter another player's home tile.
 - You can pass through other champions, but when passing another player's champion, they may choose to initiate combat, in which case your champion is forced to stop and fight and cannot pass through.
-- A champion can combine multiple dice to move further in a single action. However, once a champion performs any tile action (other than movement), they cannot use any remaining dice that turn.
+- A champion can use multiple dice to move further in a single action, treating that as if it was a single dice roll.
+- Once a champion performs any tile action, they cannot move ordo anything else that turn.
 
 **Tile Actions:**
 
