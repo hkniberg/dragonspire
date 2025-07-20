@@ -18,7 +18,6 @@ const Spinner = ({ size = 20 }: { size?: number }) => (
       borderTop: `2px solid #3498db`,
       borderRadius: "50%",
       animation: "spin 1s linear infinite",
-      display: "inline-block",
       marginRight: "8px",
     }}
   />
@@ -50,10 +49,15 @@ export default function Home() {
   // Debug mode for revealing all tiles
   const [debugMode, setDebugMode] = useState<boolean>(false);
 
-  // Prompt tracking and display
+  // Prompt tracking
   const [lastSystemPrompt, setLastSystemPrompt] = useState<string>("");
   const [lastUserMessage, setLastUserMessage] = useState<string>("");
   const [showPrompts, setShowPrompts] = useState<boolean>(false);
+
+  // Chat history for tool calling
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [toolCalls, setToolCalls] = useState<any[]>([]);
+  const [showChatHistory, setShowChatHistory] = useState<boolean>(false);
 
   // Initialize game state only on client side
   useEffect(() => {
@@ -72,6 +76,8 @@ export default function Home() {
     setLoading(true);
     setError("");
     setAiResponse("");
+    setChatHistory([]);
+    setToolCalls([]);
 
     try {
       // Roll 2 D3 dice for the current player
@@ -107,11 +113,13 @@ export default function Home() {
       setLastSystemPrompt(systemPrompt);
       setLastUserMessage(userMessage);
 
-      // Use client-side Claude instance
+      // Use client-side Claude instance with tool calling
       const claude = new Claude(apiKey);
-      const response = await claude.simpleChat(systemPrompt, userMessage);
+      const result = await claude.useLLMWithTools(systemPrompt, userMessage);
 
-      setAiResponse(response);
+      setAiResponse(result.response);
+      setChatHistory(result.messages);
+      setToolCalls(result.toolCalls);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -140,13 +148,9 @@ export default function Home() {
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            flexDirection: "column",
           }}
         >
-          <Spinner size={40} />
-          <p style={{ marginTop: "20px", fontSize: "18px", color: "#2c3e50" }}>
-            Initializing Lords of Doomspire...
-          </p>
+          <Spinner size={50} />
         </div>
       </>
     );
@@ -164,14 +168,13 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
         <style dangerouslySetInnerHTML={{ __html: spinnerStyles }} />
       </Head>
+
       <div
         style={{
           minHeight: "100vh",
           backgroundColor: "#f0f8ff",
+          fontFamily: "Arial, sans-serif",
           padding: "20px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
         }}
       >
         <h1
@@ -276,6 +279,23 @@ export default function Home() {
           >
             {showPrompts ? "💬 Prompts: ON" : "💬 Prompts: OFF"}
           </button>
+
+          <button
+            onClick={() => setShowChatHistory(!showChatHistory)}
+            style={{
+              display: "inline-block",
+              padding: "8px 16px",
+              backgroundColor: showChatHistory ? "#ffc107" : "#6c757d",
+              color: showChatHistory ? "#000" : "white",
+              border: "none",
+              borderRadius: "4px",
+              fontSize: "14px",
+              cursor: "pointer",
+              marginLeft: "10px",
+            }}
+          >
+            {showChatHistory ? "💭 Chat: ON" : "💭 Chat: OFF"}
+          </button>
         </div>
 
         {/* AI Move Results Component */}
@@ -285,6 +305,94 @@ export default function Home() {
           aiResponse={aiResponse}
           error={error}
         />
+
+        {/* Tool Calls Display */}
+        {toolCalls.length > 0 && (
+          <div
+            style={{
+              marginBottom: "20px",
+              padding: "15px",
+              backgroundColor: "rgba(40, 167, 69, 0.1)",
+              border: "2px solid #28a745",
+              borderRadius: "8px",
+            }}
+          >
+            <h3 style={{ marginTop: 0, color: "#28a745" }}>
+              🔧 Tool Calls Executed
+            </h3>
+            {toolCalls.map((call, index) => (
+              <div
+                key={index}
+                style={{
+                  marginBottom: "10px",
+                  padding: "10px",
+                  backgroundColor: "white",
+                  borderRadius: "4px",
+                  border: "1px solid #28a745",
+                }}
+              >
+                <strong>{call.name}</strong>
+                <pre
+                  style={{
+                    margin: "5px 0",
+                    fontSize: "12px",
+                    overflow: "auto",
+                  }}
+                >
+                  {JSON.stringify(call.input, null, 2)}
+                </pre>
+                <div style={{ color: "#28a745", fontSize: "12px" }}>
+                  ✓ Action succeeded
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Chat History Display */}
+        {showChatHistory && chatHistory.length > 0 && (
+          <div
+            style={{
+              marginBottom: "20px",
+              padding: "15px",
+              backgroundColor: "rgba(255, 193, 7, 0.1)",
+              border: "2px solid #ffc107",
+              borderRadius: "8px",
+            }}
+          >
+            <h3 style={{ marginTop: 0, color: "#856404" }}>💭 Chat History</h3>
+            {chatHistory.map((message, index) => (
+              <div
+                key={index}
+                style={{
+                  marginBottom: "15px",
+                  padding: "10px",
+                  backgroundColor:
+                    message.role === "user" ? "#e3f2fd" : "#f3e5f5",
+                  borderRadius: "8px",
+                  border: `1px solid ${
+                    message.role === "user" ? "#2196f3" : "#9c27b0"
+                  }`,
+                }}
+              >
+                <div
+                  style={{
+                    fontWeight: "bold",
+                    marginBottom: "5px",
+                    color: message.role === "user" ? "#1976d2" : "#7b1fa2",
+                  }}
+                >
+                  {message.role === "user" ? "👤 User" : "🤖 Assistant"}
+                </div>
+                <div style={{ whiteSpace: "pre-wrap", fontSize: "14px" }}>
+                  {typeof message.content === "string"
+                    ? message.content
+                    : JSON.stringify(message.content, null, 2)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Prompts Display Component */}
         <PromptViewer
@@ -301,6 +409,7 @@ export default function Home() {
           onApiKeyChange={setApiKey}
         />
 
+        {/* Rest of the component remains the same */}
         <div
           style={{
             marginBottom: "20px",
@@ -336,55 +445,18 @@ export default function Home() {
             style={{
               marginBottom: "20px",
               padding: "10px",
-              backgroundColor: "#fff3cd",
-              border: "1px solid #ffeaa7",
+              backgroundColor: "rgba(220, 53, 69, 0.1)",
+              border: "2px solid #dc3545",
               borderRadius: "8px",
               textAlign: "center",
-              color: "#856404",
-              fontWeight: "bold",
+              color: "#721c24",
             }}
           >
-            🔍 DEBUG MODE ACTIVE - All tiles revealed
+            <strong>🔍 DEBUG MODE ACTIVE</strong> - All tiles are revealed
           </div>
         )}
 
-        {/* Board layout with ocean tiles in 2x2 grid behind island */}
         <GameBoard gameState={gameState} debugMode={debugMode} />
-
-        <div
-          style={{
-            marginTop: "20px",
-            padding: "15px",
-            backgroundColor: "rgba(255, 255, 255, 0.9)",
-            borderRadius: "8px",
-            maxWidth: "600px",
-            textAlign: "center",
-          }}
-        >
-          <h3>Board Layout</h3>
-          <p>
-            <strong style={{ color: "#1E90FF" }}>
-              Ocean Tiles (A, B, C, D)
-            </strong>
-            : Large ocean areas surrounding the main island
-          </p>
-          <p>
-            <strong style={{ color: "#4CAF50" }}>Tier 1 (T1)</strong>: Outer
-            layer - explored terrain (Plains, Mountains, Woodlands)
-          </p>
-          <p>
-            <strong style={{ color: "#FF9800" }}>Tier 2 (T2)</strong>: Middle
-            layer - unexplored tiles with higher risk/reward
-          </p>
-          <p>
-            <strong style={{ color: "#F44336" }}>Tier 3 (T3)</strong>: Center -
-            most dangerous areas including Doomspire
-          </p>
-          <p style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>
-            The board displays live game state including champion positions,
-            resource tiles, claimed territories, and boat positions.
-          </p>
-        </div>
       </div>
     </>
   );

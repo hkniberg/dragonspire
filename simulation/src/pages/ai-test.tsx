@@ -10,6 +10,13 @@ export default function AITest() {
   const [apiKey, setApiKey] = useState<string>("");
   const [showApiKeyModal, setShowApiKeyModal] = useState<boolean>(false);
 
+  // Tool calling test state
+  const [toolResponse, setToolResponse] = useState<string>("");
+  const [toolLoading, setToolLoading] = useState<boolean>(false);
+  const [chatHistory, setChatHistory] = useState<any[]>([]);
+  const [toolCalls, setToolCalls] = useState<any[]>([]);
+  const [showChatHistory, setShowChatHistory] = useState<boolean>(false);
+
   const handleAICall = async () => {
     if (!apiKey.trim()) {
       setError("Please enter your Anthropic API key");
@@ -23,7 +30,7 @@ export default function AITest() {
     try {
       // Use client-side Claude instance
       const claude = new Claude(apiKey);
-      const response = await claude.simpleChat(
+      const response = await claude.useLLM(
         null,
         "Suggest 3 cool names for a dragon"
       );
@@ -36,6 +43,36 @@ export default function AITest() {
     }
   };
 
+  const handleToolTest = async () => {
+    if (!apiKey.trim()) {
+      setError("Please enter your Anthropic API key");
+      return;
+    }
+
+    setToolLoading(true);
+    setError("");
+    setToolResponse("");
+    setChatHistory([]);
+    setToolCalls([]);
+
+    try {
+      // Use client-side Claude instance with tool calling
+      const claude = new Claude(apiKey);
+      const result = await claude.useLLMWithTools(
+        "You are a board game AI assistant. You have access to dice action tools.",
+        "I need to move my champion from position (1,1) to position (2,3) and then harvest some resources. Assume I'm player 1 with champion 1. Use the available tools to execute these actions."
+      );
+
+      setToolResponse(result.response);
+      setChatHistory(result.messages);
+      setToolCalls(result.toolCalls);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setToolLoading(false);
+    }
+  };
+
   return (
     <>
       <Head>
@@ -43,13 +80,14 @@ export default function AITest() {
         <meta name="description" content="AI functionality test page" />
       </Head>
 
-      <div style={{ padding: "2rem", maxWidth: "800px", margin: "0 auto" }}>
+      <div style={{ padding: "2rem", maxWidth: "1000px", margin: "0 auto" }}>
         <h1>AI Test Page</h1>
         <p>
-          Test the AI functionality by asking Claude to suggest dragon names.
+          Test the AI functionality including basic text generation and tool
+          calling.
         </p>
 
-        <div style={{ marginBottom: "1rem" }}>
+        <div style={{ marginBottom: "2rem" }}>
           <button
             onClick={() => setShowApiKeyModal(true)}
             style={{
@@ -67,6 +105,25 @@ export default function AITest() {
           </button>
 
           <button
+            onClick={() => setShowChatHistory(!showChatHistory)}
+            style={{
+              padding: "8px 16px",
+              backgroundColor: showChatHistory ? "#ffc107" : "#6c757d",
+              color: showChatHistory ? "#000" : "white",
+              border: "none",
+              borderRadius: "6px",
+              fontSize: "14px",
+              cursor: "pointer",
+            }}
+          >
+            {showChatHistory ? "💭 Chat: ON" : "💭 Chat: OFF"}
+          </button>
+        </div>
+
+        {/* Basic AI Test */}
+        <div style={{ marginBottom: "3rem" }}>
+          <h2>Basic AI Test</h2>
+          <button
             onClick={handleAICall}
             disabled={loading || !apiKey.trim()}
             style={{
@@ -82,7 +139,148 @@ export default function AITest() {
           >
             {loading ? "Asking Claude..." : "Get Dragon Names from AI"}
           </button>
+
+          {response && (
+            <div
+              style={{
+                padding: "1rem",
+                backgroundColor: "#f9f9f9",
+                border: "1px solid #ddd",
+                borderRadius: "6px",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              <h3>AI Response:</h3>
+              <p>{response}</p>
+            </div>
+          )}
         </div>
+
+        {/* Tool Calling Test */}
+        <div style={{ marginBottom: "3rem" }}>
+          <h2>Tool Calling Test</h2>
+          <p>Test the dice action tools used in the game.</p>
+
+          <button
+            onClick={handleToolTest}
+            disabled={toolLoading || !apiKey.trim()}
+            style={{
+              padding: "12px 24px",
+              fontSize: "16px",
+              backgroundColor:
+                toolLoading || !apiKey.trim() ? "#ccc" : "#28a745",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: toolLoading || !apiKey.trim() ? "not-allowed" : "pointer",
+              marginBottom: "1rem",
+            }}
+          >
+            {toolLoading ? "Testing Tools..." : "Test Dice Action Tools"}
+          </button>
+
+          {toolCalls.length > 0 && (
+            <div
+              style={{
+                marginBottom: "20px",
+                padding: "15px",
+                backgroundColor: "rgba(40, 167, 69, 0.1)",
+                border: "2px solid #28a745",
+                borderRadius: "8px",
+              }}
+            >
+              <h3 style={{ marginTop: 0, color: "#28a745" }}>
+                🔧 Tool Calls Executed
+              </h3>
+              {toolCalls.map((call, index) => (
+                <div
+                  key={index}
+                  style={{
+                    marginBottom: "10px",
+                    padding: "10px",
+                    backgroundColor: "white",
+                    borderRadius: "4px",
+                    border: "1px solid #28a745",
+                  }}
+                >
+                  <strong>{call.name}</strong>
+                  <pre
+                    style={{
+                      margin: "5px 0",
+                      fontSize: "12px",
+                      overflow: "auto",
+                    }}
+                  >
+                    {JSON.stringify(call.input, null, 2)}
+                  </pre>
+                  <div style={{ color: "#28a745", fontSize: "12px" }}>
+                    ✓ Action succeeded
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {toolResponse && (
+            <div
+              style={{
+                padding: "1rem",
+                backgroundColor: "#f9f9f9",
+                border: "1px solid #ddd",
+                borderRadius: "6px",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              <h3>AI Response with Tools:</h3>
+              <p>{toolResponse}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Chat History Display */}
+        {showChatHistory && chatHistory.length > 0 && (
+          <div
+            style={{
+              marginBottom: "20px",
+              padding: "15px",
+              backgroundColor: "rgba(255, 193, 7, 0.1)",
+              border: "2px solid #ffc107",
+              borderRadius: "8px",
+            }}
+          >
+            <h3 style={{ marginTop: 0, color: "#856404" }}>💭 Chat History</h3>
+            {chatHistory.map((message, index) => (
+              <div
+                key={index}
+                style={{
+                  marginBottom: "15px",
+                  padding: "10px",
+                  backgroundColor:
+                    message.role === "user" ? "#e3f2fd" : "#f3e5f5",
+                  borderRadius: "8px",
+                  border: `1px solid ${
+                    message.role === "user" ? "#2196f3" : "#9c27b0"
+                  }`,
+                }}
+              >
+                <div
+                  style={{
+                    fontWeight: "bold",
+                    marginBottom: "5px",
+                    color: message.role === "user" ? "#1976d2" : "#7b1fa2",
+                  }}
+                >
+                  {message.role === "user" ? "👤 User" : "🤖 Assistant"}
+                </div>
+                <div style={{ whiteSpace: "pre-wrap", fontSize: "14px" }}>
+                  {typeof message.content === "string"
+                    ? message.content
+                    : JSON.stringify(message.content, null, 2)}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {error && (
           <div
@@ -95,31 +293,9 @@ export default function AITest() {
               marginBottom: "1rem",
             }}
           >
-            <strong>Error:</strong> {error}
+            Error: {error}
           </div>
         )}
-
-        {response && (
-          <div
-            style={{
-              padding: "1rem",
-              backgroundColor: "#f9f9f9",
-              border: "1px solid #ddd",
-              borderRadius: "6px",
-              whiteSpace: "pre-wrap",
-            }}
-          >
-            <h3>AI Response:</h3>
-            <p>{response}</p>
-          </div>
-        )}
-
-        <div style={{ marginTop: "2rem", fontSize: "14px", color: "#666" }}>
-          <p>
-            <strong>Note:</strong> This page now uses client-side API calls.
-            Your API key stays in your browser and is never sent to our servers.
-          </p>
-        </div>
 
         {/* API Key Modal */}
         <ApiKeyModal

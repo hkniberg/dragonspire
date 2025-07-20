@@ -19,9 +19,9 @@
 </available-actions>
 
 <decision-prompt>
-What do you want to do with one of your dice rolls from {{diceRolls}}?
+What do you want to do with your dice rolls {{diceRolls}}?
 
-Please analyze the board state and provide your decision in the following format:
+Please analyze the board state and then **use the available tool functions** to execute your dice actions.
 
 <analysis>
 Provide your strategic reasoning here. Consider:
@@ -34,47 +34,22 @@ Provide your strategic reasoning here. Consider:
 
 4. **Victory Path Analysis:** Are you pursuing combat victory (defeat dragon), diplomatic victory (10 Fame + reach Doomspire), or economic victory (control starred resource tiles)?
 
-5. **Dice Efficiency:** How can you use this die roll most effectively?
+5. **Dice Efficiency:** How can you use your dice rolls most effectively?
 
-6. **Risk Assessment:** What are the potential consequences of this action? Are there safer alternatives that still advance your strategy?
+6. **Risk Assessment:** What are the potential consequences of these actions? Are there safer alternatives that still advance your strategy?
+
+7. **Action Plan:** Plan out how you'll use both dice rolls efficiently.
    </analysis>
 
-<action>
-Provide a JSON formatted DiceAction for ONE of your dice. The action must follow one of these formats:
+<actions>
+Execute your planned actions using the available tool functions:
 
-For moving a champion:
+- **moveChampion**: Move a champion along a path of tiles
+- **moveBoat**: Move a boat with optional champion pickup/dropoff
+- **harvest**: Harvest resources from claimed tiles
 
-```json
-{
-  "type": "moveChampion",
-  "playerId": {{playerId}},
-  "championId": [champion ID number],
-  "path": [{"row": [number], "col": [number]}, ...]
-}
-```
+Use these tools to execute actions for your dice rolls {{diceRolls}}. You should typically use both dice rolls, either for two separate actions or for a single complex action that benefits from multiple dice.
 
-For moving a boat (with optional champion pickup/dropoff):
-
-```json
-{
-  "type": "moveBoat",
-  "playerId": {{playerId}},
-  "boatId": [boat ID number],
-  "path": ["ocean position strings"],
-  "championId": [optional champion ID to pick up],
-  "championDropPosition": {"row": [number], "col": [number]}
-}
-```
-
-For harvesting resources:
-
-```json
-{
-  "type": "harvest",
-  "playerId": {{playerId}},
-  "resources": {"food": [number], "wood": [number], "ore": [number], "gold": [number]}
-}
-```
-
-</action>
+**Important:** Use the tool functions directly - do not provide JSON responses. Call the appropriate tool functions to execute your planned actions.
+</actions>
 </decision-prompt>
