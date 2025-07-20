@@ -35,13 +35,13 @@ This is a board game design project, not a software application. Code in the sim
 
 The simulation includes AI functionality for decision-making assistance:
 
-- **AI Endpoint**: `/api/ai-chat` (POST) - Accepts `systemPrompt` and `userMessage`, returns AI response
+- **Client-Side AI**: Direct browser-based API calls using Anthropic SDK
 - **LLM Interface**: Simple `Claude` class implementing `LLM` interface with `simpleChat` method
 - **Test Page**: `/ai-test` - Basic UI for testing AI functionality
-- **Environment**: Requires `ANTHROPIC_API_KEY` in `.env.local`
-- **Implementation**: Located in `src/lib/llm.ts` and `src/pages/api/ai-chat.ts`
+- **API Key Input**: Users enter their own Anthropic API key via UI (stays in browser)
+- **Implementation**: Located in `src/lib/llm.ts` with client-side usage in pages
 
-The AI integration is designed to help with game decision-making and will be used for automated player moves in future development.
+The AI integration is designed to help with game decision-making and will be used for automated player moves in future development. API keys are handled client-side for security and simplicity.
 
 ## Coding guidelines
 

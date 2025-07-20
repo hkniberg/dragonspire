@@ -13,7 +13,7 @@ export class Claude implements LLM {
     private model: string;
 
     constructor(apiKey: string, model: string = DEFAULT_MODEL) {
-        this.anthropic = new Anthropic({ apiKey });
+        this.anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
         this.model = model;
     }
 

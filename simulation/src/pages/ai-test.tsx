@@ -1,35 +1,34 @@
 import Head from "next/head";
 import { useState } from "react";
+import { ApiKeyModal } from "../components/ApiKeyModal";
+import { Claude } from "../lib/llm";
 
 export default function AITest() {
   const [response, setResponse] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+  const [apiKey, setApiKey] = useState<string>("");
+  const [showApiKeyModal, setShowApiKeyModal] = useState<boolean>(false);
 
   const handleAICall = async () => {
+    if (!apiKey.trim()) {
+      setError("Please enter your Anthropic API key");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setResponse("");
 
     try {
-      const res = await fetch("/api/ai-chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          systemPrompt: null,
-          userMessage: "Suggest 3 cool names for a dragon",
-        }),
-      });
+      // Use client-side Claude instance
+      const claude = new Claude(apiKey);
+      const response = await claude.simpleChat(
+        null,
+        "Suggest 3 cool names for a dragon"
+      );
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to get AI response");
-      }
-
-      setResponse(data.response);
+      setResponse(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -50,22 +49,40 @@ export default function AITest() {
           Test the AI functionality by asking Claude to suggest dragon names.
         </p>
 
-        <button
-          onClick={handleAICall}
-          disabled={loading}
-          style={{
-            padding: "12px 24px",
-            fontSize: "16px",
-            backgroundColor: loading ? "#ccc" : "#0070f3",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: loading ? "not-allowed" : "pointer",
-            marginBottom: "1rem",
-          }}
-        >
-          {loading ? "Asking Claude..." : "Get Dragon Names from AI"}
-        </button>
+        <div style={{ marginBottom: "1rem" }}>
+          <button
+            onClick={() => setShowApiKeyModal(true)}
+            style={{
+              padding: "8px 16px",
+              backgroundColor: apiKey ? "#28a745" : "#6c757d",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              fontSize: "14px",
+              cursor: "pointer",
+              marginRight: "10px",
+            }}
+          >
+            🔑 {apiKey ? "API Key Set" : "Set API Key"}
+          </button>
+
+          <button
+            onClick={handleAICall}
+            disabled={loading || !apiKey.trim()}
+            style={{
+              padding: "12px 24px",
+              fontSize: "16px",
+              backgroundColor: loading || !apiKey.trim() ? "#ccc" : "#0070f3",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: loading || !apiKey.trim() ? "not-allowed" : "pointer",
+              marginBottom: "1rem",
+            }}
+          >
+            {loading ? "Asking Claude..." : "Get Dragon Names from AI"}
+          </button>
+        </div>
 
         {error && (
           <div
@@ -99,15 +116,18 @@ export default function AITest() {
 
         <div style={{ marginTop: "2rem", fontSize: "14px", color: "#666" }}>
           <p>
-            <strong>Note:</strong> Make sure to set the ANTHROPIC_API_KEY
-            environment variable.
+            <strong>Note:</strong> This page now uses client-side API calls.
+            Your API key stays in your browser and is never sent to our servers.
           </p>
-          <p>
-            You can create a <code>.env.local</code> file in the simulation
-            directory with:
-          </p>
-          <code>ANTHROPIC_API_KEY=your_api_key_here</code>
         </div>
+
+        {/* API Key Modal */}
+        <ApiKeyModal
+          isOpen={showApiKeyModal}
+          onClose={() => setShowApiKeyModal(false)}
+          apiKey={apiKey}
+          onApiKeyChange={setApiKey}
+        />
       </div>
     </>
   );

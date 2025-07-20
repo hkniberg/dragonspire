@@ -51,12 +51,9 @@ doomspire/
    npm install
    ```
 
-3. **Configure AI integration** (optional):
+3. **AI integration** (optional):
 
-   ```bash
-   cp env.example .env.local
-   # Add your ANTHROPIC_API_KEY to .env.local
-   ```
+   The simulation includes AI functionality that runs client-side in your browser. Simply enter your Anthropic API key in the UI when prompted. Your API key stays in your browser and is never sent to our servers.
 
 4. **Start the development server**:
 

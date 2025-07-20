@@ -1,9 +1,11 @@
 import Head from "next/head";
 import { useEffect, useState } from "react";
 import { AIMoveResult } from "../components/AIMoveResult";
+import { ApiKeyModal } from "../components/ApiKeyModal";
 import { GameBoard } from "../components/GameBoard";
 import { PromptViewer } from "../components/PromptViewer";
 import { GameState, rollMultipleD3 } from "../lib/gameState";
+import { Claude } from "../lib/llm";
 import { templateProcessor } from "../lib/templateProcessor";
 
 // Simple spinner for other loading states
@@ -41,6 +43,10 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
+  // API Key modal state
+  const [apiKey, setApiKey] = useState<string>("");
+  const [showApiKeyModal, setShowApiKeyModal] = useState<boolean>(false);
+
   // Debug mode for revealing all tiles
   const [debugMode, setDebugMode] = useState<boolean>(false);
 
@@ -57,6 +63,11 @@ export default function Home() {
 
   const handleAIMove = async () => {
     if (!gameState) return;
+
+    if (!apiKey.trim()) {
+      setError("Please enter your Anthropic API key");
+      return;
+    }
 
     setLoading(true);
     setError("");
@@ -96,24 +107,11 @@ export default function Home() {
       setLastSystemPrompt(systemPrompt);
       setLastUserMessage(userMessage);
 
-      const res = await fetch("/api/ai-chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          systemPrompt,
-          userMessage,
-        }),
-      });
+      // Use client-side Claude instance
+      const claude = new Claude(apiKey);
+      const response = await claude.simpleChat(systemPrompt, userMessage);
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to get AI response");
-      }
-
-      setAiResponse(data.response);
+      setAiResponse(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -188,6 +186,23 @@ export default function Home() {
         </h1>
 
         <div style={{ marginBottom: "20px", textAlign: "center" }}>
+          <button
+            onClick={() => setShowApiKeyModal(true)}
+            style={{
+              display: "inline-block",
+              padding: "8px 16px",
+              backgroundColor: apiKey ? "#28a745" : "#6c757d",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              fontSize: "14px",
+              cursor: "pointer",
+              marginRight: "10px",
+            }}
+          >
+            🔑 {apiKey ? "API Key Set" : "Set API Key"}
+          </button>
+
           <a
             href="/ai-test"
             style={{
@@ -206,16 +221,16 @@ export default function Home() {
 
           <button
             onClick={handleAIMove}
-            disabled={loading}
+            disabled={loading || !apiKey.trim()}
             style={{
               display: "inline-block",
               padding: "8px 16px",
-              backgroundColor: loading ? "#ccc" : "#28a745",
+              backgroundColor: loading || !apiKey.trim() ? "#ccc" : "#28a745",
               color: "white",
               border: "none",
               borderRadius: "4px",
               fontSize: "14px",
-              cursor: loading ? "not-allowed" : "pointer",
+              cursor: loading || !apiKey.trim() ? "not-allowed" : "pointer",
               marginRight: "10px",
             }}
           >
@@ -276,6 +291,14 @@ export default function Home() {
           showPrompts={showPrompts}
           lastSystemPrompt={lastSystemPrompt}
           lastUserMessage={lastUserMessage}
+        />
+
+        {/* API Key Modal */}
+        <ApiKeyModal
+          isOpen={showApiKeyModal}
+          onClose={() => setShowApiKeyModal(false)}
+          apiKey={apiKey}
+          onApiKeyChange={setApiKey}
         />
 
         <div
