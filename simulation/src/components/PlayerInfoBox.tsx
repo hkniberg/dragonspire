@@ -102,15 +102,14 @@ export const PlayerInfoBox = ({
         </div>
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "2px",
+            display: "flex",
+            gap: "8px",
           }}
         >
-          <div>🥖 {player.resources.food}</div>
-          <div>🪵 {player.resources.wood}</div>
-          <div>⛏️ {player.resources.ore}</div>
-          <div>🪙 {player.resources.gold}</div>
+          <span>🌾 {player.resources.food}</span>
+          <span>🪵 {player.resources.wood}</span>
+          <span>🪨 {player.resources.ore}</span>
+          <span>💰 {player.resources.gold}</span>
         </div>
       </div>
 
