@@ -39,4 +39,4 @@ This is a board game design project, not a software application. Code in the sim
 
 ## Committing
 
-When I write "commit", you should check the diff and write a brief commit message, tell it to me, and then commit. Don't push.
+When I write "commit", you should check the diff and write a brief commit message in past tense, tell it to me, and then commit. Don't push.
