@@ -3,7 +3,7 @@
 import { GameState, rollMultipleD3 } from '../game/GameState';
 import { GameAction } from '../lib/types';
 import { ActionResult, ExecuteActionFunction, Player } from '../players/Player';
-import { GameRules } from './GameRules';
+import { ActionExecutor } from './ActionExecutor';
 
 export type GameSessionState = 'setup' | 'playing' | 'finished';
 
@@ -74,7 +74,7 @@ export class GameSession {
         // Create the execute action function that the player will use
         let currentState = this.gameState;
         const executeAction: ExecuteActionFunction = (action: GameAction) => {
-            const result = GameRules.executeAction(currentState, action);
+            const result = ActionExecutor.executeAction(currentState, action);
 
             // Track the action
             turnActions.push({ action, result });
@@ -112,7 +112,7 @@ export class GameSession {
         });
 
         // Check for victory conditions
-        const victoryCheck = GameRules.checkVictory(this.gameState);
+        const victoryCheck = ActionExecutor.checkVictory(this.gameState);
         if (victoryCheck.won) {
             this.endGame(victoryCheck.playerId, victoryCheck.condition);
             return;

@@ -47,7 +47,7 @@ This document outlines the target architecture for the Lords of Doomspire game s
 - Contains board state, player positions, resources, scores
 - Supports serialization for logging and replay
 
-**GameRules**
+**ActionExecutor**
 
 - Validates player actions against game rules
 - Applies actions to generate new game states
@@ -130,7 +130,7 @@ simulation/
 ├── src/
 │   ├── engine/
 │   │   ├── GameSession.ts
-│   │   ├── GameRules.ts
+│   │   ├── ActionExecutor.ts
 │   │   └── ReplayEngine.ts
 │   ├── game/
 │   │   ├── GameState.ts
@@ -177,7 +177,7 @@ simulation/
 
 1. GameSession calls `player.executeTurn()` with current state and dice
 2. Player analyzes state and submits actions via `executeAction`
-3. GameRules validates and applies each action
+3. ActionExecutor validates and applies each action
 4. Player receives immediate feedback and updated state
 5. Player continues until all dice used or chooses to end turn
 6. GameSession checks victory conditions and advances to next player

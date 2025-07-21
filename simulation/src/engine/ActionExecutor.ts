@@ -11,7 +11,7 @@ import type {
 } from '../lib/types';
 import { ActionResult } from '../players/Player';
 
-export class GameRules {
+export class ActionExecutor {
     /**
      * Validates and executes a game action, returning the new state and summary
      */
