@@ -10,7 +10,17 @@ const getTileColor = (tile: Tile): string => {
   if (tile.tileType === "resource") {
     return "#90EE90"; // Light green for resource tiles
   } else if (tile.tileType === "adventure") {
-    return "#DDD"; // Light gray for adventure tiles
+    // Tier-based colors for adventure tiles
+    switch (tile.tier) {
+      case 1:
+        return "#90EE90"; // Light green for tier 1
+      case 2:
+        return "#FFB366"; // Light orange for tier 2
+      case 3:
+        return "#FFB3B3"; // Light red for tier 3
+      default:
+        return "#DDD";
+    }
   } else if (tile.tileType === "doomspire") {
     return "#8B0000"; // Dark red for doomspire
   } else if (tile.tileType === "home") {
@@ -34,16 +44,16 @@ const getTileColor = (tile: Tile): string => {
 
 const getTileSymbol = (tile: Tile): string => {
   if (!tile.explored) {
-    return "?";
+    return "";
   }
 
   // Special locations
   if (tile.tileType) {
     switch (tile.tileType) {
       case "doomspire":
-        return "🐉";
+        return ""; // No icon needed, uses background image
       case "adventure":
-        return "❓"; // Big question mark for adventure tiles
+        return ""; // No symbol needed, uses centered question mark circle
       case "resource":
         return getResourceSymbol(tile);
       case "chapel":
@@ -161,7 +171,70 @@ export const TileComponent = ({
       style={{
         width: "120px",
         height: "120px",
-        backgroundColor: getTileColor(effectiveTile),
+        backgroundColor:
+          effectiveTile.explored &&
+          (effectiveTile.tileType === "chapel" ||
+            effectiveTile.tileType === "trader" ||
+            effectiveTile.tileType === "mercenary" ||
+            effectiveTile.tileType === "doomspire")
+            ? "transparent"
+            : getTileColor(effectiveTile),
+        backgroundImage: effectiveTile.explored
+          ? effectiveTile.tileType === "chapel"
+            ? "url(/tiles/chapel.png)"
+            : effectiveTile.tileType === "trader"
+            ? "url(/tiles/trader.png)"
+            : effectiveTile.tileType === "mercenary"
+            ? "url(/tiles/mercenary.png)"
+            : effectiveTile.tileType === "doomspire"
+            ? "url(/tiles/dragon.png)"
+            : effectiveTile.tileType === "home"
+            ? "url(/tiles/home.png)"
+            : effectiveTile.tileType === "resource" &&
+              effectiveTile.resources &&
+              effectiveTile.resources.food > 0 &&
+              (!effectiveTile.resources.wood ||
+                effectiveTile.resources.wood === 0) &&
+              (!effectiveTile.resources.ore ||
+                effectiveTile.resources.ore === 0) &&
+              (!effectiveTile.resources.gold ||
+                effectiveTile.resources.gold === 0)
+            ? "url(/tiles/food.png)"
+            : effectiveTile.tileType === "resource" &&
+              effectiveTile.resources &&
+              effectiveTile.resources.wood > 0 &&
+              (!effectiveTile.resources.food ||
+                effectiveTile.resources.food === 0) &&
+              (!effectiveTile.resources.ore ||
+                effectiveTile.resources.ore === 0) &&
+              (!effectiveTile.resources.gold ||
+                effectiveTile.resources.gold === 0)
+            ? "url(/tiles/wood.png)"
+            : effectiveTile.tileType === "resource" &&
+              effectiveTile.resources &&
+              effectiveTile.resources.gold > 0 &&
+              (!effectiveTile.resources.food ||
+                effectiveTile.resources.food === 0) &&
+              (!effectiveTile.resources.wood ||
+                effectiveTile.resources.wood === 0) &&
+              (!effectiveTile.resources.ore ||
+                effectiveTile.resources.ore === 0)
+            ? "url(/tiles/gold.png)"
+            : effectiveTile.tileType === "resource" &&
+              effectiveTile.resources &&
+              effectiveTile.resources.ore > 0 &&
+              (!effectiveTile.resources.food ||
+                effectiveTile.resources.food === 0) &&
+              (!effectiveTile.resources.wood ||
+                effectiveTile.resources.wood === 0) &&
+              (!effectiveTile.resources.gold ||
+                effectiveTile.resources.gold === 0)
+            ? "url(/tiles/ore.png)"
+            : "none"
+          : "none",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -216,37 +289,67 @@ ${
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "4px",
-              fontSize: "20px",
+              gap: "24px",
+              fontSize: "16px",
             }}
           >
-            <span>🌾</span>
-            <span style={{ fontSize: "12px", fontWeight: "normal" }}>or</span>
-            <span>🪵</span>
+            <span
+              style={{
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                borderRadius: "3px",
+                padding: "1px 3px",
+                border: "1px solid rgba(0, 0, 0, 0.2)",
+                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.3)",
+              }}
+            >
+              🌾
+            </span>
+            <span
+              style={{
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                borderRadius: "3px",
+                padding: "1px 3px",
+                border: "1px solid rgba(0, 0, 0, 0.2)",
+                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.3)",
+              }}
+            >
+              🪵
+            </span>
           </div>
         ) : specialLabel ? (
           <>
-            <div style={{ fontSize: "24px" }}>
-              {getTileSymbol(effectiveTile)}
-            </div>
-            <div
-              style={{
-                fontSize: "10px",
-                fontWeight: "bold",
-                marginTop: "2px",
-              }}
-            >
-              {specialLabel}
-            </div>
+            {effectiveTile.tileType !== "chapel" &&
+              effectiveTile.tileType !== "trader" &&
+              effectiveTile.tileType !== "mercenary" &&
+              effectiveTile.tileType !== "doomspire" && (
+                <div style={{ fontSize: "24px" }}>
+                  {getTileSymbol(effectiveTile)}
+                </div>
+              )}
+            {effectiveTile.tileType !== "chapel" &&
+              effectiveTile.tileType !== "trader" &&
+              effectiveTile.tileType !== "mercenary" &&
+              effectiveTile.tileType !== "doomspire" && (
+                <div
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: "bold",
+                    marginTop: "2px",
+                  }}
+                >
+                  {specialLabel}
+                </div>
+              )}
           </>
         ) : effectiveTile.tileType === "resource" && effectiveTile.explored ? (
           <div
             style={{
               display: "flex",
-              gap: "4px",
+              gap: "2px",
               alignItems: "center",
-              fontSize: "24px",
+              fontSize: "16px",
               flexWrap: "wrap",
+              justifyContent: "center",
             }}
           >
             {effectiveTile.resources &&
@@ -261,18 +364,24 @@ ${
                   };
                   const symbol = resourceSymbols[type as ResourceType];
                   return Array.from({ length: amount }, (_, index) => (
-                    <span key={`${type}-${index}`}>{symbol}</span>
+                    <span
+                      key={`${type}-${index}`}
+                      style={{
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        borderRadius: "3px",
+                        padding: "1px 3px",
+                        border: "1px solid rgba(0, 0, 0, 0.2)",
+                        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.3)",
+                      }}
+                    >
+                      {symbol}
+                    </span>
                   ));
                 })
                 .flat()}
           </div>
         ) : (
           <div style={{ fontSize: "24px" }}>{getTileSymbol(effectiveTile)}</div>
-        )}
-
-        {/* Star indicator for starred tiles */}
-        {effectiveTile.isStarred && (
-          <div style={{ fontSize: "16px", marginTop: "2px" }}>⭐</div>
         )}
       </div>
 
@@ -289,6 +398,46 @@ ${
             playerId={effectiveTile.claimedBy}
             getPlayerColor={getPlayerColor}
           />
+        </div>
+      )}
+
+      {/* Star indicator for starred tiles */}
+      {effectiveTile.isStarred && (
+        <div
+          style={{
+            position: "absolute",
+            top: "4px",
+            right: "4px",
+            fontSize: "16px",
+          }}
+        >
+          ⭐
+        </div>
+      )}
+
+      {/* Adventure tile question mark */}
+      {effectiveTile.tileType === "adventure" && effectiveTile.explored && (
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            borderRadius: "50%",
+            width: "60px",
+            height: "60px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "32px",
+            fontWeight: "bold",
+            border: "3px solid rgba(0, 0, 0, 0.3)",
+            boxShadow: "0 3px 6px rgba(0,0,0,0.3)",
+            zIndex: 5,
+          }}
+        >
+          ❓
         </div>
       )}
 

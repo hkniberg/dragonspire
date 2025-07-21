@@ -49,6 +49,7 @@ export default function GameSimulation() {
   const [autoPlay, setAutoPlay] = useState(false);
   const [autoPlaySpeed, setAutoPlaySpeed] = useState(1000); // ms between turns
   const [showActionLog, setShowActionLog] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
 
   // Ref to hold the autoplay interval
   const autoPlayInterval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -156,6 +157,10 @@ export default function GameSimulation() {
     setAutoPlay(!autoPlay);
   };
 
+  const toggleDebugMode = () => {
+    setDebugMode(!debugMode);
+  };
+
   const resetGame = () => {
     setGameSession(null);
     setGameState(null);
@@ -228,12 +233,14 @@ export default function GameSimulation() {
           autoPlay={autoPlay}
           autoPlaySpeed={autoPlaySpeed}
           showActionLog={showActionLog}
+          debugMode={debugMode}
           onStartNewGame={startNewGame}
           onExecuteNextTurn={executeNextTurn}
           onToggleAutoPlay={toggleAutoPlay}
           onSetAutoPlaySpeed={setAutoPlaySpeed}
           onResetGame={resetGame}
           onToggleActionLog={() => setShowActionLog(!showActionLog)}
+          onToggleDebugMode={toggleDebugMode}
         />
 
         {/* Game Status */}
@@ -250,7 +257,7 @@ export default function GameSimulation() {
 
         {/* Game Board */}
         {gameState ? (
-          <GameBoard gameState={gameState} debugMode={false} />
+          <GameBoard gameState={gameState} debugMode={debugMode} />
         ) : (
           <div
             style={{
