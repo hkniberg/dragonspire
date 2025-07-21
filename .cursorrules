@@ -36,3 +36,7 @@ This is a board game design project, not a software application. Code in the sim
 
 - Don't run or build the next.js app automatically when making changes. When working on the web app, I will already have `npm run dev` running in the background.
 - When needed, you can run `node run-test.js --single-turn` to run a single turn of the game in a headless mode to check that things are working.
+
+## Committing
+
+When I write "commit", you should check the diff and write a brief commit message, tell it to me, and then commit. Don't push.

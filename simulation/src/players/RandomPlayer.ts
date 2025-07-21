@@ -1,9 +1,9 @@
 // Lords of Doomspire Random Player
 
 import { GameState } from '../game/GameState';
-import { MoveGenerator } from '../game/MoveGenerator';
-import { GameAction } from '../lib/types';
+import { GameAction, ResourceType } from '../lib/types';
 import { ExecuteActionFunction, Player, PlayerType } from './Player';
+import { generatePath, getValidMoveDirections } from './PlayerUtils';
 
 export class RandomPlayer implements Player {
     private name: string;
@@ -29,43 +29,138 @@ export class RandomPlayer implements Player {
 
         const playerId = gameState.getCurrentPlayer().id;
         let currentGameState = gameState;
-        let remainingDice = [...diceRolls];
+        const dice = [...diceRolls];
 
-        // Execute actions until all dice are used or no valid actions available
-        while (remainingDice.length > 0) {
-            // Get all valid actions for current state and remaining dice
-            const validActions = MoveGenerator.getValidActions(currentGameState, playerId, remainingDice);
-
-            if (validActions.length === 0) {
-                console.log(`${this.name} has no valid actions remaining. Ending turn.`);
-                break;
-            }
-
-            // Select a random action
-            const randomIndex = Math.floor(Math.random() * validActions.length);
-            const selectedAction = validActions[randomIndex];
-
-            console.log(`${this.name} attempting action: ${this.actionToString(selectedAction)}`);
-
-            // Execute the action
-            const result = executeAction(selectedAction);
-
-            if (result.success) {
-                console.log(`${this.name} action succeeded: ${result.summary}`);
-                currentGameState = result.newGameState;
-
-                // Remove one die (for simplicity, we'll remove the first available die)
-                // In a more sophisticated implementation, we'd track which die was used for which action
-                remainingDice.splice(0, 1);
+        // Use first die to move a champion
+        if (dice.length > 0) {
+            const moveResult = this.executeRandomChampionMove(currentGameState, playerId, dice[0], executeAction);
+            if (moveResult.success) {
+                currentGameState = moveResult.newGameState;
+                console.log(`${this.name} move succeeded: ${moveResult.summary}`);
             } else {
-                console.log(`${this.name} action failed: ${result.summary}`);
-                // If action failed, try a different action or end turn
-                // For now, we'll just end the turn on failure
-                break;
+                console.log(`${this.name} move failed: ${moveResult.summary}`);
+            }
+        }
+
+        // Use second die to harvest
+        if (dice.length > 1) {
+            const harvestResult = this.executeRandomHarvest(currentGameState, playerId, dice[1], executeAction);
+            if (harvestResult.success) {
+                currentGameState = harvestResult.newGameState;
+                console.log(`${this.name} harvest succeeded: ${harvestResult.summary}`);
+            } else {
+                console.log(`${this.name} harvest failed: ${harvestResult.summary}`);
             }
         }
 
         console.log(`${this.name} ending turn`);
+    }
+
+    private executeRandomChampionMove(
+        gameState: GameState,
+        playerId: number,
+        dieValue: number,
+        executeAction: ExecuteActionFunction
+    ) {
+        const player = gameState.getPlayerById(playerId);
+        if (!player || player.champions.length === 0) {
+            return { success: false, summary: 'No champions available', newGameState: gameState };
+        }
+
+        // Pick a random champion
+        const randomChampionIndex = Math.floor(Math.random() * player.champions.length);
+        const champion = player.champions[randomChampionIndex];
+
+        // Get all valid directions this champion can move in
+        const validDirections = getValidMoveDirections(gameState, champion.position, dieValue);
+
+        if (validDirections.length === 0) {
+            return { success: false, summary: 'No valid directions to move', newGameState: gameState };
+        }
+
+        // Pick a random valid direction
+        const randomDirectionChoice = validDirections[Math.floor(Math.random() * validDirections.length)];
+        const { direction, maxSteps } = randomDirectionChoice;
+
+        // Generate path for the full die value or maximum possible steps
+        const stepsToTake = Math.min(dieValue, maxSteps);
+        const path = generatePath(champion.position, direction, stepsToTake);
+
+        // Execute the move
+        const moveAction: GameAction = {
+            type: 'moveChampion',
+            playerId: playerId,
+            championId: champion.id,
+            path: path
+        };
+
+        const result = executeAction(moveAction);
+        if (result.success) {
+            return {
+                ...result,
+                summary: `Moved champion ${champion.id} ${direction.name} for ${stepsToTake} steps`
+            };
+        } else {
+            return result;
+        }
+    }
+
+    private executeRandomHarvest(
+        gameState: GameState,
+        playerId: number,
+        dieValue: number,
+        executeAction: ExecuteActionFunction
+    ) {
+        const player = gameState.getPlayerById(playerId);
+        if (!player) {
+            return { success: false, summary: 'Player not found', newGameState: gameState };
+        }
+
+        // Find all resource tiles claimed by this player
+        const claimedTiles = [];
+        for (const row of gameState.board) {
+            for (const tile of row) {
+                if (tile.claimedBy === playerId && tile.resources) {
+                    claimedTiles.push(tile);
+                }
+            }
+        }
+
+        if (claimedTiles.length === 0) {
+            return { success: false, summary: 'No claimed resource tiles', newGameState: gameState };
+        }
+
+        // Calculate available resources from claimed tiles
+        const availableResources: Record<ResourceType, number> = { food: 0, wood: 0, ore: 0, gold: 0 };
+        for (const tile of claimedTiles) {
+            if (tile.resources) {
+                for (const [resourceType, amount] of Object.entries(tile.resources)) {
+                    availableResources[resourceType as ResourceType] += amount as number;
+                }
+            }
+        }
+
+        // Pick a random resource type that has available resources
+        const resourceTypes: ResourceType[] = ['food', 'wood', 'ore', 'gold'];
+        const availableTypes = resourceTypes.filter(type => availableResources[type] > 0);
+
+        if (availableTypes.length === 0) {
+            return { success: false, summary: 'No resources available to harvest', newGameState: gameState };
+        }
+
+        const randomResourceType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+        const harvestAmount = Math.min(dieValue, availableResources[randomResourceType]);
+
+        const harvestResources: Record<ResourceType, number> = { food: 0, wood: 0, ore: 0, gold: 0 };
+        harvestResources[randomResourceType] = harvestAmount;
+
+        const harvestAction: GameAction = {
+            type: 'harvest',
+            playerId: playerId,
+            resources: harvestResources
+        };
+
+        return executeAction(harvestAction);
     }
 
     private actionToString(action: GameAction): string {

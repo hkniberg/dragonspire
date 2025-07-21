@@ -87,4 +87,17 @@ export type GameAction = MoveChampionAction | MoveBoatAction | HarvestAction;
 export interface DiceUsage {
     diceNumber: number;
     action: GameAction;
+}
+
+// Utility functions for game logic
+export function isHomeTile(tile: Tile): boolean {
+    return tile.tileType === 'home';
+}
+
+export function isHomeTilePosition(position: Position): boolean {
+    // Home tiles are at the four corners of the 8x8 board
+    return (position.row === 0 && position.col === 0) ||
+        (position.row === 0 && position.col === 7) ||
+        (position.row === 7 && position.col === 0) ||
+        (position.row === 7 && position.col === 7);
 } 

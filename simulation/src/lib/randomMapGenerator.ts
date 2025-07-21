@@ -80,10 +80,22 @@ export class RandomMapGenerator {
      */
     private static placeSpecialTiles(board: Tile[][]): void {
         // Place 4 player home tiles in corners (Tier 1)
-        board[0][0].tileType = 'home';
-        board[0][7].tileType = 'home';
-        board[7][0].tileType = 'home';
-        board[7][7].tileType = 'home';
+        // Each home tile is claimed by the corresponding player and provides wood OR food
+        const homePositions = [
+            { pos: { row: 0, col: 0 }, playerId: 1 },
+            { pos: { row: 0, col: 7 }, playerId: 2 },
+            { pos: { row: 7, col: 0 }, playerId: 3 },
+            { pos: { row: 7, col: 7 }, playerId: 4 }
+        ];
+
+        homePositions.forEach(({ pos, playerId }) => {
+            const tile = board[pos.row][pos.col];
+            tile.tileType = 'home';
+            tile.claimedBy = playerId;
+            // Home tiles provide both wood and food (OR logic handled during harvesting)
+            tile.resources = { food: 1, wood: 1, ore: 0, gold: 0 };
+            tile.isStarred = false; // Home tiles are not starred
+        });
 
         // Place doomspire in center (Tier 3)
         board[3][3].tileType = 'doomspire';
