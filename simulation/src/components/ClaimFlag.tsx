@@ -13,8 +13,8 @@ export const ClaimFlag = ({ playerId, getPlayerColor }: ClaimFlagProps) => {
   return (
     <div
       style={{
-        width: "20px",
-        height: "16px",
+        width: "30px",
+        height: "24px",
         display: "flex",
         alignItems: "flex-start",
       }}
@@ -22,10 +22,10 @@ export const ClaimFlag = ({ playerId, getPlayerColor }: ClaimFlagProps) => {
       {/* Flag pole */}
       <div
         style={{
-          width: "2px",
-          height: "16px",
+          width: "3px",
+          height: "24px",
           backgroundColor: "#8B4513",
-          marginRight: "1px",
+          marginRight: "2px",
         }}
       />
       {/* Flag */}
@@ -33,9 +33,9 @@ export const ClaimFlag = ({ playerId, getPlayerColor }: ClaimFlagProps) => {
         style={{
           width: "0",
           height: "0",
-          borderLeft: `12px solid ${playerColors.main}`,
-          borderTop: "4px solid transparent",
-          borderBottom: "4px solid transparent",
+          borderLeft: `18px solid ${playerColors.main}`,
+          borderTop: "6px solid transparent",
+          borderBottom: "6px solid transparent",
         }}
       />
     </div>

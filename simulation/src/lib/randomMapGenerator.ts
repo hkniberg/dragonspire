@@ -183,16 +183,38 @@ export class RandomMapGenerator {
      */
     private static generateRandomResources(isBetter: boolean = false): Record<ResourceType, number> {
         const resourceTypes: ResourceType[] = ['food', 'wood', 'ore', 'gold'];
-        const randomType = resourceTypes[Math.floor(this.seededRandom() * resourceTypes.length)];
 
-        // Better resources for Tier 2
-        const baseAmount = isBetter ? 2 : 1;
-        const amount = baseAmount + Math.floor(this.seededRandom() * (isBetter ? 3 : 2));
+        // Determine if this should be a dual-resource tile
+        const dualResourceChance = isBetter ? 0.4 : 0.15; // 40% for tier 2, 15% for tier 1
+        const isDualResource = this.seededRandom() < dualResourceChance;
 
-        // Only include the resource type that has a non-zero value
-        return {
-            [randomType]: amount
-        } as Record<ResourceType, number>;
+        if (isDualResource) {
+            // Create a tile with two different resource types
+            const shuffledTypes = this.shuffleArray([...resourceTypes]);
+            const firstType = shuffledTypes[0];
+            const secondType = shuffledTypes[1];
+
+            const baseAmount = isBetter ? 1 : 1;
+            const firstAmount = baseAmount + Math.floor(this.seededRandom() * (isBetter ? 2 : 1));
+            const secondAmount = baseAmount + Math.floor(this.seededRandom() * (isBetter ? 2 : 1));
+
+            return {
+                [firstType]: firstAmount,
+                [secondType]: secondAmount
+            } as Record<ResourceType, number>;
+        } else {
+            // Create a single-resource tile (existing logic)
+            const randomType = resourceTypes[Math.floor(this.seededRandom() * resourceTypes.length)];
+
+            // Better resources for Tier 2
+            const baseAmount = isBetter ? 2 : 1;
+            const amount = baseAmount + Math.floor(this.seededRandom() * (isBetter ? 3 : 2));
+
+            // Only include the resource type that has a non-zero value
+            return {
+                [randomType]: amount
+            } as Record<ResourceType, number>;
+        }
     }
 
     /**
