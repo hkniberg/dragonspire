@@ -1,6 +1,7 @@
 // Lords of Doomspire Game Session Manager
 
 import { GameState, rollMultipleD3 } from '../game/GameState';
+import { GameLogger } from '../lib/gameLogger';
 import { GameAction } from '../lib/types';
 import { ActionResult, ExecuteActionFunction, Player } from '../players/Player';
 import { ActionExecutor } from './ActionExecutor';
@@ -65,8 +66,9 @@ export class GameSession {
         const diceCount = 2 + additionalChampions;
         const diceRolls = rollMultipleD3(diceCount);
 
-        console.log(`\n--- Round ${this.gameState.currentRound}, Player ${playerId} (${currentPlayer.getName()}) ---`);
-        console.log(`Dice rolled: [${diceRolls.join(', ')}]`);
+        // Log turn header and dice using GameLogger
+        console.log('\n' + GameLogger.formatTurnHeader(this.gameState.currentRound, playerId, currentPlayer.getName()));
+        console.log(GameLogger.formatDiceRolls(diceRolls));
 
         // Track actions for this turn
         const turnActions: Array<{ action: GameAction; result: ActionResult }> = [];
@@ -97,9 +99,9 @@ export class GameSession {
         // Update game state to the final state after all actions
         this.gameState = currentState;
 
-        // Generate turn summary
+        // Generate turn summary and log it
         const turnSummary = this.generateTurnSummary(turnActions);
-        console.log(`Turn Summary: ${turnSummary}`);
+        console.log(GameLogger.formatTurnSummary(turnSummary));
 
         // Log the turn
         this.actionLog.push({

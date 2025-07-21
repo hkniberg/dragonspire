@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { GameBoard } from "../components/GameBoard";
 import { GameSession, GameSessionConfig } from "../engine/GameSession";
 import { GameState } from "../game/GameState";
+import { GameLogger } from "../lib/gameLogger";
 import { RandomPlayer } from "../players/RandomPlayer";
 
 // Simple spinner for loading states
@@ -402,34 +403,59 @@ export default function GameSimulation() {
               backgroundColor: "rgba(255, 255, 255, 0.9)",
               borderRadius: "8px",
               border: "1px solid #ddd",
-              maxHeight: "300px",
+              maxHeight: "400px",
               overflowY: "auto",
             }}
           >
-            <h3 style={{ marginTop: 0, color: "#2c3e50" }}>📋 Action Log</h3>
-            {actionLog
-              .slice()
-              .reverse()
-              .map((turn, index) => (
-                <div
-                  key={actionLog.length - index}
-                  style={{
-                    marginBottom: "10px",
-                    padding: "10px",
-                    backgroundColor: "#f8f9fa",
-                    borderRadius: "4px",
-                    border: "1px solid #e9ecef",
-                  }}
-                >
-                  <div style={{ fontWeight: "bold", color: "#495057" }}>
-                    Round {turn.round} - {turn.playerName}
+            <h3 style={{ marginTop: 0, color: "#2c3e50" }}>
+              📋 Detailed Action Log
+            </h3>
+            <div
+              style={{
+                fontFamily: "monospace",
+                fontSize: "12px",
+                lineHeight: "1.4",
+              }}
+            >
+              {actionLog.map((turn, index) => {
+                const detailedTurn =
+                  GameLogger.enhanceWithDetailedActions(turn);
+                const messages = GameLogger.getCliTurnMessages(detailedTurn);
+
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      marginBottom: "15px",
+                      padding: "10px",
+                      backgroundColor: "#f8f9fa",
+                      borderRadius: "4px",
+                      border: "1px solid #e9ecef",
+                    }}
+                  >
+                    {messages.map((message, msgIndex) => (
+                      <div
+                        key={msgIndex}
+                        style={{
+                          marginBottom: "2px",
+                          color: message.includes("---")
+                            ? "#2c3e50"
+                            : message.includes("succeeded")
+                            ? "#28a745"
+                            : message.includes("failed")
+                            ? "#dc3545"
+                            : message.includes("Summary:")
+                            ? "#6f42c1"
+                            : "#495057",
+                        }}
+                      >
+                        {message}
+                      </div>
+                    ))}
                   </div>
-                  <div style={{ fontSize: "12px", color: "#6c757d" }}>
-                    Dice: [{turn.diceRolls.join(", ")}] | Actions:{" "}
-                    {turn.actions.length} |{turn.turnSummary}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
+            </div>
           </div>
         )}
 

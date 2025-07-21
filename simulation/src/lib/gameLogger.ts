@@ -1,0 +1,108 @@
+// Game Logger Utility for consistent formatting across CLI and web
+
+import { ActionResult } from '../players/Player';
+import { GameAction } from './types';
+
+export interface DetailedTurnLog {
+    round: number;
+    playerId: number;
+    playerName: string;
+    diceRolls: number[];
+    actions: Array<{ action: GameAction; result: ActionResult }>;
+    turnSummary: string;
+    detailedActions: string[];
+}
+
+export class GameLogger {
+    /**
+     * Format individual action result for display
+     */
+    static formatActionResult(action: GameAction, result: ActionResult, playerName: string): string {
+        const status = result.success ? "succeeded" : "failed";
+        const actionType = action.type;
+        return `${playerName} ${actionType} ${status}: ${result.summary}`;
+    }
+
+    /**
+     * Convert a basic turn log to a detailed turn log with formatted action strings
+     */
+    static enhanceWithDetailedActions(turnLog: {
+        round: number;
+        playerId: number;
+        playerName: string;
+        diceRolls: number[];
+        actions: Array<{ action: GameAction; result: ActionResult }>;
+        turnSummary: string;
+    }): DetailedTurnLog {
+        const detailedActions = turnLog.actions.map(({ action, result }) =>
+            this.formatActionResult(action, result, turnLog.playerName)
+        );
+
+        return {
+            ...turnLog,
+            detailedActions
+        };
+    }
+
+    /**
+     * Format turn header for display
+     */
+    static formatTurnHeader(round: number, playerId: number, playerName: string): string {
+        return `--- Round ${round}, Player ${playerId} (${playerName}) ---`;
+    }
+
+    /**
+     * Format dice rolls for display
+     */
+    static formatDiceRolls(diceRolls: number[]): string {
+        return `Dice rolled: [${diceRolls.join(', ')}]`;
+    }
+
+    /**
+     * Format turn start message
+     */
+    static formatTurnStart(playerName: string, diceRolls: number[]): string {
+        return `${playerName} starting turn with dice: [${diceRolls.join(', ')}]`;
+    }
+
+    /**
+     * Format turn end message
+     */
+    static formatTurnEnd(playerName: string): string {
+        return `${playerName} ending turn`;
+    }
+
+    /**
+     * Format turn summary
+     */
+    static formatTurnSummary(turnSummary: string): string {
+        return `Turn Summary: ${turnSummary}`;
+    }
+
+    /**
+     * Get all log messages for a turn in CLI format
+     */
+    static getCliTurnMessages(detailedTurnLog: DetailedTurnLog): string[] {
+        const messages: string[] = [];
+
+        // Turn header
+        messages.push(this.formatTurnHeader(detailedTurnLog.round, detailedTurnLog.playerId, detailedTurnLog.playerName));
+
+        // Dice rolls
+        messages.push(this.formatDiceRolls(detailedTurnLog.diceRolls));
+
+        // Turn start
+        messages.push(this.formatTurnStart(detailedTurnLog.playerName, detailedTurnLog.diceRolls));
+
+        // Individual actions
+        messages.push(...detailedTurnLog.detailedActions);
+
+        // Turn end
+        messages.push(this.formatTurnEnd(detailedTurnLog.playerName));
+
+        // Turn summary
+        messages.push(this.formatTurnSummary(detailedTurnLog.turnSummary));
+
+        return messages;
+    }
+} 

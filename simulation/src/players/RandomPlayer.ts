@@ -1,6 +1,7 @@
 // Lords of Doomspire Random Player
 
 import { GameState } from '../game/GameState';
+import { GameLogger } from '../lib/gameLogger';
 import { ClaimTileAction, GameAction, ResourceType } from '../lib/types';
 import { ExecuteActionFunction, Player, PlayerType } from './Player';
 import { generateAllPaths, getHarvestableResourcesInfo, getReachableTiles } from './PlayerUtils';
@@ -25,7 +26,7 @@ export class RandomPlayer implements Player {
         diceRolls: number[],
         executeAction: ExecuteActionFunction
     ): Promise<void> {
-        console.log(`${this.name} starting turn with dice: [${diceRolls.join(', ')}]`);
+        console.log(GameLogger.formatTurnStart(this.name, diceRolls));
 
         const playerId = gameState.getCurrentPlayer().id;
         let currentGameState = gameState;
@@ -36,9 +37,11 @@ export class RandomPlayer implements Player {
             const moveResult = this.executeRandomChampionMove(currentGameState, playerId, dice[0], executeAction);
             if (moveResult.success) {
                 currentGameState = moveResult.newGameState;
-                console.log(`${this.name} move succeeded: ${moveResult.summary}`);
+                // Note: The actual action logging will be handled by the GameSession's action tracking
+                // These console.log statements are just for immediate feedback during the turn
+                console.log(`${this.name} moveChampion succeeded: ${moveResult.summary}`);
             } else {
-                console.log(`${this.name} move failed: ${moveResult.summary}`);
+                console.log(`${this.name} moveChampion failed: ${moveResult.summary}`);
             }
         }
 
@@ -53,7 +56,7 @@ export class RandomPlayer implements Player {
             }
         }
 
-        console.log(`${this.name} ending turn`);
+        console.log(GameLogger.formatTurnEnd(this.name));
     }
 
     private executeRandomChampionMove(
