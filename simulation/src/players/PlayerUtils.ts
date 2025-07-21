@@ -1,5 +1,5 @@
 import { GameState } from '../game/GameState';
-import { Position } from '../lib/types';
+import { Position, ResourceType, Tile } from '../lib/types';
 
 export interface Direction {
     row: number;
@@ -260,4 +260,112 @@ export function generateAllPaths(
 
     findPaths(startPosition, [startPosition], 0);
     return paths;
+}
+
+/**
+ * Get detailed information about harvestable resources for a player, taking blockading into account
+ * 
+ * A player can harvest from:
+ * - Any tile that is claimed by them and doesn't have an opposing champion on it
+ * - Any tile that is claimed by an opposing player and has their champion on it (blockading)
+ */
+export interface HarvestableResourcesInfo {
+    ownedNonBlockedTiles: Tile[];
+    ownedBlockedTiles: Tile[];
+    blockadedOpponentTiles: Tile[];
+    totalHarvestableResources: Record<ResourceType, number>;
+}
+
+export function getHarvestableResourcesInfo(gameState: GameState, playerId: number): HarvestableResourcesInfo {
+    const ownedNonBlockedTiles: Tile[] = [];
+    const ownedBlockedTiles: Tile[] = [];
+    const blockadedOpponentTiles: Tile[] = [];
+    const totalHarvestableResources: Record<ResourceType, number> = { food: 0, wood: 0, ore: 0, gold: 0 };
+
+    // Get the player's champions positions
+    const player = gameState.getPlayerById(playerId);
+    if (!player) {
+        return {
+            ownedNonBlockedTiles,
+            ownedBlockedTiles,
+            blockadedOpponentTiles,
+            totalHarvestableResources
+        };
+    }
+
+    const playerChampionPositions = new Set<string>();
+    for (const champion of player.champions) {
+        playerChampionPositions.add(`${champion.position.row},${champion.position.col}`);
+    }
+
+    // Check all tiles on the board
+    for (const row of gameState.board) {
+        for (const tile of row) {
+            if (!tile.resources) {
+                continue; // Not a resource tile
+            }
+
+            const tileKey = `${tile.position.row},${tile.position.col}`;
+            const hasPlayerChampion = playerChampionPositions.has(tileKey);
+
+            // Check if any opposing champions are on this tile
+            let hasOpposingChampion = false;
+            for (const otherPlayer of gameState.players) {
+                if (otherPlayer.id === playerId) {
+                    continue; // Skip the current player
+                }
+
+                for (const champion of otherPlayer.champions) {
+                    if (champion.position.row === tile.position.row &&
+                        champion.position.col === tile.position.col) {
+                        hasOpposingChampion = true;
+                        break;
+                    }
+                }
+                if (hasOpposingChampion) {
+                    break;
+                }
+            }
+
+            // Case 1: Tile is claimed by the player
+            if (tile.claimedBy === playerId) {
+                if (!hasOpposingChampion) {
+                    // Player owns this tile and it's not blockaded
+                    ownedNonBlockedTiles.push(tile);
+                    for (const [resourceType, amount] of Object.entries(tile.resources)) {
+                        totalHarvestableResources[resourceType as ResourceType] += amount as number;
+                    }
+                } else {
+                    // Player owns this tile but it's blockaded
+                    ownedBlockedTiles.push(tile);
+                }
+            }
+
+            // Case 2: Tile is claimed by an opposing player and player's champion is on it (blockading)
+            if (tile.claimedBy !== undefined && tile.claimedBy !== playerId && hasPlayerChampion) {
+                blockadedOpponentTiles.push(tile);
+                for (const [resourceType, amount] of Object.entries(tile.resources)) {
+                    totalHarvestableResources[resourceType as ResourceType] += amount as number;
+                }
+            }
+        }
+    }
+
+    return {
+        ownedNonBlockedTiles,
+        ownedBlockedTiles,
+        blockadedOpponentTiles,
+        totalHarvestableResources
+    };
+}
+
+/**
+ * Get the total harvestable resources for a player, taking blockading into account
+ * 
+ * A player can harvest from:
+ * - Any tile that is claimed by them and doesn't have an opposing champion on it
+ * - Any tile that is claimed by an opposing player and has their champion on it (blockading)
+ */
+export function getHarvestableResources(gameState: GameState, playerId: number): Record<ResourceType, number> {
+    return getHarvestableResourcesInfo(gameState, playerId).totalHarvestableResources;
 } 

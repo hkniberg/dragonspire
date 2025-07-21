@@ -2,6 +2,7 @@
 
 import { GameState } from '../game/GameState';
 import type {
+    ClaimTileAction,
     GameAction,
     HarvestAction,
     MoveBoatAction,
@@ -24,6 +25,8 @@ export class ActionExecutor {
                     return this.executeMoveBoat(gameState, action);
                 case 'harvest':
                     return this.executeHarvest(gameState, action);
+                case 'claimTile':
+                    return this.executeClaimTile(gameState, action);
                 default:
                     return {
                         newGameState: gameState,
@@ -238,6 +241,98 @@ export class ActionExecutor {
         return {
             newGameState,
             summary: `Player ${action.playerId} harvested ${harvestedItems}`,
+            success: true
+        };
+    }
+
+    private static executeClaimTile(gameState: GameState, action: ClaimTileAction): ActionResult {
+        const player = gameState.getPlayerById(action.playerId);
+        if (!player) {
+            return {
+                newGameState: gameState,
+                summary: `Player ${action.playerId} not found`,
+                success: false
+            };
+        }
+
+        const champion = gameState.getChampionById(action.playerId, action.championId);
+        if (!champion) {
+            return {
+                newGameState: gameState,
+                summary: `Champion ${action.championId} not found for player ${action.playerId}`,
+                success: false
+            };
+        }
+
+        // Check if champion is at the specified position
+        if (champion.position.row !== action.position.row || champion.position.col !== action.position.col) {
+            return {
+                newGameState: gameState,
+                summary: `Champion ${action.championId} is not at position (${action.position.row}, ${action.position.col})`,
+                success: false
+            };
+        }
+
+        const tile = gameState.getTile(action.position);
+        if (!tile) {
+            return {
+                newGameState: gameState,
+                summary: `Tile at position (${action.position.row}, ${action.position.col}) does not exist`,
+                success: false
+            };
+        }
+
+        // Check if tile is a resource tile
+        if (tile.tileType !== 'resource') {
+            return {
+                newGameState: gameState,
+                summary: `Tile at (${action.position.row}, ${action.position.col}) is not a resource tile`,
+                success: false
+            };
+        }
+
+        // Check if tile is already claimed
+        if (tile.claimedBy !== undefined) {
+            return {
+                newGameState: gameState,
+                summary: `Tile at (${action.position.row}, ${action.position.col}) is already claimed by player ${tile.claimedBy}`,
+                success: false
+            };
+        }
+
+        // Check if player has claims available
+        if (player.maxClaims <= 0) {
+            return {
+                newGameState: gameState,
+                summary: `Player ${action.playerId} has no claims available`,
+                success: false
+            };
+        }
+
+        // Claim the tile
+        const updatedTile = { ...tile, claimedBy: action.playerId };
+        const updatedBoard = gameState.board.map((row, rowIndex) =>
+            row.map((tile, colIndex) =>
+                rowIndex === action.position.row && colIndex === action.position.col
+                    ? updatedTile
+                    : tile
+            )
+        );
+
+        // Reduce player's available claims
+        const updatedPlayer = { ...player, maxClaims: player.maxClaims - 1 };
+        const updatedPlayers = gameState.players.map(p =>
+            p.id === action.playerId ? updatedPlayer : p
+        );
+
+        const newGameState = gameState.withUpdates({
+            board: updatedBoard,
+            players: updatedPlayers
+        });
+
+        return {
+            newGameState,
+            summary: `Player ${action.playerId} claimed resource tile at (${action.position.row}, ${action.position.col})`,
             success: true
         };
     }

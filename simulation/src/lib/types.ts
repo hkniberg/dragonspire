@@ -82,7 +82,14 @@ export interface HarvestAction {
     resources: Record<ResourceType, number>; // Resources and amounts to harvest
 }
 
-export type GameAction = MoveChampionAction | MoveBoatAction | HarvestAction;
+export interface ClaimTileAction {
+    type: 'claimTile';
+    playerId: number;
+    championId: number;
+    position: Position;
+}
+
+export type GameAction = MoveChampionAction | MoveBoatAction | HarvestAction | ClaimTileAction;
 
 export interface DiceUsage {
     diceNumber: number;

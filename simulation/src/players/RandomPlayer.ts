@@ -1,9 +1,9 @@
 // Lords of Doomspire Random Player
 
 import { GameState } from '../game/GameState';
-import { GameAction, ResourceType } from '../lib/types';
+import { ClaimTileAction, GameAction, ResourceType } from '../lib/types';
 import { ExecuteActionFunction, Player, PlayerType } from './Player';
-import { generateAllPaths, getReachableTiles } from './PlayerUtils';
+import { generateAllPaths, getHarvestableResourcesInfo, getReachableTiles } from './PlayerUtils';
 
 export class RandomPlayer implements Player {
     private name: string;
@@ -120,9 +120,46 @@ export class RandomPlayer implements Player {
 
         const result = executeAction(moveAction);
         if (result.success) {
+            // Check if we landed on an unclaimed resource tile and claim it
+            const destinationTile = result.newGameState.getTile(targetTile);
+            if (destinationTile &&
+                destinationTile.tileType === 'resource' &&
+                destinationTile.claimedBy === undefined) {
+
+                const claimAction: ClaimTileAction = {
+                    type: 'claimTile',
+                    playerId: playerId,
+                    championId: champion.id,
+                    position: targetTile
+                };
+
+                const claimResult = executeAction(claimAction);
+                if (claimResult.success) {
+                    console.log(`${this.name} claimed resource tile at (${targetTile.row},${targetTile.col})`);
+                    return {
+                        ...claimResult,
+                        summary: `Moved champion ${champion.id} from (${champion.position.row},${champion.position.col}) to (${targetTile.row},${targetTile.col}) and claimed the resource tile`
+                    };
+                } else {
+                    // Move succeeded but claim failed
+                    return {
+                        ...result,
+                        summary: `Moved champion ${champion.id} from (${champion.position.row},${champion.position.col}) to (${targetTile.row},${targetTile.col}) but failed to claim tile: ${claimResult.summary}`
+                    };
+                }
+            }
+
+            // Check if we landed on an opponent's claimed resource tile (blockading)
+            if (destinationTile &&
+                destinationTile.tileType === 'resource' &&
+                destinationTile.claimedBy !== undefined &&
+                destinationTile.claimedBy !== playerId) {
+                console.log(`${this.name} is blockading opponent's resource tile at (${targetTile.row},${targetTile.col}) (claimed by player ${destinationTile.claimedBy})`);
+            }
+
             return {
                 ...result,
-                summary: `Moved champion ${champion.id} to (${targetTile.row},${targetTile.col}) via path with ${selectedPath.length - 1} steps`
+                summary: `Moved champion ${champion.id} from (${champion.position.row},${champion.position.col}) to (${targetTile.row},${targetTile.col}) via path with ${selectedPath.length - 1} steps`
             };
         } else {
             return result;
@@ -140,40 +177,39 @@ export class RandomPlayer implements Player {
             return { success: false, summary: 'Player not found', newGameState: gameState };
         }
 
-        // Find all resource tiles claimed by this player
-        const claimedTiles = [];
-        for (const row of gameState.board) {
-            for (const tile of row) {
-                if (tile.claimedBy === playerId && tile.resources) {
-                    claimedTiles.push(tile);
-                }
-            }
+        // Get detailed information about harvestable resources, taking blockading into account
+        const harvestInfo = getHarvestableResourcesInfo(gameState, playerId);
+
+        // Log detailed information about the player's tiles
+        if (harvestInfo.ownedNonBlockedTiles.length > 0) {
+            console.log(`${this.name} has ${harvestInfo.ownedNonBlockedTiles.length} owned non-blocked resource tile(s)`);
+        }
+        if (harvestInfo.ownedBlockedTiles.length > 0) {
+            console.log(`${this.name} has ${harvestInfo.ownedBlockedTiles.length} owned but blockaded resource tile(s)`);
+        }
+        if (harvestInfo.blockadedOpponentTiles.length > 0) {
+            console.log(`${this.name} is blockading ${harvestInfo.blockadedOpponentTiles.length} opponent resource tile(s)`);
         }
 
-        if (claimedTiles.length === 0) {
-            return { success: false, summary: 'No claimed resource tiles', newGameState: gameState };
-        }
-
-        // Calculate available resources from claimed tiles
-        const availableResources: Record<ResourceType, number> = { food: 0, wood: 0, ore: 0, gold: 0 };
-        for (const tile of claimedTiles) {
-            if (tile.resources) {
-                for (const [resourceType, amount] of Object.entries(tile.resources)) {
-                    availableResources[resourceType as ResourceType] += amount as number;
-                }
-            }
+        // Check if there are any harvestable resources
+        const totalHarvestable = harvestInfo.totalHarvestableResources.food +
+            harvestInfo.totalHarvestableResources.wood +
+            harvestInfo.totalHarvestableResources.ore +
+            harvestInfo.totalHarvestableResources.gold;
+        if (totalHarvestable === 0) {
+            return { success: false, summary: 'No harvestable resources available', newGameState: gameState };
         }
 
         // Pick a random resource type that has available resources
         const resourceTypes: ResourceType[] = ['food', 'wood', 'ore', 'gold'];
-        const availableTypes = resourceTypes.filter(type => availableResources[type] > 0);
+        const availableTypes = resourceTypes.filter(type => harvestInfo.totalHarvestableResources[type] > 0);
 
         if (availableTypes.length === 0) {
             return { success: false, summary: 'No resources available to harvest', newGameState: gameState };
         }
 
         const randomResourceType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
-        const harvestAmount = Math.min(dieValue, availableResources[randomResourceType]);
+        const harvestAmount = Math.min(dieValue, harvestInfo.totalHarvestableResources[randomResourceType]);
 
         const harvestResources: Record<ResourceType, number> = { food: 0, wood: 0, ore: 0, gold: 0 };
         harvestResources[randomResourceType] = harvestAmount;
