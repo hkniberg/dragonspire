@@ -3,7 +3,7 @@
 import { GameState, rollMultipleD3 } from '../game/GameState';
 import { GameLogger } from '../lib/gameLogger';
 import { GameAction } from '../lib/types';
-import { ActionResult, ExecuteActionFunction, Player } from '../players/Player';
+import { ActionLogEntry, ActionResult, ExecuteActionFunction, Player } from '../players/Player';
 import { ActionExecutor } from './ActionExecutor';
 
 export type GameSessionState = 'setup' | 'playing' | 'finished';
@@ -18,14 +18,7 @@ export class GameSession {
     private players: Player[];
     private sessionState: GameSessionState;
     private maxRounds: number;
-    private actionLog: Array<{
-        round: number;
-        playerId: number;
-        playerName: string;
-        diceRolls: number[];
-        actions: Array<{ action: GameAction; result: ActionResult }>;
-        turnSummary: string;
-    }>;
+    private actionLog: ActionLogEntry[];
 
     constructor(config: GameSessionConfig) {
         this.gameState = new GameState();
@@ -91,7 +84,7 @@ export class GameSession {
 
         // Let the player execute their turn
         try {
-            await currentPlayer.executeTurn(this.gameState, diceRolls, executeAction);
+            await currentPlayer.executeTurn(this.gameState, diceRolls, executeAction, this.actionLog);
         } catch (error) {
             console.error(`Error during ${currentPlayer.getName()}'s turn:`, error);
         }

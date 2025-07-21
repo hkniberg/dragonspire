@@ -20,6 +20,18 @@ export interface ActionResult {
 export type ExecuteActionFunction = (action: GameAction) => ActionResult;
 
 /**
+ * Action log entry for a completed turn
+ */
+export interface ActionLogEntry {
+    round: number;
+    playerId: number;
+    playerName: string;
+    diceRolls: number[];
+    actions: Array<{ action: GameAction; result: ActionResult }>;
+    turnSummary: string;
+}
+
+/**
  * Interface that all player implementations must follow
  */
 export interface Player {
@@ -38,10 +50,12 @@ export interface Player {
      * @param gameState Current game state
      * @param diceRolls Available dice values for this turn
      * @param executeAction Function to execute actions and get immediate feedback
+     * @param actionLog Read-only history of all previous turns in the game
      */
     executeTurn(
         gameState: GameState,
         diceRolls: number[],
-        executeAction: ExecuteActionFunction
+        executeAction: ExecuteActionFunction,
+        actionLog: readonly ActionLogEntry[]
     ): Promise<void>;
 } 
