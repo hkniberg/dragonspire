@@ -56,16 +56,19 @@ export default function AITest() {
     setToolCalls([]);
 
     try {
-      // Use client-side Claude instance with tool calling
+      // Use client-side Claude instance for simple testing
       const claude = new Claude(apiKey);
-      const result = await claude.useLLMWithTools(
-        "You are a board game AI assistant. You have access to dice action tools.",
-        "I need to move my champion from position (1,1) to position (2,3) and then harvest some resources. Assume I'm player 1 with champion 1. Use the available tools to execute these actions."
+      const result = await claude.useLLM(
+        "You are a board game AI assistant.",
+        "I need to move my champion from position (1,1) to position (2,3) and then harvest some resources. Describe what actions you would take as a strategic AI player."
       );
 
-      setToolResponse(result.response);
-      setChatHistory(result.messages);
-      setToolCalls(result.toolCalls);
+      setToolResponse(result);
+      setChatHistory([
+        { role: "user", content: "Test message", ts: new Date() },
+        { role: "assistant", content: result, ts: new Date() },
+      ]);
+      setToolCalls([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

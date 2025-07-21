@@ -1,10 +1,11 @@
 
 import { Anthropic } from "@anthropic-ai/sdk";
-import { diceActionTools } from "./tools";
+import { Tool, convertToolsToAnthropicDefinitions } from "./tools";
 
 const DEFAULT_MODEL = "claude-sonnet-4-0";
 //const DEFAULT_MODEL = "claude-3-5-haiku-latest"
 const PROMPT_CACHING_ENABLED = true; // Enable prompt caching for system prompts and user messages
+const CALL_LOOP_LIMIT = 10;
 
 // Logging configuration
 const MAX_LOG_MESSAGE_LENGTH = 1000;
@@ -35,6 +36,13 @@ function logThinkingBlocks(content: any[]) {
         }
     }
 }
+
+type ToolResult = {
+    type: "tool_result";
+    tool_use_id: string;
+    content: string;
+    is_error?: boolean;
+};
 
 export class Claude implements LLM {
     private anthropic: Anthropic;
@@ -108,11 +116,7 @@ export class Claude implements LLM {
         return textContent;
     }
 
-    async useLLMWithTools(systemPrompt: string | null, userMessage: string): Promise<{
-        messages: Anthropic.Messages.MessageParam[],
-        response: string,
-        toolCalls: Anthropic.ToolUseBlock[]
-    }> {
+    async useLLMWithTools(systemPrompt: string | null, userMessage: string, tools: Tool[]): Promise<string> {
         // Log input
         log("LLM System Prompt", systemPrompt ? truncateForLog(systemPrompt) : "None");
         log("LLM User Message", truncateForLog(userMessage));
@@ -130,15 +134,12 @@ export class Claude implements LLM {
         };
 
         const messages: Anthropic.Messages.MessageParam[] = [userMessageParam];
-
-        const allToolCalls: Anthropic.ToolUseBlock[] = [];
         let finalResponse = '';
         let toolCallsRemaining = true;
         let callLoopCount = 0;
-        const CALL_LOOP_LIMIT = 10;
 
         log("LLM Model", this.model);
-        log("LLM Available Tools", diceActionTools.map(tool => tool.name));
+        log("LLM Available Tools", tools.map(tool => tool.name));
 
         while (toolCallsRemaining) {
             callLoopCount++;
@@ -150,7 +151,7 @@ export class Claude implements LLM {
                 model: this.model,
                 messages,
                 max_tokens: 16000,
-                tools: diceActionTools,
+                tools: convertToolsToAnthropicDefinitions(tools),
                 thinking: {
                     type: "enabled",
                     budget_tokens: 5000
@@ -202,21 +203,39 @@ export class Claude implements LLM {
                     content: response.content
                 });
 
-                // Track all tool calls
-                allToolCalls.push(...toolUseBlocks);
+                // Execute tools and collect results
+                const toolResults: ToolResult[] = [];
 
-                // Execute tools and add results
-                const toolResults: Anthropic.ToolResultBlockParam[] = toolUseBlocks.map(toolCall => {
-                    // For now, just return success - in a real implementation you'd execute the tool
-                    const result = "Action succeeded";
-                    log("Tool Result", { id: toolCall.id, result });
+                for (const toolCall of toolUseBlocks) {
+                    try {
+                        // Find the tool implementation
+                        const tool = tools.find(t => t.name === toolCall.name);
+                        if (!tool) {
+                            throw new Error(`Tool ${toolCall.name} is not available`);
+                        }
 
-                    return {
-                        type: "tool_result",
-                        tool_use_id: toolCall.id,
-                        content: result
-                    };
-                });
+                        // Execute the tool
+                        const result = await tool.execute(toolCall.input);
+
+                        log("Tool Result", { id: toolCall.id, name: toolCall.name, result });
+
+                        toolResults.push({
+                            type: "tool_result",
+                            tool_use_id: toolCall.id,
+                            content: result
+                        });
+                    } catch (error) {
+                        console.error(`Tool call ${toolCall.name} failed:`, error);
+
+                        const errorMessage = error instanceof Error ? error.message : String(error);
+                        toolResults.push({
+                            type: "tool_result",
+                            tool_use_id: toolCall.id,
+                            content: `The tool call failed with error: ${errorMessage}`,
+                            is_error: true
+                        });
+                    }
+                }
 
                 // Add tool results as user message
                 messages.push({
@@ -241,16 +260,11 @@ export class Claude implements LLM {
         }
 
         log("LLM Complete", {
-            toolCallCount: allToolCalls.length,
             responseLength: finalResponse.length,
             totalMessages: messages.length,
             loopCount: callLoopCount
         });
 
-        return {
-            messages,
-            response: finalResponse,
-            toolCalls: allToolCalls
-        };
+        return finalResponse;
     }
 } 

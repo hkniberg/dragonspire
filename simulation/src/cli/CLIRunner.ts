@@ -1,25 +1,98 @@
 // Lords of Doomspire CLI Runner
 
+import * as dotenv from 'dotenv';
 import { GameSession, GameSessionConfig } from '../engine/GameSession';
+import { Claude } from '../lib/llm';
+import { ClaudePlayer } from '../players/ClaudePlayer';
+import { Player } from '../players/Player';
 import { RandomPlayer } from '../players/RandomPlayer';
+
+// Load environment variables
+dotenv.config();
+
+export interface PlayerConfig {
+    name: string;
+    type: 'random' | 'claude';
+}
 
 export interface CLIConfig {
     maxRounds?: number;
     singleTurnTest?: boolean;
     specificTurns?: number;
-    playerNames?: string[];
+    playerConfigs?: PlayerConfig[];
 }
 
 export class CLIRunner {
+    private static createPlayer(config: PlayerConfig): Player {
+        switch (config.type) {
+            case 'random':
+                return new RandomPlayer(config.name);
+            case 'claude':
+                const apiKey = process.env.ANTHROPIC_API_KEY;
+                if (!apiKey) {
+                    throw new Error('ANTHROPIC_API_KEY not found in environment variables. Please add it to your .env file.');
+                }
+                const claude = new Claude(apiKey);
+                return new ClaudePlayer(config.name, claude);
+            default:
+                throw new Error(`Unknown player type: ${config.type}`);
+        }
+    }
+
+    private static parsePlayerArgs(args: string[]): PlayerConfig[] {
+        const playerConfigs: PlayerConfig[] = [];
+        const defaultNames = ['Alice', 'Bob', 'Charlie', 'Diana'];
+
+        // Look for player specifications like p1=random, p2=claude, etc.
+        const playerArgs = args.filter(arg => arg.match(/^p[1-4]=(random|claude)$/));
+
+        if (playerArgs.length === 0) {
+            // No player specifications, default to all random players
+            return defaultNames.map(name => ({ name, type: 'random' }));
+        }
+
+        // Initialize with default random players
+        for (let i = 0; i < 4; i++) {
+            playerConfigs.push({ name: defaultNames[i], type: 'random' });
+        }
+
+        // Override with specified player types
+        for (const arg of playerArgs) {
+            const match = arg.match(/^p([1-4])=(random|claude)$/);
+            if (match) {
+                const playerIndex = parseInt(match[1]) - 1;
+                const playerType = match[2] as 'random' | 'claude';
+
+                if (playerIndex >= 0 && playerIndex < 4) {
+                    playerConfigs[playerIndex].type = playerType;
+                }
+            }
+        }
+
+        return playerConfigs;
+    }
+
     /**
-     * Run a single turn test with random players
+     * Run a single turn test with specified players
      */
     public static async runSingleTurnTest(config: CLIConfig = {}): Promise<void> {
         console.log('=== Lords of Doomspire - Single Turn Test ===\n');
 
-        // Create random players
-        const playerNames = config.playerNames || ['Alice', 'Bob', 'Charlie', 'Diana'];
-        const players = playerNames.map(name => new RandomPlayer(name));
+        // Create players based on configuration
+        const playerConfigs = config.playerConfigs || [
+            { name: 'Alice', type: 'random' },
+            { name: 'Bob', type: 'random' },
+            { name: 'Charlie', type: 'random' },
+            { name: 'Diana', type: 'random' }
+        ];
+
+        console.log('Player Configuration:');
+        playerConfigs.forEach((config, index) => {
+            console.log(`  Player ${index + 1}: ${config.name} (${config.type})`);
+        });
+        console.log();
+
+        const players = playerConfigs.map(config => this.createPlayer(config));
 
         // Create game session with just 1 round for testing
         const sessionConfig: GameSessionConfig = {
@@ -62,9 +135,21 @@ export class CLIRunner {
         const numTurns = config.specificTurns || 1;
         console.log(`=== Lords of Doomspire - ${numTurns} Turn(s) Simulation ===\n`);
 
-        // Create random players
-        const playerNames = config.playerNames || ['Alice', 'Bob', 'Charlie', 'Diana'];
-        const players = playerNames.map(name => new RandomPlayer(name));
+        // Create players based on configuration
+        const playerConfigs = config.playerConfigs || [
+            { name: 'Alice', type: 'random' },
+            { name: 'Bob', type: 'random' },
+            { name: 'Charlie', type: 'random' },
+            { name: 'Diana', type: 'random' }
+        ];
+
+        console.log('Player Configuration:');
+        playerConfigs.forEach((config, index) => {
+            console.log(`  Player ${index + 1}: ${config.name} (${config.type})`);
+        });
+        console.log();
+
+        const players = playerConfigs.map(config => this.createPlayer(config));
 
         // Create game session with enough rounds to complete the requested turns
         // We need at least numTurns / players.length rounds, but let's be generous
@@ -116,9 +201,21 @@ export class CLIRunner {
     public static async runCompleteGame(config: CLIConfig = {}): Promise<void> {
         console.log('=== Lords of Doomspire - Complete Game Simulation ===\n');
 
-        // Create random players
-        const playerNames = config.playerNames || ['Alice', 'Bob', 'Charlie', 'Diana'];
-        const players = playerNames.map(name => new RandomPlayer(name));
+        // Create players based on configuration
+        const playerConfigs = config.playerConfigs || [
+            { name: 'Alice', type: 'random' },
+            { name: 'Bob', type: 'random' },
+            { name: 'Charlie', type: 'random' },
+            { name: 'Diana', type: 'random' }
+        ];
+
+        console.log('Player Configuration:');
+        playerConfigs.forEach((config, index) => {
+            console.log(`  Player ${index + 1}: ${config.name} (${config.type})`);
+        });
+        console.log();
+
+        const players = playerConfigs.map(config => this.createPlayer(config));
 
         // Create game session
         const sessionConfig: GameSessionConfig = {
@@ -144,7 +241,10 @@ export class CLIRunner {
     public static async main(args: string[] = []): Promise<void> {
         const config: CLIConfig = {};
 
-        // Parse command line arguments
+        // Parse player configurations first
+        config.playerConfigs = this.parsePlayerArgs(args);
+
+        // Parse other command line arguments
         for (let i = 0; i < args.length; i++) {
             switch (args[i]) {
                 case '--single-turn':
@@ -158,9 +258,12 @@ export class CLIRunner {
                     config.maxRounds = parseInt(args[i + 1]);
                     i++; // Skip next argument
                     break;
-                case '--players':
-                    config.playerNames = args[i + 1].split(',');
-                    i++; // Skip next argument
+                // Skip player arguments as they're already parsed
+                default:
+                    if (args[i].match(/^p[1-4]=(random|claude)$/)) {
+                        // Skip player arguments
+                        continue;
+                    }
                     break;
             }
         }

@@ -230,6 +230,60 @@ export const TileComponent = ({
               (!effectiveTile.resources.gold ||
                 effectiveTile.resources.gold === 0)
             ? "url(/tiles/ore.png)"
+            : effectiveTile.tileType === "resource" &&
+              effectiveTile.resources &&
+              effectiveTile.resources.food > 0 &&
+              effectiveTile.resources.gold > 0 &&
+              (!effectiveTile.resources.wood ||
+                effectiveTile.resources.wood === 0) &&
+              (!effectiveTile.resources.ore ||
+                effectiveTile.resources.ore === 0)
+            ? "url(/tiles/food-gold.png)"
+            : effectiveTile.tileType === "resource" &&
+              effectiveTile.resources &&
+              effectiveTile.resources.food > 0 &&
+              effectiveTile.resources.ore > 0 &&
+              (!effectiveTile.resources.wood ||
+                effectiveTile.resources.wood === 0) &&
+              (!effectiveTile.resources.gold ||
+                effectiveTile.resources.gold === 0)
+            ? "url(/tiles/food-ore.png)"
+            : effectiveTile.tileType === "resource" &&
+              effectiveTile.resources &&
+              effectiveTile.resources.food > 0 &&
+              effectiveTile.resources.wood > 0 &&
+              (!effectiveTile.resources.ore ||
+                effectiveTile.resources.ore === 0) &&
+              (!effectiveTile.resources.gold ||
+                effectiveTile.resources.gold === 0)
+            ? "url(/tiles/food-wood.png)"
+            : effectiveTile.tileType === "resource" &&
+              effectiveTile.resources &&
+              effectiveTile.resources.gold > 0 &&
+              effectiveTile.resources.ore > 0 &&
+              (!effectiveTile.resources.food ||
+                effectiveTile.resources.food === 0) &&
+              (!effectiveTile.resources.wood ||
+                effectiveTile.resources.wood === 0)
+            ? "url(/tiles/gold-ore.png)"
+            : effectiveTile.tileType === "resource" &&
+              effectiveTile.resources &&
+              effectiveTile.resources.gold > 0 &&
+              effectiveTile.resources.wood > 0 &&
+              (!effectiveTile.resources.food ||
+                effectiveTile.resources.food === 0) &&
+              (!effectiveTile.resources.ore ||
+                effectiveTile.resources.ore === 0)
+            ? "url(/tiles/gold-wood.png)"
+            : effectiveTile.tileType === "resource" &&
+              effectiveTile.resources &&
+              effectiveTile.resources.ore > 0 &&
+              effectiveTile.resources.wood > 0 &&
+              (!effectiveTile.resources.food ||
+                effectiveTile.resources.food === 0) &&
+              (!effectiveTile.resources.gold ||
+                effectiveTile.resources.gold === 0)
+            ? "url(/tiles/ore-wood.png)"
             : "none"
           : "none",
         backgroundSize: "cover",

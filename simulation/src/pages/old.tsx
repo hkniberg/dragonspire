@@ -113,13 +113,16 @@ export default function Home() {
       setLastSystemPrompt(systemPrompt);
       setLastUserMessage(userMessage);
 
-      // Use client-side Claude instance with tool calling
+      // Use client-side Claude instance for simple testing
       const claude = new Claude(apiKey);
-      const result = await claude.useLLMWithTools(systemPrompt, userMessage);
+      const result = await claude.useLLM(systemPrompt, userMessage);
 
-      setAiResponse(result.response);
-      setChatHistory(result.messages);
-      setToolCalls(result.toolCalls);
+      setAiResponse(result);
+      setChatHistory([
+        { role: "user", content: userMessage, ts: new Date() },
+        { role: "assistant", content: result, ts: new Date() },
+      ]);
+      setToolCalls([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {

@@ -1,96 +1,180 @@
 import { Anthropic } from "@anthropic-ai/sdk";
+import { ExecuteActionFunction } from '../players/Player';
+import { GameAction } from './types';
 
-// Define tool schemas for dice actions
-export const diceActionTools: Anthropic.Tool[] = [
-    {
-        name: "moveChampion",
-        description: "Move a champion along a path of tiles",
-        input_schema: {
-            type: "object",
-            properties: {
-                playerId: {
-                    type: "number",
-                    description: "The player ID making the move"
-                },
-                championId: {
-                    type: "number",
-                    description: "The champion ID to move"
-                },
-                path: {
-                    type: "array",
-                    description: "Array of positions the champion will move through",
-                    items: {
-                        type: "object",
-                        properties: {
-                            row: { type: "number" },
-                            col: { type: "number" }
-                        },
-                        required: ["row", "col"]
-                    }
-                }
+// Tool interface for LLM tool execution
+export interface Tool {
+    name: string;
+    description: string;
+    inputSchema: any;
+    execute(input: any): Promise<string>;
+}
+
+// Base class for game action tools
+abstract class GameActionTool implements Tool {
+    abstract name: string;
+    abstract description: string;
+    abstract inputSchema: any;
+
+    constructor(protected executeAction: ExecuteActionFunction) { }
+
+    abstract execute(input: any): Promise<string>;
+}
+
+// Move Champion Tool
+export class MoveChampionTool extends GameActionTool {
+    name = "moveChampion";
+    description = "Move a champion from the current position to a given end position, through the given path (including start position)";
+    inputSchema = {
+        type: "object",
+        properties: {
+            playerId: {
+                type: "number",
+                description: "The player ID making the move"
             },
-            required: ["playerId", "championId", "path"]
-        }
-    },
-    {
-        name: "moveBoat",
-        description: "Move a boat with optional champion pickup/dropoff",
-        input_schema: {
-            type: "object",
-            properties: {
-                playerId: {
-                    type: "number",
-                    description: "The player ID making the move"
-                },
-                boatId: {
-                    type: "number",
-                    description: "The boat ID to move"
-                },
-                path: {
-                    type: "array",
-                    description: "Array of ocean position strings the boat will move through",
-                    items: { type: "string" }
-                },
-                championId: {
-                    type: "number",
-                    description: "Optional champion ID to pick up"
-                },
-                championDropPosition: {
+            championId: {
+                type: "number",
+                description: "The champion ID to move"
+            },
+            path: {
+                type: "array",
+                description: "Array of positions the champion will move through, from start position (inclusive) to end position (inclusive)",
+                items: {
                     type: "object",
-                    description: "Optional position to drop off champion",
                     properties: {
                         row: { type: "number" },
                         col: { type: "number" }
                     },
                     required: ["row", "col"]
                 }
-            },
-            required: ["playerId", "boatId", "path"]
-        }
-    },
-    {
-        name: "harvest",
-        description: "Harvest resources from claimed tiles",
-        input_schema: {
-            type: "object",
-            properties: {
-                playerId: {
-                    type: "number",
-                    description: "The player ID harvesting"
-                },
-                resources: {
-                    type: "object",
-                    description: "Resources to harvest",
-                    properties: {
-                        food: { type: "number" },
-                        wood: { type: "number" },
-                        ore: { type: "number" },
-                        gold: { type: "number" }
-                    },
-                    required: ["food", "wood", "ore", "gold"]
-                }
-            },
-            required: ["playerId", "resources"]
-        }
+            }
+        },
+        required: ["playerId", "championId", "path"]
+    };
+
+    async execute(input: any): Promise<string> {
+        const action: GameAction = {
+            type: 'moveChampion',
+            playerId: input.playerId,
+            championId: input.championId,
+            path: input.path
+        };
+
+        const result = this.executeAction(action);
+        return result.summary;
     }
-]; 
+}
+
+// Move Boat Tool
+export class MoveBoatTool extends GameActionTool {
+    name = "moveBoat";
+    description = "Move a boat with optional champion pickup/dropoff";
+    inputSchema = {
+        type: "object",
+        properties: {
+            playerId: {
+                type: "number",
+                description: "The player ID making the move"
+            },
+            boatId: {
+                type: "number",
+                description: "The boat ID to move"
+            },
+            path: {
+                type: "array",
+                description: "Array of ocean position strings the boat will move through",
+                items: { type: "string" }
+            },
+            championId: {
+                type: "number",
+                description: "Optional champion ID to pick up"
+            },
+            championDropPosition: {
+                type: "object",
+                description: "Optional position to drop off champion",
+                properties: {
+                    row: { type: "number" },
+                    col: { type: "number" }
+                },
+                required: ["row", "col"]
+            }
+        },
+        required: ["playerId", "boatId", "path"]
+    };
+
+    async execute(input: any): Promise<string> {
+        const action: any = {
+            type: 'moveBoat',
+            playerId: input.playerId,
+            boatId: input.boatId,
+            path: input.path
+        };
+
+        if (input.championId) {
+            action.championId = input.championId;
+        }
+
+        if (input.championDropPosition) {
+            action.championDropPosition = input.championDropPosition;
+        }
+
+        const result = this.executeAction(action);
+        return result.summary;
+    }
+}
+
+// Harvest Tool
+export class HarvestTool extends GameActionTool {
+    name = "harvest";
+    description = "Harvest resources from claimed tiles";
+    inputSchema = {
+        type: "object",
+        properties: {
+            playerId: {
+                type: "number",
+                description: "The player ID harvesting"
+            },
+            resources: {
+                type: "object",
+                description: "Resources to harvest",
+                properties: {
+                    food: { type: "number" },
+                    wood: { type: "number" },
+                    ore: { type: "number" },
+                    gold: { type: "number" }
+                },
+                required: ["food", "wood", "ore", "gold"]
+            }
+        },
+        required: ["playerId", "resources"]
+    };
+
+    async execute(input: any): Promise<string> {
+        const action: GameAction = {
+            type: 'harvest',
+            playerId: input.playerId,
+            resources: input.resources
+        };
+
+        const result = this.executeAction(action);
+        return result.summary;
+    }
+}
+
+// Factory function to create game action tools
+export function createGameActionTools(executeAction: ExecuteActionFunction): Tool[] {
+    return [
+        new MoveChampionTool(executeAction),
+        new MoveBoatTool(executeAction),
+        new HarvestTool(executeAction)
+    ];
+}
+
+// Convert tools to Anthropic tool definitions
+export function convertToolsToAnthropicDefinitions(tools: Tool[]): Anthropic.Tool[] {
+    return tools.map(tool => ({
+        name: tool.name,
+        description: tool.description,
+        input_schema: tool.inputSchema
+    }));
+} 
