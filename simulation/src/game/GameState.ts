@@ -92,6 +92,20 @@ export class GameState {
         return player?.champions.find(c => c.id === championId);
     }
 
+    public getValidActions(diceRolls: number[]): string[] {
+        const currentPlayer = this.getCurrentPlayer();
+        const actions: string[] = [];
+
+        for (const dieValue of diceRolls) {
+            actions.push(`Move & Act (die value ${dieValue}): Move a champion up to ${dieValue} tiles and perform an action`);
+            actions.push(`Harvest (die value ${dieValue}): Collect up to ${dieValue} resources from claimed tiles`);
+            actions.push(`Build: Construct a building in your castle (die value doesn't matter)`);
+            actions.push(`Boat Travel (die value ${dieValue}): Move boat and transport champion`);
+        }
+
+        return actions;
+    }
+
     /**
      * Creates a new immutable GameState with updated properties
      */

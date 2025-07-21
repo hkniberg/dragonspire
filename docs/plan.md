@@ -1,6 +1,6 @@
 # Lords of Doomspire - Development Plan
 
-## Current Implementation Status
+## Current Implementation Status (before Milestone 1)
 
 ### What We Have Built
 
@@ -36,11 +36,11 @@
 
 Implement core game engine architecture, with the ability to execute one player turn using a random decision-making player in headless mode. This validates that the fundamental game simulation mechanics work correctly. As part of this we create the new interfaces and new directory structure, and start migrating the existing code to the new structure.
 
-### Milestone 2: Full Game Execution (Headless, Random Players)
+### Milestone 2: Full Game Execution (Headless, Random Players) ✅ **COMPLETED**
 
 Extend the engine to support complete games from start to finish with multiple random players. Includes victory condition checking and proper game lifecycle management.
 
-### Milestone 3: Single Turn Execution (UI, Random Player)
+### Milestone 3: Single Turn Execution (UI, Random Player) ✅ **COMPLETED**
 
 Integrate the new game engine with the existing user interface, allowing players to execute actual turns through the web interface rather than just viewing static game state.
 

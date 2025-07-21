@@ -11,12 +11,30 @@ export const oceanZones = [
 export const OceanZoneComponent = ({
   zone,
   players,
+  getPlayerColor,
 }: {
   zone: (typeof oceanZones)[0];
   players: Player[];
+  getPlayerColor?: (playerId: number) => {
+    main: string;
+    light: string;
+    dark: string;
+  };
 }) => {
-  // For now, since boats don't have zone mapping, show empty boats
-  const boatsInZone: Player[] = [];
+  // Map zone positions to boat positions
+  const zonePositionMap: Record<string, string[]> = {
+    northwest: ["nw"],
+    northeast: ["ne"],
+    southwest: ["sw"],
+    southeast: ["se"],
+  };
+
+  // Find boats in this zone
+  const boatsInZone = players.flatMap((player) =>
+    player.boats
+      .filter((boat) => zonePositionMap[zone.position]?.includes(boat.position))
+      .map((boat) => ({ ...boat, player }))
+  );
 
   return (
     <div
@@ -218,11 +236,68 @@ export const OceanZoneComponent = ({
         〜〜
       </div>
 
-      {boatsInZone.length > 0 && (
-        <div style={{ fontSize: "32px", marginTop: "20px", zIndex: 1 }}>
-          🛥️ {boatsInZone.length}
-        </div>
-      )}
+      {boatsInZone.length > 0 &&
+        (() => {
+          // Determine corner position based on zone
+          const getCornerPosition = (zonePosition: string) => {
+            switch (zonePosition) {
+              case "northwest":
+                return { top: "20px", left: "20px" };
+              case "northeast":
+                return { top: "20px", right: "20px" };
+              case "southwest":
+                return { bottom: "20px", left: "20px" };
+              case "southeast":
+                return { bottom: "20px", right: "20px" };
+              default:
+                return { top: "20px", left: "20px" };
+            }
+          };
+
+          const cornerStyle = getCornerPosition(zone.position);
+
+          return (
+            <div
+              style={{
+                position: "absolute",
+                ...cornerStyle,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: "8px",
+                zIndex: 10,
+              }}
+            >
+              {boatsInZone.map((boatWithPlayer) => {
+                const playerColors = getPlayerColor
+                  ? getPlayerColor(boatWithPlayer.player.id)
+                  : { main: "#666", light: "#ccc", dark: "#333" };
+                return (
+                  <div
+                    key={`${boatWithPlayer.player.id}-${boatWithPlayer.id}`}
+                    style={{
+                      backgroundColor: playerColors.main,
+                      color: "white",
+                      borderRadius: "12px",
+                      padding: "8px 12px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: "20px",
+                      fontWeight: "bold",
+                      border: "2px solid white",
+                      boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                      minWidth: "60px",
+                    }}
+                    title={`Boat ${boatWithPlayer.id} (${boatWithPlayer.player.name})`}
+                  >
+                    🚢
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
     </div>
   );
 };

@@ -1,17 +1,11 @@
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import { AIMoveResult } from "../components/AIMoveResult";
-import { ApiKeyModal } from "../components/ApiKeyModal";
 import { GameBoard } from "../components/GameBoard";
-import { PromptViewer } from "../components/PromptViewer";
-import {
-  GameStateDeprecated,
-  rollMultipleD3,
-} from "../lib/gameStateDeprecated";
-import { Claude } from "../lib/llm";
-import { templateProcessor } from "../lib/templateProcessor";
+import { GameSession, GameSessionConfig } from "../engine/GameSession";
+import { GameState } from "../game/GameState";
+import { RandomPlayer } from "../players/RandomPlayer";
 
-// Simple spinner for other loading states
+// Simple spinner for loading states
 const Spinner = ({ size = 20 }: { size?: number }) => (
   <div
     style={{
@@ -34,112 +28,125 @@ const spinnerStyles = `
   }
 `;
 
-export default function Home() {
+type SimulationState = "setup" | "playing" | "finished";
+
+export default function GameSimulation() {
   // Client-side rendering state
   const [mounted, setMounted] = useState(false);
 
-  // AI Move functionality
-  const [gameState, setGameState] = useState<GameStateDeprecated | null>(null);
-  const [aiResponse, setAiResponse] = useState<string>("");
-  const [lastDiceRolls, setLastDiceRolls] = useState<number[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  // Game simulation state
+  const [gameSession, setGameSession] = useState<GameSession | null>(null);
+  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [simulationState, setSimulationState] =
+    useState<SimulationState>("setup");
+  const [actionLog, setActionLog] = useState<any[]>([]);
 
-  // API Key modal state
-  const [apiKey, setApiKey] = useState<string>("");
-  const [showApiKeyModal, setShowApiKeyModal] = useState<boolean>(false);
+  // UI state
+  const [isExecutingTurn, setIsExecutingTurn] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(false);
+  const [autoPlaySpeed, setAutoPlaySpeed] = useState(1000); // ms between turns
+  const [showActionLog, setShowActionLog] = useState(false);
 
-  // Debug mode for revealing all tiles
-  const [debugMode, setDebugMode] = useState<boolean>(false);
-
-  // Prompt tracking
-  const [lastSystemPrompt, setLastSystemPrompt] = useState<string>("");
-  const [lastUserMessage, setLastUserMessage] = useState<string>("");
-  const [showPrompts, setShowPrompts] = useState<boolean>(false);
-
-  // Chat history for tool calling
-  const [chatHistory, setChatHistory] = useState<any[]>([]);
-  const [toolCalls, setToolCalls] = useState<any[]>([]);
-  const [showChatHistory, setShowChatHistory] = useState<boolean>(false);
-
-  // Initialize game state only on client side
+  // Initialize component only on client side
   useEffect(() => {
-    setGameState(new GameStateDeprecated());
     setMounted(true);
   }, []);
 
-  const handleAIMove = async () => {
-    if (!gameState) return;
+  // Auto-play effect
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
 
-    if (!apiKey.trim()) {
-      setError("Please enter your Anthropic API key");
+    if (autoPlay && simulationState === "playing" && !isExecutingTurn) {
+      timeoutId = setTimeout(async () => {
+        await executeNextTurn();
+      }, autoPlaySpeed);
+    }
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [autoPlay, simulationState, isExecutingTurn, autoPlaySpeed]);
+
+  const startNewGame = () => {
+    // Create 4 random players
+    const players = [
+      new RandomPlayer("Alice"),
+      new RandomPlayer("Bob"),
+      new RandomPlayer("Charlie"),
+      new RandomPlayer("Diana"),
+    ];
+
+    // Create game session
+    const sessionConfig: GameSessionConfig = {
+      players: players,
+      maxRounds: 20, // Reasonable limit for web interface
+    };
+
+    const session = new GameSession(sessionConfig);
+    session.start();
+
+    setGameSession(session);
+    setGameState(session.getGameState());
+    setSimulationState("playing");
+    setActionLog([]);
+    setAutoPlay(false);
+
+    console.log(
+      "New game started with players:",
+      players.map((p) => p.getName())
+    );
+  };
+
+  const executeNextTurn = async () => {
+    if (!gameSession || simulationState !== "playing" || isExecutingTurn) {
       return;
     }
 
-    setLoading(true);
-    setError("");
-    setAiResponse("");
-    setChatHistory([]);
-    setToolCalls([]);
+    setIsExecutingTurn(true);
 
     try {
-      // Roll 2 D3 dice for the current player
-      const diceRolls = rollMultipleD3(2);
-      setLastDiceRolls(diceRolls);
+      await gameSession.executeTurn();
 
-      // Get current game state
-      const currentPlayer = gameState.getCurrentPlayer();
-      const validActions = gameState.getValidActions(diceRolls);
-      const boardState = JSON.stringify(gameState.toAIJSON(), null, 2);
+      const updatedGameState = gameSession.getGameState();
+      const updatedActionLog = gameSession.getActionLog();
 
-      // Process system prompt template (includes game rules dynamically)
-      const systemPrompt = await templateProcessor.processTemplate(
-        "SystemPrompt",
-        {}
-      );
+      setGameState(updatedGameState);
+      setActionLog(updatedActionLog);
 
-      // Process user message template
-      const userMessage = await templateProcessor.processTemplate("makeMove", {
-        currentRound: gameState.currentRound,
-        playerId: currentPlayer.id,
-        diceRolls: diceRolls.join(" and "),
-        fame: currentPlayer.fame,
-        might: currentPlayer.might,
-        resources: JSON.stringify(currentPlayer.resources),
-        championRow: currentPlayer.champions[0].position.row,
-        championCol: currentPlayer.champions[0].position.col,
-        boatPosition: currentPlayer.boats[0].position,
-        boardState: boardState,
-        validActions: validActions.join("\n"),
-      });
-
-      setLastSystemPrompt(systemPrompt);
-      setLastUserMessage(userMessage);
-
-      // Use client-side Claude instance with tool calling
-      const claude = new Claude(apiKey);
-      const result = await claude.useLLMWithTools(systemPrompt, userMessage);
-
-      setAiResponse(result.response);
-      setChatHistory(result.messages);
-      setToolCalls(result.toolCalls);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      // Check if game ended
+      if (gameSession.getSessionState() === "finished") {
+        setSimulationState("finished");
+        setAutoPlay(false);
+        console.log("Game finished!");
+      }
+    } catch (error) {
+      console.error("Error executing turn:", error);
+      setAutoPlay(false);
     } finally {
-      setLoading(false);
+      setIsExecutingTurn(false);
     }
   };
 
+  const toggleAutoPlay = () => {
+    setAutoPlay(!autoPlay);
+  };
+
+  const resetGame = () => {
+    setGameSession(null);
+    setGameState(null);
+    setSimulationState("setup");
+    setActionLog([]);
+    setAutoPlay(false);
+  };
+
   // Show loading state until client-side rendering is ready
-  if (!mounted || !gameState) {
+  if (!mounted) {
     return (
       <>
         <Head>
-          <title>Lords of Doomspire Board Game Simulator</title>
-          <meta
-            name="description"
-            content="Lords of Doomspire Board Game AI Simulation"
-          />
+          <title>Lords of Doomspire - Game Simulation</title>
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <link rel="icon" href="/favicon.ico" />
           <style dangerouslySetInnerHTML={{ __html: spinnerStyles }} />
@@ -162,10 +169,10 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Lords of Doomspire Board Game Simulator</title>
+        <title>Lords of Doomspire - Game Simulation</title>
         <meta
           name="description"
-          content="Lords of Doomspire Board Game AI Simulation"
+          content="Lords of Doomspire Board Game Simulation"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -188,234 +195,280 @@ export default function Home() {
             fontFamily: "serif",
           }}
         >
-          Lords of Doomspire Board Game Simulator
+          Lords of Doomspire - Game Simulation
         </h1>
 
-        <div style={{ marginBottom: "20px", textAlign: "center" }}>
-          <button
-            onClick={() => setShowApiKeyModal(true)}
-            style={{
-              display: "inline-block",
-              padding: "8px 16px",
-              backgroundColor: apiKey ? "#28a745" : "#6c757d",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "14px",
-              cursor: "pointer",
-              marginRight: "10px",
-            }}
-          >
-            🔑 {apiKey ? "API Key Set" : "Set API Key"}
-          </button>
-
-          <a
-            href="/ai-test"
-            style={{
-              display: "inline-block",
-              padding: "8px 16px",
-              backgroundColor: "#0070f3",
-              color: "white",
-              textDecoration: "none",
-              borderRadius: "4px",
-              fontSize: "14px",
-              marginRight: "10px",
-            }}
-          >
-            🤖 Test AI Integration
-          </a>
-
-          <button
-            onClick={handleAIMove}
-            disabled={loading || !apiKey.trim()}
-            style={{
-              display: "inline-block",
-              padding: "8px 16px",
-              backgroundColor: loading || !apiKey.trim() ? "#ccc" : "#28a745",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "14px",
-              cursor: loading || !apiKey.trim() ? "not-allowed" : "pointer",
-              marginRight: "10px",
-            }}
-          >
-            {loading ? (
-              <>
-                <Spinner />
-                AI Thinking...
-              </>
-            ) : (
-              "🎲 AI Move"
-            )}
-          </button>
-
-          <button
-            onClick={() => setDebugMode(!debugMode)}
-            style={{
-              display: "inline-block",
-              padding: "8px 16px",
-              backgroundColor: debugMode ? "#dc3545" : "#6c757d",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "14px",
-              cursor: "pointer",
-            }}
-          >
-            {debugMode ? "🔍 Debug: ON" : "🔍 Debug: OFF"}
-          </button>
-
-          <button
-            onClick={() => setShowPrompts(!showPrompts)}
-            style={{
-              display: "inline-block",
-              padding: "8px 16px",
-              backgroundColor: showPrompts ? "#17a2b8" : "#6c757d",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "14px",
-              cursor: "pointer",
-              marginLeft: "10px",
-            }}
-          >
-            {showPrompts ? "💬 Prompts: ON" : "💬 Prompts: OFF"}
-          </button>
-
-          <button
-            onClick={() => setShowChatHistory(!showChatHistory)}
-            style={{
-              display: "inline-block",
-              padding: "8px 16px",
-              backgroundColor: showChatHistory ? "#ffc107" : "#6c757d",
-              color: showChatHistory ? "#000" : "white",
-              border: "none",
-              borderRadius: "4px",
-              fontSize: "14px",
-              cursor: "pointer",
-              marginLeft: "10px",
-            }}
-          >
-            {showChatHistory ? "💭 Chat: ON" : "💭 Chat: OFF"}
-          </button>
-        </div>
-
-        {/* AI Move Results Component */}
-        <AIMoveResult
-          loading={loading}
-          lastDiceRolls={lastDiceRolls}
-          aiResponse={aiResponse}
-          error={error}
-        />
-
-        {/* Tool Calls Display */}
-        {toolCalls.length > 0 && (
-          <div
-            style={{
-              marginBottom: "20px",
-              padding: "15px",
-              backgroundColor: "rgba(40, 167, 69, 0.1)",
-              border: "2px solid #28a745",
-              borderRadius: "8px",
-            }}
-          >
-            <h3 style={{ marginTop: 0, color: "#28a745" }}>
-              🔧 Tool Calls Executed
-            </h3>
-            {toolCalls.map((call, index) => (
-              <div
-                key={index}
-                style={{
-                  marginBottom: "10px",
-                  padding: "10px",
-                  backgroundColor: "white",
-                  borderRadius: "4px",
-                  border: "1px solid #28a745",
-                }}
-              >
-                <strong>{call.name}</strong>
-                <pre
-                  style={{
-                    margin: "5px 0",
-                    fontSize: "12px",
-                    overflow: "auto",
-                  }}
-                >
-                  {JSON.stringify(call.input, null, 2)}
-                </pre>
-                <div style={{ color: "#28a745", fontSize: "12px" }}>
-                  ✓ Action succeeded
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Chat History Display */}
-        {showChatHistory && chatHistory.length > 0 && (
-          <div
-            style={{
-              marginBottom: "20px",
-              padding: "15px",
-              backgroundColor: "rgba(255, 193, 7, 0.1)",
-              border: "2px solid #ffc107",
-              borderRadius: "8px",
-            }}
-          >
-            <h3 style={{ marginTop: 0, color: "#856404" }}>💭 Chat History</h3>
-            {chatHistory.map((message, index) => (
-              <div
-                key={index}
-                style={{
-                  marginBottom: "15px",
-                  padding: "10px",
-                  backgroundColor:
-                    message.role === "user" ? "#e3f2fd" : "#f3e5f5",
-                  borderRadius: "8px",
-                  border: `1px solid ${
-                    message.role === "user" ? "#2196f3" : "#9c27b0"
-                  }`,
-                }}
-              >
-                <div
-                  style={{
-                    fontWeight: "bold",
-                    marginBottom: "5px",
-                    color: message.role === "user" ? "#1976d2" : "#7b1fa2",
-                  }}
-                >
-                  {message.role === "user" ? "👤 User" : "🤖 Assistant"}
-                </div>
-                <div style={{ whiteSpace: "pre-wrap", fontSize: "14px" }}>
-                  {typeof message.content === "string"
-                    ? message.content
-                    : JSON.stringify(message.content, null, 2)}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Prompts Display Component */}
-        <PromptViewer
-          showPrompts={showPrompts}
-          lastSystemPrompt={lastSystemPrompt}
-          lastUserMessage={lastUserMessage}
-        />
-
-        {/* API Key Modal */}
-        <ApiKeyModal
-          isOpen={showApiKeyModal}
-          onClose={() => setShowApiKeyModal(false)}
-          apiKey={apiKey}
-          onApiKeyChange={setApiKey}
-        />
-
-        {/* Rest of the component remains the same */}
+        {/* Control Panel */}
         <div
           style={{
             marginBottom: "20px",
+            padding: "15px",
+            backgroundColor: "rgba(255, 255, 255, 0.8)",
+            borderRadius: "8px",
+            border: "1px solid #ddd",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            {simulationState === "setup" && (
+              <button
+                onClick={startNewGame}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: "#28a745",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "4px",
+                  fontSize: "16px",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                }}
+              >
+                🎮 Start New Game (4 Random Players)
+              </button>
+            )}
+
+            {simulationState === "playing" && (
+              <>
+                <button
+                  onClick={executeNextTurn}
+                  disabled={isExecutingTurn || autoPlay}
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor:
+                      isExecutingTurn || autoPlay ? "#ccc" : "#007bff",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    fontSize: "16px",
+                    cursor:
+                      isExecutingTurn || autoPlay ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {isExecutingTurn ? (
+                    <>
+                      <Spinner />
+                      Executing Turn...
+                    </>
+                  ) : (
+                    "▶️ Next Turn"
+                  )}
+                </button>
+
+                <button
+                  onClick={toggleAutoPlay}
+                  disabled={isExecutingTurn}
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: autoPlay ? "#dc3545" : "#ffc107",
+                    color: autoPlay ? "white" : "#000",
+                    border: "none",
+                    borderRadius: "4px",
+                    fontSize: "16px",
+                    cursor: isExecutingTurn ? "not-allowed" : "pointer",
+                  }}
+                >
+                  {autoPlay ? "⏸️ Pause Auto-Play" : "⏩ Auto-Play"}
+                </button>
+
+                {autoPlay && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "5px",
+                    }}
+                  >
+                    <label style={{ fontSize: "14px" }}>Speed:</label>
+                    <select
+                      value={autoPlaySpeed}
+                      onChange={(e) => setAutoPlaySpeed(Number(e.target.value))}
+                      style={{
+                        padding: "5px",
+                        borderRadius: "4px",
+                        border: "1px solid #ccc",
+                      }}
+                    >
+                      <option value={500}>Fast (0.5s)</option>
+                      <option value={1000}>Normal (1s)</option>
+                      <option value={2000}>Slow (2s)</option>
+                      <option value={5000}>Very Slow (5s)</option>
+                    </select>
+                  </div>
+                )}
+              </>
+            )}
+
+            {(simulationState === "playing" ||
+              simulationState === "finished") && (
+              <>
+                <button
+                  onClick={resetGame}
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    fontSize: "16px",
+                    cursor: "pointer",
+                  }}
+                >
+                  🔄 Reset Game
+                </button>
+
+                <button
+                  onClick={() => setShowActionLog(!showActionLog)}
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: showActionLog ? "#17a2b8" : "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    fontSize: "16px",
+                    cursor: "pointer",
+                  }}
+                >
+                  {showActionLog ? "📋 Hide Log" : "📋 Show Log"}
+                </button>
+
+                <a
+                  href="/old"
+                  style={{
+                    display: "inline-block",
+                    padding: "10px 20px",
+                    backgroundColor: "#6f42c1",
+                    color: "white",
+                    textDecoration: "none",
+                    borderRadius: "4px",
+                    fontSize: "16px",
+                  }}
+                >
+                  🤖 Old AI Interface
+                </a>
+              </>
+            )}
+          </div>
+
+          {/* Game Status */}
+          {gameState && (
+            <div style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>
+              <div>
+                <strong>Round:</strong> {gameState.currentRound} |
+                <strong> Current Player:</strong>{" "}
+                <span
+                  style={{
+                    color: ["#e74c3c", "#3498db", "#2ecc71", "#f39c12"][
+                      (gameState.getCurrentPlayer().id - 1) % 4
+                    ],
+                    fontWeight: "bold",
+                  }}
+                >
+                  {gameState.getCurrentPlayer().name}
+                </span>{" "}
+                |<strong> Game Status:</strong> {simulationState}
+                {simulationState === "finished" && gameState.winner && (
+                  <span style={{ color: "#28a745", fontWeight: "bold" }}>
+                    {" "}
+                    | 🎉 Winner:{" "}
+                    {
+                      gameState.players.find((p) => p.id === gameState.winner)
+                        ?.name
+                    }
+                  </span>
+                )}
+              </div>
+              {actionLog.length > 0 && (
+                <div>
+                  <strong>Total Turns:</strong> {actionLog.length}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Action Log */}
+        {showActionLog && actionLog.length > 0 && (
+          <div
+            style={{
+              marginBottom: "20px",
+              padding: "15px",
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              borderRadius: "8px",
+              border: "1px solid #ddd",
+              maxHeight: "300px",
+              overflowY: "auto",
+            }}
+          >
+            <h3 style={{ marginTop: 0, color: "#2c3e50" }}>📋 Action Log</h3>
+            {actionLog
+              .slice()
+              .reverse()
+              .map((turn, index) => (
+                <div
+                  key={actionLog.length - index}
+                  style={{
+                    marginBottom: "10px",
+                    padding: "10px",
+                    backgroundColor: "#f8f9fa",
+                    borderRadius: "4px",
+                    border: "1px solid #e9ecef",
+                  }}
+                >
+                  <div style={{ fontWeight: "bold", color: "#495057" }}>
+                    Round {turn.round} - {turn.playerName}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#6c757d" }}>
+                    Dice: [{turn.diceRolls.join(", ")}] | Actions:{" "}
+                    {turn.actions.length} |{turn.turnSummary}
+                  </div>
+                </div>
+              ))}
+          </div>
+        )}
+
+        {/* Game Board */}
+        {gameState ? (
+          <GameBoard gameState={gameState} debugMode={false} />
+        ) : (
+          <div
+            style={{
+              padding: "60px",
+              textAlign: "center",
+              backgroundColor: "rgba(255, 255, 255, 0.8)",
+              borderRadius: "8px",
+              border: "2px dashed #ddd",
+            }}
+          >
+            <h2 style={{ color: "#6c757d", marginBottom: "20px" }}>
+              Welcome to Lords of Doomspire!
+            </h2>
+            <p
+              style={{
+                color: "#6c757d",
+                fontSize: "18px",
+                marginBottom: "30px",
+              }}
+            >
+              Click "Start New Game" to begin a simulation with 4 random
+              players.
+            </p>
+            <p style={{ color: "#6c757d", fontSize: "14px" }}>
+              This is Milestone 3: Single Turn Execution (UI, Random Player)
+            </p>
+          </div>
+        )}
+
+        {/* Legend */}
+        <div
+          style={{
+            marginTop: "20px",
             padding: "10px",
             backgroundColor: "rgba(255, 255, 255, 0.8)",
             borderRadius: "8px",
@@ -441,25 +494,6 @@ export default function Home() {
             <span style={{ color: "#8B4513" }}>? Unexplored</span>
           </div>
         </div>
-
-        {/* Debug mode indicator */}
-        {debugMode && (
-          <div
-            style={{
-              marginBottom: "20px",
-              padding: "10px",
-              backgroundColor: "rgba(220, 53, 69, 0.1)",
-              border: "2px solid #dc3545",
-              borderRadius: "8px",
-              textAlign: "center",
-              color: "#721c24",
-            }}
-          >
-            <strong>🔍 DEBUG MODE ACTIVE</strong> - All tiles are revealed
-          </div>
-        )}
-
-        <GameBoard gameState={gameState} debugMode={debugMode} />
       </div>
     </>
   );

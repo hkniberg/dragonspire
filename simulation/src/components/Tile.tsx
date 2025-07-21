@@ -1,4 +1,5 @@
 import type { Champion, Player, ResourceType, Tile } from "../lib/types";
+import { ClaimFlag } from "./ClaimFlag";
 
 const getTileColor = (tile: Tile): string => {
   if (!tile.explored) {
@@ -95,11 +96,17 @@ export const TileComponent = ({
   champions,
   currentPlayer,
   debugMode = false,
+  getPlayerColor,
 }: {
   tile: Tile;
   champions: Champion[];
   currentPlayer: Player;
   debugMode?: boolean;
+  getPlayerColor: (playerId: number) => {
+    main: string;
+    light: string;
+    dark: string;
+  };
 }) => {
   const championsOnTile = champions.filter(
     (champion) =>
@@ -163,46 +170,52 @@ ${
         e.currentTarget.style.transform = "scale(1)";
       }}
     >
-      {/* Main tile symbol */}
-      {specialLabel ? (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <div style={{ fontSize: "32px" }}>{getTileSymbol(effectiveTile)}</div>
-          <div
-            style={{
-              fontSize: "12px",
-              textAlign: "center",
-              fontWeight: "bold",
-              marginTop: "2px",
-            }}
-          >
-            {specialLabel}
-          </div>
-        </div>
-      ) : (
-        <div style={{ fontSize: "32px" }}>{getTileSymbol(effectiveTile)}</div>
-      )}
-
-      {/* Resource details for resource tiles */}
-      {effectiveTile.tileType === "resource" &&
-        effectiveTile.resources &&
-        Object.keys(effectiveTile.resources).length > 0 &&
-        effectiveTile.explored && (
-          <div
-            style={{ fontSize: "12px", marginTop: "4px", textAlign: "center" }}
-          >
-            {Object.entries(effectiveTile.resources)
-              .filter(([_, amount]) => amount > 0)
-              .map(([type, amount]) => `${type}: ${amount}`)
-              .join(", ")}
-            {effectiveTile.isStarred && " ⭐"}
-          </div>
+      {/* Main tile symbol - moved to bottom */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: "8px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
+        }}
+      >
+        {specialLabel ? (
+          <>
+            <div style={{ fontSize: "24px" }}>
+              {getTileSymbol(effectiveTile)}
+            </div>
+            <div
+              style={{
+                fontSize: "10px",
+                fontWeight: "bold",
+                marginTop: "2px",
+              }}
+            >
+              {specialLabel}
+            </div>
+          </>
+        ) : (
+          <div style={{ fontSize: "24px" }}>{getTileSymbol(effectiveTile)}</div>
         )}
+
+        {/* Resource details for resource tiles */}
+        {effectiveTile.tileType === "resource" &&
+          effectiveTile.resources &&
+          Object.keys(effectiveTile.resources).length > 0 &&
+          effectiveTile.explored && (
+            <div style={{ fontSize: "10px", marginTop: "2px" }}>
+              {Object.entries(effectiveTile.resources)
+                .filter(([_, amount]) => amount > 0)
+                .map(([type, amount]) => `${type}: ${amount}`)
+                .join(", ")}
+              {effectiveTile.isStarred && " ⭐"}
+            </div>
+          )}
+      </div>
 
       {/* Flag indicator */}
       {effectiveTile.claimedBy && (
@@ -211,11 +224,12 @@ ${
             position: "absolute",
             top: "4px",
             left: "4px",
-            fontSize: "16px",
-            color: `hsl(${(effectiveTile.claimedBy - 1) * 90}, 70%, 50%)`,
           }}
         >
-          🚩
+          <ClaimFlag
+            playerId={effectiveTile.claimedBy}
+            getPlayerColor={getPlayerColor}
+          />
         </div>
       )}
 
@@ -224,23 +238,41 @@ ${
         <div
           style={{
             position: "absolute",
-            bottom: "4px",
-            right: "4px",
-            fontSize: "16px",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
             display: "flex",
             flexDirection: "column",
+            alignItems: "center",
+            gap: "4px",
+            zIndex: 10,
           }}
         >
-          {championsOnTile.map((champion) => (
-            <span
-              key={champion.id}
-              style={{
-                color: `hsl(${(champion.playerId - 1) * 90}, 70%, 50%)`,
-              }}
-            >
-              C{champion.id}
-            </span>
-          ))}
+          {championsOnTile.map((champion) => {
+            const playerColors = getPlayerColor(champion.playerId);
+            return (
+              <div
+                key={champion.id}
+                style={{
+                  backgroundColor: playerColors.main,
+                  color: "white",
+                  borderRadius: "50%",
+                  width: "44px",
+                  height: "44px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  border: "3px solid white",
+                  boxShadow: "0 3px 6px rgba(0,0,0,0.4)",
+                }}
+                title={`Champion ${champion.id} (Player ${champion.playerId})`}
+              >
+                ⚔️
+              </div>
+            );
+          })}
         </div>
       )}
 
