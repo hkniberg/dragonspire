@@ -3,6 +3,13 @@ import { GameState } from '../../src/game/GameState';
 import type { Champion, ClaimTileAction, HarvestAction, MoveChampionAction, Player, Tile } from '../../src/lib/types';
 
 describe('ActionExecutor', () => {
+    let gameState: GameState;
+
+    beforeEach(() => {
+        // Create a basic GameState with default board and players
+        gameState = new GameState();
+    });
+
     // Helper function to create a test game state
     function createTestGameState() {
         // Create a simple 2x2 board
@@ -47,34 +54,119 @@ describe('ActionExecutor', () => {
         );
     }
 
-    describe('executeAction - moveChampion', () => {
-        it('should move a champion one step on a 2x2 board', () => {
-            const gameState = createTestGameState();
+    describe('executeAction', () => {
+        it('should handle unknown action type', () => {
+            const unknownAction = { type: 'unknown' } as any;
 
-            // Create a move champion action to move from (0,0) to (0,1)
+            const result = ActionExecutor.executeAction(gameState, unknownAction);
+
+            expect(result.success).toBe(false);
+            expect(result.summary).toContain('Unknown action type');
+        });
+    });
+
+    describe('moveChampion', () => {
+        it('should move champion successfully to adjacent tile', () => {
             const action: MoveChampionAction = {
                 type: 'moveChampion',
                 playerId: 1,
                 championId: 1,
                 path: [
-                    { row: 0, col: 0 },
-                    { row: 0, col: 1 }
+                    { row: 0, col: 0 }, // Start position
+                    { row: 0, col: 1 }  // Adjacent position
                 ]
             };
 
-            // Execute the action
             const result = ActionExecutor.executeAction(gameState, action);
 
-            // Verify the action was successful
             expect(result.success).toBe(true);
+            expect(result.summary).toContain('moved champion');
 
-            // Verify the champion has moved
-            const newChampion = result.newGameState.getChampionById(1, 1);
-            expect(newChampion).toBeTruthy();
-            expect(newChampion?.position).toEqual({ row: 0, col: 1 });
+            // Verify champion position was updated
+            const updatedChampion = result.newGameState.getChampionById(1, 1);
+            expect(updatedChampion?.position).toEqual({ row: 0, col: 1 });
+        });
 
-            // Verify the summary is correct
-            expect(result.summary).toContain('moved champion 1 from (0, 0) to (0, 1)');
+        it('should grant fame when exploring unexplored tile', () => {
+            // Get the initial state and verify player starts with 0 fame
+            const player = gameState.getPlayerById(1);
+            expect(player?.fame).toBe(0);
+
+            // Manually create an unexplored tile at position (3, 3) - this should be Tier 2
+            const updatedBoard = gameState.board.map((row, rowIndex) =>
+                row.map((tile, colIndex) =>
+                    rowIndex === 3 && colIndex === 3
+                        ? { ...tile, explored: false }
+                        : tile
+                )
+            );
+
+            const gameStateWithUnexploredTile = gameState.withUpdates({ board: updatedBoard });
+
+            // Verify the tile is unexplored
+            const targetTile = gameStateWithUnexploredTile.getTile({ row: 3, col: 3 });
+            expect(targetTile?.explored).toBe(false);
+
+            // Move champion to an unexplored tile
+            const action: MoveChampionAction = {
+                type: 'moveChampion',
+                playerId: 1,
+                championId: 1,
+                path: [
+                    { row: 0, col: 0 }, // Start position (home)
+                    { row: 1, col: 0 }, // Step 1
+                    { row: 2, col: 0 }, // Step 2  
+                    { row: 3, col: 0 }, // Step 3
+                    { row: 3, col: 1 }, // Step 4
+                    { row: 3, col: 2 }, // Step 5
+                    { row: 3, col: 3 }  // Final position (unexplored tile)
+                ]
+            };
+
+            const result = ActionExecutor.executeAction(gameStateWithUnexploredTile, action);
+
+            expect(result.success).toBe(true);
+            expect(result.summary).toContain('explored a new tile');
+            expect(result.summary).toContain('gained 1 Fame');
+
+            // Verify player gained fame
+            const updatedPlayer = result.newGameState.getPlayerById(1);
+            expect(updatedPlayer?.fame).toBe(1);
+
+            // Verify tile is now explored
+            const exploredTile = result.newGameState.getTile({ row: 3, col: 3 });
+            expect(exploredTile?.explored).toBe(true);
+
+            // Verify champion position was updated
+            const updatedChampion = result.newGameState.getChampionById(1, 1);
+            expect(updatedChampion?.position).toEqual({ row: 3, col: 3 });
+        });
+
+        it('should not grant fame when moving to already explored tile', () => {
+            // Get the initial state and verify player starts with 0 fame
+            const player = gameState.getPlayerById(1);
+            expect(player?.fame).toBe(0);
+
+            // Move champion to an already explored tile (Tier 1 tiles start explored)
+            const action: MoveChampionAction = {
+                type: 'moveChampion',
+                playerId: 1,
+                championId: 1,
+                path: [
+                    { row: 0, col: 0 }, // Start position
+                    { row: 0, col: 1 }  // Adjacent explored tile
+                ]
+            };
+
+            const result = ActionExecutor.executeAction(gameState, action);
+
+            expect(result.success).toBe(true);
+            expect(result.summary).not.toContain('explored a new tile');
+            expect(result.summary).not.toContain('gained 1 Fame');
+
+            // Verify player did not gain fame
+            const updatedPlayer = result.newGameState.getPlayerById(1);
+            expect(updatedPlayer?.fame).toBe(0);
         });
 
         it('should reject a move with non-adjacent tiles', () => {

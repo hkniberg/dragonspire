@@ -102,23 +102,47 @@ export class ActionExecutor {
             };
         }
 
+        // Check if destination tile is unexplored and handle exploration
+        let updatedBoard = gameState.board;
+        let updatedPlayer = player;
+        let explorationSummary = '';
+
+        if (!destinationTile.explored) {
+            // Reveal the tile
+            const revealedTile = { ...destinationTile, explored: true };
+            updatedBoard = gameState.board.map((row, rowIndex) =>
+                row.map((tile, colIndex) =>
+                    rowIndex === destination.row && colIndex === destination.col
+                        ? revealedTile
+                        : tile
+                )
+            );
+
+            // Grant 1 fame for exploring the tile
+            updatedPlayer = { ...player, fame: player.fame + 1 };
+            explorationSummary = ` and explored a new tile (gained 1 Fame)`;
+        }
+
         // Create new game state with champion moved
-        const updatedChampions = player.champions.map(c =>
+        const updatedChampions = updatedPlayer.champions.map(c =>
             c.id === action.championId
                 ? { ...c, position: destination }
                 : c
         );
 
-        const updatedPlayer = { ...player, champions: updatedChampions };
+        const finalPlayer = { ...updatedPlayer, champions: updatedChampions };
         const updatedPlayers = gameState.players.map(p =>
-            p.id === action.playerId ? updatedPlayer : p
+            p.id === action.playerId ? finalPlayer : p
         );
 
-        const newGameState = gameState.withUpdates({ players: updatedPlayers });
+        const newGameState = gameState.withUpdates({
+            board: updatedBoard,
+            players: updatedPlayers
+        });
 
         return {
             newGameState,
-            summary: `Player ${action.playerId} moved champion ${action.championId} from (${champion.position.row}, ${champion.position.col}) to (${destination.row}, ${destination.col})`,
+            summary: `Player ${action.playerId} moved champion ${action.championId} from (${champion.position.row}, ${champion.position.col}) to (${destination.row}, ${destination.col})${explorationSummary}`,
             success: true
         };
     }
