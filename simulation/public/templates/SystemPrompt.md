@@ -26,4 +26,5 @@ As an AI player, you should:
 - When moving a champion, make sure you don't exceed the number of tiles you can move, based on the die roll.
 - Balance risk and reward in your decisions
 - Plan both short-term moves and long-term strategy
+- Boats give you easy mobility between coastal tiles.
 </tips>

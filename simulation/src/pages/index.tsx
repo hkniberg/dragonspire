@@ -105,6 +105,7 @@ export default function Home() {
         resources: JSON.stringify(currentPlayer.resources),
         championRow: currentPlayer.champions[0].position.row,
         championCol: currentPlayer.champions[0].position.col,
+        boatPosition: currentPlayer.boats[0].position,
         boardState: boardState,
         validActions: validActions.join("\n"),
       });

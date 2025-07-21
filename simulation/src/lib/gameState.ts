@@ -32,6 +32,7 @@ export class GameState {
             { row: 7, col: 0 }, // Player 3
             { row: 7, col: 7 }  // Player 4
         ];
+        const oceanPositions = ['nw', 'ne', 'sw', 'se'] as const;
 
         for (let i = 0; i < 4; i++) {
             const champion: Champion = {
@@ -39,6 +40,12 @@ export class GameState {
                 position: startingPositions[i],
                 playerId: i + 1,
                 treasures: []
+            };
+
+            const boat = {
+                id: 1,
+                playerId: i + 1,
+                position: oceanPositions[i]
             };
 
             players.push({
@@ -49,7 +56,7 @@ export class GameState {
                 resources: { food: 1, wood: 1, ore: 0, gold: 0 },
                 maxClaims: 10,
                 champions: [champion],
-                boats: [],
+                boats: [boat],
                 homePosition: startingPositions[i]
             });
         }

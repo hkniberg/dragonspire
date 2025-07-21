@@ -6,6 +6,7 @@
 **Your Might:** {{might}}
 **Your Resources:** {{resources}}
 **Champion Position:** Row {{championRow}}, Col {{championCol}}
+**Boat Position (nw, ne, sw, se):** {{boatPosition}}
 </current-situation>
 
 <board-state>
