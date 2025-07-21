@@ -65,7 +65,7 @@ In Lords of Doomspire, you are a lord commanding champions from your island cast
 
 The board is organized into 3 tiers. The outer two layers are Tier 1, the inner middle layer is Tier 2, and the center 4 tiles are Tier 3. High tier means higher risk but higher reward. The dragon lives in one of the Tier 3 tiles.
 
-- **Home tiles** (4 tiles): These are corner tiles that representing the home of the player, the landing spot where the player's champions start. They are non-combat zones, and permanently owned (claimed) by the player.
+- **Home tiles** (4 tiles): These are corner tiles that representing the home of the player, the landing spot where the player's champions start. They are non-combat zones, and are automatically claimed by the player from the start of the game. This claim is permanent and cannot be removed by any means (conquest, blockade, etc.).
 - **Special locations**:
   - **Chapel tile**: Pray at the chapel to reset your fame to 0. This is a non-combat zone.
   - **Trader tile**: Purchase any resource for 2 gold per resource. This is a non-combat zone.
@@ -177,7 +177,7 @@ Each action die can be used for ONE of the following:
 - You can collect from multiple tiles, up to the amount printed on each tile.
 - You can't harvest from tiles that you claimed during this turn - it takes one turn for a newly claimed tile to start producing resources.
 - If an opposing champion is on one of your tiles, you cannot harvest from it.
-- Your starting tile is a special resource til. It can always provide a wood OR a food, but not both, and it can't be blockaded or conqured by another champion.
+- Your starting home tile is a special resource tile. It can always provide a wood OR a food, but not both, and it can't be blockaded or conquered by another champion. It is permanently claimed by you from the start of the game.
 
 **Examples**:
 
