@@ -3,7 +3,7 @@
 import { GameState } from '../game/GameState';
 import { GameAction, ResourceType } from '../lib/types';
 import { ExecuteActionFunction, Player, PlayerType } from './Player';
-import { generatePath, getValidMoveDirections } from './PlayerUtils';
+import { generateAllPaths, getReachableTiles } from './PlayerUtils';
 
 export class RandomPlayer implements Player {
     private name: string;
@@ -71,34 +71,58 @@ export class RandomPlayer implements Player {
         const randomChampionIndex = Math.floor(Math.random() * player.champions.length);
         const champion = player.champions[randomChampionIndex];
 
-        // Get all valid directions this champion can move in
-        const validDirections = getValidMoveDirections(gameState, champion.position, dieValue);
+        // Get all reachable tiles within movement range, excluding tiles with other champions
+        const reachableTiles = getReachableTiles(
+            gameState,
+            champion.position,
+            dieValue,
+            champion.id,
+            playerId
+        );
 
-        if (validDirections.length === 0) {
-            return { success: false, summary: 'No valid directions to move', newGameState: gameState };
+        if (reachableTiles.length === 0) {
+            return { success: false, summary: 'No reachable tiles available', newGameState: gameState };
         }
 
-        // Pick a random valid direction
-        const randomDirectionChoice = validDirections[Math.floor(Math.random() * validDirections.length)];
-        const { direction, maxSteps } = randomDirectionChoice;
+        // Pick a random reachable tile
+        const randomTileIndex = Math.floor(Math.random() * reachableTiles.length);
+        const targetTile = reachableTiles[randomTileIndex];
 
-        // Generate path for the full die value or maximum possible steps
-        const stepsToTake = Math.min(dieValue, maxSteps);
-        const path = generatePath(champion.position, direction, stepsToTake);
+        // Calculate the Manhattan distance to determine minimum steps needed
+        const minSteps = Math.abs(targetTile.row - champion.position.row) +
+            Math.abs(targetTile.col - champion.position.col);
+
+        // Generate all possible paths to the target tile
+        const allPaths = generateAllPaths(
+            gameState,
+            champion.position,
+            targetTile,
+            dieValue,
+            champion.id,
+            playerId
+        );
+
+        if (allPaths.length === 0) {
+            return { success: false, summary: 'No valid paths to target tile', newGameState: gameState };
+        }
+
+        // Pick a random path
+        const randomPathIndex = Math.floor(Math.random() * allPaths.length);
+        const selectedPath = allPaths[randomPathIndex];
 
         // Execute the move
         const moveAction: GameAction = {
             type: 'moveChampion',
             playerId: playerId,
             championId: champion.id,
-            path: path
+            path: selectedPath
         };
 
         const result = executeAction(moveAction);
         if (result.success) {
             return {
                 ...result,
-                summary: `Moved champion ${champion.id} ${direction.name} for ${stepsToTake} steps`
+                summary: `Moved champion ${champion.id} to (${targetTile.row},${targetTile.col}) via path with ${selectedPath.length - 1} steps`
             };
         } else {
             return result;

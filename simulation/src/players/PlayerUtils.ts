@@ -104,4 +104,160 @@ export function generatePath(
     }
 
     return path;
+}
+
+/**
+ * Check if there are any champions (other than the specified one) on a given position
+ */
+export function hasOtherChampionsAtPosition(
+    gameState: GameState,
+    position: Position,
+    excludeChampionId?: number,
+    excludePlayerId?: number
+): boolean {
+    for (const player of gameState.players) {
+        for (const champion of player.champions) {
+            if (champion.position.row === position.row && champion.position.col === position.col) {
+                // Skip if this is the champion we're excluding
+                if (excludeChampionId && champion.id === excludeChampionId) {
+                    continue;
+                }
+                // Skip if this is the player we're excluding
+                if (excludePlayerId && champion.playerId === excludePlayerId) {
+                    continue;
+                }
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * Get all reachable tiles within movement range, excluding tiles with other champions
+ */
+export function getReachableTiles(
+    gameState: GameState,
+    championPosition: Position,
+    dieValue: number,
+    excludeChampionId?: number,
+    excludePlayerId?: number
+): Position[] {
+    const reachableTiles: Position[] = [];
+
+    // Use breadth-first search to find all reachable tiles
+    const visited = new Set<string>();
+    const queue: Array<{ position: Position; steps: number }> = [
+        { position: championPosition, steps: 0 }
+    ];
+
+    visited.add(`${championPosition.row},${championPosition.col}`);
+
+    while (queue.length > 0) {
+        const { position, steps } = queue.shift()!;
+
+        // Add current position if it's not the starting position and has no other champions
+        if (steps > 0 && !hasOtherChampionsAtPosition(gameState, position, excludeChampionId, excludePlayerId)) {
+            reachableTiles.push(position);
+        }
+
+        // If we've reached the maximum steps, don't explore further
+        if (steps >= dieValue) {
+            continue;
+        }
+
+        // Explore all four directions
+        for (const direction of DIRECTIONS) {
+            const nextPos = {
+                row: position.row + direction.row,
+                col: position.col + direction.col
+            };
+
+            const key = `${nextPos.row},${nextPos.col}`;
+
+            // Skip if already visited or out of bounds
+            if (visited.has(key) || !isValidBoardPosition(nextPos)) {
+                continue;
+            }
+
+            // Check if tile exists
+            const tile = gameState.getTile(nextPos);
+            if (!tile) {
+                continue;
+            }
+
+            visited.add(key);
+            queue.push({ position: nextPos, steps: steps + 1 });
+        }
+    }
+
+    return reachableTiles;
+}
+
+/**
+ * Generate all possible paths from start to target position
+ * Uses a simple recursive approach to find all valid paths
+ */
+export function generateAllPaths(
+    gameState: GameState,
+    startPosition: Position,
+    targetPosition: Position,
+    maxSteps: number,
+    excludeChampionId?: number,
+    excludePlayerId?: number
+): Position[][] {
+    const paths: Position[][] = [];
+
+    function findPaths(currentPos: Position, currentPath: Position[], stepsUsed: number) {
+        // If we've reached the target, add this path
+        if (currentPos.row === targetPosition.row && currentPos.col === targetPosition.col) {
+            paths.push([...currentPath]);
+            return;
+        }
+
+        // If we've used all steps, stop
+        if (stepsUsed >= maxSteps) {
+            return;
+        }
+
+        // Try all four directions
+        for (const direction of DIRECTIONS) {
+            const nextPos = {
+                row: currentPos.row + direction.row,
+                col: currentPos.col + direction.col
+            };
+
+            // Check if valid position
+            if (!isValidBoardPosition(nextPos)) {
+                continue;
+            }
+
+            // Check if tile exists
+            const tile = gameState.getTile(nextPos);
+            if (!tile) {
+                continue;
+            }
+
+            // Check if we've already visited this position in this path
+            const alreadyVisited = currentPath.some(pos =>
+                pos.row === nextPos.row && pos.col === nextPos.col
+            );
+
+            if (alreadyVisited) {
+                continue;
+            }
+
+            // Check if there are other champions at this position (except at target)
+            const isTarget = nextPos.row === targetPosition.row && nextPos.col === targetPosition.col;
+            if (!isTarget && hasOtherChampionsAtPosition(gameState, nextPos, excludeChampionId, excludePlayerId)) {
+                continue;
+            }
+
+            // Continue searching from this position
+            findPaths(nextPos, [...currentPath, nextPos], stepsUsed + 1);
+        }
+    }
+
+    findPaths(startPosition, [startPosition], 0);
+    return paths;
 } 

@@ -42,6 +42,15 @@ Open [http://localhost:3000](http://localhost:3000) in your browser. Enter your 
 ```bash
 # Run a headless game simulation
 node run-test.js
+
+# Run a single turn for testing
+node run-test.js --single-turn
+
+# Run a specific number of turns
+node run-test.js --turns 5
+
+# Run a complete game
+node run-test.js --complete
 ```
 
 The CLI mode supports automated playtesting with AI players for game balance analysis.

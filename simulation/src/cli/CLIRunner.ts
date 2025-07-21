@@ -6,6 +6,7 @@ import { RandomPlayer } from '../players/RandomPlayer';
 export interface CLIConfig {
     maxRounds?: number;
     singleTurnTest?: boolean;
+    specificTurns?: number;
     playerNames?: string[];
 }
 
@@ -55,6 +56,61 @@ export class CLIRunner {
     }
 
     /**
+     * Run a specific number of turns
+     */
+    public static async runSpecificTurns(config: CLIConfig = {}): Promise<void> {
+        const numTurns = config.specificTurns || 1;
+        console.log(`=== Lords of Doomspire - ${numTurns} Turn(s) Simulation ===\n`);
+
+        // Create random players
+        const playerNames = config.playerNames || ['Alice', 'Bob', 'Charlie', 'Diana'];
+        const players = playerNames.map(name => new RandomPlayer(name));
+
+        // Create game session with enough rounds to complete the requested turns
+        // We need at least numTurns / players.length rounds, but let's be generous
+        const maxRounds = Math.max(Math.ceil(numTurns / players.length), 10);
+        const sessionConfig: GameSessionConfig = {
+            players: players,
+            maxRounds: maxRounds
+        };
+
+        const session = new GameSession(sessionConfig);
+
+        try {
+            session.start();
+
+            // Execute the specified number of turns
+            for (let i = 0; i < numTurns; i++) {
+                await session.executeTurn();
+
+                // Check if game ended early due to victory condition
+                if (session.getGameState().gameEnded) {
+                    console.log(`\nGame ended after ${i + 1} turn(s) due to victory condition.`);
+                    break;
+                }
+            }
+
+            console.log(`\n=== ${numTurns} Turn(s) Simulation Complete ===`);
+            console.log('✅ Specific turns simulation successful!');
+
+            // Print summary
+            const actionLog = session.getActionLog();
+            console.log(`\nTotal turns executed: ${actionLog.length}`);
+
+            if (actionLog.length > 0) {
+                console.log('Turn summary:');
+                actionLog.forEach((turn, index) => {
+                    console.log(`  Turn ${index + 1}: ${turn.playerName} - ${turn.turnSummary}`);
+                });
+            }
+
+        } catch (error) {
+            console.error(`❌ ${numTurns} turn(s) simulation failed:`, error);
+            throw error;
+        }
+    }
+
+    /**
      * Run a complete game simulation
      */
     public static async runCompleteGame(config: CLIConfig = {}): Promise<void> {
@@ -94,6 +150,10 @@ export class CLIRunner {
                 case '--single-turn':
                     config.singleTurnTest = true;
                     break;
+                case '--turns':
+                    config.specificTurns = parseInt(args[i + 1]);
+                    i++; // Skip next argument
+                    break;
                 case '--max-rounds':
                     config.maxRounds = parseInt(args[i + 1]);
                     i++; // Skip next argument
@@ -108,6 +168,8 @@ export class CLIRunner {
         try {
             if (config.singleTurnTest) {
                 await CLIRunner.runSingleTurnTest(config);
+            } else if (config.specificTurns) {
+                await CLIRunner.runSpecificTurns(config);
             } else {
                 await CLIRunner.runCompleteGame(config);
             }
