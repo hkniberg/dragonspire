@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "test-turn": "node run-test.js --single-turn",
+    "simulate": "node run-test.js --complete"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.56.0",

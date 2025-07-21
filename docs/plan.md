@@ -32,7 +32,7 @@
 
 ## Development Roadmap
 
-### Milestone 1: Single Turn Execution (Headless, Random Player)
+### Milestone 1: Single Turn Execution (Headless, Random Player) ✅ **COMPLETED**
 
 Implement core game engine architecture, with the ability to execute one player turn using a random decision-making player in headless mode. This validates that the fundamental game simulation mechanics work correctly. As part of this we create the new interfaces and new directory structure, and start migrating the existing code to the new structure.
 
