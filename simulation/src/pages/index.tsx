@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActionLog } from "../components/ActionLog";
 import { ControlPanel } from "../components/ControlPanel";
 import { GameBoard } from "../components/GameBoard";
@@ -50,57 +50,47 @@ export default function GameSimulation() {
   const [autoPlaySpeed, setAutoPlaySpeed] = useState(1000); // ms between turns
   const [showActionLog, setShowActionLog] = useState(false);
 
+  // Ref to hold the autoplay interval
+  const autoPlayInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Initialize component only on client side
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Auto-play effect
+  // Simple autoplay effect
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
+    // Clear any existing interval
+    if (autoPlayInterval.current) {
+      clearInterval(autoPlayInterval.current);
+      autoPlayInterval.current = null;
+    }
 
-    if (autoPlay && simulationState === "playing" && !isExecutingTurn) {
-      timeoutId = setTimeout(async () => {
-        await executeNextTurn();
+    // Start new interval if autoplay is enabled
+    if (autoPlay && simulationState === "playing") {
+      autoPlayInterval.current = setInterval(() => {
+        executeNextTurn();
       }, autoPlaySpeed);
     }
 
+    // Cleanup function
     return () => {
-      if (timeoutId) {
-        clearTimeout(timeoutId);
+      if (autoPlayInterval.current) {
+        clearInterval(autoPlayInterval.current);
+        autoPlayInterval.current = null;
       }
     };
-  }, [autoPlay, simulationState, isExecutingTurn, autoPlaySpeed]);
+  }, [autoPlay, simulationState, autoPlaySpeed]);
 
-  const startNewGame = () => {
-    // Create 4 random players
-    const players = [
-      new RandomPlayer("Alice"),
-      new RandomPlayer("Bob"),
-      new RandomPlayer("Charlie"),
-      new RandomPlayer("Diana"),
-    ];
-
-    // Create game session
-    const sessionConfig: GameSessionConfig = {
-      players: players,
-      maxRounds: 20, // Reasonable limit for web interface
+  // Cleanup interval on unmount
+  useEffect(() => {
+    return () => {
+      if (autoPlayInterval.current) {
+        clearInterval(autoPlayInterval.current);
+        autoPlayInterval.current = null;
+      }
     };
-
-    const session = new GameSession(sessionConfig);
-    session.start();
-
-    setGameSession(session);
-    setGameState(session.getGameState());
-    setSimulationState("playing");
-    setActionLog([]);
-    setAutoPlay(false);
-
-    console.log(
-      "New game started with players:",
-      players.map((p) => p.getName())
-    );
-  };
+  }, []);
 
   const executeNextTurn = async () => {
     if (!gameSession || simulationState !== "playing" || isExecutingTurn) {
@@ -130,6 +120,36 @@ export default function GameSimulation() {
     } finally {
       setIsExecutingTurn(false);
     }
+  };
+
+  const startNewGame = () => {
+    // Create 4 random players
+    const players = [
+      new RandomPlayer("Alice"),
+      new RandomPlayer("Bob"),
+      new RandomPlayer("Charlie"),
+      new RandomPlayer("Diana"),
+    ];
+
+    // Create game session
+    const sessionConfig: GameSessionConfig = {
+      players: players,
+      maxRounds: 20, // Reasonable limit for web interface
+    };
+
+    const session = new GameSession(sessionConfig);
+    session.start();
+
+    setGameSession(session);
+    setGameState(session.getGameState());
+    setSimulationState("playing");
+    setActionLog([]);
+    setAutoPlay(false);
+
+    console.log(
+      "New game started with players:",
+      players.map((p) => p.getName())
+    );
   };
 
   const toggleAutoPlay = () => {
