@@ -1,33 +1,19 @@
 # Lords of Doomspire
 
-A work-in-progress strategic board game design project featuring digital simulation and AI-powered gameplay assistance.
+A strategic board game design project with digital simulation for playtesting and AI-powered gameplay.
 
-## Overview
+## What is this?
 
-**Lords of Doomspire** is a 2-8 player (4 players for now) strategic board game where players command champions to explore a dangerous island, gather resources, and ultimately seek to defeat the ancient dragon at Doomspire. It is inspired by games like Talisman, Catan, Agricola, and Game of Thrones (the board game).
+**Lords of Doomspire** is a 4-player strategic board game where players command champions to explore a dangerous island, gather resources, and ultimately defeat a dragon. This repository contains the complete game design and a TypeScript simulation system that supports both web UI and headless CLI execution for AI-powered playtesting.
 
-This repository contains both the complete game design documentation and a work-in-progress digital simulation for playtesting and development. Assets will be added as the game is developed.
+## Key Documentation
 
-### Game Features
+- **[Game Overview](docs/game-overview.md)** - Core game concept and mechanics
+- **[Game Rules](docs/game-rules.md)** - Complete rulebook (source of truth)
+- **[Architecture](docs/architecture.md)** - Simulation system design
+- **[Development Plan](docs/plan.md)** - Current progress and roadmap
 
-- **Resource Management**: Collect Food, Wood, Ore, and Gold through exploration and trading
-- **Champion-Based Exploration**: Deploy champions across an 8x8 grid to discover new territories
-- **Combat System**: Fight monsters, other players, and ultimately face the dragon
-- **Multiple Victory Paths**:
-  - **Combat Victory**: Defeat the dragon in battle
-  - **Diplomatic Victory**: Reach max Fame and recruit the dragon.
-  - **Economic Victory**: Control all starred resource tiles and lure the dragon to your side.
-- **Building & Expansion**: Construct buildings in your castle to gain strategic advantages
-
-## Project Structure
-
-```
-doomspire/
-├── docs/                          # Game Design Documentation│
-└── simulation/                    # Digital Game Simulation
-```
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
@@ -35,40 +21,31 @@ doomspire/
 - npm or yarn
 - Anthropic API key (for AI features)
 
-### Quick Start
+### Installation
 
-1. **Clone the repository**:
+```bash
+git clone <repository-url>
+cd doomspire/simulation
+npm install
+```
 
-   ```bash
-   git clone <repository-url>
-   cd doomspire
-   ```
+### Running the Web UI
 
-2. **Set up the simulation**:
+```bash
+npm run dev
+```
 
-   ```bash
-   cd simulation
-   npm install
-   ```
+Open [http://localhost:3000](http://localhost:3000) in your browser. Enter your Anthropic API key when prompted (stays local in browser).
 
-3. **AI integration** (optional):
+### Running CLI Simulation
 
-   The simulation includes AI functionality that runs client-side in your browser. Simply enter your Anthropic API key in the UI when prompted. Your API key stays in your browser and is never sent to our servers.
+```bash
+# Run a headless game simulation
+node run-test.js
+```
 
-4. **Start the development server**:
+The CLI mode supports automated playtesting with AI players for game balance analysis.
 
-   ```bash
-   npm run dev
-   ```
+## Live Demo
 
-5. **Open your browser**: Navigate to [http://localhost:3000](http://localhost:3000)
-
-## Game Rules
-
-The complete game rules are documented in [`docs/game-rules.md`](./docs/game-rules.md). This serves as the authoritative source for all game mechanics.
-
-**Note**: A Git pre-commit hook automatically copies the latest game rules to `simulation/public/templates/`, which is used by AI in the simulation.
-
-## Simulation
-
-The simulation is auto-deployed to https://doomspire.vercel.app/
+The simulation is deployed at: https://doomspire.vercel.app/
