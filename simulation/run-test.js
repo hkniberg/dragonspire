@@ -4,7 +4,7 @@ const { execSync } = require("child_process");
 function runSingleTurn() {
   console.log("🎮 Running single turn test...\n");
   try {
-    execSync("npx tsx src/cli/CLIRunner.ts --single-turn", {
+    execSync("./node_modules/.bin/tsx src/cli/CLIRunner.ts --single-turn", {
       stdio: "inherit",
     });
   } catch (error) {
@@ -16,7 +16,9 @@ function runSingleTurn() {
 function runCompleteGame() {
   console.log("🎮 Running complete game simulation...\n");
   try {
-    execSync("npx tsx src/cli/CLIRunner.ts", { stdio: "inherit" });
+    execSync("./node_modules/.bin/tsx src/cli/CLIRunner.ts", {
+      stdio: "inherit",
+    });
   } catch (error) {
     console.error("❌ Failed to run complete game simulation");
     process.exit(1);
