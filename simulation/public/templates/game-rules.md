@@ -65,7 +65,7 @@ In Lords of Doomspire, you are a lord commanding champions from your island cast
 
 The board is organized into 3 tiers. The outer two layers are Tier 1, the inner middle layer is Tier 2, and the center 4 tiles are Tier 3. High tier means higher risk but higher reward. The dragon lives in one of the Tier 3 tiles.
 
-- **Home tiles** (4 tiles): These are corner tiles that representing the home of the player, the landing spot where the player's champions start. They are non-combat zones, and are automatically claimed by the player from the start of the game. This claim is permanent and cannot be removed by any means (conquest, blockade, etc.).
+- **Home tiles** (4 tiles): These are corner tiles that representing the home of the player, the landing spot where the player's champions start. They are non-combat zones, and are automatically claimed by the player from the start of the game. This claim is permanent and cannot be removed.
 - **Special locations**:
   - **Chapel tile**: Pray at the chapel to reset your fame to 0. This is a non-combat zone.
   - **Trader tile**: Purchase any resource for 2 gold per resource. This is a non-combat zone.
