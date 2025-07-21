@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "check": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "test-turn": "node run-test.js --single-turn",
     "simulate": "node run-test.js --complete"
   },
@@ -18,10 +20,13 @@
     "react-dom": "19.1.0"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "esbuild-wasm": "^0.25.8",
+    "jest": "^30.0.4",
+    "ts-jest": "^29.4.0",
     "tsx": "^4.20.3",
     "typescript": "^5"
   }
