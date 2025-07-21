@@ -4,7 +4,10 @@ import { AIMoveResult } from "../components/AIMoveResult";
 import { ApiKeyModal } from "../components/ApiKeyModal";
 import { GameBoard } from "../components/GameBoard";
 import { PromptViewer } from "../components/PromptViewer";
-import { GameState, rollMultipleD3 } from "../lib/gameState";
+import {
+  GameStateDeprecated,
+  rollMultipleD3,
+} from "../lib/gameStateDeprecated";
 import { Claude } from "../lib/llm";
 import { templateProcessor } from "../lib/templateProcessor";
 
@@ -36,7 +39,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
 
   // AI Move functionality
-  const [gameState, setGameState] = useState<GameState | null>(null);
+  const [gameState, setGameState] = useState<GameStateDeprecated | null>(null);
   const [aiResponse, setAiResponse] = useState<string>("");
   const [lastDiceRolls, setLastDiceRolls] = useState<number[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
@@ -61,7 +64,7 @@ export default function Home() {
 
   // Initialize game state only on client side
   useEffect(() => {
-    setGameState(new GameState());
+    setGameState(new GameStateDeprecated());
     setMounted(true);
   }, []);
 

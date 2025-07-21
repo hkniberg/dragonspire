@@ -8,7 +8,7 @@ import type {
     Tile
 } from './types';
 
-export class GameState {
+export class GameStateDeprecated {
     public board: Tile[][];
     public players: Player[];
     public currentPlayerIndex: number;

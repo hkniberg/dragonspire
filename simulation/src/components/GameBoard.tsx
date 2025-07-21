@@ -1,9 +1,9 @@
-import type { GameState } from "../lib/gameState";
+import type { GameStateDeprecated } from "../lib/gameStateDeprecated";
 import { OceanZoneComponent, oceanZones } from "./OceanZone";
 import { TileComponent } from "./Tile";
 
 interface GameBoardProps {
-  gameState: GameState;
+  gameState: GameStateDeprecated;
   debugMode?: boolean;
 }
 
