@@ -284,9 +284,9 @@ describe('ActionExecutor', () => {
             const tile = result.newGameState.getTile({ row: 0, col: 0 });
             expect(tile?.claimedBy).toBe(1);
 
-            // Verify player's claim count was reduced
+            // Verify player's maxClaims remains unchanged (it's a fixed maximum)
             const player = result.newGameState.getPlayerById(1);
-            expect(player?.maxClaims).toBe(2); // Original was 3, reduced by 1
+            expect(player?.maxClaims).toBe(3); // Should remain the same
 
             // Verify the summary is correct
             expect(result.summary).toContain('claimed resource tile at (0, 0)');

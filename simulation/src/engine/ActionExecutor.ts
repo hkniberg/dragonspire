@@ -325,10 +325,14 @@ export class ActionExecutor {
         }
 
         // Check if player has claims available
-        if (player.maxClaims <= 0) {
+        const currentClaims = gameState.board
+            .flat()
+            .filter(tile => tile.claimedBy === action.playerId).length;
+
+        if (currentClaims >= player.maxClaims) {
             return {
                 newGameState: gameState,
-                summary: `Player ${action.playerId} has no claims available`,
+                summary: `Player ${action.playerId} has reached maximum claims (${player.maxClaims})`,
                 success: false
             };
         }
@@ -343,11 +347,8 @@ export class ActionExecutor {
             )
         );
 
-        // Reduce player's available claims
-        const updatedPlayer = { ...player, maxClaims: player.maxClaims - 1 };
-        const updatedPlayers = gameState.players.map(p =>
-            p.id === action.playerId ? updatedPlayer : p
-        );
+        // Player maxClaims stays the same - it's a fixed maximum
+        const updatedPlayers = gameState.players.map(p => p);
 
         const newGameState = gameState.withUpdates({
             board: updatedBoard,
