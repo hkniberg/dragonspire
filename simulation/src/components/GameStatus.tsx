@@ -1,0 +1,48 @@
+import React from "react";
+import { GameState } from "../game/GameState";
+
+type SimulationState = "setup" | "playing" | "finished";
+
+interface GameStatusProps {
+  gameState: GameState;
+  simulationState: SimulationState;
+  actionLogLength: number;
+}
+
+export const GameStatus: React.FC<GameStatusProps> = ({
+  gameState,
+  simulationState,
+  actionLogLength,
+}) => {
+  return (
+    <div style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>
+      <div>
+        <strong>Round:</strong> {gameState.currentRound} |
+        <strong> Current Player:</strong>{" "}
+        <span
+          style={{
+            color: ["#e74c3c", "#3498db", "#2ecc71", "#f39c12"][
+              (gameState.getCurrentPlayer().id - 1) % 4
+            ],
+            fontWeight: "bold",
+          }}
+        >
+          {gameState.getCurrentPlayer().name}
+        </span>{" "}
+        |<strong> Game Status:</strong> {simulationState}
+        {simulationState === "finished" && gameState.winner && (
+          <span style={{ color: "#28a745", fontWeight: "bold" }}>
+            {" "}
+            | 🎉 Winner:{" "}
+            {gameState.players.find((p) => p.id === gameState.winner)?.name}
+          </span>
+        )}
+      </div>
+      {actionLogLength > 0 && (
+        <div>
+          <strong>Total Turns:</strong> {actionLogLength}
+        </div>
+      )}
+    </div>
+  );
+};

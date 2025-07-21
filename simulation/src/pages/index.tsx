@@ -1,12 +1,14 @@
 import Head from "next/head";
 import { useEffect, useState } from "react";
+import { ActionLog } from "../components/ActionLog";
+import { ControlPanel } from "../components/ControlPanel";
 import { GameBoard } from "../components/GameBoard";
+import { GameStatus } from "../components/GameStatus";
 import { GameSession, GameSessionConfig } from "../engine/GameSession";
 import { GameState } from "../game/GameState";
-import { GameLogger } from "../lib/gameLogger";
 import { RandomPlayer } from "../players/RandomPlayer";
 
-// Simple spinner for loading states
+// Simple spinner for loading states (used only in main component now)
 const Spinner = ({ size = 20 }: { size?: number }) => (
   <div
     style={{
@@ -200,264 +202,31 @@ export default function GameSimulation() {
         </h1>
 
         {/* Control Panel */}
-        <div
-          style={{
-            marginBottom: "20px",
-            padding: "15px",
-            backgroundColor: "rgba(255, 255, 255, 0.8)",
-            borderRadius: "8px",
-            border: "1px solid #ddd",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              gap: "10px",
-              alignItems: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            {simulationState === "setup" && (
-              <button
-                onClick={startNewGame}
-                style={{
-                  padding: "10px 20px",
-                  backgroundColor: "#28a745",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  fontSize: "16px",
-                  cursor: "pointer",
-                  fontWeight: "bold",
-                }}
-              >
-                🎮 Start New Game (4 Random Players)
-              </button>
-            )}
+        <ControlPanel
+          simulationState={simulationState}
+          isExecutingTurn={isExecutingTurn}
+          autoPlay={autoPlay}
+          autoPlaySpeed={autoPlaySpeed}
+          showActionLog={showActionLog}
+          onStartNewGame={startNewGame}
+          onExecuteNextTurn={executeNextTurn}
+          onToggleAutoPlay={toggleAutoPlay}
+          onSetAutoPlaySpeed={setAutoPlaySpeed}
+          onResetGame={resetGame}
+          onToggleActionLog={() => setShowActionLog(!showActionLog)}
+        />
 
-            {simulationState === "playing" && (
-              <>
-                <button
-                  onClick={executeNextTurn}
-                  disabled={isExecutingTurn || autoPlay}
-                  style={{
-                    padding: "10px 20px",
-                    backgroundColor:
-                      isExecutingTurn || autoPlay ? "#ccc" : "#007bff",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    fontSize: "16px",
-                    cursor:
-                      isExecutingTurn || autoPlay ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {isExecutingTurn ? (
-                    <>
-                      <Spinner />
-                      Executing Turn...
-                    </>
-                  ) : (
-                    "▶️ Next Turn"
-                  )}
-                </button>
-
-                <button
-                  onClick={toggleAutoPlay}
-                  disabled={isExecutingTurn}
-                  style={{
-                    padding: "10px 20px",
-                    backgroundColor: autoPlay ? "#dc3545" : "#ffc107",
-                    color: autoPlay ? "white" : "#000",
-                    border: "none",
-                    borderRadius: "4px",
-                    fontSize: "16px",
-                    cursor: isExecutingTurn ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {autoPlay ? "⏸️ Pause Auto-Play" : "⏩ Auto-Play"}
-                </button>
-
-                {autoPlay && (
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "5px",
-                    }}
-                  >
-                    <label style={{ fontSize: "14px" }}>Speed:</label>
-                    <select
-                      value={autoPlaySpeed}
-                      onChange={(e) => setAutoPlaySpeed(Number(e.target.value))}
-                      style={{
-                        padding: "5px",
-                        borderRadius: "4px",
-                        border: "1px solid #ccc",
-                      }}
-                    >
-                      <option value={500}>Fast (0.5s)</option>
-                      <option value={1000}>Normal (1s)</option>
-                      <option value={2000}>Slow (2s)</option>
-                      <option value={5000}>Very Slow (5s)</option>
-                    </select>
-                  </div>
-                )}
-              </>
-            )}
-
-            {(simulationState === "playing" ||
-              simulationState === "finished") && (
-              <>
-                <button
-                  onClick={resetGame}
-                  style={{
-                    padding: "10px 20px",
-                    backgroundColor: "#6c757d",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    fontSize: "16px",
-                    cursor: "pointer",
-                  }}
-                >
-                  🔄 Reset Game
-                </button>
-
-                <button
-                  onClick={() => setShowActionLog(!showActionLog)}
-                  style={{
-                    padding: "10px 20px",
-                    backgroundColor: showActionLog ? "#17a2b8" : "#6c757d",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "4px",
-                    fontSize: "16px",
-                    cursor: "pointer",
-                  }}
-                >
-                  {showActionLog ? "📋 Hide Log" : "📋 Show Log"}
-                </button>
-
-                <a
-                  href="/old"
-                  style={{
-                    display: "inline-block",
-                    padding: "10px 20px",
-                    backgroundColor: "#6f42c1",
-                    color: "white",
-                    textDecoration: "none",
-                    borderRadius: "4px",
-                    fontSize: "16px",
-                  }}
-                >
-                  🤖 Old AI Interface
-                </a>
-              </>
-            )}
-          </div>
-
-          {/* Game Status */}
-          {gameState && (
-            <div style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>
-              <div>
-                <strong>Round:</strong> {gameState.currentRound} |
-                <strong> Current Player:</strong>{" "}
-                <span
-                  style={{
-                    color: ["#e74c3c", "#3498db", "#2ecc71", "#f39c12"][
-                      (gameState.getCurrentPlayer().id - 1) % 4
-                    ],
-                    fontWeight: "bold",
-                  }}
-                >
-                  {gameState.getCurrentPlayer().name}
-                </span>{" "}
-                |<strong> Game Status:</strong> {simulationState}
-                {simulationState === "finished" && gameState.winner && (
-                  <span style={{ color: "#28a745", fontWeight: "bold" }}>
-                    {" "}
-                    | 🎉 Winner:{" "}
-                    {
-                      gameState.players.find((p) => p.id === gameState.winner)
-                        ?.name
-                    }
-                  </span>
-                )}
-              </div>
-              {actionLog.length > 0 && (
-                <div>
-                  <strong>Total Turns:</strong> {actionLog.length}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        {/* Game Status */}
+        {gameState && (
+          <GameStatus
+            gameState={gameState}
+            simulationState={simulationState}
+            actionLogLength={actionLog.length}
+          />
+        )}
 
         {/* Action Log */}
-        {showActionLog && actionLog.length > 0 && (
-          <div
-            style={{
-              marginBottom: "20px",
-              padding: "15px",
-              backgroundColor: "rgba(255, 255, 255, 0.9)",
-              borderRadius: "8px",
-              border: "1px solid #ddd",
-              maxHeight: "400px",
-              overflowY: "auto",
-            }}
-          >
-            <h3 style={{ marginTop: 0, color: "#2c3e50" }}>
-              📋 Detailed Action Log
-            </h3>
-            <div
-              style={{
-                fontFamily: "monospace",
-                fontSize: "12px",
-                lineHeight: "1.4",
-              }}
-            >
-              {actionLog.map((turn, index) => {
-                const detailedTurn =
-                  GameLogger.enhanceWithDetailedActions(turn);
-                const messages = GameLogger.getCliTurnMessages(detailedTurn);
-
-                return (
-                  <div
-                    key={index}
-                    style={{
-                      marginBottom: "15px",
-                      padding: "10px",
-                      backgroundColor: "#f8f9fa",
-                      borderRadius: "4px",
-                      border: "1px solid #e9ecef",
-                    }}
-                  >
-                    {messages.map((message, msgIndex) => (
-                      <div
-                        key={msgIndex}
-                        style={{
-                          marginBottom: "2px",
-                          color: message.includes("---")
-                            ? "#2c3e50"
-                            : message.includes("succeeded")
-                            ? "#28a745"
-                            : message.includes("failed")
-                            ? "#dc3545"
-                            : message.includes("Summary:")
-                            ? "#6f42c1"
-                            : "#495057",
-                        }}
-                      >
-                        {message}
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        <ActionLog actionLog={actionLog} isVisible={showActionLog} />
 
         {/* Game Board */}
         {gameState ? (
