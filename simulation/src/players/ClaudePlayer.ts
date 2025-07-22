@@ -67,33 +67,12 @@ export class ClaudePlayer implements Player {
             throw new Error(`Player with ID ${playerId} not found`);
         }
 
-        // Get the first champion for position (assuming single champion for now)
-        const champion = player.champions[0];
-        const championRow = champion ? champion.position.row : 0;
-        const championCol = champion ? champion.position.col : 0;
-
-        // Get the first boat for position
-        const boat = player.boats[0];
-        const boatPosition = boat ? boat.position : 'nw';
-
-        // Format resources as a readable string
-        const resourcesString = Object.entries(player.resources)
-            .map(([type, amount]) => `${type}: ${amount}`)
-            .join(', ');
-
         // Use the readable stringified game state instead of JSON
         const boardState = GameStateStringifier.stringify(gameState);
 
         const variables: TemplateVariables = {
-            currentRound: gameState.currentRound,
-            playerId: playerId,
-            diceRolls: diceRolls.join(', '),
-            fame: player.fame,
-            might: player.might,
-            resources: resourcesString,
-            championRow: championRow,
-            championCol: championCol,
-            boatPosition: boatPosition,
+            playerName: player.name,
+            diceRolls: diceRolls.join(' and '),
             boardState: boardState
         };
 

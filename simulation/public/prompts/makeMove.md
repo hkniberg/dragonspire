@@ -1,13 +1,6 @@
-<current-situation>
-**Current Round:** {{currentRound}}
-**Your Player ID:** {{playerId}}
-**Dice Rolled:** {{diceRolls}}
-**Your Fame:** {{fame}}
-**Your Might:** {{might}}
-**Your Resources:** {{resources}}
-**Champion Position:** Row {{championRow}}, Col {{championCol}}
-**Boat Position (nw, ne, sw, se):** {{boatPosition}}
-</current-situation>
+<player-context>
+You are player {{playerName}}. It is your turn and you have just rolled {{diceRolls}}.
+</player-context>
 
 <board-state>
 ```json
