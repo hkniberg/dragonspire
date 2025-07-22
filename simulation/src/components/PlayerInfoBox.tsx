@@ -4,6 +4,8 @@ interface PlayerInfoBoxProps {
   player: Player;
   isCurrentPlayer: boolean;
   claimedTiles: number;
+  playerType?: string; // Added to identify if this is a Claude player
+  onExtraInstructionsChange?: (playerId: number, instructions: string) => void; // Callback for updating extra instructions
   getPlayerColor: (playerId: number) => {
     main: string;
     light: string;
@@ -15,6 +17,8 @@ export const PlayerInfoBox = ({
   player,
   isCurrentPlayer,
   claimedTiles,
+  playerType,
+  onExtraInstructionsChange,
   getPlayerColor,
 }: PlayerInfoBoxProps) => {
   const colors = getPlayerColor(player.id);
@@ -158,6 +162,39 @@ export const PlayerInfoBox = ({
           </div>
         ))}
       </div>
+
+      {/* Extra Instructions for Claude Players */}
+      {playerType === "claude" && onExtraInstructionsChange && (
+        <div style={{ marginTop: "12px", fontSize: "12px" }}>
+          <div
+            style={{
+              fontWeight: "bold",
+              marginBottom: "6px",
+              color: "#495057",
+            }}
+          >
+            Extra Instructions:
+          </div>
+          <textarea
+            value={player.extraInstructions || ""}
+            onChange={(e) =>
+              onExtraInstructionsChange(player.id, e.target.value)
+            }
+            placeholder="Enter additional instructions for this AI player..."
+            style={{
+              width: "100%",
+              height: "60px",
+              padding: "6px",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+              fontSize: "11px",
+              fontFamily: "Arial, sans-serif",
+              resize: "vertical",
+              backgroundColor: "#f8f9fa",
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };

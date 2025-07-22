@@ -83,7 +83,8 @@ export class GameState {
                 maxClaims: 10,
                 champions: [champion],
                 boats: [boat],
-                homePosition: startingPositions[i]
+                homePosition: startingPositions[i],
+                extraInstructions: '' // Initialize with empty extra instructions
             });
         }
 
@@ -108,6 +109,16 @@ export class GameState {
     public getChampionById(playerId: number, championId: number): Champion | undefined {
         const player = this.getPlayerById(playerId);
         return player?.champions.find(c => c.id === championId);
+    }
+
+    public updatePlayerExtraInstructions(playerId: number, extraInstructions: string): GameState {
+        const updatedPlayers = this.players.map(player =>
+            player.id === playerId
+                ? { ...player, extraInstructions }
+                : player
+        );
+
+        return this.withUpdates({ players: updatedPlayers });
     }
 
     public getValidActions(diceRolls: number[]): string[] {

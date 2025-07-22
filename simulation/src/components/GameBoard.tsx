@@ -6,6 +6,8 @@ import { TileComponent } from "./Tile";
 interface GameBoardProps {
   gameState: GameState;
   debugMode?: boolean;
+  playerConfigs?: { name: string; type: string }[]; // Player configurations to determine types
+  onExtraInstructionsChange?: (playerId: number, instructions: string) => void; // Callback for updating extra instructions
 }
 
 // Player color scheme - distinct colors for each player
@@ -21,7 +23,12 @@ const getPlayerColor = (
   return colors[(playerId - 1) % colors.length];
 };
 
-export const GameBoard = ({ gameState, debugMode = false }: GameBoardProps) => {
+export const GameBoard = ({
+  gameState,
+  debugMode = false,
+  playerConfigs,
+  onExtraInstructionsChange,
+}: GameBoardProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
 
   return (
@@ -47,12 +54,20 @@ export const GameBoard = ({ gameState, debugMode = false }: GameBoardProps) => {
             .flat()
             .filter((tile) => tile.claimedBy === player.id).length;
 
+          // Find the player type from configuration
+          const playerConfig = playerConfigs?.find(
+            (config, index) => index + 1 === player.id
+          );
+          const playerType = playerConfig?.type;
+
           return (
             <PlayerInfoBox
               key={player.id}
               player={player}
               isCurrentPlayer={isCurrentPlayer}
               claimedTiles={claimedTiles}
+              playerType={playerType}
+              onExtraInstructionsChange={onExtraInstructionsChange}
               getPlayerColor={getPlayerColor}
             />
           );

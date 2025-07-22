@@ -230,6 +230,21 @@ export default function GameSimulation() {
     setAutoPlay(false);
   };
 
+  const handleExtraInstructionsChange = (
+    playerId: number,
+    instructions: string
+  ) => {
+    if (gameState && gameSession) {
+      const updatedGameState = gameState.updatePlayerExtraInstructions(
+        playerId,
+        instructions
+      );
+      setGameState(updatedGameState);
+      // Also update the game session's internal state
+      gameSession.updateGameState(updatedGameState);
+    }
+  };
+
   const hasClaudePlayers = playerConfigs.some(
     (config) => config.type === "claude"
   );
@@ -499,7 +514,12 @@ export default function GameSimulation() {
 
         {/* Game Board */}
         {gameState ? (
-          <GameBoard gameState={gameState} debugMode={debugMode} />
+          <GameBoard
+            gameState={gameState}
+            debugMode={debugMode}
+            playerConfigs={playerConfigs}
+            onExtraInstructionsChange={handleExtraInstructionsChange}
+          />
         ) : simulationState === "setup" ? (
           <div
             style={{

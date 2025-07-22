@@ -73,6 +73,11 @@ export class ClaudePlayer implements Player {
 
         const diaryText = previousDiaryEntries || 'No previous diary entries.';
 
+        // Prepare extra instructions if they exist, formatted in a special block
+        const extraInstructionsText = player.extraInstructions?.trim()
+            ? `\n<additional-instructions-provided-by-player>\n${player.extraInstructions.trim()}\n</additional-instructions-provided-by-player>\n`
+            : '';
+
         const variables: TemplateVariables = {
             playerName: player.name,
             diceRolls: diceRolls.join(' and '),
@@ -80,6 +85,7 @@ export class ClaudePlayer implements Player {
             previousDiaryEntries: diaryText
         };
 
-        return await templateProcessor.processTemplate('makeMove', variables);
+        const baseMessage = await templateProcessor.processTemplate('makeMove', variables);
+        return baseMessage + extraInstructionsText;
     }
 } 

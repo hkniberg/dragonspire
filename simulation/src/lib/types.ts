@@ -56,6 +56,7 @@ export interface Player {
     champions: Champion[];
     boats: Boat[];
     homePosition: Position;
+    extraInstructions?: string; // Optional extra instructions for AI players
 }
 
 export type DiceAction = MoveChampionAction | MoveBoatAction | HarvestAction;

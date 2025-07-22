@@ -165,6 +165,13 @@ export class GameSession {
         return [...this.actionLog];
     }
 
+    /**
+     * Update the game state (useful for UI changes like extra instructions)
+     */
+    public updateGameState(newGameState: GameState): void {
+        this.gameState = newGameState;
+    }
+
     private endGame(winnerId?: number, condition?: string): void {
         this.sessionState = 'finished';
 
