@@ -27,7 +27,7 @@ In Lords of Doomspire, you are a lord commanding champions from your island cast
 
 **Players:** 4  
 **Playing Time:** 60-90 minutes  
-**Victory:** Multiple paths to victory - defeat the dragon, achieve diplomatic victory with 20 Fame, or claim economic dominance through starred resource tiles
+**Victory:** Multiple paths to victory - defeat the dragon, achieve diplomatic victory with 19 Fame, or claim economic dominance through starred resource tiles
 
 ---
 
