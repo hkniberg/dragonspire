@@ -5,8 +5,8 @@ import { ApiKeyModal } from "../components/ApiKeyModal";
 import { GameBoard } from "../components/GameBoard";
 import { PromptViewer } from "../components/PromptViewer";
 import { GameState, rollMultipleD3 } from "../game/GameState";
-import { Claude } from "../lib/llm";
 import { templateProcessor } from "../lib/templateProcessor";
+import { Claude } from "../llm/claude";
 
 // Simple spinner for other loading states
 const Spinner = ({ size = 20 }: { size?: number }) => (
@@ -115,7 +115,7 @@ export default function Home() {
 
       // Use client-side Claude instance for simple testing
       const claude = new Claude(apiKey);
-      const result = await claude.useLLM(systemPrompt, userMessage);
+      const result = await claude.useClaude(systemPrompt, userMessage);
 
       setAiResponse(result);
       setChatHistory([

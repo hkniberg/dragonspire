@@ -1,6 +1,6 @@
 
 import { Anthropic } from "@anthropic-ai/sdk";
-import { Tool, convertToolsToAnthropicDefinitions } from "./tools";
+import { Tool, convertToolsToAnthropicDefinitions } from "../lib/tools";
 
 const DEFAULT_MODEL = "claude-sonnet-4-0";
 //const DEFAULT_MODEL = "claude-3-5-haiku-latest"
@@ -9,10 +9,6 @@ const CALL_LOOP_LIMIT = 10;
 
 // Logging configuration
 const MAX_LOG_MESSAGE_LENGTH = 1000;
-
-export interface LLM {
-    useLLM(systemPrompt: string | null, userMessage: string): Promise<string>;
-}
 
 // Helper function to truncate long messages for logging
 function truncateForLog(message: string, maxLength: number = MAX_LOG_MESSAGE_LENGTH): string {
@@ -44,7 +40,7 @@ type ToolResult = {
     is_error?: boolean;
 };
 
-export class Claude implements LLM {
+export class Claude {
     private anthropic: Anthropic;
     private model: string;
 
@@ -53,70 +49,7 @@ export class Claude implements LLM {
         this.model = model;
     }
 
-    async useLLM(systemPrompt: string | null, userMessage: string): Promise<string> {
-        // Log input
-        log("LLM System Prompt", systemPrompt ? truncateForLog(systemPrompt) : "None");
-        log("LLM User Message", truncateForLog(userMessage));
-
-        // Create user message with cache control if enabled
-        const userMessageParam: Anthropic.Messages.MessageParam = {
-            role: "user",
-            content: PROMPT_CACHING_ENABLED ? [
-                {
-                    type: "text",
-                    text: userMessage,
-                    cache_control: { type: "ephemeral" }
-                }
-            ] : userMessage
-        };
-
-        const messages: Anthropic.Messages.MessageParam[] = [userMessageParam];
-
-        const params: Anthropic.Messages.MessageCreateParamsNonStreaming = {
-            model: this.model,
-            messages,
-            max_tokens: 16000,
-            thinking: {
-                type: "enabled",
-                budget_tokens: 5000
-            },
-        };
-
-        // Add system prompt with cache control if provided
-        if (systemPrompt) {
-            if (PROMPT_CACHING_ENABLED) {
-                params.system = [
-                    {
-                        type: "text",
-                        text: systemPrompt,
-                        cache_control: { type: "ephemeral" }
-                    }
-                ];
-            } else {
-                params.system = systemPrompt;
-            }
-        }
-
-        log("LLM Model", this.model);
-
-        const response = await this.anthropic.messages.create(params);
-
-        // Log thinking blocks
-        logThinkingBlocks(response.content);
-
-        // Extract text content from response
-        const textContent = response.content
-            .filter(block => block.type === 'text')
-            .map(block => block.text)
-            .join('');
-
-        // Log response
-        log("LLM Response", textContent);
-
-        return textContent;
-    }
-
-    async useLLMWithTools(systemPrompt: string | null, userMessage: string, tools: Tool[]): Promise<string> {
+    async useClaude(systemPrompt: string | null, userMessage: string, tools: Tool[] = []): Promise<string> {
         // Log input
         log("LLM System Prompt", systemPrompt ? truncateForLog(systemPrompt) : "None");
         log("LLM User Message", truncateForLog(userMessage));

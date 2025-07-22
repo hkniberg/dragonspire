@@ -2,7 +2,7 @@
 
 import * as dotenv from 'dotenv';
 import { GameSession, GameSessionConfig } from '../engine/GameSession';
-import { Claude } from '../lib/llm';
+import { Claude } from '../llm/claude';
 import { ClaudePlayer } from '../players/ClaudePlayer';
 import { Player } from '../players/Player';
 import { RandomPlayer } from '../players/RandomPlayer';

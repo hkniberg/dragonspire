@@ -7,7 +7,7 @@ import { GameBoard } from "../components/GameBoard";
 import { GameStatus } from "../components/GameStatus";
 import { GameSession, GameSessionConfig } from "../engine/GameSession";
 import { GameState } from "../game/GameState";
-import { Claude } from "../lib/llm";
+import { Claude } from "../llm/claude";
 import { ClaudePlayer } from "../players/ClaudePlayer";
 import { RandomPlayer } from "../players/RandomPlayer";
 

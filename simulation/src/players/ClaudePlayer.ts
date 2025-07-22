@@ -2,18 +2,18 @@
 
 import { GameState } from '../game/GameState';
 import { GameLogger } from '../lib/gameLogger';
-import { Claude } from '../lib/llm';
 import { templateProcessor, TemplateVariables } from '../lib/templateProcessor';
 import { createGameActionTools } from '../lib/tools';
+import { Claude } from '../llm/claude';
 import { ExecuteActionFunction, Player, PlayerType } from './Player';
 
 export class ClaudePlayer implements Player {
     private name: string;
-    private llm: Claude;
+    private claude: Claude;
 
-    constructor(name: string, llm: Claude) {
+    constructor(name: string, claude: Claude) {
         this.name = name;
-        this.llm = llm;
+        this.claude = claude;
     }
 
     getName(): string {
@@ -42,7 +42,7 @@ export class ClaudePlayer implements Player {
             const tools = createGameActionTools(executeAction);
 
             // Get LLM response with tool execution handled internally
-            const diaryEntry = await this.llm.useLLMWithTools(systemPrompt, userMessage, tools);
+            const diaryEntry = await this.claude.useClaude(systemPrompt, userMessage, tools);
 
             // Log the diary entry
             if (diaryEntry.trim()) {
