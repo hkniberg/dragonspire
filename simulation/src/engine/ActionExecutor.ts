@@ -193,6 +193,13 @@ export class ActionExecutor {
             blockadeSummary = ` and blockaded ${opponentName}'s resource tile${resourceDesc}`;
         }
 
+        // Check for adventure tiles
+        let adventureSummary = '';
+        if (destinationTile.tileType === 'adventure') {
+            const tier = (destinationTile as any).tier || 1; // Default to tier 1 if not specified
+            adventureSummary = `, a Tier ${tier} adventure tile. These are not yet implemented, so nothing happens.`;
+        }
+
         // Create new game state with champion moved
         const updatedChampions = updatedPlayer.champions.map(c =>
             c.id === action.championId
@@ -212,7 +219,7 @@ export class ActionExecutor {
 
         return {
             newGameState,
-            summary: `Moved champion${action.championId} from (${champion.position.row}, ${champion.position.col}) to (${destination.row}, ${destination.col})${explorationSummary}${claimSummary}${blockadeSummary}`,
+            summary: `Moved champion${action.championId} from (${champion.position.row}, ${champion.position.col}) to (${destination.row}, ${destination.col})${adventureSummary}${explorationSummary}${claimSummary}${blockadeSummary}`,
             success: true,
             diceValuesUsed: diceValues
         };
