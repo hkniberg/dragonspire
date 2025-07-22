@@ -107,6 +107,19 @@ export class ActionExecutor {
             };
         }
 
+        // Validate home tile access
+        if (destinationTile.tileType === 'home') {
+            const homeOwner = this.getHomeTileOwner(destination);
+            if (homeOwner && homeOwner !== action.playerId) {
+                return {
+                    newGameState: gameState,
+                    summary: `Cannot enter home tile at (${destination.row}, ${destination.col}): belongs to player ${homeOwner}`,
+                    success: false,
+                    diceValuesUsed: diceValues
+                };
+            }
+        }
+
         // Validate claiming if requested
         if (action.claimTile) {
             // Check if tile is a resource tile
@@ -377,6 +390,24 @@ export class ActionExecutor {
         const rowDiff = Math.abs(pos1.row - pos2.row);
         const colDiff = Math.abs(pos1.col - pos2.col);
         return (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
+    }
+
+    /**
+     * Get the player ID who owns a home tile at the given position
+     */
+    private static getHomeTileOwner(position: Position): number | undefined {
+        // Home tiles are at the four corners of the 8x8 board
+        // Player 1: (0,0), Player 2: (0,7), Player 3: (7,0), Player 4: (7,7)
+        if (position.row === 0 && position.col === 0) {
+            return 1; // Player 1
+        } else if (position.row === 0 && position.col === 7) {
+            return 2; // Player 2
+        } else if (position.row === 7 && position.col === 0) {
+            return 3; // Player 3
+        } else if (position.row === 7 && position.col === 7) {
+            return 4; // Player 4
+        }
+        return undefined; // Not a home tile
     }
 
     /**
