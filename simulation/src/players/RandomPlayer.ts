@@ -1,7 +1,6 @@
 // Lords of Doomspire Random Player
 
 import { GameState } from '../game/GameState';
-import { GameLogger } from '../lib/gameLogger';
 import { GameAction, ResourceType } from '../lib/types';
 import { ExecuteActionFunction, Player, PlayerType } from './Player';
 import { generateAllPaths, getHarvestableResourcesInfo, getReachableTiles } from './PlayerUtils';
@@ -25,9 +24,7 @@ export class RandomPlayer implements Player {
         gameState: GameState,
         diceRolls: number[],
         executeAction: ExecuteActionFunction
-    ): Promise<void> {
-        console.log(GameLogger.formatTurnStart(this.name, diceRolls));
-
+    ): Promise<string | undefined> {
         const playerId = gameState.getCurrentPlayer().id;
         let currentGameState = gameState;
         const dice = [...diceRolls];
@@ -37,11 +34,6 @@ export class RandomPlayer implements Player {
             const moveResult = this.executeRandomChampionMove(currentGameState, playerId, dice[0], executeAction);
             if (moveResult.success) {
                 currentGameState = moveResult.newGameState;
-                // Note: The actual action logging will be handled by the GameSession's action tracking
-                // These console.log statements are just for immediate feedback during the turn
-                console.log(`${this.name} moveChampion succeeded: ${moveResult.summary}`);
-            } else {
-                console.log(`${this.name} moveChampion failed: ${moveResult.summary}`);
             }
         }
 
@@ -50,13 +42,11 @@ export class RandomPlayer implements Player {
             const harvestResult = this.executeRandomHarvest(currentGameState, playerId, dice[1], executeAction);
             if (harvestResult.success) {
                 currentGameState = harvestResult.newGameState;
-                console.log(`${this.name} harvest succeeded: ${harvestResult.summary}`);
-            } else {
-                console.log(`${this.name} harvest failed: ${harvestResult.summary}`);
             }
         }
 
-        console.log(GameLogger.formatTurnEnd(this.name));
+        // RandomPlayer doesn't generate diary entries
+        return undefined;
     }
 
     private executeRandomChampionMove(
@@ -128,23 +118,7 @@ export class RandomPlayer implements Player {
             claimTile: shouldClaimTile
         };
 
-        const result = executeAction(moveAction);
-        if (result.success) {
-            // Check if we landed on an opponent's claimed resource tile (blockading)
-            if (destinationTile &&
-                destinationTile.tileType === 'resource' &&
-                destinationTile.claimedBy !== undefined &&
-                destinationTile.claimedBy !== playerId) {
-                console.log(`${this.name} is blockading opponent's resource tile at (${targetTile.row},${targetTile.col}) (claimed by player ${destinationTile.claimedBy})`);
-            }
-
-            return {
-                ...result,
-                summary: `Moved champion ${champion.id} from (${champion.position.row},${champion.position.col}) to (${targetTile.row},${targetTile.col}) via path with ${selectedPath.length - 1} steps`
-            };
-        } else {
-            return result;
-        }
+        return executeAction(moveAction, dieValue);
     }
 
     private executeRandomHarvest(
@@ -160,17 +134,6 @@ export class RandomPlayer implements Player {
 
         // Get detailed information about harvestable resources, taking blockading into account
         const harvestInfo = getHarvestableResourcesInfo(gameState, playerId);
-
-        // Log detailed information about the player's tiles
-        if (harvestInfo.ownedNonBlockedTiles.length > 0) {
-            console.log(`${this.name} has ${harvestInfo.ownedNonBlockedTiles.length} owned non-blocked resource tile(s)`);
-        }
-        if (harvestInfo.ownedBlockedTiles.length > 0) {
-            console.log(`${this.name} has ${harvestInfo.ownedBlockedTiles.length} owned but blockaded resource tile(s)`);
-        }
-        if (harvestInfo.blockadedOpponentTiles.length > 0) {
-            console.log(`${this.name} is blockading ${harvestInfo.blockadedOpponentTiles.length} opponent resource tile(s)`);
-        }
 
         // Check if there are any harvestable resources
         const totalHarvestable = harvestInfo.totalHarvestableResources.food +
@@ -201,7 +164,7 @@ export class RandomPlayer implements Player {
             resources: harvestResources
         };
 
-        return executeAction(harvestAction);
+        return executeAction(harvestAction, dieValue);
     }
 
     private actionToString(action: GameAction): string {

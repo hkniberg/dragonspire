@@ -61,17 +61,13 @@ export class GameSession {
         const diceCount = 2 + additionalChampions;
         const diceRolls = rollMultipleD3(diceCount);
 
-        // Log turn header and dice using GameLogger
-        console.log('\n' + GameLogger.formatTurnHeader(this.gameState.currentRound, playerId, currentPlayer.getName()));
-        console.log(GameLogger.formatDiceRolls(diceRolls));
-
         // Track actions for this turn
         const turnActions: Array<{ action: GameAction; result: ActionResult }> = [];
 
         // Create the execute action function that the player will use
         let currentState = this.gameState;
-        const executeAction: ExecuteActionFunction = (action: GameAction) => {
-            const result = ActionExecutor.executeAction(currentState, action);
+        const executeAction: ExecuteActionFunction = (action: GameAction, diceValue?: number) => {
+            const result = ActionExecutor.executeAction(currentState, action, diceValue);
 
             // Track the action
             turnActions.push({ action, result });
@@ -85,8 +81,9 @@ export class GameSession {
         };
 
         // Let the player execute their turn
+        let diaryEntry: string | undefined;
         try {
-            await currentPlayer.executeTurn(this.gameState, diceRolls, executeAction, this.actionLog);
+            diaryEntry = await currentPlayer.executeTurn(this.gameState, diceRolls, executeAction, this.actionLog);
         } catch (error) {
             console.error(`Error during ${currentPlayer.getName()}'s turn:`, error);
         }
@@ -94,19 +91,26 @@ export class GameSession {
         // Update game state to the final state after all actions
         this.gameState = currentState;
 
-        // Generate turn summary and log it
+        // Generate turn summary and log it using the new concise format
         const turnSummary = this.generateTurnSummary(turnActions);
-        console.log(GameLogger.formatTurnSummary(turnSummary));
 
-        // Log the turn
-        this.actionLog.push({
+        // Create the turn log entry
+        const turnLogEntry: ActionLogEntry = {
             round: this.gameState.currentRound,
             playerId: playerId,
             playerName: currentPlayer.getName(),
             diceRolls: diceRolls,
             actions: turnActions,
-            turnSummary: turnSummary
-        });
+            turnSummary: turnSummary,
+            diaryEntry: diaryEntry
+        };
+
+        // Log using concise format
+        const conciseLog = GameLogger.formatTurnConcise(turnLogEntry);
+        console.log('\n' + conciseLog.join('\n'));
+
+        // Add to action log
+        this.actionLog.push(turnLogEntry);
 
         // Check for victory conditions
         const victoryCheck = ActionExecutor.checkVictory(this.gameState);

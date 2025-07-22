@@ -15,38 +15,41 @@ export class ActionExecutor {
     /**
      * Validates and executes a game action, returning the new state and summary
      */
-    public static executeAction(gameState: GameState, action: GameAction): ActionResult {
+    public static executeAction(gameState: GameState, action: GameAction, diceValue?: number): ActionResult {
         try {
             switch (action.type) {
                 case 'moveChampion':
-                    return this.executeMoveChampion(gameState, action);
+                    return this.executeMoveChampion(gameState, action, diceValue);
                 case 'moveBoat':
-                    return this.executeMoveBoat(gameState, action);
+                    return this.executeMoveBoat(gameState, action, diceValue);
                 case 'harvest':
-                    return this.executeHarvest(gameState, action);
+                    return this.executeHarvest(gameState, action, diceValue);
                 default:
                     return {
                         newGameState: gameState,
                         summary: `Unknown action type: ${(action as any).type}`,
-                        success: false
+                        success: false,
+                        diceValueUsed: diceValue
                     };
             }
         } catch (error) {
             return {
                 newGameState: gameState,
                 summary: `Error executing action: ${error instanceof Error ? error.message : 'Unknown error'}`,
-                success: false
+                success: false,
+                diceValueUsed: diceValue
             };
         }
     }
 
-    private static executeMoveChampion(gameState: GameState, action: MoveChampionAction): ActionResult {
+    private static executeMoveChampion(gameState: GameState, action: MoveChampionAction, diceValue?: number): ActionResult {
         const player = gameState.getPlayerById(action.playerId);
         if (!player) {
             return {
                 newGameState: gameState,
                 summary: `Player ${action.playerId} not found`,
-                success: false
+                success: false,
+                diceValueUsed: diceValue
             };
         }
 
@@ -55,7 +58,8 @@ export class ActionExecutor {
             return {
                 newGameState: gameState,
                 summary: `Champion ${action.championId} not found for player ${action.playerId}`,
-                success: false
+                success: false,
+                diceValueUsed: diceValue
             };
         }
 
@@ -64,7 +68,8 @@ export class ActionExecutor {
             return {
                 newGameState: gameState,
                 summary: `Invalid path: empty path`,
-                success: false
+                success: false,
+                diceValueUsed: diceValue
             };
         }
 
@@ -74,7 +79,8 @@ export class ActionExecutor {
             return {
                 newGameState: gameState,
                 summary: `Invalid path: path must start from champion's current position (${champion.position.row}, ${champion.position.col})`,
-                success: false
+                success: false,
+                diceValueUsed: diceValue
             };
         }
 
@@ -84,7 +90,8 @@ export class ActionExecutor {
                 return {
                     newGameState: gameState,
                     summary: `Invalid path: positions (${action.path[i - 1].row}, ${action.path[i - 1].col}) and (${action.path[i].row}, ${action.path[i].col}) are not adjacent`,
-                    success: false
+                    success: false,
+                    diceValueUsed: diceValue
                 };
             }
         }
@@ -95,7 +102,8 @@ export class ActionExecutor {
             return {
                 newGameState: gameState,
                 summary: `Invalid destination: tile at (${destination.row}, ${destination.col}) does not exist`,
-                success: false
+                success: false,
+                diceValueUsed: diceValue
             };
         }
 
@@ -106,7 +114,8 @@ export class ActionExecutor {
                 return {
                     newGameState: gameState,
                     summary: `Cannot claim tile at (${destination.row}, ${destination.col}): not a resource tile`,
-                    success: false
+                    success: false,
+                    diceValueUsed: diceValue
                 };
             }
 
@@ -115,7 +124,8 @@ export class ActionExecutor {
                 return {
                     newGameState: gameState,
                     summary: `Cannot claim tile at (${destination.row}, ${destination.col}): already claimed by player ${destinationTile.claimedBy}`,
-                    success: false
+                    success: false,
+                    diceValueUsed: diceValue
                 };
             }
 
@@ -128,7 +138,8 @@ export class ActionExecutor {
                 return {
                     newGameState: gameState,
                     summary: `Cannot claim tile: Player ${action.playerId} has reached maximum claims (${player.maxClaims})`,
-                    success: false
+                    success: false,
+                    diceValueUsed: diceValue
                 };
             }
         }
@@ -165,7 +176,21 @@ export class ActionExecutor {
                         : tile
                 )
             );
-            claimSummary = ` and claimed the resource tile`;
+
+            // Generate resource description
+            const resourceDesc = this.getTileResourceDescription(updatedTile);
+            claimSummary = ` and claimed a resource tile${resourceDesc}`;
+        }
+
+        // Check for blockading (landing on opponent's claimed resource tile)
+        let blockadeSummary = '';
+        if (destinationTile.tileType === 'resource' &&
+            destinationTile.claimedBy !== undefined &&
+            destinationTile.claimedBy !== action.playerId) {
+            const opponentPlayer = gameState.getPlayerById(destinationTile.claimedBy);
+            const opponentName = opponentPlayer?.name || `Player ${destinationTile.claimedBy}`;
+            const resourceDesc = this.getTileResourceDescription(destinationTile);
+            blockadeSummary = ` and blockaded ${opponentName}'s resource tile${resourceDesc}`;
         }
 
         // Create new game state with champion moved
@@ -187,18 +212,20 @@ export class ActionExecutor {
 
         return {
             newGameState,
-            summary: `Player ${action.playerId} moved champion ${action.championId} from (${champion.position.row}, ${champion.position.col}) to (${destination.row}, ${destination.col})${explorationSummary}${claimSummary}`,
-            success: true
+            summary: `Moved champion${action.championId} from (${champion.position.row}, ${champion.position.col}) to (${destination.row}, ${destination.col})${explorationSummary}${claimSummary}${blockadeSummary}`,
+            success: true,
+            diceValueUsed: diceValue
         };
     }
 
-    private static executeMoveBoat(gameState: GameState, action: MoveBoatAction): ActionResult {
+    private static executeMoveBoat(gameState: GameState, action: MoveBoatAction, diceValue?: number): ActionResult {
         const player = gameState.getPlayerById(action.playerId);
         if (!player) {
             return {
                 newGameState: gameState,
                 summary: `Player ${action.playerId} not found`,
-                success: false
+                success: false,
+                diceValueUsed: diceValue
             };
         }
 
@@ -207,7 +234,8 @@ export class ActionExecutor {
             return {
                 newGameState: gameState,
                 summary: `Boat ${action.boatId} not found for player ${action.playerId}`,
-                success: false
+                success: false,
+                diceValueUsed: diceValue
             };
         }
 
@@ -215,7 +243,8 @@ export class ActionExecutor {
             return {
                 newGameState: gameState,
                 summary: `Invalid path: empty path`,
-                success: false
+                success: false,
+                diceValueUsed: diceValue
             };
         }
 
@@ -228,7 +257,7 @@ export class ActionExecutor {
         );
 
         let updatedChampions = player.champions;
-        let summary = `Player ${action.playerId} moved boat ${action.boatId} to ${destination}`;
+        let summary = `Moved boat${action.boatId} to ${destination}`;
 
         // Handle champion pickup/dropoff if specified
         if (action.championId && action.championDropPosition) {
@@ -239,7 +268,7 @@ export class ActionExecutor {
                         ? { ...c, position: action.championDropPosition! }
                         : c
                 );
-                summary += ` and transported champion ${action.championId} to (${action.championDropPosition.row}, ${action.championDropPosition.col})`;
+                summary += ` and transported champion${action.championId} to (${action.championDropPosition.row}, ${action.championDropPosition.col})`;
             }
         }
 
@@ -253,17 +282,19 @@ export class ActionExecutor {
         return {
             newGameState,
             summary,
-            success: true
+            success: true,
+            diceValueUsed: diceValue
         };
     }
 
-    private static executeHarvest(gameState: GameState, action: HarvestAction): ActionResult {
+    private static executeHarvest(gameState: GameState, action: HarvestAction, diceValue?: number): ActionResult {
         const player = gameState.getPlayerById(action.playerId);
         if (!player) {
             return {
                 newGameState: gameState,
                 summary: `Player ${action.playerId} not found`,
-                success: false
+                success: false,
+                diceValueUsed: diceValue
             };
         }
 
@@ -274,7 +305,8 @@ export class ActionExecutor {
                 return {
                     newGameState: gameState,
                     summary: `Invalid harvest: cannot harvest negative ${resourceType}`,
-                    success: false
+                    success: false,
+                    diceValueUsed: diceValue
                 };
             }
         }
@@ -285,7 +317,8 @@ export class ActionExecutor {
             return {
                 newGameState: gameState,
                 summary: `No resources harvested`,
-                success: true
+                success: true,
+                diceValueUsed: diceValue
             };
         }
 
@@ -309,9 +342,25 @@ export class ActionExecutor {
 
         return {
             newGameState,
-            summary: `Player ${action.playerId} harvested ${harvestedItems}`,
-            success: true
+            summary: `Harvested ${harvestedItems}`,
+            success: true,
+            diceValueUsed: diceValue
         };
+    }
+
+    /**
+     * Generate a description of resources on a tile
+     */
+    private static getTileResourceDescription(tile: any): string {
+        if (!tile.resources) return '';
+
+        const resources = [];
+        if (tile.resources.food > 0) resources.push(`${tile.resources.food} food`);
+        if (tile.resources.wood > 0) resources.push(`${tile.resources.wood} wood`);
+        if (tile.resources.ore > 0) resources.push(`${tile.resources.ore} ore`);
+        if (tile.resources.gold > 0) resources.push(`${tile.resources.gold} gold`);
+
+        return resources.length > 0 ? ` with ${resources.join(', ')}` : '';
     }
 
     /**

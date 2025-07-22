@@ -24,6 +24,18 @@ export class GameLogger {
     }
 
     /**
+     * Format individual action result with dice value for concise display
+     */
+    static formatActionResultConcise(action: GameAction, result: ActionResult): string {
+        if (!result.success) {
+            return `[${result.diceValueUsed || '?'}]: FAILED - ${result.summary}`;
+        }
+
+        const dicePrefix = result.diceValueUsed ? `[${result.diceValueUsed}]: ` : '';
+        return `${dicePrefix}${result.summary}`;
+    }
+
+    /**
      * Convert a basic turn log to a detailed turn log with formatted action strings
      */
     static enhanceWithDetailedActions(turnLog: {
@@ -42,6 +54,58 @@ export class GameLogger {
             ...turnLog,
             detailedActions
         };
+    }
+
+    /**
+     * Convert a basic turn log to a concise format
+     */
+    static formatTurnConcise(turnLog: {
+        round: number;
+        playerId: number;
+        playerName: string;
+        diceRolls: number[];
+        actions: Array<{ action: GameAction; result: ActionResult }>;
+        turnSummary: string;
+    }): string[] {
+        const lines: string[] = [];
+
+        // Turn header with dice
+        lines.push(`--- Round ${turnLog.round}, ${turnLog.playerName} ---`);
+        lines.push(`Dice rolled: [${turnLog.diceRolls.join(', ')}]`);
+
+        // Actions with dice values
+        const successfulActions = turnLog.actions.filter(({ result }) => result.success);
+        for (const { action, result } of successfulActions) {
+            lines.push(this.formatActionResultConcise(action, result));
+        }
+
+        // Only show aggregated harvest summary if there are multiple harvest actions
+        const harvestActions = turnLog.actions.filter(({ action, result }) =>
+            action.type === 'harvest' && result.success
+        );
+
+        if (harvestActions.length > 1) {
+            const allHarvestedResources: Record<string, number> = { food: 0, wood: 0, ore: 0, gold: 0 };
+
+            for (const { action } of harvestActions) {
+                if (action.type === 'harvest') {
+                    for (const [resource, amount] of Object.entries(action.resources)) {
+                        allHarvestedResources[resource] = (allHarvestedResources[resource] || 0) + amount;
+                    }
+                }
+            }
+
+            const harvestSummary = Object.entries(allHarvestedResources)
+                .filter(([_, amount]) => amount > 0)
+                .map(([resource, amount]) => `${amount} ${resource}`)
+                .join(', ');
+
+            if (harvestSummary) {
+                lines.push(`Total harvested: ${harvestSummary}`);
+            }
+        }
+
+        return lines;
     }
 
     /**

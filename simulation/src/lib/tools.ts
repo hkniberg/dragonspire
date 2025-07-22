@@ -1,3 +1,5 @@
+// Lords of Doomspire Claude AI Player
+
 import { Anthropic } from "@anthropic-ai/sdk";
 import { ExecuteActionFunction } from '../players/Player';
 import { GameAction } from './types';
@@ -16,7 +18,7 @@ abstract class GameActionTool implements Tool {
     abstract description: string;
     abstract inputSchema: any;
 
-    constructor(protected executeAction: ExecuteActionFunction) { }
+    constructor(protected executeAction: ExecuteActionFunction, protected playerId: number) { }
 
     abstract execute(input: any): Promise<string>;
 }
@@ -28,10 +30,6 @@ export class MoveChampionTool extends GameActionTool {
     inputSchema = {
         type: "object",
         properties: {
-            playerId: {
-                type: "number",
-                description: "The player ID making the move"
-            },
             championId: {
                 type: "number",
                 description: "The champion ID to move"
@@ -51,21 +49,25 @@ export class MoveChampionTool extends GameActionTool {
             claimTile: {
                 type: "boolean",
                 description: "Optional: if true, attempts to claim the destination tile (must be an unclaimed resource tile)"
+            },
+            diceValue: {
+                type: "number",
+                description: "The dice value being used for this move action"
             }
         },
-        required: ["playerId", "championId", "path"]
+        required: ["championId", "path", "diceValue"]
     };
 
     async execute(input: any): Promise<string> {
         const action: GameAction = {
             type: 'moveChampion',
-            playerId: input.playerId,
+            playerId: this.playerId,
             championId: input.championId,
             path: input.path,
             claimTile: input.claimTile
         };
 
-        const result = this.executeAction(action);
+        const result = this.executeAction(action, input.diceValue);
         return result.summary;
     }
 }
@@ -77,10 +79,6 @@ export class MoveBoatTool extends GameActionTool {
     inputSchema = {
         type: "object",
         properties: {
-            playerId: {
-                type: "number",
-                description: "The player ID making the move"
-            },
             boatId: {
                 type: "number",
                 description: "The boat ID to move"
@@ -102,15 +100,19 @@ export class MoveBoatTool extends GameActionTool {
                     col: { type: "number" }
                 },
                 required: ["row", "col"]
+            },
+            diceValue: {
+                type: "number",
+                description: "The dice value being used for this move action"
             }
         },
-        required: ["playerId", "boatId", "path"]
+        required: ["boatId", "path", "diceValue"]
     };
 
     async execute(input: any): Promise<string> {
         const action: any = {
             type: 'moveBoat',
-            playerId: input.playerId,
+            playerId: this.playerId,
             boatId: input.boatId,
             path: input.path
         };
@@ -123,7 +125,7 @@ export class MoveBoatTool extends GameActionTool {
             action.championDropPosition = input.championDropPosition;
         }
 
-        const result = this.executeAction(action);
+        const result = this.executeAction(action, input.diceValue);
         return result.summary;
     }
 }
@@ -135,10 +137,6 @@ export class HarvestTool extends GameActionTool {
     inputSchema = {
         type: "object",
         properties: {
-            playerId: {
-                type: "number",
-                description: "The player ID harvesting"
-            },
             resources: {
                 type: "object",
                 description: "Resources to harvest",
@@ -149,29 +147,33 @@ export class HarvestTool extends GameActionTool {
                     gold: { type: "number" }
                 },
                 required: ["food", "wood", "ore", "gold"]
+            },
+            diceValue: {
+                type: "number",
+                description: "The dice value being used for this harvest action"
             }
         },
-        required: ["playerId", "resources"]
+        required: ["resources", "diceValue"]
     };
 
     async execute(input: any): Promise<string> {
         const action: GameAction = {
             type: 'harvest',
-            playerId: input.playerId,
+            playerId: this.playerId,
             resources: input.resources
         };
 
-        const result = this.executeAction(action);
+        const result = this.executeAction(action, input.diceValue);
         return result.summary;
     }
 }
 
 // Factory function to create game action tools
-export function createGameActionTools(executeAction: ExecuteActionFunction): Tool[] {
+export function createGameActionTools(executeAction: ExecuteActionFunction, playerId: number): Tool[] {
     return [
-        new MoveChampionTool(executeAction),
-        new MoveBoatTool(executeAction),
-        new HarvestTool(executeAction)
+        new MoveChampionTool(executeAction, playerId),
+        new MoveBoatTool(executeAction, playerId),
+        new HarvestTool(executeAction, playerId)
     ];
 }
 

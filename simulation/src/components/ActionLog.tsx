@@ -68,6 +68,23 @@ export const ActionLog: React.FC<ActionLogProps> = ({
                   {message}
                 </div>
               ))}
+
+              {/* Display diary entry if it exists */}
+              {turn.diaryEntry && (
+                <div
+                  style={{
+                    marginTop: "8px",
+                    padding: "8px",
+                    backgroundColor: "#e8f4f8",
+                    borderLeft: "3px solid #17a2b8",
+                    borderRadius: "3px",
+                    fontStyle: "italic",
+                    color: "#0c5460",
+                  }}
+                >
+                  <strong>💭 Player Diary:</strong> {turn.diaryEntry}
+                </div>
+              )}
             </div>
           );
         })}
