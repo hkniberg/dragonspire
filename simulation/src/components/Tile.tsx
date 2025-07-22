@@ -1,5 +1,6 @@
 import type { Champion, Player, ResourceType, Tile } from "../lib/types";
 import { ClaimFlag } from "./ClaimFlag";
+import { MonsterCard } from "./MonsterCard";
 
 const getTileColor = (tile: Tile): string => {
   if (!tile.explored) {
@@ -501,57 +502,17 @@ ${
 
       {/* Monster card */}
       {effectiveTile.monster && effectiveTile.explored && (
-        <div
+        <MonsterCard
+          monster={effectiveTile.monster}
+          size="m"
           style={{
             position: "absolute",
             top: "40%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: "75px",
-            height: "85px",
-            backgroundColor: "white",
-            borderRadius: "6px",
-            border: "2px solid #8B0000",
-            boxShadow: "0 4px 8px rgba(0,0,0,0.4)",
             zIndex: 8,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "4px",
           }}
-          title={`Monster: ${effectiveTile.monster.name} (Might: ${effectiveTile.monster.might})`}
-        >
-          <div
-            style={{
-              width: "63px",
-              height: "60px",
-              backgroundImage: `url(/monsters/${effectiveTile.monster.name
-                .toLowerCase()
-                .replace(/\s+/g, "-")}.png)`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-              borderRadius: "4px",
-              border: "1px solid #ccc",
-            }}
-          />
-          <div
-            style={{
-              fontSize: "9px",
-              fontWeight: "bold",
-              color: "#333",
-              textAlign: "center",
-              lineHeight: "1",
-              textOverflow: "ellipsis",
-              overflow: "hidden",
-              whiteSpace: "nowrap",
-              width: "100%",
-            }}
-          >
-            {effectiveTile.monster.name}
-          </div>
-        </div>
+        />
       )}
 
       {/* Champions on tile */}

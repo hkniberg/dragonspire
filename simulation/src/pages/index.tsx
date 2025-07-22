@@ -579,6 +579,45 @@ export default function GameSimulation() {
           </div>
         </div>
 
+        {/* Bestiary Link */}
+        <div
+          style={{
+            marginTop: "20px",
+            padding: "15px",
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            borderRadius: "8px",
+            textAlign: "center",
+            border: "1px solid #ddd",
+          }}
+        >
+          <a
+            href="/monsters"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 20px",
+              backgroundColor: "#8B0000",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: "6px",
+              fontWeight: "bold",
+              transition: "background-color 0.2s",
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = "#A00000";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = "#8B0000";
+            }}
+          >
+            📖 View Bestiary
+          </a>
+          <p style={{ margin: "10px 0 0 0", color: "#666", fontSize: "14px" }}>
+            Explore all creatures you may encounter in Lords of Doomspire
+          </p>
+        </div>
+
         {/* API Key Modal */}
         <ApiKeyModal
           isOpen={showApiKeyModal}
