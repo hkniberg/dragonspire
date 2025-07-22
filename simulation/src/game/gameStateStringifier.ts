@@ -1,5 +1,5 @@
 import { GameState } from '../game/GameState';
-import type { Champion, Player, ResourceType, Tile } from './types';
+import type { Champion, Player, ResourceType, Tile } from '../lib/types';
 
 export class GameStateStringifier {
     /**

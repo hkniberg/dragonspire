@@ -1,6 +1,6 @@
-import { GameState } from '../game/GameState';
-import { GameStateStringifier } from '../lib/gameStateStringifier';
-import type { Player, Position, Tile } from '../lib/types';
+import { GameState } from '../../src/game/GameState';
+import { GameStateStringifier } from '../../src/game/gameStateStringifier';
+import type { Player, Position, Tile } from '../../src/lib/types';
 
 describe('GameStateStringifier', () => {
     test('should stringify game state to match expected markdown format', () => {

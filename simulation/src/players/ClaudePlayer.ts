@@ -1,8 +1,8 @@
 // Lords of Doomspire Claude AI Player
 
+import { GameStateStringifier } from '@/game/gameStateStringifier';
 import { GameState } from '../game/GameState';
 import { GameLogger } from '../lib/gameLogger';
-import { GameStateStringifier } from '../lib/gameStateStringifier';
 import { templateProcessor, TemplateVariables } from '../lib/templateProcessor';
 import { createGameActionTools } from '../lib/tools';
 import { Claude } from '../llm/claude';
