@@ -50,12 +50,13 @@ export class MoveChampionTool extends GameActionTool {
                 type: "boolean",
                 description: "Optional: if true, attempts to claim the destination tile (must be an unclaimed resource tile)"
             },
-            diceValue: {
-                type: "number",
-                description: "The dice value being used for this move action"
+            diceValues: {
+                type: "array",
+                description: "The dice values being used for this move action",
+                items: { type: "number" }
             }
         },
-        required: ["championId", "path", "diceValue"]
+        required: ["championId", "path", "diceValues"]
     };
 
     async execute(input: any): Promise<string> {
@@ -67,7 +68,7 @@ export class MoveChampionTool extends GameActionTool {
             claimTile: input.claimTile
         };
 
-        const result = this.executeAction(action, input.diceValue);
+        const result = this.executeAction(action, input.diceValues);
         return result.summary;
     }
 }
@@ -101,12 +102,13 @@ export class MoveBoatTool extends GameActionTool {
                 },
                 required: ["row", "col"]
             },
-            diceValue: {
-                type: "number",
-                description: "The dice value being used for this move action"
+            diceValues: {
+                type: "array",
+                description: "The dice values being used for this move action",
+                items: { type: "number" }
             }
         },
-        required: ["boatId", "path", "diceValue"]
+        required: ["boatId", "path", "diceValues"]
     };
 
     async execute(input: any): Promise<string> {
@@ -125,7 +127,7 @@ export class MoveBoatTool extends GameActionTool {
             action.championDropPosition = input.championDropPosition;
         }
 
-        const result = this.executeAction(action, input.diceValue);
+        const result = this.executeAction(action, input.diceValues);
         return result.summary;
     }
 }
@@ -148,12 +150,13 @@ export class HarvestTool extends GameActionTool {
                 },
                 required: ["food", "wood", "ore", "gold"]
             },
-            diceValue: {
-                type: "number",
-                description: "The dice value being used for this harvest action"
+            diceValues: {
+                type: "array",
+                description: "The dice values being used for this harvest action",
+                items: { type: "number" }
             }
         },
-        required: ["resources", "diceValue"]
+        required: ["resources", "diceValues"]
     };
 
     async execute(input: any): Promise<string> {
@@ -163,7 +166,7 @@ export class HarvestTool extends GameActionTool {
             resources: input.resources
         };
 
-        const result = this.executeAction(action, input.diceValue);
+        const result = this.executeAction(action, input.diceValues);
         return result.summary;
     }
 }

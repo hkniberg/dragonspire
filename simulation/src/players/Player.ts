@@ -12,13 +12,13 @@ export interface ActionResult {
     newGameState: GameState;
     summary: string;
     success: boolean;
-    diceValueUsed?: number; // Track which dice value was used for this action
+    diceValuesUsed?: number[]; // Track which dice values were used for this action
 }
 
 /**
  * Function provided to players for executing actions during their turn
  */
-export type ExecuteActionFunction = (action: GameAction, diceValue?: number) => ActionResult;
+export type ExecuteActionFunction = (action: GameAction, diceValues?: number[]) => ActionResult;
 
 /**
  * Action log entry for a completed turn

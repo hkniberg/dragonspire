@@ -28,10 +28,15 @@ export class GameLogger {
      */
     static formatActionResultConcise(action: GameAction, result: ActionResult): string {
         if (!result.success) {
-            return `[${result.diceValueUsed || '?'}]: FAILED - ${result.summary}`;
+            const dicePrefix = result.diceValuesUsed && result.diceValuesUsed.length > 0
+                ? `[${result.diceValuesUsed.join('+')}]: `
+                : '[?]: ';
+            return `${dicePrefix}FAILED - ${result.summary}`;
         }
 
-        const dicePrefix = result.diceValueUsed ? `[${result.diceValueUsed}]: ` : '';
+        const dicePrefix = result.diceValuesUsed && result.diceValuesUsed.length > 0
+            ? `[${result.diceValuesUsed.join('+')}]: `
+            : '';
         return `${dicePrefix}${result.summary}`;
     }
 
@@ -66,12 +71,13 @@ export class GameLogger {
         diceRolls: number[];
         actions: Array<{ action: GameAction; result: ActionResult }>;
         turnSummary: string;
+        diaryEntry?: string;
     }): string[] {
         const lines: string[] = [];
 
         // Turn header with dice
         lines.push(`--- Round ${turnLog.round}, ${turnLog.playerName} ---`);
-        lines.push(`Dice rolled: [${turnLog.diceRolls.join(', ')}]`);
+        lines.push(`Dice rolled: [${turnLog.diceRolls.join(',')}]`);
 
         // Actions with dice values
         const successfulActions = turnLog.actions.filter(({ result }) => result.success);
@@ -103,6 +109,29 @@ export class GameLogger {
             if (harvestSummary) {
                 lines.push(`Total harvested: ${harvestSummary}`);
             }
+        }
+
+        return lines;
+    }
+
+    /**
+     * Format turn log with diary entry for unified display (CLI and web)
+     */
+    static formatTurnUnified(turnLog: {
+        round: number;
+        playerId: number;
+        playerName: string;
+        diceRolls: number[];
+        actions: Array<{ action: GameAction; result: ActionResult }>;
+        turnSummary: string;
+        diaryEntry?: string;
+    }): string[] {
+        const lines = this.formatTurnConcise(turnLog);
+
+        // Add diary entry if it exists
+        if (turnLog.diaryEntry) {
+            lines.push('');
+            lines.push(`💭 Player Diary: ${turnLog.diaryEntry}`);
         }
 
         return lines;

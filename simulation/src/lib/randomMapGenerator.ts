@@ -9,7 +9,7 @@ import type {
 
 export class RandomMapGenerator {
     // Hard-coded seed for deterministic map generation
-    private static readonly SEED = 12345;
+    private static readonly SEED = 1;
     private static seedValue = this.SEED;
 
     /**

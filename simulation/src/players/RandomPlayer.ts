@@ -29,19 +29,36 @@ export class RandomPlayer implements Player {
         let currentGameState = gameState;
         const dice = [...diceRolls];
 
-        // Use first die to move a champion
-        if (dice.length > 0) {
-            const moveResult = this.executeRandomChampionMove(currentGameState, playerId, dice[0], executeAction);
+        // 20% chance to use both dice for movement, 80% chance for normal split
+        const useBothDiceForMovement = Math.random() < 0.2;
+
+        if (useBothDiceForMovement && dice.length >= 2) {
+            // Use both dice for a single movement action
+            const moveResult = this.executeRandomChampionMoveWithMultipleDice(
+                currentGameState,
+                playerId,
+                dice,
+                executeAction
+            );
             if (moveResult.success) {
                 currentGameState = moveResult.newGameState;
             }
-        }
+        } else {
+            // Normal behavior: first die for movement, second for harvesting
+            // Use first die to move a champion
+            if (dice.length > 0) {
+                const moveResult = this.executeRandomChampionMove(currentGameState, playerId, dice[0], executeAction);
+                if (moveResult.success) {
+                    currentGameState = moveResult.newGameState;
+                }
+            }
 
-        // Use second die to harvest
-        if (dice.length > 1) {
-            const harvestResult = this.executeRandomHarvest(currentGameState, playerId, dice[1], executeAction);
-            if (harvestResult.success) {
-                currentGameState = harvestResult.newGameState;
+            // Use second die to harvest
+            if (dice.length > 1) {
+                const harvestResult = this.executeRandomHarvest(currentGameState, playerId, dice[1], executeAction);
+                if (harvestResult.success) {
+                    currentGameState = harvestResult.newGameState;
+                }
             }
         }
 
@@ -118,7 +135,7 @@ export class RandomPlayer implements Player {
             claimTile: shouldClaimTile
         };
 
-        return executeAction(moveAction, dieValue);
+        return executeAction(moveAction, [dieValue]);
     }
 
     private executeRandomHarvest(
@@ -164,7 +181,78 @@ export class RandomPlayer implements Player {
             resources: harvestResources
         };
 
-        return executeAction(harvestAction, dieValue);
+        return executeAction(harvestAction, [dieValue]);
+    }
+
+    private executeRandomChampionMoveWithMultipleDice(
+        gameState: GameState,
+        playerId: number,
+        diceValues: number[],
+        executeAction: ExecuteActionFunction
+    ) {
+        const player = gameState.getPlayerById(playerId);
+        if (!player || player.champions.length === 0) {
+            return { success: false, summary: 'No champions available', newGameState: gameState };
+        }
+
+        // Pick a random champion
+        const randomChampionIndex = Math.floor(Math.random() * player.champions.length);
+        const champion = player.champions[randomChampionIndex];
+
+        // Calculate total movement from all dice
+        const totalMovement = diceValues.reduce((sum, die) => sum + die, 0);
+
+        // Get all reachable tiles within total movement range, excluding tiles with other champions
+        const reachableTiles = getReachableTiles(
+            gameState,
+            champion.position,
+            totalMovement,
+            champion.id,
+            playerId
+        );
+
+        if (reachableTiles.length === 0) {
+            return { success: false, summary: 'No reachable tiles available', newGameState: gameState };
+        }
+
+        // Pick a random reachable tile
+        const randomTileIndex = Math.floor(Math.random() * reachableTiles.length);
+        const targetTile = reachableTiles[randomTileIndex];
+
+        // Generate all possible paths to the target tile
+        const allPaths = generateAllPaths(
+            gameState,
+            champion.position,
+            targetTile,
+            totalMovement,
+            champion.id,
+            playerId
+        );
+
+        if (allPaths.length === 0) {
+            return { success: false, summary: 'No valid paths to target tile', newGameState: gameState };
+        }
+
+        // Pick a random path
+        const randomPathIndex = Math.floor(Math.random() * allPaths.length);
+        const selectedPath = allPaths[randomPathIndex];
+
+        // Check if we should claim the destination tile
+        const destinationTile = gameState.getTile(targetTile);
+        const shouldClaimTile = destinationTile &&
+            destinationTile.tileType === 'resource' &&
+            destinationTile.claimedBy === undefined;
+
+        // Execute the move with all dice values
+        const moveAction: GameAction = {
+            type: 'moveChampion',
+            playerId: playerId,
+            championId: champion.id,
+            path: selectedPath,
+            claimTile: shouldClaimTile
+        };
+
+        return executeAction(moveAction, diceValues);
     }
 
     private actionToString(action: GameAction): string {

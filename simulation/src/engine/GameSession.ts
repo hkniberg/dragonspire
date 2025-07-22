@@ -66,8 +66,8 @@ export class GameSession {
 
         // Create the execute action function that the player will use
         let currentState = this.gameState;
-        const executeAction: ExecuteActionFunction = (action: GameAction, diceValue?: number) => {
-            const result = ActionExecutor.executeAction(currentState, action, diceValue);
+        const executeAction: ExecuteActionFunction = (action: GameAction, diceValues?: number[]) => {
+            const result = ActionExecutor.executeAction(currentState, action, diceValues);
 
             // Track the action
             turnActions.push({ action, result });
@@ -105,9 +105,9 @@ export class GameSession {
             diaryEntry: diaryEntry
         };
 
-        // Log using concise format
-        const conciseLog = GameLogger.formatTurnConcise(turnLogEntry);
-        console.log('\n' + conciseLog.join('\n'));
+        // Log using unified format (includes diary entries)
+        const unifiedLog = GameLogger.formatTurnUnified(turnLogEntry);
+        console.log('\n' + unifiedLog.join('\n'));
 
         // Add to action log
         this.actionLog.push(turnLogEntry);

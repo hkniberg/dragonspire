@@ -35,8 +35,7 @@ export const ActionLog: React.FC<ActionLogProps> = ({
         }}
       >
         {actionLog.map((turn, index) => {
-          const detailedTurn = GameLogger.enhanceWithDetailedActions(turn);
-          const messages = GameLogger.getCliTurnMessages(detailedTurn);
+          const messages = GameLogger.formatTurnUnified(turn);
 
           return (
             <div
@@ -56,35 +55,22 @@ export const ActionLog: React.FC<ActionLogProps> = ({
                     marginBottom: "2px",
                     color: message.includes("---")
                       ? "#2c3e50"
-                      : message.includes("succeeded")
-                      ? "#28a745"
-                      : message.includes("failed")
-                      ? "#dc3545"
-                      : message.includes("Summary:")
+                      : message.includes("Player Diary:")
+                      ? "#0c5460"
+                      : message.includes("Dice rolled:")
+                      ? "#495057"
+                      : message.includes("Total harvested:")
                       ? "#6f42c1"
-                      : "#495057",
+                      : "#28a745", // Default green for action results
+                    fontStyle: message.includes("Player Diary:")
+                      ? "italic"
+                      : "normal",
+                    fontWeight: message.includes("---") ? "bold" : "normal",
                   }}
                 >
                   {message}
                 </div>
               ))}
-
-              {/* Display diary entry if it exists */}
-              {turn.diaryEntry && (
-                <div
-                  style={{
-                    marginTop: "8px",
-                    padding: "8px",
-                    backgroundColor: "#e8f4f8",
-                    borderLeft: "3px solid #17a2b8",
-                    borderRadius: "3px",
-                    fontStyle: "italic",
-                    color: "#0c5460",
-                  }}
-                >
-                  <strong>💭 Player Diary:</strong> {turn.diaryEntry}
-                </div>
-              )}
             </div>
           );
         })}
