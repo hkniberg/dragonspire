@@ -42,6 +42,203 @@ export class ActionExecutor {
         }
     }
 
+    /**
+ * Handles all the logic for a champion arriving at a tile (exploration, battles, claiming, etc.)
+ */
+    private static executeChampionArrival(
+        gameState: GameState,
+        playerId: number,
+        championId: number,
+        destination: Position,
+        claimTile: boolean = false
+    ): ActionResult {
+        const player = gameState.getPlayerById(playerId);
+        if (!player) {
+            return {
+                newGameState: gameState,
+                summary: `Player ${playerId} not found`,
+                success: false
+            };
+        }
+
+        const champion = gameState.getChampionById(playerId, championId);
+        if (!champion) {
+            return {
+                newGameState: gameState,
+                summary: `Champion ${championId} not found for player ${playerId}`,
+                success: false
+            };
+        }
+
+        const destinationTile = gameState.getTile(destination);
+        if (!destinationTile) {
+            return {
+                newGameState: gameState,
+                summary: `Invalid destination: tile at (${destination.row}, ${destination.col}) does not exist`,
+                success: false
+            };
+        }
+
+        // Validate home tile access
+        if (destinationTile.tileType === 'home') {
+            const homeOwner = this.getHomeTileOwner(destination);
+            if (homeOwner && homeOwner !== playerId) {
+                return {
+                    newGameState: gameState,
+                    summary: `Cannot enter home tile at (${destination.row}, ${destination.col}): belongs to player ${homeOwner}`,
+                    success: false
+                };
+            }
+        }
+
+        // Check for champions on destination tile
+        const destinationChampions = gameState.players
+            .flatMap(p => p.champions)
+            .filter(c => c.position.row === destination.row && c.position.col === destination.col);
+
+        let battleSummary = '';
+        let updatedGameState = gameState;
+
+        if (destinationChampions.length > 0) {
+            const existingChampion = destinationChampions[0];
+
+            // Cannot move to tile with same player's champion
+            if (existingChampion.playerId === playerId) {
+                return {
+                    newGameState: gameState,
+                    summary: `Cannot move to tile (${destination.row}, ${destination.col}): already occupied by your champion${existingChampion.id}`,
+                    success: false
+                };
+            }
+
+            // Battle with opponent's champion
+            const battleResult = this.resolveBattle(gameState, player, existingChampion);
+            if (!battleResult.success) {
+                return {
+                    newGameState: gameState,
+                    summary: battleResult.summary,
+                    success: false
+                };
+            }
+
+            updatedGameState = battleResult.newGameState;
+            battleSummary = ` and ${battleResult.summary}`;
+        }
+
+        // Validate claiming if requested
+        if (claimTile) {
+            // Check if tile is a resource tile
+            if (destinationTile.tileType !== 'resource') {
+                return {
+                    newGameState: gameState,
+                    summary: `Cannot claim tile at (${destination.row}, ${destination.col}): not a resource tile`,
+                    success: false
+                };
+            }
+
+            // Check if tile is already claimed
+            if (destinationTile.claimedBy !== undefined) {
+                return {
+                    newGameState: gameState,
+                    summary: `Cannot claim tile at (${destination.row}, ${destination.col}): already claimed by player ${destinationTile.claimedBy}`,
+                    success: false
+                };
+            }
+
+            // Check if player has claims available
+            const currentClaims = gameState.board
+                .flat()
+                .filter(tile => tile.claimedBy === playerId).length;
+
+            if (currentClaims >= player.maxClaims) {
+                return {
+                    newGameState: gameState,
+                    summary: `Cannot claim tile: Player ${playerId} has reached maximum claims (${player.maxClaims})`,
+                    success: false
+                };
+            }
+        }
+
+        // Check if destination tile is unexplored and handle exploration
+        let updatedBoard = updatedGameState.board;
+        let updatedPlayer = updatedGameState.getPlayerById(playerId)!;
+        let explorationSummary = '';
+
+        if (!destinationTile.explored) {
+            // Reveal the tile
+            const revealedTile = { ...destinationTile, explored: true };
+            updatedBoard = updatedGameState.board.map((row, rowIndex) =>
+                row.map((tile, colIndex) =>
+                    rowIndex === destination.row && colIndex === destination.col
+                        ? revealedTile
+                        : tile
+                )
+            );
+
+            // Grant 1 fame for exploring the tile
+            updatedPlayer = { ...updatedPlayer, fame: updatedPlayer.fame + 1 };
+            explorationSummary = ` and explored a new tile (gained 1 Fame)`;
+        }
+
+        // Handle tile claiming if requested
+        let claimSummary = '';
+        if (claimTile) {
+            const updatedTile = { ...updatedBoard[destination.row][destination.col], claimedBy: playerId };
+            updatedBoard = updatedBoard.map((row, rowIndex) =>
+                row.map((tile, colIndex) =>
+                    rowIndex === destination.row && colIndex === destination.col
+                        ? updatedTile
+                        : tile
+                )
+            );
+
+            // Generate resource description
+            const resourceDesc = this.getTileResourceDescription(updatedTile);
+            claimSummary = ` and claimed a resource tile${resourceDesc}`;
+        }
+
+        // Check for blockading (landing on opponent's claimed resource tile)
+        let blockadeSummary = '';
+        if (destinationTile.tileType === 'resource' &&
+            destinationTile.claimedBy !== undefined &&
+            destinationTile.claimedBy !== playerId) {
+            const opponentPlayer = updatedGameState.getPlayerById(destinationTile.claimedBy);
+            const opponentName = opponentPlayer?.name || `Player ${destinationTile.claimedBy}`;
+            const resourceDesc = this.getTileResourceDescription(destinationTile);
+            blockadeSummary = ` and blockaded ${opponentName}'s resource tile${resourceDesc}`;
+        }
+
+        // Check for adventure tiles
+        let adventureSummary = '';
+        if (destinationTile.tileType === 'adventure') {
+            const tier = (destinationTile as any).tier || 1; // Default to tier 1 if not specified
+            adventureSummary = `, a Tier ${tier} adventure tile. These are not yet implemented, so nothing happens.`;
+        }
+
+        // Create new game state with champion moved
+        const updatedChampions = updatedPlayer.champions.map(c =>
+            c.id === championId
+                ? { ...c, position: destination }
+                : c
+        );
+
+        const finalPlayer = { ...updatedPlayer, champions: updatedChampions };
+        const updatedPlayers = updatedGameState.players.map(p =>
+            p.id === playerId ? finalPlayer : p
+        );
+
+        const newGameState = updatedGameState.withUpdates({
+            board: updatedBoard,
+            players: updatedPlayers
+        });
+
+        return {
+            newGameState,
+            summary: `Champion${championId} arrived at (${destination.row}, ${destination.col})${adventureSummary}${battleSummary}${explorationSummary}${claimSummary}${blockadeSummary}`,
+            success: true
+        };
+    }
+
     private static executeMoveChampion(gameState: GameState, action: MoveChampionAction, diceValues?: number[]): ActionResult {
         const player = gameState.getPlayerById(action.playerId);
         if (!player) {
@@ -97,178 +294,21 @@ export class ActionExecutor {
         }
 
         const destination = action.path[action.path.length - 1];
-        const destinationTile = gameState.getTile(destination);
-        if (!destinationTile) {
+
+        // Handle champion arrival at destination
+        const arrivalResult = this.executeChampionArrival(gameState, action.playerId, action.championId, destination, action.claimTile);
+        if (!arrivalResult.success) {
             return {
                 newGameState: gameState,
-                summary: `Invalid destination: tile at (${destination.row}, ${destination.col}) does not exist`,
+                summary: arrivalResult.summary,
                 success: false,
                 diceValuesUsed: diceValues
             };
         }
 
-        // Validate home tile access
-        if (destinationTile.tileType === 'home') {
-            const homeOwner = this.getHomeTileOwner(destination);
-            if (homeOwner && homeOwner !== action.playerId) {
-                return {
-                    newGameState: gameState,
-                    summary: `Cannot enter home tile at (${destination.row}, ${destination.col}): belongs to player ${homeOwner}`,
-                    success: false,
-                    diceValuesUsed: diceValues
-                };
-            }
-        }
-
-        // Check for champions on destination tile
-        const destinationChampions = gameState.players
-            .flatMap(p => p.champions)
-            .filter(c => c.position.row === destination.row && c.position.col === destination.col);
-
-        let battleSummary = '';
-        let updatedGameState = gameState;
-
-        if (destinationChampions.length > 0) {
-            const existingChampion = destinationChampions[0];
-
-            // Cannot move to tile with same player's champion
-            if (existingChampion.playerId === action.playerId) {
-                return {
-                    newGameState: gameState,
-                    summary: `Cannot move to tile (${destination.row}, ${destination.col}): already occupied by your champion${existingChampion.id}`,
-                    success: false,
-                    diceValuesUsed: diceValues
-                };
-            }
-
-            // Battle with opponent's champion
-            const battleResult = this.resolveBattle(gameState, player, existingChampion);
-            if (!battleResult.success) {
-                return {
-                    newGameState: gameState,
-                    summary: battleResult.summary,
-                    success: false,
-                    diceValuesUsed: diceValues
-                };
-            }
-
-            updatedGameState = battleResult.newGameState;
-            battleSummary = ` and ${battleResult.summary}`;
-        }
-
-        // Validate claiming if requested
-        if (action.claimTile) {
-            // Check if tile is a resource tile
-            if (destinationTile.tileType !== 'resource') {
-                return {
-                    newGameState: gameState,
-                    summary: `Cannot claim tile at (${destination.row}, ${destination.col}): not a resource tile`,
-                    success: false,
-                    diceValuesUsed: diceValues
-                };
-            }
-
-            // Check if tile is already claimed
-            if (destinationTile.claimedBy !== undefined) {
-                return {
-                    newGameState: gameState,
-                    summary: `Cannot claim tile at (${destination.row}, ${destination.col}): already claimed by player ${destinationTile.claimedBy}`,
-                    success: false,
-                    diceValuesUsed: diceValues
-                };
-            }
-
-            // Check if player has claims available
-            const currentClaims = gameState.board
-                .flat()
-                .filter(tile => tile.claimedBy === action.playerId).length;
-
-            if (currentClaims >= player.maxClaims) {
-                return {
-                    newGameState: gameState,
-                    summary: `Cannot claim tile: Player ${action.playerId} has reached maximum claims (${player.maxClaims})`,
-                    success: false,
-                    diceValuesUsed: diceValues
-                };
-            }
-        }
-
-        // Check if destination tile is unexplored and handle exploration
-        let updatedBoard = updatedGameState.board;
-        let updatedPlayer = updatedGameState.getPlayerById(action.playerId)!;
-        let explorationSummary = '';
-
-        if (!destinationTile.explored) {
-            // Reveal the tile
-            const revealedTile = { ...destinationTile, explored: true };
-            updatedBoard = updatedGameState.board.map((row, rowIndex) =>
-                row.map((tile, colIndex) =>
-                    rowIndex === destination.row && colIndex === destination.col
-                        ? revealedTile
-                        : tile
-                )
-            );
-
-            // Grant 1 fame for exploring the tile
-            updatedPlayer = { ...updatedPlayer, fame: updatedPlayer.fame + 1 };
-            explorationSummary = ` and explored a new tile (gained 1 Fame)`;
-        }
-
-        // Handle tile claiming if requested
-        let claimSummary = '';
-        if (action.claimTile) {
-            const updatedTile = { ...updatedBoard[destination.row][destination.col], claimedBy: action.playerId };
-            updatedBoard = updatedBoard.map((row, rowIndex) =>
-                row.map((tile, colIndex) =>
-                    rowIndex === destination.row && colIndex === destination.col
-                        ? updatedTile
-                        : tile
-                )
-            );
-
-            // Generate resource description
-            const resourceDesc = this.getTileResourceDescription(updatedTile);
-            claimSummary = ` and claimed a resource tile${resourceDesc}`;
-        }
-
-        // Check for blockading (landing on opponent's claimed resource tile)
-        let blockadeSummary = '';
-        if (destinationTile.tileType === 'resource' &&
-            destinationTile.claimedBy !== undefined &&
-            destinationTile.claimedBy !== action.playerId) {
-            const opponentPlayer = updatedGameState.getPlayerById(destinationTile.claimedBy);
-            const opponentName = opponentPlayer?.name || `Player ${destinationTile.claimedBy}`;
-            const resourceDesc = this.getTileResourceDescription(destinationTile);
-            blockadeSummary = ` and blockaded ${opponentName}'s resource tile${resourceDesc}`;
-        }
-
-        // Check for adventure tiles
-        let adventureSummary = '';
-        if (destinationTile.tileType === 'adventure') {
-            const tier = (destinationTile as any).tier || 1; // Default to tier 1 if not specified
-            adventureSummary = `, a Tier ${tier} adventure tile. These are not yet implemented, so nothing happens.`;
-        }
-
-        // Create new game state with champion moved
-        const updatedChampions = updatedPlayer.champions.map(c =>
-            c.id === action.championId
-                ? { ...c, position: destination }
-                : c
-        );
-
-        const finalPlayer = { ...updatedPlayer, champions: updatedChampions };
-        const updatedPlayers = updatedGameState.players.map(p =>
-            p.id === action.playerId ? finalPlayer : p
-        );
-
-        const newGameState = updatedGameState.withUpdates({
-            board: updatedBoard,
-            players: updatedPlayers
-        });
-
         return {
-            newGameState,
-            summary: `Moved champion${action.championId} from (${champion.position.row}, ${champion.position.col}) to (${destination.row}, ${destination.col})${adventureSummary}${battleSummary}${explorationSummary}${claimSummary}${blockadeSummary}`,
+            newGameState: arrivalResult.newGameState,
+            summary: `Moved champion${action.championId} from (${champion.position.row}, ${champion.position.col}) to (${destination.row}, ${destination.col}). ${arrivalResult.summary}`,
             success: true,
             diceValuesUsed: diceValues
         };
@@ -312,31 +352,43 @@ export class ActionExecutor {
                 : b
         );
 
-        let updatedChampions = player.champions;
+        let updatedGameState = gameState.withUpdates({
+            players: gameState.players.map(p =>
+                p.id === action.playerId ? { ...p, boats: updatedBoats } : p
+            )
+        });
+
         let summary = `Moved boat${action.boatId} to ${destination}`;
 
         // Handle champion pickup/dropoff if specified
         if (action.championId && action.championDropPosition) {
             const champion = player.champions.find(c => c.id === action.championId);
-            if (champion) {
-                updatedChampions = player.champions.map(c =>
-                    c.id === action.championId
-                        ? { ...c, position: action.championDropPosition! }
-                        : c
-                );
-                summary += ` and transported champion${action.championId} to (${action.championDropPosition.row}, ${action.championDropPosition.col})`;
+            if (!champion) {
+                return {
+                    newGameState: gameState,
+                    summary: `Champion ${action.championId} not found for player ${action.playerId}`,
+                    success: false,
+                    diceValuesUsed: diceValues
+                };
             }
+
+            // Use the same arrival logic as champion movement
+            const arrivalResult = this.executeChampionArrival(updatedGameState, action.playerId, action.championId, action.championDropPosition);
+            if (!arrivalResult.success) {
+                return {
+                    newGameState: gameState,
+                    summary: `${summary}, but champion transport failed: ${arrivalResult.summary}`,
+                    success: false,
+                    diceValuesUsed: diceValues
+                };
+            }
+
+            updatedGameState = arrivalResult.newGameState;
+            summary += ` and transported champion${action.championId} to (${action.championDropPosition.row}, ${action.championDropPosition.col}). ${arrivalResult.summary}`;
         }
 
-        const updatedPlayer = { ...player, boats: updatedBoats, champions: updatedChampions };
-        const updatedPlayers = gameState.players.map(p =>
-            p.id === action.playerId ? updatedPlayer : p
-        );
-
-        const newGameState = gameState.withUpdates({ players: updatedPlayers });
-
         return {
-            newGameState,
+            newGameState: updatedGameState,
             summary,
             success: true,
             diceValuesUsed: diceValues
