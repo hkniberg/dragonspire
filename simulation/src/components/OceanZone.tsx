@@ -8,6 +8,121 @@ export const oceanZones = [
   { id: 3, label: "D", name: "Southeast Sea", position: "southeast" },
 ];
 
+// Function to get boat image path based on player ID
+const getBoatImagePath = (playerId: number): string => {
+  const boatColors = ["red", "blue", "green", "orange"];
+  const colorIndex = (playerId - 1) % boatColors.length;
+  return `/boats/boat-${boatColors[colorIndex]}.png`;
+};
+
+// Function to generate boat positions for multiple boats in the same zone
+const getBoatPosition = (
+  zonePosition: string,
+  boatIndex: number,
+  boatId: number
+): { x: number; y: number } => {
+  // Small random variation for natural look (based on boat ID)
+  const seed = boatId * 1337;
+  const randomX = (((seed * 9301) % 233280) / 233280) * 10 - 5; // ±5px variation
+  const randomY = (((seed * 7919) % 233280) / 233280) * 10 - 5; // ±5px variation
+
+  // Base spacing between boats - calculated to fit 5x5 grid in 640px ocean tile
+  const spacing = 135; // 540px usable space ÷ 4 intervals = 135px
+
+  // Calculate grid position based on boat index using 5x5 grid
+  const getGridPosition = (
+    index: number,
+    zonePos: string
+  ): { gridX: number; gridY: number } => {
+    if (index === 0) {
+      // Corner positions
+      switch (zonePos) {
+        case "northwest":
+          return { gridX: 0, gridY: 0 };
+        case "northeast":
+          return { gridX: 0, gridY: 4 };
+        case "southwest":
+          return { gridX: 4, gridY: 0 };
+        case "southeast":
+          return { gridX: 4, gridY: 4 };
+      }
+    }
+
+    // Calculate steps: odd indices use direction 1, even indices use direction 2
+    const steps = Math.ceil(index / 2);
+    const isDirection1 = index % 2 === 1;
+
+    switch (zonePos) {
+      case "northwest":
+        // Direction 1: right (increase x), Direction 2: down (increase y)
+        if (isDirection1) {
+          return { gridX: steps, gridY: 0 };
+        } else {
+          return { gridX: 0, gridY: steps };
+        }
+
+      case "northeast":
+        // Direction 1: left (decrease y), Direction 2: down (increase x)
+        if (isDirection1) {
+          return { gridX: 0, gridY: 4 - steps };
+        } else {
+          return { gridX: steps, gridY: 4 };
+        }
+
+      case "southwest":
+        // Direction 1: up (decrease x), Direction 2: right (increase y)
+        if (isDirection1) {
+          return { gridX: 4 - steps, gridY: 0 };
+        } else {
+          return { gridX: 4, gridY: steps };
+        }
+
+      case "southeast":
+        // Direction 1: left (decrease y), Direction 2: up (decrease x)
+        if (isDirection1) {
+          return { gridX: 4, gridY: 4 - steps };
+        } else {
+          return { gridX: 4 - steps, gridY: 4 };
+        }
+    }
+
+    return { gridX: 0, gridY: 0 }; // fallback
+  };
+
+  const { gridX, gridY } = getGridPosition(boatIndex, zonePosition);
+
+  // Convert grid position to pixel offset from corner
+  let baseX = 0;
+  let baseY = 0;
+
+  switch (zonePosition) {
+    case "northwest":
+      baseX = gridX * spacing;
+      baseY = gridY * spacing;
+      break;
+
+    case "northeast":
+      baseX = (gridY - 4) * spacing; // gridY: 4->0, 3->-80, 2->-160, etc.
+      baseY = gridX * spacing; // gridX: 0->0, 1->80, 2->160, etc.
+      break;
+
+    case "southwest":
+      baseX = gridY * spacing; // gridY: 0->0, 1->80, 2->160, etc.
+      baseY = (gridX - 4) * spacing; // gridX: 4->0, 3->-80, 2->-160, etc.
+      break;
+
+    case "southeast":
+      baseX = (gridY - 4) * spacing; // gridY: 4->0, 3->-80, 2->-160, etc.
+      baseY = (gridX - 4) * spacing; // gridX: 4->0, 3->-80, 2->-160, etc.
+      break;
+  }
+
+  return {
+    x: baseX + randomX,
+    y: baseY + randomY,
+  };
+};
+
 export const OceanZoneComponent = ({
   zone,
   players,
@@ -30,11 +145,21 @@ export const OceanZoneComponent = ({
   };
 
   // Find boats in this zone
-  const boatsInZone = players.flatMap((player) =>
-    player.boats
-      .filter((boat) => zonePositionMap[zone.position]?.includes(boat.position))
-      .map((boat) => ({ ...boat, player }))
-  );
+  const boatsInZone = players
+    .flatMap((player) =>
+      player.boats
+        .filter((boat) =>
+          zonePositionMap[zone.position]?.includes(boat.position)
+        )
+        .map((boat) => ({ ...boat, player }))
+    )
+    .sort((a, b) => {
+      // Sort first by player ID, then by boat ID for consistent positioning
+      if (a.player.id !== b.player.id) {
+        return a.player.id - b.player.id;
+      }
+      return a.id - b.id;
+    });
 
   return (
     <div
@@ -240,17 +365,39 @@ export const OceanZoneComponent = ({
         (() => {
           // Determine corner position based on zone
           const getCornerPosition = (zonePosition: string) => {
+            // Ocean tile is 640x640, we want 5x5 grid centered with 135px spacing
+            // Grid starts at 50px from edge, accounting for 96px boat size
+            const gridStart = 50;
+            const boatSize = 96;
+            const halfBoat = boatSize / 2;
+
             switch (zonePosition) {
               case "northwest":
-                return { top: "20px", left: "20px" };
+                // Grid position (0,0) - start at top-left of grid
+                return {
+                  top: `${gridStart - halfBoat}px`,
+                  left: `${gridStart - halfBoat}px`,
+                };
               case "northeast":
-                return { top: "20px", right: "20px" };
+                // Grid position (0,4) - start at top-right of grid
+                return {
+                  top: `${gridStart - halfBoat}px`,
+                  left: `${gridStart + 4 * 135 - halfBoat}px`,
+                };
               case "southwest":
-                return { bottom: "20px", left: "20px" };
+                // Grid position (4,0) - start at bottom-left of grid
+                return {
+                  top: `${gridStart + 4 * 135 - halfBoat}px`,
+                  left: `${gridStart - halfBoat}px`,
+                };
               case "southeast":
-                return { bottom: "20px", right: "20px" };
+                // Grid position (4,4) - start at bottom-right of grid
+                return {
+                  top: `${gridStart + 4 * 135 - halfBoat}px`,
+                  left: `${gridStart + 4 * 135 - halfBoat}px`,
+                };
               default:
-                return { top: "20px", left: "20px" };
+                return { top: `${gridStart}px`, left: `${gridStart}px` };
             }
           };
 
@@ -261,37 +408,45 @@ export const OceanZoneComponent = ({
               style={{
                 position: "absolute",
                 ...cornerStyle,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-start",
-                gap: "8px",
                 zIndex: 10,
               }}
             >
-              {boatsInZone.map((boatWithPlayer) => {
+              {boatsInZone.map((boatWithPlayer, boatIndex) => {
                 const playerColors = getPlayerColor
                   ? getPlayerColor(boatWithPlayer.player.id)
                   : { main: "#666", light: "#ccc", dark: "#333" };
+                const offset = getBoatPosition(
+                  zone.position,
+                  boatIndex,
+                  boatWithPlayer.id
+                );
                 return (
                   <div
                     key={`${boatWithPlayer.player.id}-${boatWithPlayer.id}`}
                     style={{
-                      backgroundColor: playerColors.main,
-                      color: "white",
+                      position: "absolute",
+                      backgroundColor: "transparent",
                       borderRadius: "12px",
-                      padding: "8px 12px",
+                      padding: "4px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       fontSize: "20px",
                       fontWeight: "bold",
-                      border: "2px solid white",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
                       minWidth: "60px",
+                      transform: `translate(${offset.x}px, ${offset.y}px)`,
                     }}
                     title={`Boat ${boatWithPlayer.id} (${boatWithPlayer.player.name})`}
                   >
-                    🚢
+                    <img
+                      src={getBoatImagePath(boatWithPlayer.player.id)}
+                      alt={`Boat ${boatWithPlayer.id}`}
+                      style={{
+                        width: "96px",
+                        height: "96px",
+                        objectFit: "contain",
+                      }}
+                    />
                   </div>
                 );
               })}

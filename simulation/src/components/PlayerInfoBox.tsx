@@ -1,5 +1,12 @@
 import type { Player } from "../lib/types";
 
+// Function to get boat image path based on player ID
+const getBoatImagePath = (playerId: number): string => {
+  const boatColors = ["red", "blue", "green", "orange"];
+  const colorIndex = (playerId - 1) % boatColors.length;
+  return `/boats/boat-${boatColors[colorIndex]}.png`;
+};
+
 interface PlayerInfoBoxProps {
   player: Player;
   isCurrentPlayer: boolean;
@@ -152,9 +159,26 @@ export const PlayerInfoBox = ({
           Boats:
         </div>
         {player.boats.map((boat) => (
-          <div key={boat.id} style={{ marginBottom: "2px" }}>
+          <div
+            key={boat.id}
+            style={{
+              marginBottom: "2px",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <img
+              src={getBoatImagePath(player.id)}
+              alt={`Boat ${boat.id}`}
+              style={{
+                width: "16px",
+                height: "16px",
+                objectFit: "contain",
+                marginRight: "4px",
+              }}
+            />
             <span style={{ color: colors.main, fontWeight: "bold" }}>
-              🚢 B{boat.id}
+              B{boat.id}
             </span>
             <span style={{ marginLeft: "4px", color: "#6c757d" }}>
               {boat.position.toUpperCase()}
