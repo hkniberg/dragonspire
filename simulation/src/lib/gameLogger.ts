@@ -15,18 +15,9 @@ export interface DetailedTurnLog {
 
 export class GameLogger {
     /**
-     * Format individual action result for display
-     */
-    static formatActionResult(action: GameAction, result: ActionResult, playerName: string): string {
-        const status = result.success ? "succeeded" : "failed";
-        const actionType = action.type;
-        return `${playerName} ${actionType} ${status}: ${result.summary}`;
-    }
-
-    /**
      * Format individual action result with dice value for concise display
      */
-    static formatActionResultConcise(action: GameAction, result: ActionResult): string {
+    static formatActionResultConcise(result: ActionResult): string {
         if (!result.success) {
             const dicePrefix = result.diceValuesUsed && result.diceValuesUsed.length > 0
                 ? `[${result.diceValuesUsed.join('+')}]: `
@@ -35,31 +26,11 @@ export class GameLogger {
         }
 
         const dicePrefix = result.diceValuesUsed && result.diceValuesUsed.length > 0
-            ? `[${result.diceValuesUsed.join('+')}]: `
+            ? `[${result.diceValuesUsed.join('')}]: `
             : '';
         return `${dicePrefix}${result.summary}`;
     }
 
-    /**
-     * Convert a basic turn log to a detailed turn log with formatted action strings
-     */
-    static enhanceWithDetailedActions(turnLog: {
-        round: number;
-        playerId: number;
-        playerName: string;
-        diceRolls: number[];
-        actions: Array<{ action: GameAction; result: ActionResult }>;
-        turnSummary: string;
-    }): DetailedTurnLog {
-        const detailedActions = turnLog.actions.map(({ action, result }) =>
-            this.formatActionResult(action, result, turnLog.playerName)
-        );
-
-        return {
-            ...turnLog,
-            detailedActions
-        };
-    }
 
     /**
      * Convert a basic turn log to a concise format
@@ -82,7 +53,7 @@ export class GameLogger {
         // Actions with dice values
         const successfulActions = turnLog.actions.filter(({ result }) => result.success);
         for (const { action, result } of successfulActions) {
-            lines.push(this.formatActionResultConcise(action, result));
+            lines.push(this.formatActionResultConcise(result));
         }
 
         // Only show aggregated harvest summary if there are multiple harvest actions
@@ -137,65 +108,5 @@ export class GameLogger {
         return lines;
     }
 
-    /**
-     * Format turn header for display
-     */
-    static formatTurnHeader(round: number, playerId: number, playerName: string): string {
-        return `--- Round ${round}, Player ${playerId} (${playerName}) ---`;
-    }
 
-    /**
-     * Format dice rolls for display
-     */
-    static formatDiceRolls(diceRolls: number[]): string {
-        return `Dice rolled: [${diceRolls.join(', ')}]`;
-    }
-
-    /**
-     * Format turn start message
-     */
-    static formatTurnStart(playerName: string, diceRolls: number[]): string {
-        return `${playerName} starting turn with dice: [${diceRolls.join(', ')}]`;
-    }
-
-    /**
-     * Format turn end message
-     */
-    static formatTurnEnd(playerName: string): string {
-        return `${playerName} ending turn`;
-    }
-
-    /**
-     * Format turn summary
-     */
-    static formatTurnSummary(turnSummary: string): string {
-        return `Turn Summary: ${turnSummary}`;
-    }
-
-    /**
-     * Get all log messages for a turn in CLI format
-     */
-    static getCliTurnMessages(detailedTurnLog: DetailedTurnLog): string[] {
-        const messages: string[] = [];
-
-        // Turn header
-        messages.push(this.formatTurnHeader(detailedTurnLog.round, detailedTurnLog.playerId, detailedTurnLog.playerName));
-
-        // Dice rolls
-        messages.push(this.formatDiceRolls(detailedTurnLog.diceRolls));
-
-        // Turn start
-        messages.push(this.formatTurnStart(detailedTurnLog.playerName, detailedTurnLog.diceRolls));
-
-        // Individual actions
-        messages.push(...detailedTurnLog.detailedActions);
-
-        // Turn end
-        messages.push(this.formatTurnEnd(detailedTurnLog.playerName));
-
-        // Turn summary
-        messages.push(this.formatTurnSummary(detailedTurnLog.turnSummary));
-
-        return messages;
-    }
 } 
