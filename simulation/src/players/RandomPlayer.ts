@@ -2,7 +2,7 @@
 
 import { GameState } from '../game/GameState';
 import { GameLogger } from '../lib/gameLogger';
-import { ClaimTileAction, GameAction, ResourceType } from '../lib/types';
+import { GameAction, ResourceType } from '../lib/types';
 import { ExecuteActionFunction, Player, PlayerType } from './Player';
 import { generateAllPaths, getHarvestableResourcesInfo, getReachableTiles } from './PlayerUtils';
 
@@ -113,45 +113,23 @@ export class RandomPlayer implements Player {
         const randomPathIndex = Math.floor(Math.random() * allPaths.length);
         const selectedPath = allPaths[randomPathIndex];
 
+        // Check if we should claim the destination tile
+        const destinationTile = gameState.getTile(targetTile);
+        const shouldClaimTile = destinationTile &&
+            destinationTile.tileType === 'resource' &&
+            destinationTile.claimedBy === undefined;
+
         // Execute the move
         const moveAction: GameAction = {
             type: 'moveChampion',
             playerId: playerId,
             championId: champion.id,
-            path: selectedPath
+            path: selectedPath,
+            claimTile: shouldClaimTile
         };
 
         const result = executeAction(moveAction);
         if (result.success) {
-            // Check if we landed on an unclaimed resource tile and claim it
-            const destinationTile = result.newGameState.getTile(targetTile);
-            if (destinationTile &&
-                destinationTile.tileType === 'resource' &&
-                destinationTile.claimedBy === undefined) {
-
-                const claimAction: ClaimTileAction = {
-                    type: 'claimTile',
-                    playerId: playerId,
-                    championId: champion.id,
-                    position: targetTile
-                };
-
-                const claimResult = executeAction(claimAction);
-                if (claimResult.success) {
-                    console.log(`${this.name} claimed resource tile at (${targetTile.row},${targetTile.col})`);
-                    return {
-                        ...claimResult,
-                        summary: `Moved champion ${champion.id} from (${champion.position.row},${champion.position.col}) to (${targetTile.row},${targetTile.col}) and claimed the resource tile`
-                    };
-                } else {
-                    // Move succeeded but claim failed
-                    return {
-                        ...result,
-                        summary: `Moved champion ${champion.id} from (${champion.position.row},${champion.position.col}) to (${targetTile.row},${targetTile.col}) but failed to claim tile: ${claimResult.summary}`
-                    };
-                }
-            }
-
             // Check if we landed on an opponent's claimed resource tile (blockading)
             if (destinationTile &&
                 destinationTile.tileType === 'resource' &&
@@ -230,7 +208,11 @@ export class RandomPlayer implements Player {
         switch (action.type) {
             case 'moveChampion':
                 const pathStr = action.path.map(p => `(${p.row},${p.col})`).join(' -> ');
-                return `Move champion ${action.championId} along path: ${pathStr}`;
+                let moveStr = `Move champion ${action.championId} along path: ${pathStr}`;
+                if (action.claimTile) {
+                    moveStr += ' and claim tile';
+                }
+                return moveStr;
 
             case 'moveBoat':
                 const boatPathStr = action.path.join(' -> ');

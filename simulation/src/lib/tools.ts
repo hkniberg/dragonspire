@@ -24,7 +24,7 @@ abstract class GameActionTool implements Tool {
 // Move Champion Tool
 export class MoveChampionTool extends GameActionTool {
     name = "moveChampion";
-    description = "Move a champion from the current position to a given end position, through the given path (including start position)";
+    description = "Move a champion from the current position to a given end position, through the given path (including start position). Optionally claim the destination tile if it's an unclaimed resource tile.";
     inputSchema = {
         type: "object",
         properties: {
@@ -47,6 +47,10 @@ export class MoveChampionTool extends GameActionTool {
                     },
                     required: ["row", "col"]
                 }
+            },
+            claimTile: {
+                type: "boolean",
+                description: "Optional: if true, attempts to claim the destination tile (must be an unclaimed resource tile)"
             }
         },
         required: ["playerId", "championId", "path"]
@@ -57,7 +61,8 @@ export class MoveChampionTool extends GameActionTool {
             type: 'moveChampion',
             playerId: input.playerId,
             championId: input.championId,
-            path: input.path
+            path: input.path,
+            claimTile: input.claimTile
         };
 
         const result = this.executeAction(action);

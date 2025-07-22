@@ -65,6 +65,7 @@ export interface MoveChampionAction {
     playerId: number;
     championId: number;
     path: Position[];
+    claimTile?: boolean; // If true, claims the destination tile (last position in path)
 }
 
 export interface MoveBoatAction {
@@ -82,14 +83,7 @@ export interface HarvestAction {
     resources: Record<ResourceType, number>; // Resources and amounts to harvest
 }
 
-export interface ClaimTileAction {
-    type: 'claimTile';
-    playerId: number;
-    championId: number;
-    position: Position;
-}
-
-export type GameAction = MoveChampionAction | MoveBoatAction | HarvestAction | ClaimTileAction;
+export type GameAction = MoveChampionAction | MoveBoatAction | HarvestAction;
 
 export interface DiceUsage {
     diceNumber: number;
