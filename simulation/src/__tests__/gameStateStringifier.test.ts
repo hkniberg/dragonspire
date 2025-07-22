@@ -59,7 +59,7 @@ describe('GameStateStringifier', () => {
 # Board
 
 Tile (0,0)
-- Home tile
+- Home tile for Bob
 
 Tile (0,5)
 - Resource tile providing 2 food, 1 gold
@@ -104,11 +104,11 @@ Tile (4,4)
 - Doomspire Dragon (might 13)
 
 Tile (7,0)
-- Home tile
+- Home tile for Alice
 - Alice champion1 is here
 
 Tile (7,7)
-- Home tile
+- Home tile for David
 - David champion1 is here`;
 
         expect(result).toBe(expected);

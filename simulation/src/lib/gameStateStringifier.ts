@@ -160,7 +160,8 @@ export class GameStateStringifier {
             // Format based on tile type
             switch (tile.tileType) {
                 case 'home':
-                    lines.push('- Home tile');
+                    const homeOwner = this.getPlayerByHomePosition(tile.position, gameState);
+                    lines.push(`- Home tile for ${homeOwner?.name || 'unknown'}`);
                     break;
                 case 'resource':
                     if (tile.resources) {
@@ -228,6 +229,12 @@ export class GameStateStringifier {
             }
         }
         return champions;
+    }
+
+    private static getPlayerByHomePosition(position: { row: number; col: number }, gameState: GameState): Player | undefined {
+        return gameState.players.find(player =>
+            player.homePosition.row === position.row && player.homePosition.col === position.col
+        );
     }
 
     private static formatPosition(position: { row: number; col: number }): string {

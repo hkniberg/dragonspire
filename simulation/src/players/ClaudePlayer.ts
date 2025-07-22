@@ -11,6 +11,7 @@ import { ExecuteActionFunction, Player, PlayerType } from './Player';
 export class ClaudePlayer implements Player {
     private name: string;
     private claude: Claude;
+    private diaryEntries: string[] = [];
 
     constructor(name: string, claude: Claude) {
         this.name = name;
@@ -45,8 +46,9 @@ export class ClaudePlayer implements Player {
             // Get LLM response with tool execution handled internally
             const diaryEntry = await this.claude.useClaude(systemPrompt, userMessage, tools);
 
-            // Log the diary entry
+            // Store the diary entry for future turns
             if (diaryEntry.trim()) {
+                this.diaryEntries.push(diaryEntry.trim());
                 console.log(`${this.name} diary entry: ${diaryEntry.trim()}`);
             }
 
@@ -70,10 +72,16 @@ export class ClaudePlayer implements Player {
         // Use the readable stringified game state instead of JSON
         const boardState = GameStateStringifier.stringify(gameState);
 
+        // Format previous diary entries
+        const previousDiaryEntries = this.diaryEntries.length > 0
+            ? this.diaryEntries.map((entry, index) => `Turn ${index + 1}: ${entry}`).join('\n\n')
+            : 'No previous diary entries.';
+
         const variables: TemplateVariables = {
             playerName: player.name,
             diceRolls: diceRolls.join(' and '),
-            boardState: boardState
+            boardState: boardState,
+            previousDiaryEntries: previousDiaryEntries
         };
 
         return await templateProcessor.processTemplate('makeMove', variables);

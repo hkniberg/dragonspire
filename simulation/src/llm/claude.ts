@@ -24,15 +24,6 @@ function log(label: string, content: any) {
     console.log(`[${timestamp}] ${label}:\n`, content);
 }
 
-// Helper function to log thinking blocks from response content
-function logThinkingBlocks(content: any[]) {
-    for (const block of content) {
-        if (block.type === 'thinking') {
-            log("LLM Thinking", block.thinking);
-        }
-    }
-}
-
 type ToolResult = {
     type: "tool_result";
     tool_use_id: string;
