@@ -2,6 +2,7 @@
 
 import { GameState } from '../game/GameState';
 import { GameLogger } from '../lib/gameLogger';
+import { GameStateStringifier } from '../lib/gameStateStringifier';
 import { templateProcessor, TemplateVariables } from '../lib/templateProcessor';
 import { createGameActionTools } from '../lib/tools';
 import { Claude } from '../llm/claude';
@@ -80,8 +81,8 @@ export class ClaudePlayer implements Player {
             .map(([type, amount]) => `${type}: ${amount}`)
             .join(', ');
 
-        // Serialize the board state
-        const boardState = JSON.stringify(this.serializeGameState(gameState), null, 2);
+        // Use the readable stringified game state instead of JSON
+        const boardState = GameStateStringifier.stringify(gameState);
 
         const variables: TemplateVariables = {
             currentRound: gameState.currentRound,
@@ -97,45 +98,5 @@ export class ClaudePlayer implements Player {
         };
 
         return await templateProcessor.processTemplate('makeMove', variables);
-    }
-
-    private serializeGameState(gameState: GameState): any {
-        return {
-            currentRound: gameState.currentRound,
-            currentPlayerIndex: gameState.currentPlayerIndex,
-            players: gameState.players.map(player => ({
-                id: player.id,
-                name: player.name,
-                fame: player.fame,
-                might: player.might,
-                resources: player.resources,
-                maxClaims: player.maxClaims,
-                champions: player.champions.map(champion => ({
-                    id: champion.id,
-                    position: champion.position,
-                    treasures: champion.treasures
-                })),
-                boats: player.boats.map(boat => ({
-                    id: boat.id,
-                    position: boat.position
-                })),
-                homePosition: player.homePosition
-            })),
-            board: gameState.board.map(row =>
-                row.map(tile => ({
-                    position: tile.position,
-                    tier: tile.tier,
-                    explored: tile.explored,
-                    tileType: tile.tileType,
-                    resources: tile.resources,
-                    isStarred: tile.isStarred,
-                    claimedBy: tile.claimedBy,
-                    monster: tile.monster,
-                    adventureTokens: tile.adventureTokens
-                }))
-            ),
-            gameEnded: gameState.gameEnded,
-            winner: gameState.winner
-        };
     }
 } 

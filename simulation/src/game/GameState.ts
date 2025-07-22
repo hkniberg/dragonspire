@@ -32,7 +32,25 @@ export class GameState {
         this.winner = winner;
     }
 
+    /**
+     * Create a new GameState with the specified player names
+     */
+    public static createWithPlayerNames(playerNames: string[]): GameState {
+        if (playerNames.length !== 4) {
+            throw new Error(`Expected 4 player names, got ${playerNames.length}`);
+        }
+
+        const board = RandomMapGenerator.generateBoard();
+        const players = GameState.initializePlayersWithNames(playerNames);
+
+        return new GameState(board, players);
+    }
+
     private initializePlayers(): Player[] {
+        return GameState.initializePlayersWithNames(['Player 1', 'Player 2', 'Player 3', 'Player 4']);
+    }
+
+    private static initializePlayersWithNames(playerNames: string[]): Player[] {
         const players: Player[] = [];
         const startingPositions: Position[] = [
             { row: 0, col: 0 }, // Player 1
@@ -58,7 +76,7 @@ export class GameState {
 
             players.push({
                 id: i + 1,
-                name: `Player ${i + 1}`,
+                name: playerNames[i],
                 fame: 0,
                 might: 0,
                 resources: { food: 1, wood: 1, ore: 0, gold: 0 },

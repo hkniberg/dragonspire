@@ -21,7 +21,9 @@ export class GameSession {
     private actionLog: ActionLogEntry[];
 
     constructor(config: GameSessionConfig) {
-        this.gameState = new GameState();
+        // Create GameState with the correct player names from the start
+        const playerNames = config.players.map(player => player.getName());
+        this.gameState = GameState.createWithPlayerNames(playerNames);
         this.players = config.players;
         this.sessionState = 'setup';
         this.maxRounds = config.maxRounds || 100; // Default limit to prevent infinite games

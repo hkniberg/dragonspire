@@ -52,7 +52,7 @@ export class Claude {
     async useClaude(systemPrompt: string | null, userMessage: string, tools: Tool[] = []): Promise<string> {
         // Log input
         log("LLM System Prompt", systemPrompt ? truncateForLog(systemPrompt) : "None");
-        log("LLM User Message", truncateForLog(userMessage));
+        log("LLM User Message", userMessage);
 
         // Create user message with cache control if enabled
         const userMessageParam: Anthropic.Messages.MessageParam = {
