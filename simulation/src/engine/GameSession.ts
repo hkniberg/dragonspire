@@ -2,6 +2,7 @@
 
 import { GameState, rollMultipleD3 } from '../game/GameState';
 import { GameLogger } from '../lib/gameLogger';
+import { CARDS, GameDecks } from '../lib/cards';
 import { GameAction } from '../lib/types';
 import { ActionLogEntry, ActionResult, ExecuteActionFunction, Player } from '../players/Player';
 import { ActionExecutor } from './ActionExecutor';
@@ -19,6 +20,7 @@ export class GameSession {
     private sessionState: GameSessionState;
     private maxRounds: number;
     private actionLog: ActionLogEntry[];
+    private gameDecks: GameDecks;
 
     constructor(config: GameSessionConfig) {
         // Create GameState with the correct player names from the start
@@ -28,6 +30,7 @@ export class GameSession {
         this.sessionState = 'setup';
         this.maxRounds = config.maxRounds || 100; // Default limit to prevent infinite games
         this.actionLog = [];
+        this.gameDecks = new GameDecks(CARDS);
     }
 
     /**
@@ -67,7 +70,7 @@ export class GameSession {
         // Create the execute action function that the player will use
         let currentState = this.gameState;
         const executeAction: ExecuteActionFunction = (action: GameAction, diceValues?: number[]) => {
-            const result = ActionExecutor.executeAction(currentState, action, diceValues);
+            const result = ActionExecutor.executeAction(currentState, action, diceValues, this.gameDecks);
 
             // Track the action
             turnActions.push({ action, result });

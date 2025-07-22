@@ -1,6 +1,7 @@
 // Lords of Doomspire Game Rules Engine
 
 import { GameState, rollD3 } from '../game/GameState';
+import { GameDecks } from '../lib/cards';
 import type {
     GameAction,
     HarvestAction,
@@ -15,13 +16,13 @@ export class ActionExecutor {
     /**
      * Validates and executes a game action, returning the new state and summary
      */
-    public static executeAction(gameState: GameState, action: GameAction, diceValues?: number[]): ActionResult {
+    public static executeAction(gameState: GameState, action: GameAction, diceValues?: number[], gameDecks?: GameDecks): ActionResult {
         try {
             switch (action.type) {
                 case 'moveChampion':
-                    return this.executeMoveChampion(gameState, action, diceValues);
+                    return this.executeMoveChampion(gameState, action, diceValues, gameDecks);
                 case 'moveBoat':
-                    return this.executeMoveBoat(gameState, action, diceValues);
+                    return this.executeMoveBoat(gameState, action, diceValues, gameDecks);
                 case 'harvest':
                     return this.executeHarvest(gameState, action, diceValues);
                 default:
@@ -50,7 +51,8 @@ export class ActionExecutor {
         playerId: number,
         championId: number,
         destination: Position,
-        claimTile: boolean = false
+        claimTile: boolean = false,
+        gameDecks?: GameDecks
     ): ActionResult {
         const player = gameState.getPlayerById(playerId);
         if (!player) {
@@ -211,8 +213,35 @@ export class ActionExecutor {
         // Check for adventure tiles
         let adventureSummary = '';
         if (destinationTile.tileType === 'adventure') {
-            const tier = (destinationTile as any).tier || 1; // Default to tier 1 if not specified
-            adventureSummary = `, a Tier ${tier} adventure tile. These are not yet implemented, so nothing happens.`;
+            const tier = destinationTile.tier;
+            const remainingTokens = destinationTile.adventureTokens || 0;
+
+            if (remainingTokens > 0 && gameDecks) {
+                // Draw a card from one of the three decks for this tier
+                // For now, randomly choose deck 1, 2, or 3
+                const deckNumber = (Math.floor(Math.random() * 3) + 1) as 1 | 2 | 3;
+                const drawnCard = gameDecks.drawCard(tier, deckNumber);
+
+                if (drawnCard) {
+                    // Update the tile to remove one adventure token
+                    const updatedTile = { ...destinationTile, adventureTokens: remainingTokens - 1 };
+                    updatedBoard = updatedBoard.map((row, rowIndex) =>
+                        row.map((tile, colIndex) =>
+                            rowIndex === destination.row && colIndex === destination.col
+                                ? updatedTile
+                                : tile
+                        )
+                    );
+
+                    adventureSummary = `, a Tier ${tier} adventure tile. Drew ${drawnCard.type} card: "${drawnCard.name}" (${drawnCard.biome} biome). Adventure cards are not yet implemented, so nothing happens. ${remainingTokens - 1} adventure token(s) remaining.`;
+                } else {
+                    adventureSummary = `, a Tier ${tier} adventure tile. No cards left in deck ${deckNumber}. ${remainingTokens} adventure token(s) remaining.`;
+                }
+            } else if (remainingTokens > 0) {
+                adventureSummary = `, a Tier ${tier} adventure tile. No card decks available. ${remainingTokens} adventure token(s) remaining.`;
+            } else {
+                adventureSummary = `, a Tier ${tier} adventure tile. No adventure tokens remaining - the tile is barren.`;
+            }
         }
 
         // Create new game state with champion moved
@@ -239,7 +268,7 @@ export class ActionExecutor {
         };
     }
 
-    private static executeMoveChampion(gameState: GameState, action: MoveChampionAction, diceValues?: number[]): ActionResult {
+    private static executeMoveChampion(gameState: GameState, action: MoveChampionAction, diceValues?: number[], gameDecks?: GameDecks): ActionResult {
         const player = gameState.getPlayerById(action.playerId);
         if (!player) {
             return {
@@ -296,7 +325,7 @@ export class ActionExecutor {
         const destination = action.path[action.path.length - 1];
 
         // Handle champion arrival at destination
-        const arrivalResult = this.executeChampionArrival(gameState, action.playerId, action.championId, destination, action.claimTile);
+        const arrivalResult = this.executeChampionArrival(gameState, action.playerId, action.championId, destination, action.claimTile, gameDecks);
         if (!arrivalResult.success) {
             return {
                 newGameState: gameState,
@@ -314,7 +343,7 @@ export class ActionExecutor {
         };
     }
 
-    private static executeMoveBoat(gameState: GameState, action: MoveBoatAction, diceValues?: number[]): ActionResult {
+    private static executeMoveBoat(gameState: GameState, action: MoveBoatAction, diceValues?: number[], gameDecks?: GameDecks): ActionResult {
         const player = gameState.getPlayerById(action.playerId);
         if (!player) {
             return {
@@ -373,7 +402,7 @@ export class ActionExecutor {
             }
 
             // Use the same arrival logic as champion movement
-            const arrivalResult = this.executeChampionArrival(updatedGameState, action.playerId, action.championId, action.championDropPosition);
+            const arrivalResult = this.executeChampionArrival(updatedGameState, action.playerId, action.championId, action.championDropPosition, false, gameDecks);
             if (!arrivalResult.success) {
                 return {
                     newGameState: gameState,
