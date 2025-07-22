@@ -1,5 +1,6 @@
 // Lords of Doomspire Random Map Generator
 
+import { getMonsterByName } from './content/monsterCards';
 import type {
     Position,
     ResourceType,
@@ -138,7 +139,14 @@ export class RandomMapGenerator {
                 if (tile.tier === 1) {
                     // Tier 1: Mix of resource and adventure tiles
                     if (this.seededRandom() < 0.6) {
-                        this.makeResourceTile(tile);
+                        const isDualResource = this.makeResourceTile(tile);
+                        // Place Wolf on dual-resource tiles
+                        if (isDualResource) {
+                            const wolf = getMonsterByName('Wolf');
+                            if (wolf) {
+                                tile.monster = wolf;
+                            }
+                        }
                     } else {
                         this.makeAdventureTile(tile);
                     }
@@ -146,6 +154,11 @@ export class RandomMapGenerator {
                     // Tier 2: Mix of resource and adventure tiles (better resources)
                     if (this.seededRandom() < 0.5) {
                         this.makeResourceTile(tile, true); // Better resources
+                        // Place Bandit on all Tier 2 resource tiles
+                        const bandit = getMonsterByName('Bandit');
+                        if (bandit) {
+                            tile.monster = bandit;
+                        }
                     } else {
                         this.makeAdventureTile(tile);
                     }
@@ -159,12 +172,18 @@ export class RandomMapGenerator {
 
     /**
      * Converts a tile to a resource tile
+     * Returns true if the tile has multiple resource types
      */
-    private static makeResourceTile(tile: Tile, isBetter: boolean = false): void {
+    private static makeResourceTile(tile: Tile, isBetter: boolean = false): boolean {
         tile.tileType = 'resource';
-        tile.resources = this.generateRandomResources(isBetter);
+        const resources = this.generateRandomResources(isBetter);
+        tile.resources = resources;
         tile.isStarred = this.seededRandom() < 0.1; // 10% chance of starred resource
         tile.adventureTokens = 0;
+
+        // Check if it's a dual-resource tile
+        const resourceTypes = Object.keys(resources).filter(key => (resources as any)[key] > 0);
+        return resourceTypes.length > 1;
     }
 
     /**

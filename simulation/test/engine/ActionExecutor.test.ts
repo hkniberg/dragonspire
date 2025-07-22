@@ -67,6 +67,8 @@ describe('ActionExecutor', () => {
 
     describe('moveChampion', () => {
         it('should move champion successfully to adjacent tile', () => {
+            const gameState = createTestGameState();
+
             const action: MoveChampionAction = {
                 type: 'moveChampion',
                 playerId: 1,

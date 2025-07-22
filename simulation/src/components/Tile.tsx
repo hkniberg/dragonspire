@@ -317,7 +317,11 @@ ${
 }
 ${
   effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}` : ""
-}${debugMode && !tile.explored ? " (DEBUG REVEALED)" : ""}`}
+}${
+        effectiveTile.monster && effectiveTile.explored
+          ? `\nMonster: ${effectiveTile.monster.name} (Might: ${effectiveTile.monster.might})`
+          : ""
+      }${debugMode && !tile.explored ? " (DEBUG REVEALED)" : ""}`}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "scale(1.1)";
       }}
@@ -492,6 +496,33 @@ ${
           }}
         >
           ❓
+        </div>
+      )}
+
+      {/* Monster indicator */}
+      {effectiveTile.monster && effectiveTile.explored && (
+        <div
+          style={{
+            position: "absolute",
+            top: "8px",
+            right: "8px",
+            backgroundColor: "rgba(220, 20, 60, 0.95)",
+            borderRadius: "50%",
+            width: "40px",
+            height: "40px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "20px",
+            fontWeight: "bold",
+            border: "2px solid #8B0000",
+            boxShadow: "0 3px 6px rgba(0,0,0,0.4)",
+            zIndex: 8,
+            color: "white",
+          }}
+          title={`Monster: ${effectiveTile.monster.name} (Might: ${effectiveTile.monster.might})`}
+        >
+          {effectiveTile.monster.icon}
         </div>
       )}
 
