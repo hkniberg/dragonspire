@@ -499,30 +499,58 @@ ${
         </div>
       )}
 
-      {/* Monster indicator */}
+      {/* Monster card */}
       {effectiveTile.monster && effectiveTile.explored && (
         <div
           style={{
             position: "absolute",
-            top: "8px",
-            right: "8px",
-            backgroundColor: "rgba(220, 20, 60, 0.95)",
-            borderRadius: "50%",
-            width: "40px",
-            height: "40px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "20px",
-            fontWeight: "bold",
+            top: "40%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "75px",
+            height: "85px",
+            backgroundColor: "white",
+            borderRadius: "6px",
             border: "2px solid #8B0000",
-            boxShadow: "0 3px 6px rgba(0,0,0,0.4)",
+            boxShadow: "0 4px 8px rgba(0,0,0,0.4)",
             zIndex: 8,
-            color: "white",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "4px",
           }}
           title={`Monster: ${effectiveTile.monster.name} (Might: ${effectiveTile.monster.might})`}
         >
-          {effectiveTile.monster.icon}
+          <div
+            style={{
+              width: "63px",
+              height: "60px",
+              backgroundImage: `url(/monsters/${effectiveTile.monster.name
+                .toLowerCase()
+                .replace(/\s+/g, "-")}.png)`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+              borderRadius: "4px",
+              border: "1px solid #ccc",
+            }}
+          />
+          <div
+            style={{
+              fontSize: "9px",
+              fontWeight: "bold",
+              color: "#333",
+              textAlign: "center",
+              lineHeight: "1",
+              textOverflow: "ellipsis",
+              overflow: "hidden",
+              whiteSpace: "nowrap",
+              width: "100%",
+            }}
+          >
+            {effectiveTile.monster.name}
+          </div>
         </div>
       )}
 

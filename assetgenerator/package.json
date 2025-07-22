@@ -1,0 +1,27 @@
+{
+  "name": "doomspire-assetgenerator",
+  "version": "1.0.0",
+  "description": "CLI utility for generating game assets using OpenAI DALL-E",
+  "main": "generate-image.js",
+  "type": "module",
+  "scripts": {
+    "generate": "node generate-image.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.57.0",
+    "dotenv": "^17.2.0",
+    "openai": "^5.10.2",
+    "uuid": "^11.1.0"
+  },
+  "bin": {
+    "generate-image": "./generate-image.js"
+  },
+  "keywords": [
+    "openai",
+    "dall-e",
+    "image-generation",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT"
+}
