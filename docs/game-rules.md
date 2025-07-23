@@ -27,7 +27,7 @@ In Lords of Doomspire, you are a lord commanding champions from your island cast
 
 **Players:** 4  
 **Playing Time:** 60-90 minutes  
-**Victory:** Multiple paths to victory - defeat the dragon, achieve diplomatic victory with 19 Fame, or claim economic dominance through starred resource tiles
+**Victory:** Multiple paths to victory - defeat the dragon, achieve diplomatic victory with 10 Fame, claim economic dominance with 3+ starred resource tiles, or demonstrate wealth with 10+ Gold
 
 ---
 
@@ -237,7 +237,7 @@ Each action die can be used for ONE of the following:
 
 ### Special Combat Rules
 
-- **Dragon**: Has 12-16 Might (determined when revealed). Losing = champion is eaten (removed from game)
+- **Dragon**: Has 7-9 Might (6 base + D3 roll, determined when revealed). Losing = champion is eaten (removed from game)
 
 ---
 
@@ -350,9 +350,10 @@ Multiple champions may occupy these tiles.
 
 - **The Ancient Mountain**: Home of the great dragon
 - **Multiple Victory Paths**:
-  - **Combat Victory**: Dragon with 12-16 Might. Victory wins the game! Defeat = champion is eaten (removed from game)
-  - **Diplomatic Victory**: If you have 20+ Fame and visit the dragon, the dragon takes human shape and becomes your advisor. You win immediately!
-  - **Economic Victory**: If you control all starred resource tiles and visit the dragon, the dragon agrees to let you rule the island in exchange for tributes. You win immediately!
+  - **Combat Victory**: Dragon with 7-9 Might (6 base + D3 roll). Victory wins the game! Defeat = champion is eaten (removed from game)
+  - **Diplomatic Victory**: If you have 10+ Fame and visit the dragon, the dragon takes human shape and becomes your advisor. You win immediately!
+  - **Economic Victory**: If you control 3+ starred resource tiles and visit the dragon, the dragon agrees to let you rule the island in exchange for tributes. You win immediately!
+  - **Gold Victory**: If you have 10+ Gold and visit the dragon, the dragon is impressed by your wealth and agrees to share the island's treasures. You win immediately!
 
 ---
 
@@ -393,16 +394,22 @@ The game ends immediately when a player achieves any of the following victory co
 
 ### Diplomatic Victory
 
-- **Reaches 20 Fame**, then travels to Doomspire
+- **Reaches 10 Fame**, then travels to Doomspire
 - The dragon recognizes your reputation and takes human shape to serve as your advisor
-- No combat required - you win immediately upon reaching Doomspire with 20+ Fame
+- No combat required - you win immediately upon reaching Doomspire with 10+ Fame
 
 ### Economic Victory
 
-- **Claims all starred resource tiles** (all gold resource tiles plus select strategic resources marked with stars)
+- **Claims 3+ starred resource tiles** (select strategic resources marked with stars)
 - Then travels to Doomspire
 - The dragon acknowledges your economic dominance and agrees to let you control the island in exchange for regular tributes
-- You win immediately upon reaching Doomspire while controlling all starred resources
+- You win immediately upon reaching Doomspire while controlling 3+ starred resources
+
+### Gold Victory
+
+- **Accumulates 10+ Gold**, then travels to Doomspire
+- The dragon is impressed by your wealth and agrees to share the island's treasures with you
+- You win immediately upon reaching Doomspire with 10+ Gold
 
 **Note**: Multiple victory paths can be pursued simultaneously. The first player to reach Doomspire while meeting any victory condition wins!
 
