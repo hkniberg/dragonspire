@@ -42,6 +42,11 @@ interface PlayerConfig {
   type: PlayerType;
 }
 
+interface GameConfig {
+  startFame: number;
+  startMight: number;
+}
+
 export default function GameSimulation() {
   // Client-side rendering state
   const [mounted, setMounted] = useState(false);
@@ -60,6 +65,10 @@ export default function GameSimulation() {
     { name: "Charlie", type: "random" },
     { name: "Diana", type: "random" },
   ]);
+  const [gameConfig, setGameConfig] = useState<GameConfig>({
+    startFame: 0,
+    startMight: 0,
+  });
   const [apiKey, setApiKey] = useState("");
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
 
@@ -180,6 +189,10 @@ export default function GameSimulation() {
       const sessionConfig: GameSessionConfig = {
         players: players,
         maxRounds: 20, // Reasonable limit for web interface
+        startingValues: {
+          fame: gameConfig.startFame,
+          might: gameConfig.startMight,
+        },
       };
 
       const session = new GameSession(sessionConfig);
@@ -452,6 +465,86 @@ export default function GameSimulation() {
                   </div>
                 </div>
               ))}
+            </div>
+
+            {/* Game Configuration */}
+            <div style={{ marginTop: "20px" }}>
+              <h3 style={{ marginBottom: "15px", color: "#2c3e50" }}>
+                Game Configuration
+              </h3>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: "15px",
+                  padding: "15px",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  backgroundColor: "#f8f9fa",
+                }}
+              >
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "5px",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Start Fame:
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    value={gameConfig.startFame}
+                    onChange={(e) =>
+                      setGameConfig({
+                        ...gameConfig,
+                        startFame: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    style={{
+                      width: "100%",
+                      padding: "6px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "5px",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Start Might:
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    value={gameConfig.startMight}
+                    onChange={(e) =>
+                      setGameConfig({
+                        ...gameConfig,
+                        startMight: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    style={{
+                      width: "100%",
+                      padding: "6px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                    }}
+                  />
+                </div>
+              </div>
             </div>
 
             <div style={{ marginTop: "20px", textAlign: "center" }}>

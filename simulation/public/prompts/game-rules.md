@@ -27,7 +27,7 @@ In Lords of Doomspire, you are a lord commanding champions from your island cast
 
 **Players:** 4  
 **Playing Time:** 60-90 minutes  
-**Victory:** Multiple paths to victory - defeat the dragon, achieve diplomatic victory with 20 Fame, or claim economic dominance through starred resource tiles
+**Victory:** Multiple paths to victory - defeat the dragon, achieve diplomatic victory with 10 Fame, claim economic dominance with 3+ starred resource tiles, or demonstrate wealth with 10+ Gold
 
 ---
 
@@ -70,7 +70,7 @@ The board is organized into 3 tiers. The outer two layers are Tier 1, the inner 
   - **Chapel tile**: Pray at the chapel to reset your fame to 0. This is a non-combat zone.
   - **Trader tile**: Purchase any resource for 2 gold per resource. This is a non-combat zone.
   - **Mercenary Camp tile**: Buy 1 might for 3 gold. But the mercenaries refuse to talk to you unless you have 2 or more fame. This is a non-combat zone.
-  - **Doomspire tile**: The ancient mountain where the great dragon rules. Defeat, impress, or bribe the dragon to win the game.
+  - **Doomspire tile**: The ancient mountain where the great dragon rules. Defeat, impress, or bribe the dragon to win the game. This tile is one of the four hidden tiles in the middle of the board.
 - **Resource tiles**: A resource tile provides specific types of resources such as food, wood, ore, or gold. A player must claim it first, and can then start harvesting resources on the next turn. Starred resource tiles are strategically important, a player who owns all starred resource tiles wins the game if they visit the dragon and bribe it.
 - **Adventure tiles**: These tiles contain adventure cards such as monsters, events, and treasures. Any champion landing on an adventure tile must draw a card (if there are any cards left). When all adventure cards are done they tile is considered to be barren.
 
@@ -158,10 +158,11 @@ Each action die can be used for ONE of the following:
 - Spend an action die to move horizontally or vertically (no diagonal movement), up to the number of steps indicated by the die. You can also move 0 steps if you want to stay in the same tile and interact with it (for example to draw another adventure card).
 - You cannot have multiple champions in the same tile (except when respawning in the home tile).
 - If you end your movement in a tile with another champion, battle will ensue, unless it is a non-combat zone (such as the chapel, trader, mercenary camp).
-- You cannot enter another player's home tile.
+- A champion cannot enter another player's home tile.
 - You can pass through other champions, but when passing another player's champion, they may choose to initiate combat, in which case your champion is forced to stop and fight and cannot pass through.
 - A champion can use multiple dice to move further in a single action, treating that as if it was a single dice roll.
-- Once a champion performs any tile action, they cannot move ordo anything else that turn.
+- Once a champion performs any tile action, they cannot move or do anything else that turn.
+- The restrictions above also apply when a champion is transported by boat.
 
 **Tile Actions:**
 
@@ -236,7 +237,7 @@ Each action die can be used for ONE of the following:
 
 ### Special Combat Rules
 
-- **Dragon**: Has 12-16 Might (determined when revealed). Losing = champion is eaten (removed from game)
+- **Dragon**: Has 7-9 Might (6 base + D3 roll, determined when revealed). Losing = champion is eaten (removed from game)
 
 ---
 
@@ -349,9 +350,10 @@ Multiple champions may occupy these tiles.
 
 - **The Ancient Mountain**: Home of the great dragon
 - **Multiple Victory Paths**:
-  - **Combat Victory**: Dragon with 12-16 Might. Victory wins the game! Defeat = champion is eaten (removed from game)
-  - **Diplomatic Victory**: If you have 20+ Fame and visit the dragon, the dragon takes human shape and becomes your advisor. You win immediately!
-  - **Economic Victory**: If you control all starred resource tiles and visit the dragon, the dragon agrees to let you rule the island in exchange for tributes. You win immediately!
+  - **Combat Victory**: Dragon with 7-9 Might (6 base + D3 roll). Victory wins the game! Defeat = champion is eaten (removed from game)
+  - **Diplomatic Victory**: If you have 10+ Fame and visit the dragon, the dragon takes human shape and becomes your advisor. You win immediately!
+  - **Economic Victory**: If you control 3+ starred resource tiles and visit the dragon, the dragon agrees to let you rule the island in exchange for tributes. You win immediately!
+  - **Gold Victory**: If you have 10+ Gold and visit the dragon, the dragon is impressed by your wealth and agrees to share the island's treasures. You win immediately!
 
 ---
 
@@ -392,16 +394,22 @@ The game ends immediately when a player achieves any of the following victory co
 
 ### Diplomatic Victory
 
-- **Reaches 20 Fame**, then travels to Doomspire
+- **Reaches 10 Fame**, then travels to Doomspire
 - The dragon recognizes your reputation and takes human shape to serve as your advisor
-- No combat required - you win immediately upon reaching Doomspire with 20+ Fame
+- No combat required - you win immediately upon reaching Doomspire with 10+ Fame
 
 ### Economic Victory
 
-- **Claims all starred resource tiles** (all gold resource tiles plus select strategic resources marked with stars)
+- **Claims 3+ starred resource tiles** (select strategic resources marked with stars)
 - Then travels to Doomspire
 - The dragon acknowledges your economic dominance and agrees to let you control the island in exchange for regular tributes
-- You win immediately upon reaching Doomspire while controlling all starred resources
+- You win immediately upon reaching Doomspire while controlling 3+ starred resources
+
+### Gold Victory
+
+- **Accumulates 10+ Gold**, then travels to Doomspire
+- The dragon is impressed by your wealth and agrees to share the island's treasures with you
+- You win immediately upon reaching Doomspire with 10+ Gold
 
 **Note**: Multiple victory paths can be pursued simultaneously. The first player to reach Doomspire while meeting any victory condition wins!
 

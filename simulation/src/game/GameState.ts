@@ -36,18 +36,24 @@ export class GameState {
     /**
      * Create a new GameState with the specified player names
      */
-    public static createWithPlayerNames(playerNames: string[]): GameState {
+    public static createWithPlayerNames(
+        playerNames: string[],
+        startingValues?: { fame?: number; might?: number }
+    ): GameState {
         if (playerNames.length !== 4) {
             throw new Error(`Expected 4 player names, got ${playerNames.length}`);
         }
 
         const board = BoardBuilder.buildBoard();
-        const players = GameState.initializePlayersWithNames(playerNames);
+        const players = GameState.initializePlayersWithNames(playerNames, startingValues);
 
         return new GameState(board, players);
     }
 
-    private static initializePlayersWithNames(playerNames: string[]): Player[] {
+    private static initializePlayersWithNames(
+        playerNames: string[],
+        startingValues?: { fame?: number; might?: number }
+    ): Player[] {
         const players: Player[] = [];
         const startingPositions: Position[] = [
             { row: 0, col: 0 }, // Player 1
@@ -56,6 +62,9 @@ export class GameState {
             { row: 7, col: 7 }  // Player 4
         ];
         const oceanPositions = ['nw', 'ne', 'sw', 'se'] as const;
+
+        const startingFame = startingValues?.fame ?? 0;
+        const startingMight = startingValues?.might ?? 0;
 
         for (let i = 0; i < 4; i++) {
             const champion: Champion = {
@@ -74,8 +83,8 @@ export class GameState {
             players.push({
                 id: i + 1,
                 name: playerNames[i],
-                fame: 0,
-                might: 0,
+                fame: startingFame,
+                might: startingMight,
                 resources: { food: 1, wood: 1, ore: 0, gold: 0 },
                 maxClaims: 10,
                 champions: [champion],

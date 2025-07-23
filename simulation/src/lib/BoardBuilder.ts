@@ -345,6 +345,20 @@ export class BoardBuilder {
             });
 
             tile.resources = resources;
+
+            // Star resource tiles with more than one total resource
+            const totalResources = Object.values(resources).reduce((sum, count) => sum + count, 0);
+            if (totalResources > 1) {
+                tile.isStarred = true;
+            }
+        }
+
+        // Star single resource tiles that somehow have more than one total resource (shouldn't happen with current logic, but for safety)
+        if (tile.tileType === 'resource' && tile.resources) {
+            const totalResources = Object.values(tile.resources).reduce((sum, count) => sum + count, 0);
+            if (totalResources > 1) {
+                tile.isStarred = true;
+            }
         }
 
         return tile;

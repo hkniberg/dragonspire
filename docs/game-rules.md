@@ -70,7 +70,7 @@ The board is organized into 3 tiers. The outer two layers are Tier 1, the inner 
   - **Chapel tile**: Pray at the chapel to reset your fame to 0. This is a non-combat zone.
   - **Trader tile**: Purchase any resource for 2 gold per resource. This is a non-combat zone.
   - **Mercenary Camp tile**: Buy 1 might for 3 gold. But the mercenaries refuse to talk to you unless you have 2 or more fame. This is a non-combat zone.
-  - **Doomspire tile**: The ancient mountain where the great dragon rules. Defeat, impress, or bribe the dragon to win the game.
+  - **Doomspire tile**: The ancient mountain where the great dragon rules. Defeat, impress, or bribe the dragon to win the game. This tile is one of the four hidden tiles in the middle of the board.
 - **Resource tiles**: A resource tile provides specific types of resources such as food, wood, ore, or gold. A player must claim it first, and can then start harvesting resources on the next turn. Starred resource tiles are strategically important, a player who owns all starred resource tiles wins the game if they visit the dragon and bribe it.
 - **Adventure tiles**: These tiles contain adventure cards such as monsters, events, and treasures. Any champion landing on an adventure tile must draw a card (if there are any cards left). When all adventure cards are done they tile is considered to be barren.
 

@@ -2,8 +2,9 @@
 
 import { GameState } from '../game/GameState';
 import { GameDecks } from '../lib/cards';
+import { GameSettings } from '../lib/GameSettings';
 import { GameUtilities } from '../lib/GameUtilities';
-import type { Position } from '../lib/types';
+import type { Monster, Position } from '../lib/types';
 import { ActionResult } from '../players/Player';
 import { CombatResolver } from './CombatResolver';
 
@@ -242,11 +243,17 @@ export class TileArrivalHandler {
                 };
             }
         } else if (destinationTile.tileType === 'doomspire') {
-            // Award fame for reaching doomspire
-            updatedPlayer = {
-                ...updatedPlayer,
-                fame: updatedPlayer.fame + 1
-            };
+            // Handle dragon encounter at doomspire
+            return this.handleDragonEncounter(
+                updatedGameState,
+                playerId,
+                championId,
+                destination,
+                updatedPlayer,
+                champion,
+                battleSummary,
+                existingMonsterCombatSummary
+            );
         }
 
         // Create new game state with champion moved
@@ -341,5 +348,150 @@ export class TileArrivalHandler {
             default:
                 return 'tile';
         }
+    }
+
+    /**
+     * Handle dragon encounter at doomspire - check victory conditions first, then dragon combat if needed
+     */
+    private handleDragonEncounter(
+        gameState: GameState,
+        playerId: number,
+        championId: number,
+        destination: Position,
+        updatedPlayer: any,
+        champion: any,
+        battleSummary: string,
+        existingMonsterCombatSummary: string
+    ): ActionResult {
+        // Award fame for reaching doomspire
+        updatedPlayer = {
+            ...updatedPlayer,
+            fame: updatedPlayer.fame + 1
+        };
+
+        // Check alternative victory conditions first (player can win without fighting dragon)
+
+        // Check fame victory (10+ fame)
+        if (updatedPlayer.fame >= GameSettings.VICTORY_FAME_THRESHOLD) {
+            // Update champion position and return victory
+            const updatedChampions = updatedPlayer.champions.map((c: any) =>
+                c.id === championId ? { ...c, position: destination } : c
+            );
+            const finalPlayer = { ...updatedPlayer, champions: updatedChampions };
+            const updatedPlayers = gameState.players.map(p =>
+                p.id === playerId ? finalPlayer : p
+            );
+
+            const newGameState = gameState.withUpdates({ players: updatedPlayers });
+
+            return {
+                newGameState,
+                summary: `Champion${championId} reached doomspire and achieved FAME VICTORY with ${updatedPlayer.fame} fame! The dragon recognizes their reputation and surrenders.${battleSummary}${existingMonsterCombatSummary}`,
+                success: true
+            };
+        }
+
+        // Check gold victory (10+ gold)
+        if (updatedPlayer.resources.gold >= GameSettings.VICTORY_GOLD_THRESHOLD) {
+            const updatedChampions = updatedPlayer.champions.map((c: any) =>
+                c.id === championId ? { ...c, position: destination } : c
+            );
+            const finalPlayer = { ...updatedPlayer, champions: updatedChampions };
+            const updatedPlayers = gameState.players.map(p =>
+                p.id === playerId ? finalPlayer : p
+            );
+
+            const newGameState = gameState.withUpdates({ players: updatedPlayers });
+
+            return {
+                newGameState,
+                summary: `Champion${championId} reached doomspire and achieved GOLD VICTORY with ${updatedPlayer.resources.gold} gold! The dragon accepts the tribute and surrenders.${battleSummary}${existingMonsterCombatSummary}`,
+                success: true
+            };
+        }
+
+        // Check starred tiles victory (3+ starred resource tiles)
+        const starredTileCount = gameState.board.findTiles(tile =>
+            tile.tileType === 'resource' &&
+            tile.isStarred === true &&
+            tile.claimedBy === playerId
+        ).length;
+
+        if (starredTileCount >= GameSettings.VICTORY_STARRED_TILES_THRESHOLD) {
+            const updatedChampions = updatedPlayer.champions.map((c: any) =>
+                c.id === championId ? { ...c, position: destination } : c
+            );
+            const finalPlayer = { ...updatedPlayer, champions: updatedChampions };
+            const updatedPlayers = gameState.players.map(p =>
+                p.id === playerId ? finalPlayer : p
+            );
+
+            const newGameState = gameState.withUpdates({ players: updatedPlayers });
+
+            return {
+                newGameState,
+                summary: `Champion${championId} reached doomspire and achieved ECONOMIC VICTORY with ${starredTileCount} starred resource tiles! The dragon acknowledges their dominance and surrenders.${battleSummary}${existingMonsterCombatSummary}`,
+                success: true
+            };
+        }
+
+        // No alternative victory conditions met - must fight the dragon
+        const dragonMight = GameSettings.DRAGON_BASE_MIGHT + this.rollD3();
+        const dragon: Monster = {
+            name: 'Dragon',
+            tier: 3,
+            icon: '🐲',
+            might: dragonMight,
+            fame: 10, // High fame reward for defeating dragon
+            resources: { food: 0, wood: 0, ore: 0, gold: 5 } // Generous gold reward
+        };
+
+        const combatResult = this.combatResolver.resolveMonsterCombat(
+            updatedPlayer,
+            champion,
+            dragon
+        );
+
+        if (combatResult.championReturnedHome) {
+            // Champion lost and went home (or was eaten by dragon)
+            const updatedChampions = combatResult.updatedPlayer.champions.filter(c => c.id !== championId);
+            const finalPlayer = { ...combatResult.updatedPlayer, champions: updatedChampions };
+            const finalPlayers = gameState.players.map(p =>
+                p.id === playerId ? finalPlayer : p
+            );
+
+            const newGameState = gameState.withUpdates({ players: finalPlayers });
+
+            return {
+                newGameState,
+                summary: `Champion${championId} fought the dragon (might ${dragonMight}) and ${combatResult.summary}. The champion was eaten by the dragon!${battleSummary}${existingMonsterCombatSummary}`,
+                success: true
+            };
+        } else {
+            // Champion won - COMBAT VICTORY!
+            const updatedChampions = combatResult.updatedPlayer.champions.map((c: any) =>
+                c.id === championId ? { ...c, position: destination } : c
+            );
+            const finalPlayer = { ...combatResult.updatedPlayer, champions: updatedChampions };
+            const finalPlayers = gameState.players.map(p =>
+                p.id === playerId ? finalPlayer : p
+            );
+
+            const newGameState = gameState.withUpdates({ players: finalPlayers });
+
+            return {
+                newGameState,
+                summary: `Champion${championId} fought the dragon (might ${dragonMight}) and achieved COMBAT VICTORY! ${combatResult.summary}${battleSummary}${existingMonsterCombatSummary}`,
+                success: true
+            };
+        }
+    }
+
+    /**
+     * Roll a D3 (returns 1, 2, or 3 with equal probability like the game rules)
+     */
+    private rollD3(): number {
+        const outcomes = [1, 1, 2, 2, 3, 3];
+        return outcomes[Math.floor(Math.random() * outcomes.length)];
     }
 } 

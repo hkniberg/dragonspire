@@ -52,10 +52,31 @@ const args = process.argv.slice(2);
 // Find player arguments (p1=random, p2=claude, etc.)
 const playerArgs = args.filter((arg) => arg.match(/^p[1-4]=(random|claude)$/));
 
+// Find other arguments (like --max-rounds)
+const otherArgs = args.filter((arg, index) => {
+  // Skip command flags and their values
+  if (
+    arg === "--single-turn" ||
+    arg === "-s" ||
+    arg === "--complete" ||
+    arg === "-c" ||
+    arg === "--turns" ||
+    arg === "-t"
+  )
+    return false;
+  // Skip turn number value
+  if (args[index - 1] === "--turns" || args[index - 1] === "-t") return false;
+  // Skip player arguments (already extracted)
+  if (arg.match(/^p[1-4]=(random|claude)$/)) return false;
+  return true;
+});
+
+const allExtraArgs = [...playerArgs, ...otherArgs];
+
 if (args.includes("--single-turn") || args.includes("-s")) {
-  runSingleTurn(playerArgs);
+  runSingleTurn(allExtraArgs);
 } else if (args.includes("--complete") || args.includes("-c")) {
-  runCompleteGame(playerArgs);
+  runCompleteGame(allExtraArgs);
 } else if (args.includes("--turns") || args.includes("-t")) {
   const turnsIndex = args.findIndex((arg) => arg === "--turns" || arg === "-t");
   const numTurns = parseInt(args[turnsIndex + 1]);
@@ -68,7 +89,7 @@ if (args.includes("--single-turn") || args.includes("-s")) {
     process.exit(1);
   }
 
-  runSpecificTurns(numTurns, playerArgs);
+  runSpecificTurns(numTurns, allExtraArgs);
 } else {
   console.log("🎮 Lords of Doomspire Simulation Runner\n");
   console.log("Usage:");
@@ -77,6 +98,10 @@ if (args.includes("--single-turn") || args.includes("-s")) {
   console.log("  node run-test.js --complete      # Run complete game");
   console.log("  npm run test-turn                # Test one turn");
   console.log("  npm run simulate                 # Run complete game");
+  console.log("\nAdditional Options:");
+  console.log(
+    "  --max-rounds N                   # Set maximum rounds for complete games"
+  );
   console.log("\nPlayer Configuration:");
   console.log(
     "  p1=random p2=claude p3=random p4=claude  # Specify player types"
@@ -95,6 +120,9 @@ if (args.includes("--single-turn") || args.includes("-s")) {
   );
   console.log(
     "  node run-test.js --complete p1=random p2=claude     # Complete game, mixed players"
+  );
+  console.log(
+    "  node run-test.js --complete --max-rounds 25         # Complete game with 25 max rounds"
   );
   console.log(
     "  node run-test.js -t 5 p1=claude p2=claude p3=claude # 5 turns, first 3 players are Claude AI"

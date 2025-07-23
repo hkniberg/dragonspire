@@ -12,6 +12,7 @@ export type GameSessionState = 'setup' | 'playing' | 'finished';
 export interface GameSessionConfig {
     players: Player[];
     maxRounds?: number; // Optional limit for testing
+    startingValues?: { fame?: number; might?: number }; // Optional starting fame and might
 }
 
 export class GameSession {
@@ -26,7 +27,7 @@ export class GameSession {
     constructor(config: GameSessionConfig) {
         // Create GameState with the correct player names from the start
         const playerNames = config.players.map(player => player.getName());
-        this.gameState = GameState.createWithPlayerNames(playerNames);
+        this.gameState = GameState.createWithPlayerNames(playerNames, config.startingValues);
         this.players = config.players;
         this.sessionState = 'setup';
         this.maxRounds = config.maxRounds || 100; // Default limit to prevent infinite games
@@ -191,22 +192,6 @@ export class GameSession {
             gameEnded: true,
             winner: winnerId
         });
-    }
-
-    private generateTurnSummary(turnActions: Array<{ action: GameAction; result: ActionResult }>): string {
-        if (turnActions.length === 0) {
-            return 'No actions taken';
-        }
-
-        const successfulActions = turnActions.filter(ta => ta.result.success);
-        const failedActions = turnActions.filter(ta => !ta.result.success);
-
-        let summary = `${successfulActions.length} successful action(s)`;
-        if (failedActions.length > 0) {
-            summary += `, ${failedActions.length} failed action(s)`;
-        }
-
-        return summary;
     }
 
     private printGameSummary(): void {
