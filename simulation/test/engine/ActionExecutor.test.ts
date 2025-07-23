@@ -5,10 +5,12 @@ import type { Champion, HarvestAction, MoveChampionAction, Player } from '../../
 
 describe('ActionExecutor', () => {
     let gameState: GameState;
+    let actionExecutor: ActionExecutor;
 
     beforeEach(() => {
         // Create a basic GameState with default board and players
         gameState = createTestGameState();
+        actionExecutor = new ActionExecutor();
     });
 
     // Helper function to create a test game state
@@ -65,7 +67,7 @@ describe('ActionExecutor', () => {
         it('should handle unknown action type', () => {
             const unknownAction = { type: 'unknown' } as any;
 
-            const result = ActionExecutor.executeAction(gameState, unknownAction);
+            const result = actionExecutor.executeAction(gameState, unknownAction);
 
             expect(result.success).toBe(false);
             expect(result.newGameState).toBe(gameState); // State should be unchanged
@@ -84,7 +86,7 @@ describe('ActionExecutor', () => {
                 ]
             };
 
-            const result = ActionExecutor.executeAction(gameState, action);
+            const result = actionExecutor.executeAction(gameState, action);
 
             expect(result.success).toBe(true);
 
@@ -115,7 +117,7 @@ describe('ActionExecutor', () => {
                 ]
             };
 
-            const result = ActionExecutor.executeAction(gameState, action);
+            const result = actionExecutor.executeAction(gameState, action);
 
             expect(result.success).toBe(true);
 
@@ -148,7 +150,7 @@ describe('ActionExecutor', () => {
                 ]
             };
 
-            const result = ActionExecutor.executeAction(gameState, action);
+            const result = actionExecutor.executeAction(gameState, action);
 
             expect(result.success).toBe(true);
 
@@ -175,7 +177,7 @@ describe('ActionExecutor', () => {
             };
 
             // Execute the action
-            const result = ActionExecutor.executeAction(gameState, action);
+            const result = actionExecutor.executeAction(gameState, action);
 
             // Verify the action was rejected
             expect(result.success).toBe(false);
@@ -204,7 +206,7 @@ describe('ActionExecutor', () => {
             };
 
             // Execute the action
-            const result = ActionExecutor.executeAction(gameState, action);
+            const result = actionExecutor.executeAction(gameState, action);
 
             // Verify the action was successful
             expect(result.success).toBe(true);
@@ -233,7 +235,7 @@ describe('ActionExecutor', () => {
             };
 
             // Execute the action
-            const result = ActionExecutor.executeAction(gameState, action);
+            const result = actionExecutor.executeAction(gameState, action);
 
             // Verify the action was rejected
             expect(result.success).toBe(false);
@@ -260,7 +262,7 @@ describe('ActionExecutor', () => {
             };
 
             // Execute the action
-            const result = ActionExecutor.executeAction(gameState, action);
+            const result = actionExecutor.executeAction(gameState, action);
 
             // Verify the action was successful
             expect(result.success).toBe(true);
@@ -292,7 +294,7 @@ describe('ActionExecutor', () => {
             };
 
             // Execute the action
-            const result = ActionExecutor.executeAction(gameState, action);
+            const result = actionExecutor.executeAction(gameState, action);
 
             // Verify the action was successful
             expect(result.success).toBe(true);
