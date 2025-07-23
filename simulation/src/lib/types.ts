@@ -5,7 +5,7 @@ export type TileTier = 1 | 2 | 3;
 export type BiomeType = 'plains' | 'mountains' | 'woodlands';
 export type OceanPosition = 'nw' | 'ne' | 'sw' | 'se';
 export type TreasureType = 'rustyShield' | 'brokenSword';
-export type TileType = 'home' | 'resource' | 'adventure' | 'chapel' | 'trader' | 'mercenary' | 'doomspire';
+export type TileType = 'empty' | 'home' | 'resource' | 'adventure' | 'chapel' | 'trader' | 'mercenary' | 'doomspire' | 'oasis';
 
 export interface Position {
     row: number;
@@ -23,14 +23,16 @@ export interface Monster {
 
 export interface Tile {
     position: Position;
-    tier: TileTier;
-    explored: boolean; // starts true for all tier 1 tiles, and false for all other tiles
+    tier?: TileTier;
+    explored?: boolean; // starts true for all tier 1 tiles, and false for all other tiles
     resources?: Record<ResourceType, number>; // only applicable for resource tiles
     isStarred?: boolean; // For victory condition. Only applicable for resource tiles
     claimedBy?: number; // Player ID who claimed this tile. Only applicable for resource tiles
     monster?: Monster; // only applicable for adventure tiles
     adventureTokens?: number; // Number of adventure tokens on the tile. Only applicable for adventure tiles
     tileType?: TileType;
+    backColor?: string; // Background color set by BoardBuilder
+    borderColor?: string; // Border color set by BoardBuilder
 }
 
 export interface Champion {

@@ -4,7 +4,7 @@ import { MonsterCard } from "./MonsterCard";
 
 const getTileColor = (tile: Tile): string => {
   if (!tile.explored) {
-    return "#8B4513"; // Brown for unexplored
+    return tile.backColor || "#8B4513"; // Use backColor or brown fallback for unexplored
   }
 
   // Color based on tile type
@@ -157,15 +157,8 @@ export const TileComponent = ({
 
   const specialLabel = getSpecialLocationLabel(effectiveTile);
 
-  // Determine border color - use player color for home tiles, tier color for others
-  const borderColor =
-    effectiveTile.tileType === "home" && effectiveTile.claimedBy
-      ? getPlayerColor(effectiveTile.claimedBy).main
-      : effectiveTile.tier === 1
-      ? "#4CAF50"
-      : effectiveTile.tier === 2
-      ? "#FF9800"
-      : "#F44336";
+  // Determine border color - use tile's borderColor only (no fallback)
+  const borderColor = effectiveTile.borderColor;
 
   return (
     <div
@@ -177,7 +170,9 @@ export const TileComponent = ({
           (effectiveTile.tileType === "chapel" ||
             effectiveTile.tileType === "trader" ||
             effectiveTile.tileType === "mercenary" ||
-            effectiveTile.tileType === "doomspire")
+            effectiveTile.tileType === "doomspire" ||
+            effectiveTile.tileType === "adventure" ||
+            effectiveTile.tileType === "oasis")
             ? "transparent"
             : getTileColor(effectiveTile),
         backgroundImage: effectiveTile.explored
@@ -191,6 +186,20 @@ export const TileComponent = ({
             ? "url(/tiles/dragon.png)"
             : effectiveTile.tileType === "home"
             ? "url(/tiles/home.png)"
+            : effectiveTile.tileType === "adventure"
+            ? effectiveTile.tier === 1
+              ? "url(/tiles/adventure-tier1.png)"
+              : effectiveTile.tier === 2
+              ? "url(/tiles/adventure-tier2.png)"
+              : effectiveTile.tier === 3
+              ? "url(/tiles/adventure-tier3.png)"
+              : "none"
+            : effectiveTile.tileType === "oasis"
+            ? effectiveTile.tier === 1
+              ? "url(/tiles/oasis-tier1.png)"
+              : effectiveTile.tier === 2
+              ? "url(/tiles/oasis-tier2.png)"
+              : "none"
             : effectiveTile.tileType === "resource" &&
               effectiveTile.resources &&
               effectiveTile.resources.food > 0 &&
@@ -343,7 +352,7 @@ ${
           textAlign: "center",
         }}
       >
-        {effectiveTile.tileType === "home" ? (
+        {effectiveTile.tileType === "home" && effectiveTile.explored ? (
           <div
             style={{
               display: "flex",
@@ -474,31 +483,57 @@ ${
         </div>
       )}
 
-      {/* Adventure tile question mark */}
-      {effectiveTile.tileType === "adventure" && effectiveTile.explored && (
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            backgroundColor: "rgba(255, 255, 255, 0.9)",
-            borderRadius: "50%",
-            width: "60px",
-            height: "60px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "32px",
-            fontWeight: "bold",
-            border: "3px solid rgba(0, 0, 0, 0.3)",
-            boxShadow: "0 3px 6px rgba(0,0,0,0.3)",
-            zIndex: 5,
-          }}
-        >
-          ❓
-        </div>
-      )}
+      {/* Adventure tokens as question mark circles */}
+      {(effectiveTile.tileType === "adventure" ||
+        effectiveTile.tileType === "oasis") &&
+        effectiveTile.explored &&
+        effectiveTile.adventureTokens &&
+        effectiveTile.adventureTokens > 0 && (
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              display: "flex",
+              flexDirection: "row",
+              gap: "4px",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 5,
+            }}
+          >
+            {Array.from(
+              { length: effectiveTile.adventureTokens },
+              (_, index) => (
+                <div
+                  key={index}
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    borderRadius: "50%",
+                    width: "40px",
+                    height: "40px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "18px",
+                    fontWeight: "bold",
+                    border: "2px solid rgba(0, 0, 0, 0.3)",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                    color:
+                      effectiveTile.tier === 1
+                        ? "#4CAF50" // Green for tier 1
+                        : effectiveTile.tier === 2
+                        ? "#FF9800" // Orange for tier 2
+                        : "#F44336", // Red for tier 3
+                  }}
+                >
+                  ?
+                </div>
+              )
+            )}
+          </div>
+        )}
 
       {/* Monster card */}
       {effectiveTile.monster && effectiveTile.explored && (

@@ -8,19 +8,28 @@ describe('ActionExecutor', () => {
 
     beforeEach(() => {
         // Create a basic GameState with default board and players
-        gameState = new GameState();
+        gameState = createTestGameState();
     });
 
     // Helper function to create a test game state
     function createTestGameState() {
-        // Create a simple 2x2 board
-        const board = new Board(2, 2);
+        // Create a simple 3x3 board to allow for more movement
+        const board = new Board(3, 3);
 
-        // Add tiles to the board
+        // Add tiles to the board - most are explored
         board.setTile({ position: { row: 0, col: 0 }, tier: 1, explored: true, tileType: 'resource', resources: { food: 2, wood: 0, ore: 0, gold: 0 } });
         board.setTile({ position: { row: 0, col: 1 }, tier: 1, explored: true, tileType: 'resource', resources: { food: 0, wood: 2, ore: 0, gold: 0 } });
         board.setTile({ position: { row: 1, col: 0 }, tier: 1, explored: true, tileType: 'resource', resources: { food: 0, wood: 0, ore: 2, gold: 0 } });
         board.setTile({ position: { row: 1, col: 1 }, tier: 1, explored: true, tileType: 'resource', resources: { food: 0, wood: 0, ore: 0, gold: 2 } });
+
+        // Add an unexplored tile at (1, 2)
+        board.setTile({ position: { row: 1, col: 2 }, tier: 2, explored: false, tileType: 'resource', resources: { food: 1, wood: 1, ore: 0, gold: 0 } });
+
+        // Fill remaining positions with empty explored tiles
+        board.setTile({ position: { row: 0, col: 2 }, tier: 1, explored: true, tileType: 'empty' });
+        board.setTile({ position: { row: 2, col: 0 }, tier: 1, explored: true, tileType: 'empty' });
+        board.setTile({ position: { row: 2, col: 1 }, tier: 1, explored: true, tileType: 'empty' });
+        board.setTile({ position: { row: 2, col: 2 }, tier: 1, explored: true, tileType: 'empty' });
 
         // Create a champion at position 0,0
         const champion: Champion = {
@@ -65,8 +74,6 @@ describe('ActionExecutor', () => {
 
     describe('moveChampion', () => {
         it('should move champion successfully to adjacent tile', () => {
-            const gameState = createTestGameState();
-
             const action: MoveChampionAction = {
                 type: 'moveChampion',
                 playerId: 1,
@@ -91,29 +98,20 @@ describe('ActionExecutor', () => {
             const player = gameState.getPlayerById(1);
             expect(player?.fame).toBe(0);
 
-            // Manually create an unexplored tile at position (3, 3) - this should be Tier 2
-            const tileToModify = gameState.board.getTileAt({ row: 3, col: 3 });
-            if (tileToModify) {
-                tileToModify.explored = false;
-            }
-
-            // Verify the tile is unexplored
-            const targetTile = gameState.getTile({ row: 3, col: 3 });
+            // Verify the tile at (1, 2) is unexplored (set up in createTestGameState)
+            const targetTile = gameState.getTile({ row: 1, col: 2 });
             expect(targetTile?.explored).toBe(false);
 
-            // Move champion to an unexplored tile
+            // Move champion to the unexplored tile
             const action: MoveChampionAction = {
                 type: 'moveChampion',
                 playerId: 1,
                 championId: 1,
                 path: [
                     { row: 0, col: 0 }, // Start position (home)
-                    { row: 1, col: 0 }, // Step 1
-                    { row: 2, col: 0 }, // Step 2  
-                    { row: 3, col: 0 }, // Step 3
-                    { row: 3, col: 1 }, // Step 4
-                    { row: 3, col: 2 }, // Step 5
-                    { row: 3, col: 3 }  // Final position (unexplored tile)
+                    { row: 1, col: 0 }, // Step 1 (south)
+                    { row: 1, col: 1 }, // Step 2 (east)
+                    { row: 1, col: 2 }  // Final position (unexplored tile)
                 ]
             };
 
@@ -126,12 +124,12 @@ describe('ActionExecutor', () => {
             expect(updatedPlayer?.fame).toBe(1);
 
             // Verify tile is now explored
-            const exploredTile = result.newGameState.getTile({ row: 3, col: 3 });
+            const exploredTile = result.newGameState.getTile({ row: 1, col: 2 });
             expect(exploredTile?.explored).toBe(true);
 
             // Verify champion position was updated
             const updatedChampion = result.newGameState.getChampionById(1, 1);
-            expect(updatedChampion?.position).toEqual({ row: 3, col: 3 });
+            expect(updatedChampion?.position).toEqual({ row: 1, col: 2 });
         });
 
         it('should not grant fame when moving to already explored tile', () => {
@@ -164,7 +162,6 @@ describe('ActionExecutor', () => {
         });
 
         it('should reject a move with non-adjacent tiles', () => {
-            const gameState = createTestGameState();
 
             // Create a move champion action with a diagonal move (invalid)
             const action: MoveChampionAction = {
@@ -191,7 +188,6 @@ describe('ActionExecutor', () => {
 
     describe('executeAction - harvest', () => {
         it('should correctly harvest resources', () => {
-            const gameState = createTestGameState();
             const initialPlayer = gameState.getPlayerById(1)!;
             const initialResources = initialPlayer.resources;
 
@@ -222,7 +218,6 @@ describe('ActionExecutor', () => {
         });
 
         it('should reject negative harvest amounts', () => {
-            const gameState = createTestGameState();
             const initialPlayer = gameState.getPlayerById(1)!;
 
             // Create a harvest action with negative amount
@@ -251,8 +246,6 @@ describe('ActionExecutor', () => {
 
     describe('executeAction - claimTile', () => {
         it('should allow a champion to claim a tile they are standing on', () => {
-            const gameState = createTestGameState();
-
             // Verify tile is not claimed initially
             const initialTile = gameState.getTile({ row: 0, col: 0 });
             expect(initialTile?.claimedBy).toBeUndefined();
@@ -282,8 +275,6 @@ describe('ActionExecutor', () => {
         });
 
         it('should allow a champion to move and claim a tile in the same action', () => {
-            const gameState = createTestGameState();
-
             // Verify destination tile is not claimed initially
             const initialTile = gameState.getTile({ row: 0, col: 1 });
             expect(initialTile?.claimedBy).toBeUndefined();

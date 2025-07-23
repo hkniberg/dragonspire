@@ -1,8 +1,8 @@
 
 
-type Resource = 'food' | 'wood' | 'ore' | 'gold';
-type ResourceList = Resource[];
-type TileDef = 'home' | 'adventure' | 'adventure2' | 'adventure3' | 'chapel' | 'trader' | 'mercenary' | 'doomspire' | 'oasis' | 'oasis2' | ResourceList | Resource;
+export type Resource = 'food' | 'wood' | 'ore' | 'gold';
+export type ResourceList = Resource[];
+export type TileDef = 'home' | 'adventure' | 'adventure2' | 'adventure3' | 'doomspire' | 'chapel' | 'trader' | 'mercenary' | 'oasis' | 'oasis2' | ResourceList | Resource;
 
 // L-shaped tile group.
 export interface TileTrioDef {
@@ -115,5 +115,28 @@ export const TIER_2_TRIOS: TileTrioDef[] = [
         corner: ["wood", "wood"],
         right: "oasis2",
         below: ["food", "wood"],
+    },
+]
+
+export const TIER_3_TRIOS: TileTrioDef[] = [
+    {
+        corner: "adventure3",
+        right: "adventure3",
+        below: "doomspire",
+    },
+    {
+        corner: "doomspire",
+        right: "adventure3",
+        below: "adventure3",
+    },
+    {
+        corner: "adventure3",
+        right: "doomspire",
+        below: "adventure3",
+    },
+    {
+        corner: "adventure3",
+        right: "adventure3",
+        below: "doomspire",
     },
 ]

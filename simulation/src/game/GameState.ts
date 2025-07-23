@@ -1,7 +1,7 @@
 // Lords of Doomspire Game State Model
 
 import { Board } from '../lib/Board';
-import { RandomMapGenerator } from '../lib/randomMapGenerator';
+import { BoardBuilder } from '../lib/BoardBuilder';
 import type {
     Champion,
     Player,
@@ -18,15 +18,15 @@ export class GameState {
     public readonly winner?: number;
 
     constructor(
-        board?: Board,
-        players?: Player[],
+        board: Board,
+        players: Player[],
         currentPlayerIndex: number = 0,
         currentRound: number = 1,
         gameEnded: boolean = false,
         winner?: number
     ) {
-        this.board = board || RandomMapGenerator.generateBoard();
-        this.players = players || this.initializePlayers();
+        this.board = board;
+        this.players = players;
         this.currentPlayerIndex = currentPlayerIndex;
         this.currentRound = currentRound;
         this.gameEnded = gameEnded;
@@ -41,7 +41,7 @@ export class GameState {
             throw new Error(`Expected 4 player names, got ${playerNames.length}`);
         }
 
-        const board = RandomMapGenerator.generateBoard();
+        const board = BoardBuilder.buildBoard();
         const players = GameState.initializePlayersWithNames(playerNames);
 
         return new GameState(board, players);

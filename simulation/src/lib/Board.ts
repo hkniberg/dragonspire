@@ -1,4 +1,4 @@
-import { Position, Tile, TileTier } from './types';
+import { Position, Tile } from './types';
 
 export class Board {
     private tiles: Tile[][];
@@ -19,8 +19,7 @@ export class Board {
                 // Create empty tiles with default values
                 board[row][col] = {
                     position: { row, col },
-                    tier: 1 as TileTier,
-                    explored: false,
+                    tileType: 'empty',
                 };
             }
         }

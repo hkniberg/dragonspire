@@ -211,6 +211,11 @@ export class ActionExecutor {
         // If tile is not explored, reveal it
         if (!destinationTile.explored) {
             destinationTile.explored = true;
+            // Award 1 fame for exploring an unexplored tile (per game rules)
+            updatedPlayer = {
+                ...updatedPlayer,
+                fame: updatedPlayer.fame + 1
+            };
         }
 
         // Now validate claiming if requested (after monster combat)
@@ -250,7 +255,7 @@ export class ActionExecutor {
         }
 
         // Handle adventure tile logic
-        if (destinationTile.tileType === 'adventure') {
+        if (destinationTile.tileType === 'adventure' || destinationTile.tileType === 'oasis') {
             if (destinationTile.adventureTokens && destinationTile.adventureTokens > 0) {
                 // Remove one adventure token
                 destinationTile.adventureTokens = Math.max(0, destinationTile.adventureTokens - 1);
