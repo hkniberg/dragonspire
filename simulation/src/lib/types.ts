@@ -3,9 +3,9 @@
 export type ResourceType = 'food' | 'wood' | 'ore' | 'gold';
 export type TileTier = 1 | 2 | 3;
 export type BiomeType = 'plains' | 'mountains' | 'woodlands';
-export type TileType = 'plains' | 'mountains' | 'woodlands' | 'water';
 export type OceanPosition = 'nw' | 'ne' | 'sw' | 'se';
 export type TreasureType = 'rustyShield' | 'brokenSword';
+export type TileType = 'home' | 'resource' | 'adventure' | 'chapel' | 'trader' | 'mercenary' | 'doomspire';
 
 export interface Position {
     row: number;
@@ -30,7 +30,7 @@ export interface Tile {
     claimedBy?: number; // Player ID who claimed this tile. Only applicable for resource tiles
     monster?: Monster; // only applicable for adventure tiles
     adventureTokens?: number; // Number of adventure tokens on the tile. Only applicable for adventure tiles
-    tileType?: 'home' | 'resource' | 'adventure' | 'chapel' | 'trader' | 'mercenary' | 'doomspire';
+    tileType?: TileType;
 }
 
 export interface Champion {
