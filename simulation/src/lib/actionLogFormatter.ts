@@ -1,22 +1,11 @@
 // Action Log Formatter Utilities for consistent formatting across CLI and web
 
-import { ActionResult } from '../players/Player';
-import { GameAction } from './types';
-
-export interface DetailedTurnLog {
-    round: number;
-    playerId: number;
-    playerName: string;
-    diceRolls: number[];
-    actions: Array<{ action: GameAction; result: ActionResult }>;
-    turnSummary: string;
-    detailedActions: string[];
-}
+import { ActionLogEntry, ActionResult } from '../players/Player';
 
 /**
  * Format individual action result with dice value for concise display
  */
-export function formatActionResultConcise(result: ActionResult): string {
+export function formatActionResult(result: ActionResult): string {
     if (!result.success) {
         const dicePrefix = result.diceValuesUsed && result.diceValuesUsed.length > 0
             ? `[${result.diceValuesUsed.join('+')}]: `
@@ -33,15 +22,7 @@ export function formatActionResultConcise(result: ActionResult): string {
 /**
  * Format turn log with diary entry for unified display (CLI and web)
  */
-export function formatTurnUnified(turnLog: {
-    round: number;
-    playerId: number;
-    playerName: string;
-    diceRolls: number[];
-    actions: Array<{ action: GameAction; result: ActionResult }>;
-    turnSummary: string;
-    diaryEntry?: string;
-}): string[] {
+export function formatActionLogEntry(turnLog: ActionLogEntry): string[] {
     const lines: string[] = [];
 
     // Turn header with dice
@@ -51,7 +32,7 @@ export function formatTurnUnified(turnLog: {
     // Actions with dice values
     const successfulActions = turnLog.actions.filter(({ result }) => result.success);
     for (const { action, result } of successfulActions) {
-        lines.push(formatActionResultConcise(result));
+        lines.push(formatActionResult(result));
     }
 
     // Only show aggregated harvest summary if there are multiple harvest actions

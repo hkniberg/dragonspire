@@ -15,10 +15,6 @@ export interface ActionResult {
     diceValuesUsed?: number[]; // Track which dice values were used for this action
 }
 
-/**
- * Function provided to players for executing actions during their turn
- */
-export type ExecuteActionFunction = (action: GameAction, diceValues?: number[]) => ActionResult;
 
 /**
  * Action log entry for a completed turn
@@ -29,9 +25,14 @@ export interface ActionLogEntry {
     playerName: string;
     diceRolls: number[];
     actions: Array<{ action: GameAction; result: ActionResult }>;
-    turnSummary: string;
     diaryEntry?: string; // Optional diary entry from the player
 }
+
+/**
+ * Function provided to players for executing actions during their turn
+ */
+export type ExecuteActionFunction = (action: GameAction, diceValues?: number[]) => ActionResult;
+
 
 /**
  * Interface that all player implementations must follow

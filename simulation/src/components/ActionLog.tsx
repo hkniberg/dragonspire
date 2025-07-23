@@ -1,5 +1,5 @@
 import React from "react";
-import { formatTurnUnified } from "../lib/actionLogFormatter";
+import { formatActionLogEntry } from "../lib/actionLogFormatter";
 
 interface ActionLogProps {
   actionLog: any[];
@@ -35,7 +35,7 @@ export const ActionLog: React.FC<ActionLogProps> = ({
         }}
       >
         {actionLog.map((turn, index) => {
-          const messages = formatTurnUnified(turn);
+          const messages = formatActionLogEntry(turn);
 
           return (
             <div

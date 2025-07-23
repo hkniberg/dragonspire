@@ -119,7 +119,6 @@ export class CLIRunner {
                 console.log(`\nTurn executed by: ${turn.playerName}`);
                 console.log(`Dice rolled: [${turn.diceRolls.join(', ')}]`);
                 console.log(`Actions taken: ${turn.actions.length}`);
-                console.log(`Turn summary: ${turn.turnSummary}`);
             }
 
         } catch (error) {
@@ -182,12 +181,6 @@ export class CLIRunner {
             const actionLog = session.getActionLog();
             console.log(`\nTotal turns executed: ${actionLog.length}`);
 
-            if (actionLog.length > 0) {
-                console.log('Turn summary:');
-                actionLog.forEach((turn, index) => {
-                    console.log(`  Turn ${index + 1}: ${turn.playerName} - ${turn.turnSummary}`);
-                });
-            }
 
         } catch (error) {
             console.error(`❌ ${numTurns} turn(s) simulation failed:`, error);

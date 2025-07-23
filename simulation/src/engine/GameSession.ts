@@ -1,7 +1,7 @@
 // Lords of Doomspire Game Session Manager
 
 import { GameState, rollMultipleD3 } from '../game/GameState';
-import { formatTurnUnified } from '../lib/actionLogFormatter';
+import { formatActionLogEntry } from '../lib/actionLogFormatter';
 import { CARDS, GameDecks } from '../lib/cards';
 import { GameAction } from '../lib/types';
 import { ActionLogEntry, ActionResult, ExecuteActionFunction, Player } from '../players/Player';
@@ -96,9 +96,6 @@ export class GameSession {
         // Update game state to the final state after all actions
         this.gameState = currentState;
 
-        // Generate turn summary and log it using the new concise format
-        const turnSummary = this.generateTurnSummary(turnActions);
-
         // Create the turn log entry
         const turnLogEntry: ActionLogEntry = {
             round: this.gameState.currentRound,
@@ -106,12 +103,11 @@ export class GameSession {
             playerName: currentPlayer.getName(),
             diceRolls: diceRolls,
             actions: turnActions,
-            turnSummary: turnSummary,
             diaryEntry: diaryEntry
         };
 
         // Log using unified format (includes diary entries)
-        const unifiedLog = formatTurnUnified(turnLogEntry);
+        const unifiedLog = formatActionLogEntry(turnLogEntry);
         console.log('\n' + unifiedLog.join('\n'));
 
         // Add to action log
