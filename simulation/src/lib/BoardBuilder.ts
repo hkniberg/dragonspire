@@ -26,6 +26,7 @@ const Colors = {
 
 export class BoardBuilder {
     private seedValue: number;
+    private currentGroupId: number = 1;
 
     constructor(seed: number = 0) {
         this.seedValue = seed;
@@ -110,11 +111,12 @@ export class BoardBuilder {
         explored: boolean
     ): void {
         const tileDefs = [trioDef.corner, trioDef.right, trioDef.below];
+        const groupId = this.currentGroupId++;
 
         tileDefs.forEach((tileDef, index) => {
             const backColor = tileDef === 'home' ? Colors.homeBack : Colors.tier1Back;
             const borderColor = tileDef === 'home' ? Colors.homeBorder : Colors.tier1Border;
-            const tile = this.convertTileDefToTile(tileDef, positions[index], explored, backColor, borderColor);
+            const tile = this.convertTileDefToTile(tileDef, positions[index], explored, backColor, borderColor, groupId);
             board.setTile(tile);
         });
     }
@@ -218,6 +220,7 @@ export class BoardBuilder {
         borderColor: string
     ): void {
         const tileDefs = [trioDef.corner, trioDef.right, trioDef.below];
+        const groupId = this.currentGroupId++;
 
         tileDefs.forEach((tileDef, index) => {
             const position = positions[index];
@@ -231,7 +234,7 @@ export class BoardBuilder {
                 throw new Error(`Tile at ${position.row},${position.col} already exists`);
             }
 
-            const tile = this.convertTileDefToTile(tileDef, positions[index], explored, backColor, borderColor);
+            const tile = this.convertTileDefToTile(tileDef, positions[index], explored, backColor, borderColor, groupId);
             board.setTile(tile);
         });
     }
@@ -244,9 +247,14 @@ export class BoardBuilder {
         position: Position,
         explored: boolean,
         backColor: string,
-        borderColor: string
+        borderColor: string,
+        tileGroup?: number
     ): Tile {
         const tile: Tile = { position, explored, backColor, borderColor };
+
+        if (tileGroup !== undefined) {
+            tile.tileGroup = tileGroup;
+        }
 
         if (typeof tileDef === 'string') {
             switch (tileDef) {

@@ -211,6 +211,18 @@ export class ActionExecutor {
         // If tile is not explored, reveal it
         if (!destinationTile.explored) {
             destinationTile.explored = true;
+
+            // If tile has a group, explore all tiles in the same group
+            if (destinationTile.tileGroup !== undefined) {
+                const tilesToExplore = updatedGameState.board.findTiles(tile =>
+                    tile.tileGroup === destinationTile.tileGroup && !tile.explored
+                );
+
+                tilesToExplore.forEach(tile => {
+                    tile.explored = true;
+                });
+            }
+
             // Award 1 fame for exploring an unexplored tile (per game rules)
             updatedPlayer = {
                 ...updatedPlayer,
@@ -513,21 +525,6 @@ export class ActionExecutor {
             success: true,
             diceValuesUsed: diceValues
         };
-    }
-
-    /**
-     * Generate a description of resources on a tile
-     */
-    private static getTileResourceDescription(tile: any): string {
-        if (!tile.resources) return '';
-
-        const resources = [];
-        if (tile.resources.food > 0) resources.push(`${tile.resources.food} food`);
-        if (tile.resources.wood > 0) resources.push(`${tile.resources.wood} wood`);
-        if (tile.resources.ore > 0) resources.push(`${tile.resources.ore} ore`);
-        if (tile.resources.gold > 0) resources.push(`${tile.resources.gold} gold`);
-
-        return resources.length > 0 ? ` with ${resources.join(', ')}` : '';
     }
 
     /**
