@@ -1,4 +1,5 @@
 import type { Champion, Player, ResourceType, Tile } from "../lib/types";
+import { ChampionComponent } from "./Champion";
 import { ClaimFlag } from "./ClaimFlag";
 import { MonsterCard } from "./MonsterCard";
 
@@ -565,31 +566,13 @@ ${
             zIndex: 10,
           }}
         >
-          {championsOnTile.map((champion) => {
-            const playerColors = getPlayerColor(champion.playerId);
-            return (
-              <div
-                key={champion.id}
-                style={{
-                  backgroundColor: playerColors.main,
-                  color: "white",
-                  borderRadius: "50%",
-                  width: "44px",
-                  height: "44px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                  border: "3px solid white",
-                  boxShadow: "0 3px 6px rgba(0,0,0,0.4)",
-                }}
-                title={`Champion ${champion.id} (Player ${champion.playerId})`}
-              >
-                ⚔️
-              </div>
-            );
-          })}
+          {championsOnTile.map((champion) => (
+            <ChampionComponent
+              key={champion.id}
+              champion={champion}
+              getPlayerColor={getPlayerColor}
+            />
+          ))}
         </div>
       )}
     </div>
