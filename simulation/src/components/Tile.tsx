@@ -132,12 +132,14 @@ export const TileComponent = ({
   champions,
   currentPlayer,
   debugMode = false,
+  printMode = false,
   getPlayerColor,
 }: {
   tile: Tile;
   champions: Champion[];
   currentPlayer: Player;
   debugMode?: boolean;
+  printMode?: boolean;
   getPlayerColor: (playerId: number) => {
     main: string;
     light: string;
@@ -154,6 +156,22 @@ export const TileComponent = ({
   const effectiveTile = {
     ...tile,
     explored: tile.explored || debugMode,
+  };
+
+  // Helper function for resource symbol styling - use div with explicit dimensions
+  const getResourceSymbolStyle = () => {
+    return {
+      backgroundColor: "#ffffff",
+      border: "1px solid #ccc",
+      borderRadius: "4px",
+      width: "24px",
+      height: "24px",
+      display: "inline-flex",
+      alignItems: "center",
+      justifyContent: "center",
+      fontSize: "14px",
+      margin: "1px",
+    };
   };
 
   const specialLabel = getSpecialLocationLabel(effectiveTile);
@@ -362,28 +380,8 @@ ${
               fontSize: "16px",
             }}
           >
-            <span
-              style={{
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
-                borderRadius: "3px",
-                padding: "1px 3px",
-                border: "1px solid rgba(0, 0, 0, 0.2)",
-                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.3)",
-              }}
-            >
-              🌾
-            </span>
-            <span
-              style={{
-                backgroundColor: "rgba(255, 255, 255, 0.9)",
-                borderRadius: "3px",
-                padding: "1px 3px",
-                border: "1px solid rgba(0, 0, 0, 0.2)",
-                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.3)",
-              }}
-            >
-              🪵
-            </span>
+            <div style={getResourceSymbolStyle()}>🌾</div>
+            <div style={getResourceSymbolStyle()}>🪵</div>
           </div>
         ) : specialLabel ? (
           <>
@@ -433,18 +431,12 @@ ${
                   };
                   const symbol = resourceSymbols[type as ResourceType];
                   return Array.from({ length: amount }, (_, index) => (
-                    <span
+                    <div
                       key={`${type}-${index}`}
-                      style={{
-                        backgroundColor: "rgba(255, 255, 255, 0.9)",
-                        borderRadius: "3px",
-                        padding: "1px 3px",
-                        border: "1px solid rgba(0, 0, 0, 0.2)",
-                        boxShadow: "0 1px 2px rgba(0, 0, 0, 0.3)",
-                      }}
+                      style={getResourceSymbolStyle()}
                     >
                       {symbol}
-                    </span>
+                    </div>
                   ));
                 })
                 .flat()}
@@ -488,7 +480,7 @@ ${
       {(effectiveTile.tileType === "adventure" ||
         effectiveTile.tileType === "oasis") &&
         effectiveTile.explored &&
-        effectiveTile.adventureTokens &&
+        !!effectiveTile.adventureTokens &&
         effectiveTile.adventureTokens > 0 && (
           <div
             style={{
@@ -510,7 +502,7 @@ ${
                 <div
                   key={index}
                   style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    backgroundColor: "#ffffff",
                     borderRadius: "50%",
                     width: "40px",
                     height: "40px",

@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { LuCopy, LuDownload, LuMaximize2, LuMinimize2 } from "react-icons/lu";
 import { formatActionLogEntry } from "../lib/actionLogFormatter";
 
 interface ActionLogProps {
@@ -10,23 +11,148 @@ export const ActionLog: React.FC<ActionLogProps> = ({
   actionLog,
   isVisible,
 }) => {
+  const [isMaximized, setIsMaximized] = useState(false);
+
   if (!isVisible || actionLog.length === 0) {
     return null;
   }
 
+  const convertToMarkdown = (): string => {
+    let markdown = "# Action Log\n\n";
+
+    actionLog.forEach((turn, index) => {
+      const messages = formatActionLogEntry(turn);
+      markdown += `## Turn ${index + 1}\n\n`;
+
+      messages.forEach((message) => {
+        if (message.includes("---")) {
+          markdown += `### ${message.replace(/---/g, "").trim()}\n\n`;
+        } else if (message.includes("Player Diary:")) {
+          markdown += `> ${message}\n\n`;
+        } else {
+          markdown += `- ${message}\n`;
+        }
+      });
+
+      markdown += "\n";
+    });
+
+    return markdown;
+  };
+
+  const handleCopy = async () => {
+    try {
+      const markdown = convertToMarkdown();
+      await navigator.clipboard.writeText(markdown);
+      alert("Action log copied to clipboard as markdown!");
+    } catch (err) {
+      console.error("Failed to copy to clipboard:", err);
+      alert("Failed to copy to clipboard");
+    }
+  };
+
+  const handleDownload = () => {
+    const markdown = convertToMarkdown();
+    const blob = new Blob([markdown], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `action-log-${new Date().toISOString().split("T")[0]}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const buttonStyle = {
+    padding: "6px 8px",
+    margin: "0 2px",
+    backgroundColor: "transparent",
+    color: "#6c757d",
+    border: "1px solid #dee2e6",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "14px",
+    transition: "all 0.2s ease",
+  };
+
+  const containerStyle = {
+    marginBottom: "20px",
+    padding: "15px",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: "8px",
+    border: "1px solid #ddd",
+    maxHeight: isMaximized ? "80vh" : "400px",
+    overflowY: "auto" as const,
+    position: isMaximized ? ("fixed" as const) : ("relative" as const),
+    top: isMaximized ? "10vh" : "auto",
+    left: isMaximized ? "10vw" : "auto",
+    width: isMaximized ? "80vw" : "auto",
+    zIndex: isMaximized ? 1000 : "auto",
+  };
+
   return (
-    <div
-      style={{
-        marginBottom: "20px",
-        padding: "15px",
-        backgroundColor: "rgba(255, 255, 255, 0.9)",
-        borderRadius: "8px",
-        border: "1px solid #ddd",
-        maxHeight: "400px",
-        overflowY: "auto",
-      }}
-    >
-      <h3 style={{ marginTop: 0, color: "#2c3e50" }}>📋 Detailed Action Log</h3>
+    <div style={containerStyle}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "10px",
+        }}
+      >
+        <h3 style={{ margin: 0, color: "#2c3e50" }}>📋 Detailed Action Log</h3>
+        <div>
+          <button
+            style={{
+              ...buttonStyle,
+              backgroundColor: isMaximized ? "#f8f9fa" : "transparent",
+            }}
+            onClick={() => setIsMaximized(!isMaximized)}
+            title={isMaximized ? "Minimize" : "Maximize"}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "#f8f9fa")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = isMaximized
+                ? "#f8f9fa"
+                : "transparent")
+            }
+          >
+            {isMaximized ? (
+              <LuMinimize2 size={16} />
+            ) : (
+              <LuMaximize2 size={16} />
+            )}
+          </button>
+          <button
+            style={buttonStyle}
+            onClick={handleCopy}
+            title="Copy as Markdown"
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "#f8f9fa")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "transparent")
+            }
+          >
+            <LuCopy size={16} />
+          </button>
+          <button
+            style={buttonStyle}
+            onClick={handleDownload}
+            title="Download as Markdown"
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.backgroundColor = "#f8f9fa")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.backgroundColor = "transparent")
+            }
+          >
+            <LuDownload size={16} />
+          </button>
+        </div>
+      </div>
       <div
         style={{
           fontFamily: "monospace",

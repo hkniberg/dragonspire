@@ -711,6 +711,45 @@ export default function GameSimulation() {
           </p>
         </div>
 
+        {/* Print Components Link */}
+        <div
+          style={{
+            marginTop: "20px",
+            padding: "15px",
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            borderRadius: "8px",
+            textAlign: "center",
+            border: "1px solid #ddd",
+          }}
+        >
+          <a
+            href="/print"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 20px",
+              backgroundColor: "#4CAF50",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: "6px",
+              fontWeight: "bold",
+              transition: "background-color 0.2s",
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = "#45a049";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = "#4CAF50";
+            }}
+          >
+            🖨️ Print Components
+          </a>
+          <p style={{ margin: "10px 0 0 0", color: "#666", fontSize: "14px" }}>
+            Print tiles and other game components for physical play
+          </p>
+        </div>
+
         {/* API Key Modal */}
         <ApiKeyModal
           isOpen={showApiKeyModal}
