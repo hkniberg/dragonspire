@@ -22,7 +22,7 @@ export function formatActionResult(result: ActionResult): string {
 /**
  * Format turn log with diary entry for unified display (CLI and web)
  */
-export function formatActionLogEntry(turnLog: ActionLogEntry): string[] {
+export function formatActionLogEntry(turnLog: ActionLogEntry, onlyShowDiaryForPlayerId?: number): string[] {
     const lines: string[] = [];
 
     // Turn header with dice
@@ -61,8 +61,8 @@ export function formatActionLogEntry(turnLog: ActionLogEntry): string[] {
         }
     }
 
-    // Add diary entry if it exists
-    if (turnLog.diaryEntry) {
+    // Add diary entry if it exists and if we should show it for this player
+    if (turnLog.diaryEntry && (onlyShowDiaryForPlayerId === undefined || turnLog.playerId === onlyShowDiaryForPlayerId)) {
         lines.push('');
         lines.push(`💭 Player Diary: ${turnLog.diaryEntry}`);
     }

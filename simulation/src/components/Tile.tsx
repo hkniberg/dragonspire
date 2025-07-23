@@ -493,9 +493,9 @@ ${
           <div
             style={{
               position: "absolute",
-              top: "50%",
+              bottom: "8px",
               left: "50%",
-              transform: "translate(-50%, -50%)",
+              transform: "translateX(-50%)",
               display: "flex",
               flexDirection: "row",
               gap: "4px",

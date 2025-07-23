@@ -266,10 +266,80 @@ export class TileArrivalHandler {
             players: updatedPlayers
         });
 
+        // Generate descriptive summary based on what happened at the tile
+        let arrivalSummary = this.generateArrivalSummary(
+            newGameState,
+            destinationTile,
+            claimTile,
+            playerId,
+            destination
+        );
+
         return {
             newGameState,
-            summary: `Champion${championId} arrived at (${destination.row}, ${destination.col})${battleSummary}${existingMonsterCombatSummary}`,
+            summary: `Champion${championId} ${arrivalSummary}${battleSummary}${existingMonsterCombatSummary}`,
             success: true
         };
+    }
+
+    /**
+     * Generate a descriptive summary of what happened when arriving at a tile
+     */
+    private generateArrivalSummary(
+        gameState: GameState,
+        tile: any,
+        claimedTile: boolean,
+        playerId: number,
+        destination: Position
+    ): string {
+        const tileDescription = this.getTileDescription(tile);
+
+        // Check if we just claimed this tile
+        if (claimedTile && tile.claimedBy === playerId) {
+            return `claimed ${tileDescription}`;
+        }
+
+        // Check if this tile is claimed by another player (blockading)
+        if (tile.claimedBy !== undefined && tile.claimedBy !== playerId) {
+            const ownerPlayer = gameState.getPlayerById(tile.claimedBy);
+            const ownerName = ownerPlayer ? ownerPlayer.name : `Player ${tile.claimedBy}`;
+            return `blockading ${ownerName}'s ${tileDescription}`;
+        }
+
+        // Default case - just arrived at the tile
+        return `arrived at ${tileDescription}`;
+    }
+
+    /**
+     * Get a descriptive string for a tile including its type and resources
+     */
+    private getTileDescription(tile: any): string {
+        if (tile.tileType === 'resource' && tile.resources) {
+            const resourceList = Object.entries(tile.resources)
+                .filter(([_, amount]) => (amount as number) > 0)
+                .map(([resource, _]) => resource)
+                .join(', ');
+
+            return resourceList ? `resource tile with ${resourceList}` : 'resource tile';
+        }
+
+        switch (tile.tileType) {
+            case 'adventure':
+                return 'adventure tile';
+            case 'oasis':
+                return 'oasis tile';
+            case 'home':
+                return 'home tile';
+            case 'chapel':
+                return 'chapel tile';
+            case 'trader':
+                return 'trader tile';
+            case 'mercenary':
+                return 'mercenary tile';
+            case 'doomspire':
+                return 'doomspire tile';
+            default:
+                return 'tile';
+        }
     }
 } 

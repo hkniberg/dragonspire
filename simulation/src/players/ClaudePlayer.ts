@@ -2,6 +2,7 @@
 
 import { GameStateStringifier } from '@/game/gameStateStringifier';
 import { GameState } from '../game/GameState';
+import { formatActionLogEntry } from '../lib/actionLogFormatter';
 import { templateProcessor, TemplateVariables } from '../lib/templateProcessor';
 import { createGameActionTools } from '../lib/tools';
 import { Claude } from '../llm/claude';
@@ -65,13 +66,15 @@ export class ClaudePlayer implements Player {
         // Use the readable stringified game state instead of JSON
         const boardState = GameStateStringifier.stringify(gameState);
 
-        // Format previous diary entries from action log
-        const previousDiaryEntries = actionLog
-            .filter(entry => entry.playerId === playerId && entry.diaryEntry)
-            .map((entry, index) => `Turn ${entry.round}: ${entry.diaryEntry}`)
-            .join('\n\n');
-
-        const diaryText = previousDiaryEntries || 'No previous diary entries.';
+        // Format the complete game log using the action log formatter
+        // Only show diary entries for the current player
+        const gameLogLines: string[] = [];
+        for (const entry of actionLog) {
+            const formattedEntry = formatActionLogEntry(entry, playerId);
+            gameLogLines.push(...formattedEntry);
+            gameLogLines.push(''); // Add empty line between turns
+        }
+        const gameLog = gameLogLines.join('\n').trim();
 
         // Prepare extra instructions if they exist, formatted in a special block
         const extraInstructionsText = player.extraInstructions?.trim()
@@ -82,7 +85,7 @@ export class ClaudePlayer implements Player {
             playerName: player.name,
             diceRolls: diceRolls.join(' and '),
             boardState: boardState,
-            previousDiaryEntries: diaryText
+            gameLog: gameLog
         };
 
         const baseMessage = await templateProcessor.processTemplate('makeMove', variables);

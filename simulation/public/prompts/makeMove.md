@@ -1,13 +1,18 @@
 <player-context>
-You are player {{playerName}}. It is your turn and you have just rolled {{diceRolls}}.
+You are player {{playerName}}.
 </player-context>
 
-<previous-diary-entries>
-{{previousDiaryEntries}}
-</previous-diary-entries>
+<game-log>
+{{gameLog}}
+</game-log>
 
-<board-state>
+<current-board-state>
 ```json
 {{boardState}}
 ```
-</board-state>
+</current-board-state>
+
+<dice-rolls>
+It is your turn as {{playerName}} and you have just rolled {{diceRolls}}.
+Take your dice actions. 
+</dice-rolls>
