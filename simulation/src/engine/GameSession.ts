@@ -1,8 +1,8 @@
 // Lords of Doomspire Game Session Manager
 
 import { GameState, rollMultipleD3 } from '../game/GameState';
+import { formatTurnUnified } from '../lib/actionLogFormatter';
 import { CARDS, GameDecks } from '../lib/cards';
-import { GameLogger } from '../lib/gameLogger';
 import { GameAction } from '../lib/types';
 import { ActionLogEntry, ActionResult, ExecuteActionFunction, Player } from '../players/Player';
 import { ActionExecutor } from './ActionExecutor';
@@ -111,7 +111,7 @@ export class GameSession {
         };
 
         // Log using unified format (includes diary entries)
-        const unifiedLog = GameLogger.formatTurnUnified(turnLogEntry);
+        const unifiedLog = formatTurnUnified(turnLogEntry);
         console.log('\n' + unifiedLog.join('\n'));
 
         // Add to action log
