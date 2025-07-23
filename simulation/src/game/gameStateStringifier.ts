@@ -86,7 +86,7 @@ export class GameStateStringifier {
 
     private static getClaimedTiles(playerId: number, gameState: GameState): Tile[] {
         const claimedTiles: Tile[] = [];
-        for (const row of gameState.board) {
+        for (const row of gameState.board.getTilesGrid()) {
             for (const tile of row) {
                 if (tile.claimedBy === playerId) {
                     claimedTiles.push(tile);
@@ -125,7 +125,7 @@ export class GameStateStringifier {
         // Only show interesting tiles (explored tiles or tiles with champions)
         const interestingTiles: Tile[] = [];
 
-        for (const row of gameState.board) {
+        for (const row of gameState.board.getTilesGrid()) {
             for (const tile of row) {
                 if (this.isTileInteresting(tile, gameState)) {
                     interestingTiles.push(tile);

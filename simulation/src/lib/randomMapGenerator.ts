@@ -1,5 +1,6 @@
 // Lords of Doomspire Random Map Generator
 
+import { Board } from './Board';
 import { getMonsterByName } from './content/monsterCards';
 import type {
     Position,
@@ -32,15 +33,14 @@ export class RandomMapGenerator {
     /**
      * Generates a random 8x8 board with tier-based layout according to board setup rules
      */
-    public static generateBoard(): Tile[][] {
+    public static generateBoard(): Board {
         // Reset seed for consistent generation
         this.resetSeed();
 
-        const board: Tile[][] = [];
+        const board = new Board(8, 8);
 
-        // Initialize empty board
+        // Initialize tiles with proper tier and exploration status
         for (let row = 0; row < 8; row++) {
-            board[row] = [];
             for (let col = 0; col < 8; col++) {
                 const position: Position = { row, col };
                 const distanceFromCenter = Math.max(Math.abs(row - 3.5), Math.abs(col - 3.5));
@@ -57,7 +57,7 @@ export class RandomMapGenerator {
                     tier = 3;
                 }
 
-                // Initialize basic tile structure
+                // Create tile with proper values
                 const tile: Tile = {
                     position,
                     tier,
@@ -65,7 +65,7 @@ export class RandomMapGenerator {
                     adventureTokens: 0,
                 };
 
-                board[row].push(tile);
+                board.setTile(tile);
             }
         }
 
@@ -79,7 +79,7 @@ export class RandomMapGenerator {
     /**
      * Places special tiles according to board setup rules
      */
-    private static placeSpecialTiles(board: Tile[][]): void {
+    private static placeSpecialTiles(board: Board): void {
         // Place 4 player home tiles in corners (Tier 1)
         // Each home tile is claimed by the corresponding player and provides wood OR food
         const homePositions = [
@@ -90,23 +90,30 @@ export class RandomMapGenerator {
         ];
 
         homePositions.forEach(({ pos, playerId }) => {
-            const tile = board[pos.row][pos.col];
-            tile.tileType = 'home';
-            tile.claimedBy = playerId;
-            // Home tiles provide both wood and food (OR logic handled during harvesting)
-            tile.resources = { food: 1, wood: 1, ore: 0, gold: 0 };
-            tile.isStarred = false; // Home tiles are not starred
+            const tile = board.getTileAt(pos);
+            if (tile) {
+                tile.tileType = 'home';
+                tile.claimedBy = playerId;
+                // Home tiles provide both wood and food (OR logic handled during harvesting)
+                tile.resources = { food: 1, wood: 1, ore: 0, gold: 0 };
+                tile.isStarred = false; // Home tiles are not starred
+                board.setTile(tile);
+            }
         });
 
         // Place doomspire in center (Tier 3)
-        board[3][3].tileType = 'doomspire';
+        const centerTile = board.getTileAt({ row: 3, col: 3 });
+        if (centerTile) {
+            centerTile.tileType = 'doomspire';
+            board.setTile(centerTile);
+        }
 
         // Collect available Tier 1 positions (excluding corners and doomspire)
         const tier1Positions: Position[] = [];
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
-                const tile = board[row][col];
-                if (tile.tier === 1 && !tile.tileType) {
+                const tile = board.getTileAt({ row, col });
+                if (tile && tile.tier === 1 && !tile.tileType) {
                     tier1Positions.push({ row, col });
                 }
             }
@@ -118,17 +125,22 @@ export class RandomMapGenerator {
 
         for (let i = 0; i < specialTiles.length && i < shuffledPositions.length; i++) {
             const pos = shuffledPositions[i];
-            board[pos.row][pos.col].tileType = specialTiles[i];
+            const tile = board.getTileAt(pos);
+            if (tile) {
+                tile.tileType = specialTiles[i];
+                board.setTile(tile);
+            }
         }
     }
 
     /**
      * Generates content for tiles based on their tier and type
      */
-    private static generateTileContent(board: Tile[][]): void {
+    private static generateTileContent(board: Board): void {
         for (let row = 0; row < 8; row++) {
             for (let col = 0; col < 8; col++) {
-                const tile = board[row][col];
+                const tile = board.getTileAt({ row, col });
+                if (!tile) continue;
 
                 // Skip tiles that already have special types
                 if (tile.tileType) {
@@ -166,6 +178,9 @@ export class RandomMapGenerator {
                     // Tier 3: Only adventure tiles
                     this.makeAdventureTile(tile);
                 }
+
+                // Update the tile on the board
+                board.setTile(tile);
             }
         }
     }
@@ -251,7 +266,7 @@ export class RandomMapGenerator {
     /**
      * Generates a deterministic board for testing purposes
      */
-    public static generateTestBoard(): Tile[][] {
+    public static generateTestBoard(): Board {
         // TODO: Implement deterministic board generation for testing
         // For now, just return the random board
         return this.generateBoard();

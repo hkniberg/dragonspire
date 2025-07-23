@@ -2,7 +2,6 @@
 
 import { GameState, rollD3 } from '../game/GameState';
 import { GameDecks } from '../lib/cards';
-import { getMonsterByName } from '../lib/content/monsterCards';
 import type {
     GameAction,
     HarvestAction,
@@ -205,21 +204,13 @@ export class ActionExecutor {
                 existingMonsterCombatSummary = ` and ${combatResult.summary}`;
 
                 // Remove the monster from the tile
-                const updatedTile = {
-                    ...destinationTile,
-                    monster: undefined
-                };
-                updatedBoard = updatedGameState.board.map((row, rowIndex) =>
-                    row.map((tile, colIndex) =>
-                        rowIndex === destination.row && colIndex === destination.col
-                            ? updatedTile
-                            : tile
-                    )
-                );
-
-                // Update the destination tile reference for subsequent logic
                 destinationTile.monster = undefined;
             }
+        }
+
+        // If tile is not explored, reveal it
+        if (!destinationTile.explored) {
+            destinationTile.explored = true;
         }
 
         // Now validate claiming if requested (after monster combat)
@@ -228,8 +219,8 @@ export class ActionExecutor {
             if (destinationTile.tileType !== 'resource') {
                 return {
                     newGameState: gameState,
-                    summary: `Cannot claim tile at (${destination.row}, ${destination.col}): not a resource tile`,
-                    success: false
+                    success: false,
+                    summary: `Cannot claim ${destinationTile.tileType} tile`
                 };
             }
 
@@ -237,168 +228,45 @@ export class ActionExecutor {
             if (destinationTile.claimedBy !== undefined) {
                 return {
                     newGameState: gameState,
-                    summary: `Cannot claim tile at (${destination.row}, ${destination.col}): already claimed by player ${destinationTile.claimedBy}`,
-                    success: false
+                    success: false,
+                    summary: 'Tile is already claimed'
                 };
             }
 
-            // Check if player has claims available
-            const currentClaims = gameState.board
-                .flat()
-                .filter(tile => tile.claimedBy === playerId).length;
+            // Check if player has reached max claims
+            const currentClaimedCount = updatedGameState.board
+                .findTiles(tile => tile.claimedBy === playerId).length;
 
-            if (currentClaims >= player.maxClaims) {
+            if (currentClaimedCount >= player.maxClaims) {
                 return {
                     newGameState: gameState,
-                    summary: `Cannot claim tile: Player ${playerId} has reached maximum claims (${player.maxClaims})`,
-                    success: false
+                    success: false,
+                    summary: 'Player has reached maximum number of claims'
                 };
             }
+
+            // Claim the tile
+            destinationTile.claimedBy = playerId;
         }
 
-        // Handle exploration
-        let explorationSummary = '';
+        // Handle adventure tile logic
+        if (destinationTile.tileType === 'adventure') {
+            if (destinationTile.adventureTokens && destinationTile.adventureTokens > 0) {
+                // Remove one adventure token
+                destinationTile.adventureTokens = Math.max(0, destinationTile.adventureTokens - 1);
 
-        if (!destinationTile.explored) {
-            // Reveal the tile
-            const revealedTile = { ...updatedBoard[destination.row][destination.col], explored: true };
-            updatedBoard = updatedBoard.map((row, rowIndex) =>
-                row.map((tile, colIndex) =>
-                    rowIndex === destination.row && colIndex === destination.col
-                        ? revealedTile
-                        : tile
-                )
-            );
-
-            // Grant 1 fame for exploring the tile
-            updatedPlayer = { ...updatedPlayer, fame: updatedPlayer.fame + 1 };
-            explorationSummary = ` and explored a new tile (gained 1 Fame)`;
-        }
-
-        // Handle tile claiming if requested (after monster is defeated)
-        let claimSummary = '';
-        if (claimTile) {
-            const updatedTile = { ...updatedBoard[destination.row][destination.col], claimedBy: playerId };
-            updatedBoard = updatedBoard.map((row, rowIndex) =>
-                row.map((tile, colIndex) =>
-                    rowIndex === destination.row && colIndex === destination.col
-                        ? updatedTile
-                        : tile
-                )
-            );
-
-            // Generate resource description
-            const resourceDesc = ActionExecutor.getTileResourceDescription(updatedTile);
-            claimSummary = ` and claimed a resource tile${resourceDesc}`;
-        }
-
-        // Check for blockading (landing on opponent's claimed resource tile)
-        let blockadeSummary = '';
-        if (destinationTile.tileType === 'resource' &&
-            destinationTile.claimedBy !== undefined &&
-            destinationTile.claimedBy !== playerId) {
-            const opponentPlayer = updatedGameState.getPlayerById(destinationTile.claimedBy);
-            const opponentName = opponentPlayer?.name || `Player ${destinationTile.claimedBy}`;
-            const resourceDesc = ActionExecutor.getTileResourceDescription(destinationTile);
-            blockadeSummary = ` and blockaded ${opponentName}'s resource tile${resourceDesc}`;
-        }
-
-        // Handle adventure tiles and NEW monster encounters (from adventure tokens)
-        let adventureSummary = '';
-        let newMonsterCombatSummary = '';
-        if (destinationTile.tileType === 'adventure' && gameDecks && destinationTile.adventureTokens && destinationTile.adventureTokens > 0) {
-            // Draw a card from the appropriate tier (for now, draw from deck 1)
-            const drawnCard = gameDecks.drawCard(destinationTile.tier, 1);
-
-            if (drawnCard) {
-                if (drawnCard.type === 'monster') {
-                    // Look up monster stats
-                    const monster = getMonsterByName(drawnCard.name);
-                    if (monster) {
-                        // Initiate monster combat
-                        const combatResult = ActionExecutor.combatResolver.resolveMonsterCombat(
-                            updatedPlayer,
-                            champion,
-                            monster
-                        );
-
-                        if (combatResult.championReturnedHome) {
-                            // Champion lost and went home - update champion position and player
-                            const updatedChampions = combatResult.updatedPlayer.champions;
-                            const finalPlayer = { ...combatResult.updatedPlayer, champions: updatedChampions };
-                            const finalPlayers = updatedGameState.players.map(p =>
-                                p.id === playerId ? finalPlayer : p
-                            );
-
-                            // Reduce adventure tokens and place monster on tile
-                            const updatedTile = {
-                                ...updatedBoard[destination.row][destination.col],
-                                adventureTokens: destinationTile.adventureTokens - 1,
-                                monster: monster
-                            };
-                            updatedBoard = updatedBoard.map((row, rowIndex) =>
-                                row.map((tile, colIndex) =>
-                                    rowIndex === destination.row && colIndex === destination.col
-                                        ? updatedTile
-                                        : tile
-                                )
-                            );
-
-                            const newGameState = updatedGameState.withUpdates({
-                                board: updatedBoard,
-                                players: finalPlayers
-                            });
-
-                            return {
-                                newGameState,
-                                summary: `Champion${championId} encountered ${monster.name} and ${combatResult.summary}`,
-                                success: true
-                            };
-                        } else {
-                            // Champion won - update player stats and reduce adventure tokens
-                            updatedPlayer = combatResult.updatedPlayer;
-                            newMonsterCombatSummary = ` and ${combatResult.summary}`;
-
-                            // Reduce adventure tokens
-                            const updatedTile = {
-                                ...updatedBoard[destination.row][destination.col],
-                                adventureTokens: destinationTile.adventureTokens - 1
-                            };
-                            updatedBoard = updatedBoard.map((row, rowIndex) =>
-                                row.map((tile, colIndex) =>
-                                    rowIndex === destination.row && colIndex === destination.col
-                                        ? updatedTile
-                                        : tile
-                                )
-                            );
-                        }
-                    } else {
-                        adventureSummary = `, drew ${drawnCard.name} monster card but monster stats not found`;
-                    }
-                } else {
-                    // For now, ignore non-monster cards
-                    adventureSummary = `, drew a ${drawnCard.type} card (${drawnCard.name}) - non-monster cards temporarily ignored`;
-
-                    // Still reduce adventure tokens
-                    const updatedTile = {
-                        ...updatedBoard[destination.row][destination.col],
-                        adventureTokens: destinationTile.adventureTokens - 1
-                    };
-                    updatedBoard = updatedBoard.map((row, rowIndex) =>
-                        row.map((tile, colIndex) =>
-                            rowIndex === destination.row && colIndex === destination.col
-                                ? updatedTile
-                                : tile
-                        )
-                    );
-                }
-            } else {
-                adventureSummary = `, adventure tile has no more cards`;
+                // Award fame for exploration
+                updatedPlayer = {
+                    ...updatedPlayer,
+                    fame: updatedPlayer.fame + 1
+                };
             }
-        } else if (destinationTile.tileType === 'adventure') {
-            if (!destinationTile.monster && (!destinationTile.adventureTokens || destinationTile.adventureTokens === 0)) {
-                adventureSummary = `, adventure tile with no tokens or monsters`;
-            }
+        } else if (destinationTile.tileType === 'doomspire') {
+            // Award fame for reaching doomspire
+            updatedPlayer = {
+                ...updatedPlayer,
+                fame: updatedPlayer.fame + 1
+            };
         }
 
         // Create new game state with champion moved
@@ -420,7 +288,7 @@ export class ActionExecutor {
 
         return {
             newGameState,
-            summary: `Champion${championId} arrived at (${destination.row}, ${destination.col})${adventureSummary}${battleSummary}${existingMonsterCombatSummary}${explorationSummary}${claimSummary}${blockadeSummary}${newMonsterCombatSummary}`,
+            summary: `Champion${championId} arrived at (${destination.row}, ${destination.col})${battleSummary}${existingMonsterCombatSummary}`,
             success: true
         };
     }

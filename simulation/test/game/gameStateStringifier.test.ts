@@ -1,5 +1,6 @@
 import { GameState } from '../../src/game/GameState';
 import { GameStateStringifier } from '../../src/game/gameStateStringifier';
+import { Board } from '../../src/lib/Board';
 import type { Player, Position, Tile } from '../../src/lib/types';
 
 describe('GameStateStringifier', () => {
@@ -22,7 +23,7 @@ describe('GameStateStringifier', () => {
   - Has rustyShield
   - Has brokenSword
 - champion2 at (3,5)
-- champion1 at (2,8)
+- champion1 at (2,5)
 - boat1 at (sw)
 - claims (2 tiles of max 10):
   - Tile (0,5) providing 2 food, 1 gold (blockaded by Bob champion1)
@@ -71,20 +72,20 @@ Tile (0,7)
 - Resource tile providing 1 ore
 - Claimed by Jim
 
-Tile (1,8)
+Tile (1,6)
 - Tier 1 adventure tile
 - Remaining adventure tokens: 0
 - Monster: bandit (might 3)
+
+Tile (2,5)
+- Tier 2 adventure tile
+- Remaining adventure tokens: 2
+- Jim champion1 is here
 
 Tile (2,6)
 - Resource tile providing 1 wood
 - Unclaimed
 - Monster: wolf (might 6)
-
-Tile (2,8)
-- Tier 2 adventure tile
-- Remaining adventure tokens: 2
-- Jim champion1 is here
 
 Tile (3,3)
 - Unexplored tier 1 tile
@@ -117,13 +118,18 @@ Tile (7,7)
 
 function createSampleGameState(): GameState {
     // Create the board
-    const board: Tile[][] = Array(8).fill(null).map((_, row) =>
-        Array(8).fill(null).map((_, col) => createBasicTile(row, col))
-    );
+    const board = new Board(8, 8);
+
+    // Initialize all tiles
+    for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 8; col++) {
+            board.setTile(createBasicTile(row, col));
+        }
+    }
 
     // Set up specific tiles from the example
     // Tile (0,5) - Resource tile, starred, claimed by Jim, with Bob champion1
-    board[0][5] = {
+    board.setTile({
         position: { row: 0, col: 5 },
         tier: 1,
         explored: true,
@@ -131,20 +137,20 @@ function createSampleGameState(): GameState {
         resources: { food: 2, wood: 0, ore: 0, gold: 1 },
         isStarred: true,
         claimedBy: 1
-    };
+    });
 
     // Tile (0,7) - Resource tile, claimed by Jim, with Jim champion1
-    board[0][7] = {
+    board.setTile({
         position: { row: 0, col: 7 },
         tier: 1,
         explored: true,
         tileType: 'resource',
         resources: { food: 0, wood: 0, ore: 1, gold: 0 },
         claimedBy: 1
-    };
+    });
 
     // Tile (2,6) - Resource tile with monster
-    board[2][6] = {
+    board.setTile({
         position: { row: 2, col: 6 },
         tier: 1,
         explored: true,
@@ -158,27 +164,27 @@ function createSampleGameState(): GameState {
             fame: 2,
             resources: { food: 1, wood: 0, ore: 0, gold: 0 }
         }
-    };
+    });
 
     // Tile (2,7) - Unexplored tier 2 tile
-    board[2][7] = {
+    board.setTile({
         position: { row: 2, col: 7 },
         tier: 2,
         explored: false
-    };
+    });
 
-    // Tile (2,8) - Adventure tile with tokens, Jim champion1
-    board[2][8] = {
-        position: { row: 2, col: 8 },
+    // Tile (2,5) - Adventure tile with tokens, Jim champion1 (moved from 2,8 to 2,5 to stay in bounds)
+    board.setTile({
+        position: { row: 2, col: 5 },
         tier: 2,
         explored: true,
         tileType: 'adventure',
         adventureTokens: 2
-    };
+    });
 
-    // Tile (1,8) - Adventure tile with monster
-    board[1][8] = {
-        position: { row: 1, col: 8 },
+    // Tile (1,6) - Adventure tile with monster (moved from 1,8 to 1,6 to stay in bounds)
+    board.setTile({
+        position: { row: 1, col: 6 },
         tier: 1,
         explored: true,
         tileType: 'adventure',
@@ -191,39 +197,39 @@ function createSampleGameState(): GameState {
             fame: 1,
             resources: { food: 0, wood: 0, ore: 0, gold: 1 }
         }
-    };
+    });
 
     // Tile (4,4) - Doomspire
-    board[4][4] = {
+    board.setTile({
         position: { row: 4, col: 4 },
         tier: 3,
         explored: true,
         tileType: 'doomspire'
-    };
+    });
 
     // Tile (3,5) - Chapel, Jim champion2
-    board[3][5] = {
+    board.setTile({
         position: { row: 3, col: 5 },
         tier: 1,
         explored: true,
         tileType: 'chapel'
-    };
+    });
 
     // Tile (3,6) - Trader
-    board[3][6] = {
+    board.setTile({
         position: { row: 3, col: 6 },
         tier: 1,
         explored: true,
         tileType: 'trader'
-    };
+    });
 
     // Tile (3,7) - Mercenary
-    board[3][7] = {
+    board.setTile({
         position: { row: 3, col: 7 },
         tier: 1,
         explored: true,
         tileType: 'mercenary'
-    };
+    });
 
     // Create players
     const players: Player[] = [
@@ -336,10 +342,10 @@ function createSampleGameState(): GameState {
         }
     ];
 
-    // Also add a champion at (2,8) for Jim
+    // Also add a champion at (2,5) for Jim
     players[0].champions.push({
         id: 1, // This will be confusing with multiple champion1s, but it matches the example
-        position: { row: 2, col: 8 },
+        position: { row: 2, col: 5 },
         playerId: 1,
         treasures: []
     });

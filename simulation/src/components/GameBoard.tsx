@@ -51,7 +51,7 @@ export const GameBoard = ({
         {gameState.players.map((player) => {
           const isCurrentPlayer = player.id === currentPlayer.id;
           const claimedTiles = gameState.board
-            .flat()
+            .getAllTiles()
             .filter((tile) => tile.claimedBy === player.id).length;
 
           // Find the player type from configuration
@@ -121,20 +121,22 @@ export const GameBoard = ({
             height: "1040px",
           }}
         >
-          {gameState.board.map((row, rowIndex) =>
-            row.map((tile, colIndex) => (
-              <TileComponent
-                key={`${rowIndex}-${colIndex}`}
-                tile={tile}
-                champions={gameState.players.flatMap(
-                  (player) => player.champions
-                )}
-                currentPlayer={currentPlayer}
-                debugMode={debugMode}
-                getPlayerColor={getPlayerColor}
-              />
-            ))
-          )}
+          {gameState.board
+            .getTilesGrid()
+            .map((row, rowIndex) =>
+              row.map((tile, colIndex) => (
+                <TileComponent
+                  key={`${rowIndex}-${colIndex}`}
+                  tile={tile}
+                  champions={gameState.players.flatMap(
+                    (player) => player.champions
+                  )}
+                  currentPlayer={currentPlayer}
+                  debugMode={debugMode}
+                  getPlayerColor={getPlayerColor}
+                />
+              ))
+            )}
         </div>
       </div>
     </div>

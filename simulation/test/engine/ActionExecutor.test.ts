@@ -1,6 +1,7 @@
 import { ActionExecutor } from '../../src/engine/ActionExecutor';
 import { GameState } from '../../src/game/GameState';
-import type { Champion, HarvestAction, MoveChampionAction, Player, Tile } from '../../src/lib/types';
+import { Board } from '../../src/lib/Board';
+import type { Champion, HarvestAction, MoveChampionAction, Player } from '../../src/lib/types';
 
 describe('ActionExecutor', () => {
     let gameState: GameState;
@@ -13,16 +14,13 @@ describe('ActionExecutor', () => {
     // Helper function to create a test game state
     function createTestGameState() {
         // Create a simple 2x2 board
-        const board: Tile[][] = [
-            [
-                { position: { row: 0, col: 0 }, tier: 1, explored: true, tileType: 'resource', resources: { food: 2, wood: 0, ore: 0, gold: 0 } },
-                { position: { row: 0, col: 1 }, tier: 1, explored: true, tileType: 'resource', resources: { food: 0, wood: 2, ore: 0, gold: 0 } }
-            ],
-            [
-                { position: { row: 1, col: 0 }, tier: 1, explored: true, tileType: 'resource', resources: { food: 0, wood: 0, ore: 2, gold: 0 } },
-                { position: { row: 1, col: 1 }, tier: 1, explored: true, tileType: 'resource', resources: { food: 0, wood: 0, ore: 0, gold: 2 } }
-            ]
-        ];
+        const board = new Board(2, 2);
+
+        // Add tiles to the board
+        board.setTile({ position: { row: 0, col: 0 }, tier: 1, explored: true, tileType: 'resource', resources: { food: 2, wood: 0, ore: 0, gold: 0 } });
+        board.setTile({ position: { row: 0, col: 1 }, tier: 1, explored: true, tileType: 'resource', resources: { food: 0, wood: 2, ore: 0, gold: 0 } });
+        board.setTile({ position: { row: 1, col: 0 }, tier: 1, explored: true, tileType: 'resource', resources: { food: 0, wood: 0, ore: 2, gold: 0 } });
+        board.setTile({ position: { row: 1, col: 1 }, tier: 1, explored: true, tileType: 'resource', resources: { food: 0, wood: 0, ore: 0, gold: 2 } });
 
         // Create a champion at position 0,0
         const champion: Champion = {
@@ -94,18 +92,13 @@ describe('ActionExecutor', () => {
             expect(player?.fame).toBe(0);
 
             // Manually create an unexplored tile at position (3, 3) - this should be Tier 2
-            const updatedBoard = gameState.board.map((row, rowIndex) =>
-                row.map((tile, colIndex) =>
-                    rowIndex === 3 && colIndex === 3
-                        ? { ...tile, explored: false }
-                        : tile
-                )
-            );
-
-            const gameStateWithUnexploredTile = gameState.withUpdates({ board: updatedBoard });
+            const tileToModify = gameState.board.getTileAt({ row: 3, col: 3 });
+            if (tileToModify) {
+                tileToModify.explored = false;
+            }
 
             // Verify the tile is unexplored
-            const targetTile = gameStateWithUnexploredTile.getTile({ row: 3, col: 3 });
+            const targetTile = gameState.getTile({ row: 3, col: 3 });
             expect(targetTile?.explored).toBe(false);
 
             // Move champion to an unexplored tile
@@ -124,7 +117,7 @@ describe('ActionExecutor', () => {
                 ]
             };
 
-            const result = ActionExecutor.executeAction(gameStateWithUnexploredTile, action);
+            const result = ActionExecutor.executeAction(gameState, action);
 
             expect(result.success).toBe(true);
 

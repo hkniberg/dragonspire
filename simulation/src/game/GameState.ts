@@ -1,5 +1,6 @@
 // Lords of Doomspire Game State Model
 
+import { Board } from '../lib/Board';
 import { RandomMapGenerator } from '../lib/randomMapGenerator';
 import type {
     Champion,
@@ -9,7 +10,7 @@ import type {
 } from '../lib/types';
 
 export class GameState {
-    public readonly board: Tile[][];
+    public readonly board: Board;
     public readonly players: Player[];
     public readonly currentPlayerIndex: number;
     public readonly currentRound: number;
@@ -17,7 +18,7 @@ export class GameState {
     public readonly winner?: number;
 
     constructor(
-        board?: Tile[][],
+        board?: Board,
         players?: Player[],
         currentPlayerIndex: number = 0,
         currentRound: number = 1,
@@ -100,10 +101,7 @@ export class GameState {
     }
 
     public getTile(position: Position): Tile | undefined {
-        if (position.row < 0 || position.row >= 8 || position.col < 0 || position.col >= 8) {
-            return undefined;
-        }
-        return this.board[position.row][position.col];
+        return this.board.getTileAt(position) || undefined;
     }
 
     public getChampionById(playerId: number, championId: number): Champion | undefined {
@@ -139,7 +137,7 @@ export class GameState {
      * Creates a new immutable GameState with updated properties
      */
     public withUpdates(updates: Partial<{
-        board: Tile[][];
+        board: Board;
         players: Player[];
         currentPlayerIndex: number;
         currentRound: number;
@@ -171,7 +169,7 @@ export class GameState {
 
     public toJSON() {
         return {
-            board: this.board,
+            board: this.board.getTilesGrid(),
             players: this.players,
             currentPlayerIndex: this.currentPlayerIndex,
             currentRound: this.currentRound,
@@ -185,22 +183,29 @@ export class GameState {
      * Unexplored tiles only show position, tier, and explored: false.
      */
     public toAIJSON() {
-        const filteredBoard = this.board.map(row =>
-            row.map(tile => {
+        const filteredBoard: Tile[][] = [];
+
+        // Reconstruct 2D array structure for backwards compatibility
+        for (let row = 0; row < 8; row++) {
+            filteredBoard[row] = [];
+            for (let col = 0; col < 8; col++) {
+                const tile = this.board.getTileAt({ row, col });
+                if (!tile) continue;
+
                 if (!tile.explored) {
                     // For unexplored tiles, only show position, tier, and explored status
-                    return {
+                    filteredBoard[row][col] = {
                         position: tile.position,
                         tier: tile.tier,
                         explored: false
                         // Note: intentionally omitting adventureTokens, resources, monster, etc.
-                    };
+                    } as Tile;
                 } else {
                     // For explored tiles, show all information
-                    return tile;
+                    filteredBoard[row][col] = tile;
                 }
-            })
-        );
+            }
+        }
 
         return {
             board: filteredBoard,

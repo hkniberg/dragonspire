@@ -299,7 +299,7 @@ export function getHarvestableResourcesInfo(gameState: GameState, playerId: numb
     }
 
     // Check all tiles on the board
-    for (const row of gameState.board) {
+    for (const row of gameState.board.getTilesGrid()) {
         for (const tile of row) {
             if (!tile.resources) {
                 continue; // Not a resource tile
