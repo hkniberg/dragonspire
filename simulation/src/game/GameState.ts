@@ -47,10 +47,6 @@ export class GameState {
         return new GameState(board, players);
     }
 
-    private initializePlayers(): Player[] {
-        return GameState.initializePlayersWithNames(['Player 1', 'Player 2', 'Player 3', 'Player 4']);
-    }
-
     private static initializePlayersWithNames(playerNames: string[]): Player[] {
         const players: Player[] = [];
         const startingPositions: Position[] = [
