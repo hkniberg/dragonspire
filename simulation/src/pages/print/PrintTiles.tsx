@@ -1,4 +1,5 @@
 import Head from "next/head";
+import React from "react";
 import { TileComponent } from "../../components/Tile";
 import { convertTileDefToTile, TileColors } from "../../lib/TileConverter";
 import {
@@ -8,20 +9,7 @@ import {
   TileDef,
   TileTrioDef,
 } from "../../lib/content/tilesDefs";
-import type { Champion, Player, Tile } from "../../lib/types";
-
-// Simple function to create dummy props for TileComponent
-const createDummyPlayer = (): Player => ({
-  id: 1,
-  name: "Print Player",
-  fame: 0,
-  might: 0,
-  resources: { food: 0, wood: 0, ore: 0, gold: 0 },
-  maxClaims: 0,
-  champions: [],
-  boats: [],
-  homePosition: { row: 0, col: 0 },
-});
+import type { Champion, Tile } from "../../lib/types";
 
 const getPlayerColor = (playerId: number) => ({
   main: "#0070f3",
@@ -29,16 +17,38 @@ const getPlayerColor = (playerId: number) => ({
   dark: "#0056b3",
 });
 
-// Function to convert a trio definition to an array of tiles
-const convertTrioToTiles = (trioDef: TileTrioDef): Tile[] => {
+// Convert trio to tiles with grid positioning info
+const convertTrioToTiles = (
+  trioDef: TileTrioDef,
+  showBackside: boolean = false,
+  tier: 1 | 2 = 1
+): { tile: Tile; gridPosition: { row: number; col: number } }[] => {
   const tileDefs = [trioDef.corner, trioDef.right, trioDef.below];
+  const gridPositions = [
+    { row: 1, col: 1 }, // corner
+    { row: 1, col: 2 }, // right
+    { row: 2, col: 1 }, // below
+  ];
 
   return tileDefs.map((tileDef, index) => {
-    const position = { row: 0, col: index }; // Simple positioning for print view
-    const backColor =
-      tileDef === "home" ? TileColors.homeBack : TileColors.tier1Back;
-    const borderColor =
-      tileDef === "home" ? TileColors.homeBorder : TileColors.tier1Border;
+    const position = { row: 0, col: index };
+
+    let backColor: string;
+    let borderColor: string;
+
+    if (tileDef === "home") {
+      backColor = TileColors.homeBack;
+      borderColor = TileColors.homeBorder;
+    } else if (tier === 1) {
+      backColor = TileColors.tier1Back;
+      borderColor = TileColors.tier1Border;
+    } else if (tier === 2) {
+      backColor = TileColors.tier2Back;
+      borderColor = TileColors.tier2Border;
+    } else {
+      backColor = TileColors.tier1Back;
+      borderColor = TileColors.tier1Border;
+    }
 
     const tile = convertTileDefToTile(
       tileDef,
@@ -49,156 +59,115 @@ const convertTrioToTiles = (trioDef: TileTrioDef): Tile[] => {
       1
     );
 
-    // Remove adventure tokens for print version - they're added during gameplay
-    if (tile.tileType === "adventure" || tile.tileType === "oasis") {
-      tile.adventureTokens = 0;
+    if (showBackside) {
+      tile.explored = false;
+    } else {
+      if (tile.tileType === "adventure" || tile.tileType === "oasis") {
+        tile.adventureTokens = 0;
+      }
     }
-    console.log("tile", tile);
-    return tile;
+
+    return {
+      tile,
+      gridPosition: gridPositions[index],
+    };
   });
 };
 
-// Component to render a single trio
-const TrioDisplay = ({ trio, index }: { trio: TileTrioDef; index: number }) => {
-  const dummyPlayer = createDummyPlayer();
-  const emptyChampions: Champion[] = [];
-  const trioTiles = convertTrioToTiles(trio);
-
-  return (
-    <div
-      className="trio-display"
-      style={{ display: "inline-block", margin: 0, padding: 0 }}
-    >
-      {/* L-shaped layout */}
-      <div style={{ margin: 0, padding: 0 }}>
-        {/* Top row: Corner and Right tiles */}
-        <div
-          className="trio-top-row"
-          style={{ display: "flex", margin: 0, padding: 0 }}
-        >
-          <TileComponent
-            tile={trioTiles[0]} // corner
-            champions={emptyChampions}
-            currentPlayer={dummyPlayer}
-            debugMode={false}
-            printMode={true}
-            getPlayerColor={getPlayerColor}
-          />
-          <TileComponent
-            tile={trioTiles[1]} // right
-            champions={emptyChampions}
-            currentPlayer={dummyPlayer}
-            debugMode={false}
-            printMode={true}
-            getPlayerColor={getPlayerColor}
-          />
-        </div>
-
-        {/* Bottom row: Below tile aligned with Corner */}
-        <div
-          className="trio-bottom-row"
-          style={{ display: "flex", margin: 0, padding: 0 }}
-        >
-          <TileComponent
-            tile={trioTiles[2]} // below
-            champions={emptyChampions}
-            currentPlayer={dummyPlayer}
-            debugMode={false}
-            printMode={true}
-            getPlayerColor={getPlayerColor}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Component to render individual tier 3 tiles
-const Tier3TileDisplay = ({
-  tileDef,
-  index,
-}: {
-  tileDef: TileDef;
-  index: number;
-}) => {
-  const dummyPlayer = createDummyPlayer();
-  const emptyChampions: Champion[] = [];
-
-  const position = { row: 0, col: 0 };
-  const tile = convertTileDefToTile(
-    tileDef,
-    position,
-    false, // tier 3 tiles start unexplored
-    TileColors.tier3Back,
-    TileColors.tier3Border,
-    1
-  );
-  tile.explored = true;
-  tile.adventureTokens = 0;
-
-  return (
-    <div style={{ display: "inline-block" }}>
-      <TileComponent
-        tile={tile}
-        champions={emptyChampions}
-        currentPlayer={dummyPlayer}
-        debugMode={false}
-        printMode={true}
-        getPlayerColor={getPlayerColor}
-      />
-    </div>
-  );
-};
-
 export default function PrintTiles() {
-  // Combine all trios into a single array
+  const emptyChampions: Champion[] = [];
+
+  // Combine all trios
+  const homeTriosCount = HOME_TILE_TRIOS.length;
+  const tier1TriosCount = TIER_1_TRIOS.length;
   const allTrios = [...HOME_TILE_TRIOS, ...TIER_1_TRIOS, ...TIER_2_TRIOS];
 
-  // Tier 3 tiles: 3 adventure3 and 1 doomspire
-  const tier3Tiles: TileDef[] = [
+  const getTierForTrio = (trioIndex: number): 1 | 2 => {
+    if (trioIndex < homeTriosCount + tier1TriosCount) {
+      return 1;
+    } else {
+      return 2;
+    }
+  };
+
+  // Convert all trios to tiles with positioning
+  const frontTrios: {
+    tiles: { tile: Tile; gridPosition: { row: number; col: number } }[];
+    tier: 1 | 2;
+  }[] = [];
+
+  const backTrios: {
+    tiles: { tile: Tile; gridPosition: { row: number; col: number } }[];
+    tier: 1 | 2;
+  }[] = [];
+
+  allTrios.forEach((trio, index) => {
+    const tier = getTierForTrio(index);
+    frontTrios.push({
+      tiles: convertTrioToTiles(trio, false, tier),
+      tier,
+    });
+    backTrios.push({
+      tiles: convertTrioToTiles(trio, true, tier),
+      tier,
+    });
+  });
+
+  // Create tier 3 tiles (not in trios)
+  const tier3TileDefs: TileDef[] = [
     "adventure3",
     "adventure3",
     "adventure3",
     "doomspire",
   ];
+  const frontTier3Tiles: Tile[] = [];
+  const backTier3Tiles: Tile[] = [];
 
-  // Group trios into rows of 2
-  const trioRows = [];
-  for (let i = 0; i < allTrios.length; i += 2) {
-    trioRows.push(allTrios.slice(i, i + 2));
+  tier3TileDefs.forEach((tileDef) => {
+    const position = { row: 0, col: 0 };
+
+    const frontTile = convertTileDefToTile(
+      tileDef,
+      position,
+      false,
+      TileColors.tier3Back,
+      TileColors.tier3Border,
+      1
+    );
+    frontTile.explored = true;
+    frontTile.adventureTokens = 0;
+
+    const backTile = convertTileDefToTile(
+      tileDef,
+      position,
+      false,
+      TileColors.tier3Back,
+      TileColors.tier3Border,
+      1
+    );
+    backTile.explored = false;
+
+    frontTier3Tiles.push(frontTile);
+    backTier3Tiles.push(backTile);
+  });
+
+  // Split trios into pages (6 trios per page = 3x2 layout)
+  const TRIOS_PER_PAGE = 6;
+  const frontPages: (typeof frontTrios)[] = [];
+  const backPages: (typeof backTrios)[] = [];
+
+  for (let i = 0; i < frontTrios.length; i += TRIOS_PER_PAGE) {
+    frontPages.push(frontTrios.slice(i, i + TRIOS_PER_PAGE));
+    backPages.push(backTrios.slice(i, i + TRIOS_PER_PAGE));
   }
 
   return (
     <>
       <Head>
         <title>Print Tiles - Lords of Doomspire</title>
-        <meta
-          name="description"
-          content="Print tile trios for Lords of Doomspire"
-        />
       </Head>
 
       <style jsx>{`
-        @media print {
-          * {
-            -webkit-print-color-adjust: exact !important;
-            color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-
-          /* Universal spacing reset for print */
-          .print-area * {
-            margin: 0 !important;
-            padding: 0 !important;
-            box-sizing: border-box !important;
-          }
-
-          .print-area {
-            line-height: 0;
-            margin-top: 1rem !important;
-          }
-        }
-
         .print-button {
           background: #0070f3;
           color: white;
@@ -210,112 +179,210 @@ export default function PrintTiles() {
           margin-bottom: 20px;
         }
 
-        .print-button:hover {
-          background: #0056b3;
+        .print-page {
+          padding: 20px;
+          border-bottom: 2px dashed #ccc;
+          margin-bottom: 20px;
+        }
+
+        .print-page:last-child {
+          border-bottom: none;
+          margin-bottom: 0;
+        }
+
+        .trios-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 120px);
+          grid-template-rows: repeat(6, 120px);
+          gap: 0px;
+          justify-content: center;
+        }
+
+        .trio-container {
+          display: contents;
+        }
+
+        .tier3-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 120px);
+          gap: 0px;
+          justify-content: center;
+          margin-top: 20px;
         }
 
         @media print {
           .print-button {
-            display: none;
+            display: none !important;
           }
 
-          body {
-            margin: 0.5in;
-          }
-
-          h1 {
-            font-size: 18px;
-            margin-bottom: 10px;
-          }
-
-          .trio-row {
-            page-break-inside: avoid;
-            margin: 0 !important;
+          .outer-container {
             padding: 0 !important;
           }
 
-          .trio-display {
-            margin: 0 !important;
-            padding: 0 !important;
+          /* Force colors to print */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
 
-          .trio-top-row {
-            margin: 0 !important;
-            padding: 0 !important;
-            margin-bottom: 0px !important;
+          .print-page {
+            page-break-after: always;
+            break-after: page;
+            padding: 0.5in;
+            border: none;
+            margin: 0;
           }
 
-          .trio-bottom-row {
-            margin: 0 !important;
-            padding: 0 !important;
+          .print-page:last-child {
+            page-break-after: auto;
+            break-after: auto;
           }
 
-          .tier3-row {
-            page-break-before: auto;
+          .trios-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 120px);
+            grid-template-rows: repeat(6, 120px);
+            gap: 0px;
+            justify-content: center;
+          }
+
+          .tier3-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 120px);
+            gap: 0px;
+            justify-content: center;
             margin-top: 20px;
-            margin-bottom: 0 !important;
-            padding: 0 !important;
-          }
-
-          /* Remove all spacing from tile components in print */
-          .trio-row > div {
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-
-          .trio-display > div > div > div {
-            margin: 0 !important;
-            padding: 0 !important;
-          }
-
-          /* Force all styling to print including backgrounds, borders, shadows */
-          .print-area * {
-            -webkit-print-color-adjust: exact !important;
-            color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-
-          /* Ensure resource symbol styling prints correctly */
-          .print-area span {
-            -webkit-print-color-adjust: exact !important;
-            color-adjust: exact !important;
-            print-color-adjust: exact !important;
           }
         }
       `}</style>
 
-      <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
+      <div
+        className="outer-container"
+        style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}
+      >
         <button className="print-button" onClick={() => window.print()}>
           📄 Print / Save as PDF
         </button>
 
-        <h1>Print Tiles</h1>
+        {/* Alternating front and back pages with trios */}
+        {frontPages.map((frontPageTrios, pageIndex) => {
+          const backPageTrios = backPages[pageIndex];
 
-        <div className="print-area" style={{ marginTop: "2rem" }}>
-          {/* Trio rows with 2 trios each */}
-          {trioRows.map((row, rowIndex) => (
-            <div
-              key={`row-${rowIndex}`}
-              className="trio-row"
-              style={{ display: "flex", margin: 0, padding: 0 }}
-            >
-              {row.map((trio, index) => (
-                <TrioDisplay
-                  key={`trio-${rowIndex * 2 + index}`}
-                  trio={trio}
-                  index={rowIndex * 2 + index}
-                />
-              ))}
-            </div>
-          ))}
+          return (
+            <React.Fragment key={`page-pair-${pageIndex}`}>
+              {/* Front page */}
+              <div className="print-page">
+                <h3>Front Side - Page {pageIndex + 1}</h3>
+                <div className="trios-grid">
+                  {frontPageTrios.map((trioData, trioIndex) => {
+                    // Calculate trio position in 3x2 grid
+                    const trioRow = Math.floor(trioIndex / 2);
+                    const trioCol = trioIndex % 2;
 
-          {/* Tier 3 tiles row */}
-          <div className="tier3-row" style={{ display: "flex" }}>
-            {tier3Tiles.map((tileDef, index) => (
-              <Tier3TileDisplay
-                key={`tier3-${index}`}
-                tileDef={tileDef}
-                index={index}
+                    return (
+                      <div key={`trio-${trioIndex}`} className="trio-container">
+                        {trioData.tiles.map(
+                          ({ tile, gridPosition }, tileIndex) => {
+                            // Calculate absolute grid position for this tile
+                            const gridRow = trioRow * 2 + gridPosition.row;
+                            const gridCol = trioCol * 2 + gridPosition.col;
+
+                            return (
+                              <div
+                                key={`tile-${tileIndex}`}
+                                style={{
+                                  gridRow: gridRow,
+                                  gridColumn: gridCol,
+                                }}
+                              >
+                                <TileComponent
+                                  tile={tile}
+                                  champions={emptyChampions}
+                                  debugMode={false}
+                                  getPlayerColor={getPlayerColor}
+                                />
+                              </div>
+                            );
+                          }
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Back page */}
+              <div className="print-page">
+                <h3>Back Side - Page {pageIndex + 1}</h3>
+                <div className="trios-grid">
+                  {backPageTrios.map((trioData, trioIndex) => {
+                    // Calculate trio position in 3x2 grid
+                    const trioRow = Math.floor(trioIndex / 2);
+                    const trioCol = trioIndex % 2;
+
+                    return (
+                      <div key={`trio-${trioIndex}`} className="trio-container">
+                        {trioData.tiles.map(
+                          ({ tile, gridPosition }, tileIndex) => {
+                            // Calculate absolute grid position for this tile
+                            const gridRow = trioRow * 2 + gridPosition.row;
+                            const gridCol = trioCol * 2 + gridPosition.col;
+
+                            return (
+                              <div
+                                key={`tile-${tileIndex}`}
+                                style={{
+                                  gridRow: gridRow,
+                                  gridColumn: gridCol,
+                                }}
+                              >
+                                <TileComponent
+                                  tile={tile}
+                                  champions={emptyChampions}
+                                  debugMode={false}
+                                  getPlayerColor={getPlayerColor}
+                                />
+                              </div>
+                            );
+                          }
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </React.Fragment>
+          );
+        })}
+
+        {/* Tier 3 tiles front page */}
+        <div className="print-page">
+          <h3>Tier 3 Tiles - Front Side</h3>
+          <div className="tier3-grid">
+            {frontTier3Tiles.map((tile, index) => (
+              <TileComponent
+                key={`tier3-front-${index}`}
+                tile={tile}
+                champions={emptyChampions}
+                debugMode={false}
+                getPlayerColor={getPlayerColor}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Tier 3 tiles back page */}
+        <div className="print-page">
+          <h3>Tier 3 Tiles - Back Side</h3>
+          <div className="tier3-grid">
+            {backTier3Tiles.map((tile, index) => (
+              <TileComponent
+                key={`tier3-back-${index}`}
+                tile={tile}
+                champions={emptyChampions}
+                debugMode={false}
+                getPlayerColor={getPlayerColor}
               />
             ))}
           </div>
