@@ -3,8 +3,6 @@ import type { Monster } from "../lib/types";
 interface MonsterCardProps {
   monster: Monster;
   showStats?: boolean;
-  className?: string;
-  style?: React.CSSProperties;
 }
 
 const getTierBackgroundColor = (tier: number | undefined) => {
@@ -46,15 +44,12 @@ const formatResources = (
 export const MonsterCard = ({
   monster,
   showStats = false,
-  className,
-  style,
 }: MonsterCardProps) => {
   const tier = "tier" in monster ? monster.tier : undefined;
   const backgroundColor = getTierBackgroundColor(tier);
 
   return (
     <div
-      className={className}
       style={{
         width: "160px",
         height: "190px",
@@ -68,7 +63,6 @@ export const MonsterCard = ({
         justifyContent: "flex-start",
         padding: "4px",
         gap: "0px",
-        ...style,
       }}
       title={`Monster: ${monster.name} (Might: ${monster.might})`}
     >

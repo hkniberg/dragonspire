@@ -528,8 +528,7 @@ ${
 
       {/* Monster card */}
       {effectiveTile.monster && effectiveTile.explored && (
-        <MonsterCard
-          monster={effectiveTile.monster}
+        <div
           style={{
             position: "absolute",
             top: "40%",
@@ -542,7 +541,9 @@ ${
             }deg)`,
             zIndex: 8,
           }}
-        />
+        >
+          <MonsterCard monster={effectiveTile.monster} />
+        </div>
       )}
 
       {/* Champions on tile */}
