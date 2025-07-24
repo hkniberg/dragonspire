@@ -85,7 +85,7 @@ export const EVENT_CARDS: EventCard[] = [
     // Tier 3 Event Cards
     {
         id: 'curse-of-the-earth',
-        name: 'Curse of the earth',
+        name: 'Cursed Earth',
         tier: 3,
         description: 'All players lose `−2 might`, as their **weapons** *rust and crumble*.',
         count: 1

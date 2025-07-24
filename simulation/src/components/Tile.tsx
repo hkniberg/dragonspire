@@ -2,7 +2,7 @@ import type { Champion, ResourceType, Tile } from "../lib/types";
 import { getTierSolidColor } from "../lib/uiConstants";
 import { ChampionComponent } from "./Champion";
 import { ClaimFlag } from "./ClaimFlag";
-import { MonsterCard } from "./cards/MonsterCard";
+import { AdventureCard, formatMonsterContent } from "./cards/AdventureCard";
 
 const getTileColor = (tile: Tile): string => {
   if (!tile.explored) {
@@ -529,7 +529,7 @@ ${
             position: "absolute",
             top: "40%",
             left: "50%",
-            transform: `translate(-50%, -55%) scale(0.5) rotate(${
+            transform: `translate(-50%, -55%) scale(0.7) rotate(${
               ((effectiveTile.position.row * 7 +
                 effectiveTile.position.col * 11) %
                 21) -
@@ -538,7 +538,16 @@ ${
             zIndex: 8,
           }}
         >
-          <MonsterCard monster={effectiveTile.monster} />
+          <AdventureCard
+            tier={effectiveTile.monster.tier || effectiveTile.tier}
+            borderColor={getTierSolidColor(effectiveTile.tier)}
+            name={effectiveTile.monster.name}
+            imageUrl={`/monsters/${effectiveTile.monster.id}.png`}
+            compactMode={true}
+            title={`Monster: ${effectiveTile.monster.name} (Might: ${effectiveTile.monster.might})`}
+            content={formatMonsterContent(effectiveTile.monster)}
+            contentFontSize="14px"
+          />
         </div>
       )}
 

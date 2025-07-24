@@ -36,9 +36,9 @@ Spend \`2 ore\` to gain \`+1 might\``,
         name: 'Mysterious Ring',
         tier: 1,
         description: `Roll \`1d3\`:  
-**(1)** The ring is *stuck* and does nothing (can be removed at the **chapel**)  
-**(2)** **Swap** your location with any other player  
-**(3)** Gain *immunity to fire* and \`+3 might\` when fighting **dragons** and *drakes*`,
+**(1)** The ring is *stuck* (can remove at **chapel**)  
+**(2)** **Swap** location with any knight  
+**(3)** \`+3 might\` against **dragons** & **drakes**`,
         count: 1
     },
 
@@ -62,8 +62,8 @@ Spend \`2 ore\` to gain \`+1 might\``,
         name: 'Sword in a stone',
         tier: 2,
         description: `Card stays here until someone **pulls it out**. Roll \`3+D3\`:  
-**(3)** You break off half and gain \`+4 might\`  
-**(4)** You gain **Cloudslicer** (\`+4\` the *Legendary sword*, \`+2 might\`)`,
+**(3)** You break off half and gain \`+2 might\`  
+**(9)** You gain **Cloudslicer** and gain \`+4 might\``,
         count: 1
     }
 ];

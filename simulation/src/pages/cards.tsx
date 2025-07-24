@@ -1,9 +1,12 @@
 import { useState } from "react";
-import { AdventureCardBackside } from "../components/cards/AdventureCardBackside";
-import { EncounterCard } from "../components/cards/EncounterCard";
-import { EventCard } from "../components/cards/EventCard";
-import { MonsterCard } from "../components/cards/MonsterCard";
-import { TreasureCard } from "../components/cards/TreasureCard";
+import {
+  AdventureCard,
+  formatEncounterContent,
+  formatEventContent,
+  formatMonsterContent,
+  formatTreasureContent,
+  getBorderColor,
+} from "../components/cards/AdventureCard";
 import { ENCOUNTERS } from "../content/encounterCards";
 import { EVENT_CARDS } from "../content/eventCards";
 import { MONSTER_CARDS } from "../content/monsterCards";
@@ -19,6 +22,7 @@ type UnifiedCard =
 
 export default function CardsPage() {
   const [allFlipped, setAllFlipped] = useState(false);
+  const [compactMode, setCompactMode] = useState(false);
   const [individualFlips, setIndividualFlips] = useState<
     Record<string, boolean>
   >({});
@@ -77,30 +81,61 @@ export default function CardsPage() {
   };
 
   const renderCard = (card: UnifiedCard) => {
+    const commonProps = {
+      tier: card.data.tier,
+      borderColor: getBorderColor(card.type),
+      name: card.data.name,
+      compactMode,
+      title: `${card.type.charAt(0).toUpperCase() + card.type.slice(1)}: ${
+        card.data.name
+      } (Tier ${card.data.tier})`,
+    };
+
     if (isCardFlipped(card.id)) {
       return (
-        <AdventureCardBackside
-          monster={{
-            tier: card.data.tier,
-            biome:
-              card.type === "monster" ? (card.data as any).biome : undefined,
-          }}
+        <AdventureCard
+          {...commonProps}
+          upsideDown={true}
+          biome={card.type === "monster" ? (card.data as any).biome : undefined}
         />
       );
     }
 
     switch (card.type) {
       case "monster":
-        return <MonsterCard monster={card.data as any} showStats={true} />;
+        return (
+          <AdventureCard
+            {...commonProps}
+            imageUrl={`/monsters/${card.data.id}.png`}
+            content={formatMonsterContent(card.data)}
+            contentFontSize="14px"
+          />
+        );
       case "event":
-        return <EventCard event={card.data as any} showDescription={true} />;
+        return (
+          <AdventureCard
+            {...commonProps}
+            imageUrl={`/events/${card.data.id}.png`}
+            content={formatEventContent(card.data)}
+          />
+        );
       case "treasure":
         return (
-          <TreasureCard treasure={card.data as any} showDescription={true} />
+          <AdventureCard
+            {...commonProps}
+            imageUrl={`/treasures/${card.data.id}.png`}
+            content={formatTreasureContent(card.data)}
+            bottomTag="Item"
+          />
         );
       case "encounter":
         return (
-          <EncounterCard encounter={card.data as any} showDescription={true} />
+          <AdventureCard
+            {...commonProps}
+            imageUrl={`/encounters/${card.data.id}.png`}
+            content={formatEncounterContent(card.data)}
+            bottomTag={(card.data as any).follower ? "Follower" : undefined}
+          />
         );
       default:
         return null;
@@ -216,6 +251,35 @@ export default function CardsPage() {
           }}
         >
           {allFlipped ? "Show Fronts" : "Show Backs"}
+        </button>
+
+        {/* Compact Mode Toggle */}
+        <button
+          onClick={() => setCompactMode(!compactMode)}
+          style={{
+            padding: "10px 20px",
+            fontSize: "14px",
+            fontWeight: "bold",
+            backgroundColor: compactMode ? "#28a745" : "#6c757d",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            transition: "background-color 0.2s ease",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = compactMode
+              ? "#218838"
+              : "#5a6268";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = compactMode
+              ? "#28a745"
+              : "#6c757d";
+          }}
+        >
+          {compactMode ? "Full Cards" : "Compact Mode"}
         </button>
       </div>
 
