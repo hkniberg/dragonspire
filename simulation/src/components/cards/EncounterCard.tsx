@@ -1,5 +1,9 @@
 import type { Encounter } from "../../content/encounterCards";
-import { getTierBackgroundColor } from "../../lib/uiConstants";
+import {
+  CARD_HEIGHT,
+  CARD_WIDTH,
+  getTierBackgroundColor,
+} from "../../lib/uiConstants";
 
 interface EncounterCardProps {
   encounter: Encounter;
@@ -15,8 +19,8 @@ export const EncounterCard = ({
   return (
     <div
       style={{
-        width: "160px",
-        height: "190px",
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
         backgroundColor: "white",
         borderRadius: "6px",
         border: "2px solid #2E8B57",
@@ -39,6 +43,7 @@ export const EncounterCard = ({
           justifyContent: "center",
           borderRadius: "4px",
           overflow: "hidden",
+          flexShrink: 0,
         }}
       >
         <img
@@ -67,6 +72,7 @@ export const EncounterCard = ({
           backgroundColor,
           borderRadius: "4px",
           padding: "2px 4px",
+          flexShrink: 0,
         }}
       >
         {encounter.name}
@@ -77,23 +83,27 @@ export const EncounterCard = ({
           style={{
             fontSize: "12px",
             textAlign: "center",
-            lineHeight: "1.1",
+            lineHeight: "1.3",
             width: "100%",
-            padding: "2px",
+            padding: "4px 2px",
             color: "#666",
             overflow: "hidden",
-            height: "47px",
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-start",
           }}
         >
-          <div style={{ marginBottom: "1px" }}>Tier {encounter.tier}</div>
+          <div style={{ marginBottom: "4px", flexShrink: 0 }}>
+            Tier {encounter.tier}
+          </div>
           <div
             style={{
               fontSize: "10px",
               overflow: "hidden",
-              textOverflow: "ellipsis",
-              display: "-webkit-box",
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: "vertical",
+              flex: 1,
+              display: "flex",
+              alignItems: "flex-start",
             }}
           >
             {encounter.description}
@@ -107,6 +117,7 @@ export const EncounterCard = ({
                 padding: "1px 3px",
                 borderRadius: "2px",
                 marginTop: "2px",
+                flexShrink: 0,
               }}
             >
               Follower

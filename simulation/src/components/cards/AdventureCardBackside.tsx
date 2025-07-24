@@ -1,4 +1,6 @@
 import {
+  CARD_HEIGHT,
+  CARD_WIDTH,
   getBiomeDisplayName,
   getTierBackgroundColor,
   getTierDisplayText,
@@ -22,8 +24,8 @@ export const AdventureCardBackside = ({
   return (
     <div
       style={{
-        width: "160px",
-        height: "190px",
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
         backgroundImage: biome ? `url(/biomes/${biome}.png)` : undefined,
         backgroundSize: "cover",
         backgroundPosition: "center",

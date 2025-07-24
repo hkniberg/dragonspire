@@ -1,5 +1,9 @@
 import type { TreasureCard as TreasureCardType } from "../../content/treasureCards";
-import { getTierBackgroundColor } from "../../lib/uiConstants";
+import {
+  CARD_HEIGHT,
+  CARD_WIDTH,
+  getTierBackgroundColor,
+} from "../../lib/uiConstants";
 
 interface TreasureCardProps {
   treasure: TreasureCardType;
@@ -15,8 +19,8 @@ export const TreasureCard = ({
   return (
     <div
       style={{
-        width: "160px",
-        height: "190px",
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
         backgroundColor: "white",
         borderRadius: "6px",
         border: "2px solid #8B4513",
@@ -39,6 +43,7 @@ export const TreasureCard = ({
           justifyContent: "center",
           borderRadius: "4px",
           overflow: "hidden",
+          flexShrink: 0,
         }}
       >
         <img
@@ -67,6 +72,7 @@ export const TreasureCard = ({
           backgroundColor,
           borderRadius: "4px",
           padding: "2px 4px",
+          flexShrink: 0,
         }}
       >
         {treasure.name}
@@ -77,23 +83,25 @@ export const TreasureCard = ({
           style={{
             fontSize: "12px",
             textAlign: "center",
-            lineHeight: "1.1",
+            lineHeight: "1.3",
             width: "100%",
-            padding: "2px",
+            padding: "4px 2px",
             color: "#666",
             overflow: "hidden",
-            height: "47px",
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-start",
           }}
         >
-          <div style={{ marginBottom: "1px" }}>Carryable</div>
+          <div style={{ marginBottom: "4px", flexShrink: 0 }}>Carryable</div>
           <div
             style={{
               fontSize: "10px",
               overflow: "hidden",
-              textOverflow: "ellipsis",
-              display: "-webkit-box",
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: "vertical",
+              flex: 1,
+              display: "flex",
+              alignItems: "flex-start",
             }}
           >
             {treasure.description}

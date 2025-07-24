@@ -3,6 +3,10 @@
  * Visual constants and utility functions used across components
  */
 
+// Card dimensions
+export const CARD_WIDTH = "160px";
+export const CARD_HEIGHT = "240px";
+
 // Tier-based background colors
 export const TIER_COLORS = {
     1: "#E8F5E8", // Light green

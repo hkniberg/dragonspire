@@ -1,5 +1,9 @@
 import type { Monster } from "../../lib/types";
-import { getTierBackgroundColor } from "../../lib/uiConstants";
+import {
+  CARD_HEIGHT,
+  CARD_WIDTH,
+  getTierBackgroundColor,
+} from "../../lib/uiConstants";
 
 interface MonsterCardProps {
   monster: Monster;
@@ -39,8 +43,8 @@ export const MonsterCard = ({
   return (
     <div
       style={{
-        width: "160px",
-        height: "190px",
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
         backgroundColor: "white",
         borderRadius: "6px",
         border: "2px solid #8B0000",
@@ -63,6 +67,7 @@ export const MonsterCard = ({
           justifyContent: "center",
           borderRadius: "4px",
           overflow: "hidden",
+          flexShrink: 0,
         }}
       >
         <img
@@ -91,6 +96,7 @@ export const MonsterCard = ({
           backgroundColor,
           borderRadius: "4px",
           padding: "2px 4px",
+          flexShrink: 0,
         }}
       >
         {monster.name}
@@ -99,20 +105,25 @@ export const MonsterCard = ({
       {showStats && (
         <div
           style={{
-            fontSize: "15px",
+            fontSize: "12px",
             textAlign: "center",
-            lineHeight: "1.1",
+            lineHeight: "1.3",
             width: "100%",
-            padding: "2px",
+            padding: "4px 2px",
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "flex-start",
+            gap: "2px",
           }}
         >
-          <div style={{ color: "#666", marginBottom: "1px" }}>
+          <div style={{ color: "#666", flexShrink: 0 }}>
             Might: {monster.might}
           </div>
-          <div style={{ color: "#666", marginBottom: "1px" }}>
+          <div style={{ color: "#666", flexShrink: 0 }}>
             Fame: {monster.fame || 0}
           </div>
-          <div style={{ color: "#666", marginBottom: "1px" }}>
+          <div style={{ color: "#666", flexShrink: 0 }}>
             Loot: {formatResources(monster.resources)}
           </div>
         </div>
