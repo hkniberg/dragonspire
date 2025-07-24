@@ -1,6 +1,7 @@
 import { BiomeType, TileTier } from '../lib/types';
 
-export interface Monster {
+export interface MonsterCard {
+    id: string;
     name: string;
     tier: TileTier;
     biome: BiomeType;
@@ -12,9 +13,10 @@ export interface Monster {
 }
 
 // All monsters in the game
-export const MONSTERS: Monster[] = [
+export const MONSTERS: MonsterCard[] = [
     // Plains Biome Monsters
     {
+        id: 'wolf',
         name: 'Wolf',
         tier: 1,
         biome: 'plains',
@@ -25,6 +27,7 @@ export const MONSTERS: Monster[] = [
         count: 2
     },
     {
+        id: 'boar',
         name: 'Boar',
         tier: 1,
         biome: 'plains',
@@ -35,6 +38,7 @@ export const MONSTERS: Monster[] = [
         count: 2
     },
     {
+        id: 'bandit',
         name: 'Bandit',
         tier: 1,
         biome: 'plains',
@@ -47,6 +51,7 @@ export const MONSTERS: Monster[] = [
 
     // Mountains Biome Monsters
     {
+        id: 'dwerm',
         name: 'Dwerm',
         tier: 1,
         biome: 'mountains',
@@ -57,6 +62,7 @@ export const MONSTERS: Monster[] = [
         count: 2
     },
     {
+        id: 'rock-golem',
         name: 'Rock golem',
         tier: 1,
         biome: 'mountains',
@@ -67,6 +73,7 @@ export const MONSTERS: Monster[] = [
         count: 2
     },
     {
+        id: 'troll-spawn',
         name: 'Troll spawn',
         tier: 1,
         biome: 'mountains',
@@ -79,6 +86,7 @@ export const MONSTERS: Monster[] = [
 
     // Woodlands Biome Monsters
     {
+        id: 'sprout',
         name: 'Sprout',
         tier: 1,
         biome: 'woodlands',
@@ -89,6 +97,7 @@ export const MONSTERS: Monster[] = [
         count: 2
     },
     {
+        id: 'fairy',
         name: 'Fairy',
         tier: 1,
         biome: 'woodlands',
@@ -99,6 +108,7 @@ export const MONSTERS: Monster[] = [
         count: 2
     },
     {
+        id: 'entling',
         name: 'Entling',
         tier: 1,
         biome: 'woodlands',
@@ -112,6 +122,7 @@ export const MONSTERS: Monster[] = [
     // TIER 2 MONSTERS
     // Plains Biome Tier 2 Monsters
     {
+        id: 'bear',
         name: 'Bear',
         tier: 2,
         biome: 'plains',
@@ -122,6 +133,7 @@ export const MONSTERS: Monster[] = [
         count: 2
     },
     {
+        id: 'assassin',
         name: 'Assassin',
         tier: 2,
         biome: 'plains',
@@ -134,6 +146,7 @@ export const MONSTERS: Monster[] = [
 
     // Mountains Biome Tier 2 Monsters
     {
+        id: 'iron-golem',
         name: 'Iron golem',
         tier: 2,
         biome: 'mountains',
@@ -144,6 +157,7 @@ export const MONSTERS: Monster[] = [
         count: 2
     },
     {
+        id: 'troll',
         name: 'Troll',
         tier: 2,
         biome: 'mountains',
@@ -156,6 +170,7 @@ export const MONSTERS: Monster[] = [
 
     // Woodlands Biome Tier 2 Monsters
     {
+        id: 'elven-huntress',
         name: 'Elven huntress',
         tier: 2,
         biome: 'woodlands',
@@ -166,6 +181,7 @@ export const MONSTERS: Monster[] = [
         count: 2
     },
     {
+        id: 'ent',
         name: 'Ent',
         tier: 2,
         biome: 'woodlands',
@@ -179,6 +195,7 @@ export const MONSTERS: Monster[] = [
     // TIER 3 MONSTERS
     // Plains Biome Tier 3 Monsters (Beast tile)
     {
+        id: 'wyrm',
         name: 'Wyrm',
         tier: 3,
         biome: 'plains',
@@ -189,6 +206,7 @@ export const MONSTERS: Monster[] = [
         count: 1
     },
     {
+        id: 'fallen-knight',
         name: 'Fallen Knight',
         tier: 3,
         biome: 'plains',
@@ -201,6 +219,7 @@ export const MONSTERS: Monster[] = [
 
     // Mountains Biome Tier 3 Monsters
     {
+        id: 'demon-core',
         name: 'Demon core',
         tier: 3,
         biome: 'mountains',
@@ -211,6 +230,7 @@ export const MONSTERS: Monster[] = [
         count: 1
     },
     {
+        id: 'troll-lord',
         name: 'Troll lord',
         tier: 3,
         biome: 'mountains',
@@ -223,6 +243,7 @@ export const MONSTERS: Monster[] = [
 
     // Woodlands Biome Tier 3 Monsters
     {
+        id: 'three-eyed-ape',
         name: 'Three eyed ape',
         tier: 3,
         biome: 'woodlands',
@@ -233,6 +254,7 @@ export const MONSTERS: Monster[] = [
         count: 1
     },
     {
+        id: 'ancient',
         name: 'Ancient',
         tier: 3,
         biome: 'woodlands',
@@ -244,17 +266,22 @@ export const MONSTERS: Monster[] = [
     }
 ];
 
-// Helper function to get monster by name
-export function getMonsterByName(name: string): Monster | undefined {
+// Helper function to get monster by ID
+export function getMonsterById(id: string): MonsterCard | undefined {
+    return MONSTERS.find(monster => monster.id === id);
+}
+
+// Helper function to get monster by name (for backward compatibility)
+export function getMonsterByName(name: string): MonsterCard | undefined {
     return MONSTERS.find(monster => monster.name === name);
 }
 
 // Helper function to get all monsters by tier
-export function getMonstersByTier(tier: TileTier): Monster[] {
+export function getMonstersByTier(tier: TileTier): MonsterCard[] {
     return MONSTERS.filter(monster => monster.tier === tier);
 }
 
 // Helper function to get all monsters by biome
-export function getMonstersByBiome(biome: BiomeType): Monster[] {
+export function getMonstersByBiome(biome: BiomeType): MonsterCard[] {
     return MONSTERS.filter(monster => monster.biome === biome);
 } 

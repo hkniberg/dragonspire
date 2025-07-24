@@ -438,6 +438,7 @@ export class TileArrivalHandler {
         // No alternative victory conditions met - must fight the dragon
         const dragonMight = GameSettings.DRAGON_BASE_MIGHT + this.rollD3();
         const dragon: Monster = {
+            id: 'dragon',
             name: 'Dragon',
             tier: 3,
             icon: '🐲',

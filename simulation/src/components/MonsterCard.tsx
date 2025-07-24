@@ -1,14 +1,7 @@
-import type { Monster } from "../content/monsterCards";
+import type { Monster } from "../lib/types";
 
 interface MonsterCardProps {
-  monster:
-    | Monster
-    | {
-        name: string;
-        might: number;
-        fame?: number;
-        resources?: Record<string, number>;
-      };
+  monster: Monster;
   size?: "s" | "m" | "l";
   showStats?: boolean;
   className?: string;
@@ -105,9 +98,7 @@ export const MonsterCard = ({
         }}
       >
         <img
-          src={`/monsters/${monster.name
-            .toLowerCase()
-            .replace(/\s+/g, "-")}.png`}
+          src={`/monsters/${monster.id}.png`}
           alt={monster.name}
           style={{
             width: "100%",

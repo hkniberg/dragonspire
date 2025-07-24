@@ -157,6 +157,7 @@ function createSampleGameState(): GameState {
         tileType: 'resource',
         resources: { food: 0, wood: 1, ore: 0, gold: 0 },
         monster: {
+            id: 'wolf',
             name: 'wolf',
             tier: 1,
             icon: '🐺',
@@ -190,6 +191,7 @@ function createSampleGameState(): GameState {
         tileType: 'adventure',
         adventureTokens: 0,
         monster: {
+            id: 'bandit',
             name: 'bandit',
             tier: 1,
             icon: '🗡️',

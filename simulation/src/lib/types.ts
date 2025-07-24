@@ -13,6 +13,7 @@ export interface Position {
 }
 
 export interface Monster {
+    id: string;
     name: string;
     tier: TileTier;
     icon: string;

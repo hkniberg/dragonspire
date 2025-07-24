@@ -42,6 +42,7 @@ describe('CombatResolver', () => {
     });
 
     const createTestMonster = (might: number = 5, fame: number = 2): Monster => ({
+        id: 'test-monster',
         name: 'Test Monster',
         tier: 1,
         icon: '👹',
