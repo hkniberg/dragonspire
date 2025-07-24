@@ -1,6 +1,7 @@
 import { TileTier } from '../lib/types';
 
-export interface Event {
+export interface EventCard {
+    id: string;
     name: string;
     tier: TileTier;
     icon: string;
@@ -8,10 +9,17 @@ export interface Event {
     count: number; // How many cards of this event to include in deck
 }
 
+// Helper function to get event by ID
+export function getEventCardById(id: string): EventCard | undefined {
+    return EVENT_CARDS.find(event => event.id === id);
+}
+
+
 // All event cards in the game
-export const EVENTS: Event[] = [
+export const EVENT_CARDS: EventCard[] = [
     // Tier 1 Event Cards
     {
+        id: 'hungry-pests',
         name: 'Hungry pests',
         tier: 1,
         icon: '🐀',
@@ -19,6 +27,7 @@ export const EVENTS: Event[] = [
         count: 2
     },
     {
+        id: 'market-day',
         name: 'Market day',
         tier: 1,
         icon: '🏪',
@@ -26,6 +35,7 @@ export const EVENTS: Event[] = [
         count: 2
     },
     {
+        id: 'thug-ambush',
         name: 'Thug Ambush',
         tier: 1,
         icon: '🗡️',
@@ -33,6 +43,7 @@ export const EVENTS: Event[] = [
         count: 2
     },
     {
+        id: 'landslide',
         name: 'Landslide',
         tier: 1,
         icon: '🏔️',
@@ -40,6 +51,7 @@ export const EVENTS: Event[] = [
         count: 2
     },
     {
+        id: 'sudden-storm',
         name: 'Sudden storm',
         tier: 1,
         icon: '⛈️',
@@ -49,6 +61,7 @@ export const EVENTS: Event[] = [
 
     // Tier 2 Event Cards
     {
+        id: 'hornet-swarm',
         name: 'Hornet swarm',
         tier: 2,
         icon: '🐝',
@@ -56,6 +69,7 @@ export const EVENTS: Event[] = [
         count: 1
     },
     {
+        id: 'druid-rampage',
         name: 'Druid rampage',
         tier: 2,
         icon: '🧙‍♂️',
@@ -63,6 +77,7 @@ export const EVENTS: Event[] = [
         count: 1
     },
     {
+        id: 'you-got-riches',
         name: 'You got riches!',
         tier: 2,
         icon: '🧞‍♂️',
@@ -72,6 +87,7 @@ export const EVENTS: Event[] = [
 
     // Tier 3 Event Cards
     {
+        id: 'curse-of-the-earth',
         name: 'Curse of the earth',
         tier: 3,
         icon: '🪦',
@@ -79,6 +95,7 @@ export const EVENTS: Event[] = [
         count: 1
     },
     {
+        id: 'thieving-crows',
         name: 'Thieving crows',
         tier: 3,
         icon: '🐦‍⬛',
@@ -86,6 +103,7 @@ export const EVENTS: Event[] = [
         count: 1
     },
     {
+        id: 'dragon-raid',
         name: 'Dragon raid',
         tier: 3,
         icon: '🐉',
@@ -94,12 +112,4 @@ export const EVENTS: Event[] = [
     }
 ];
 
-// Helper function to get event by name
-export function getEventByName(name: string): Event | undefined {
-    return EVENTS.find(event => event.name === name);
-}
 
-// Helper function to get all events by tier
-export function getEventsByTier(tier: TileTier): Event[] {
-    return EVENTS.filter(event => event.tier === tier);
-} 

@@ -12,8 +12,13 @@ export interface MonsterCard {
     count: number; // How many cards of this monster to include in deck
 }
 
+export function getMonsterCardById(id: string): MonsterCard | undefined {
+    return MONSTER_CARDS.find(monster => monster.id === id);
+}
+
+
 // All monsters in the game
-export const MONSTERS: MonsterCard[] = [
+export const MONSTER_CARDS: MonsterCard[] = [
     // Plains Biome Monsters
     {
         id: 'wolf',
@@ -266,22 +271,3 @@ export const MONSTERS: MonsterCard[] = [
     }
 ];
 
-// Helper function to get monster by ID
-export function getMonsterById(id: string): MonsterCard | undefined {
-    return MONSTERS.find(monster => monster.id === id);
-}
-
-// Helper function to get monster by name (for backward compatibility)
-export function getMonsterByName(name: string): MonsterCard | undefined {
-    return MONSTERS.find(monster => monster.name === name);
-}
-
-// Helper function to get all monsters by tier
-export function getMonstersByTier(tier: TileTier): MonsterCard[] {
-    return MONSTERS.filter(monster => monster.tier === tier);
-}
-
-// Helper function to get all monsters by biome
-export function getMonstersByBiome(biome: BiomeType): MonsterCard[] {
-    return MONSTERS.filter(monster => monster.biome === biome);
-} 

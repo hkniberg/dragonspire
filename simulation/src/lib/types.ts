@@ -4,7 +4,6 @@ export type ResourceType = 'food' | 'wood' | 'ore' | 'gold';
 export type TileTier = 1 | 2 | 3;
 export type BiomeType = 'plains' | 'mountains' | 'woodlands';
 export type OceanPosition = 'nw' | 'ne' | 'sw' | 'se';
-export type TreasureType = 'rustyShield' | 'brokenSword';
 export type TileType = 'empty' | 'home' | 'resource' | 'adventure' | 'chapel' | 'trader' | 'mercenary' | 'doomspire' | 'oasis';
 
 export interface Position {
@@ -41,7 +40,7 @@ export interface Champion {
     id: number;
     position: Position;
     playerId: number;
-    treasures: TreasureType[];
+    treasures: string[];
 }
 
 export interface Boat {

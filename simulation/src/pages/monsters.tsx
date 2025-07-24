@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AdventureCardBackside } from "../components/AdventureCardBackside";
 import { MonsterCard } from "../components/MonsterCard";
-import { MONSTERS } from "../content/monsterCards";
+import { MONSTER_CARDS } from "../content/monsterCards";
 
 export default function MonstersPage() {
   const [allFlipped, setAllFlipped] = useState(false);
@@ -90,7 +90,7 @@ export default function MonstersPage() {
           justifyItems: "center",
         }}
       >
-        {MONSTERS.map((monster, index) => (
+        {MONSTER_CARDS.map((monster, index) => (
           <div
             key={`${monster.name}-${index}`}
             style={{
@@ -140,13 +140,13 @@ export default function MonstersPage() {
             <h3 style={{ color: "#555", fontSize: "16px" }}>By Tier</h3>
             <div style={{ fontSize: "14px", color: "#666" }}>
               <div>
-                Tier 1: {MONSTERS.filter((m) => m.tier === 1).length} types
+                Tier 1: {MONSTER_CARDS.filter((m) => m.tier === 1).length} types
               </div>
               <div>
-                Tier 2: {MONSTERS.filter((m) => m.tier === 2).length} types
+                Tier 2: {MONSTER_CARDS.filter((m) => m.tier === 2).length} types
               </div>
               <div>
-                Tier 3: {MONSTERS.filter((m) => m.tier === 3).length} types
+                Tier 3: {MONSTER_CARDS.filter((m) => m.tier === 3).length} types
               </div>
             </div>
           </div>
@@ -154,16 +154,18 @@ export default function MonstersPage() {
             <h3 style={{ color: "#555", fontSize: "16px" }}>By Biome</h3>
             <div style={{ fontSize: "14px", color: "#666" }}>
               <div>
-                Plains: {MONSTERS.filter((m) => m.biome === "plains").length}{" "}
-                types
+                Plains:{" "}
+                {MONSTER_CARDS.filter((m) => m.biome === "plains").length} types
               </div>
               <div>
                 Mountains:{" "}
-                {MONSTERS.filter((m) => m.biome === "mountains").length} types
+                {MONSTER_CARDS.filter((m) => m.biome === "mountains").length}{" "}
+                types
               </div>
               <div>
                 Woodlands:{" "}
-                {MONSTERS.filter((m) => m.biome === "woodlands").length} types
+                {MONSTER_CARDS.filter((m) => m.biome === "woodlands").length}{" "}
+                types
               </div>
             </div>
           </div>
@@ -171,10 +173,10 @@ export default function MonstersPage() {
             <h3 style={{ color: "#555", fontSize: "16px" }}>Total Cards</h3>
             <div style={{ fontSize: "14px", color: "#666" }}>
               <div>
-                Total deck: {MONSTERS.reduce((sum, m) => sum + m.count, 0)}{" "}
+                Total deck: {MONSTER_CARDS.reduce((sum, m) => sum + m.count, 0)}{" "}
                 cards
               </div>
-              <div>Unique monsters: {MONSTERS.length} types</div>
+              <div>Unique monsters: {MONSTER_CARDS.length} types</div>
             </div>
           </div>
         </div>

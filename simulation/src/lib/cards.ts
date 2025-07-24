@@ -1,7 +1,7 @@
 import { ENCOUNTERS } from '../content/encounterCards';
-import { EVENTS } from '../content/eventCards';
-import { MONSTERS } from '../content/monsterCards';
-import { TREASURES } from '../content/treasureCards';
+import { EVENT_CARDS } from '../content/eventCards';
+import { MONSTER_CARDS } from '../content/monsterCards';
+import { TREASURE_CARDS } from '../content/treasureCards';
 import { BiomeType, TileTier } from './types';
 
 export type CardType = 'monster' | 'event' | 'treasure' | 'encounter' | 'follower';
@@ -169,7 +169,7 @@ function buildCardDeck(): Card[] {
     const deck = new CardDeck();
 
     // Auto-generate monster cards from MONSTERS array
-    MONSTERS.forEach(monster => {
+    MONSTER_CARDS.forEach(monster => {
         deck.addCard(monster.count, {
             type: 'monster',
             tier: monster.tier,
@@ -179,7 +179,7 @@ function buildCardDeck(): Card[] {
     });
 
     // Auto-generate treasure cards from TREASURES array with random biomes
-    TREASURES.forEach(treasure => {
+    TREASURE_CARDS.forEach(treasure => {
         for (let i = 0; i < treasure.count; i++) {
             deck.addToTop({
                 type: 'treasure',
@@ -203,7 +203,7 @@ function buildCardDeck(): Card[] {
     });
 
     // Auto-generate event cards from EVENTS array with random biomes
-    EVENTS.forEach(event => {
+    EVENT_CARDS.forEach(event => {
         for (let i = 0; i < event.count; i++) {
             deck.addToTop({
                 type: 'event',

@@ -1,6 +1,7 @@
 import { TileTier } from '../lib/types';
 
-export interface Treasure {
+export interface TreasureCard {
+    id: string;
     name: string;
     tier: TileTier;
     icon: string;
@@ -8,10 +9,15 @@ export interface Treasure {
     count: number; // How many cards of this treasure to include in deck
 }
 
+export function getTreasureCardById(id: string): TreasureCard | undefined {
+    return TREASURE_CARDS.find(treasure => treasure.id === id);
+}
+
 // All treasure cards in the game
-export const TREASURES: Treasure[] = [
+export const TREASURE_CARDS: TreasureCard[] = [
     // Tier 1 Treasure Cards
     {
+        id: 'broken-shield',
         name: 'Broken Shield',
         tier: 1,
         icon: '🛡️',
@@ -19,6 +25,7 @@ export const TREASURES: Treasure[] = [
         count: 2
     },
     {
+        id: 'rusty-sword',
         name: 'A rusty sword',
         tier: 1,
         icon: '⚔️',
@@ -26,6 +33,7 @@ export const TREASURES: Treasure[] = [
         count: 2
     },
     {
+        id: 'mysterious-ring',
         name: 'Mysterious Ring',
         tier: 1,
         icon: '💍',
@@ -35,6 +43,7 @@ export const TREASURES: Treasure[] = [
 
     // Tier 2 Treasure Cards
     {
+        id: 'long-sword',
         name: 'Löng Swörd',
         tier: 2,
         icon: '🗡️',
@@ -42,6 +51,7 @@ export const TREASURES: Treasure[] = [
         count: 1
     },
     {
+        id: 'porcupine',
         name: 'Porcupine',
         tier: 2,
         icon: '🛡️',
@@ -49,6 +59,7 @@ export const TREASURES: Treasure[] = [
         count: 1
     },
     {
+        id: 'sword-in-stone',
         name: 'Sword in a stone',
         tier: 2,
         icon: '⚔️',
@@ -57,12 +68,4 @@ export const TREASURES: Treasure[] = [
     }
 ];
 
-// Helper function to get treasure by name
-export function getTreasureByName(name: string): Treasure | undefined {
-    return TREASURES.find(treasure => treasure.name === name);
-}
 
-// Helper function to get all treasures by tier
-export function getTreasuresByTier(tier: TileTier): Treasure[] {
-    return TREASURES.filter(treasure => treasure.tier === tier);
-} 

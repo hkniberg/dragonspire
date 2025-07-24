@@ -1,6 +1,6 @@
 // Lords of Doomspire Random Map Generator
 
-import { getMonsterById } from '../content/monsterCards';
+import { getMonsterCardById } from '../content/monsterCards';
 import { Board } from './Board';
 import type {
     Position,
@@ -154,7 +154,7 @@ export class RandomMapGenerator {
                         const isDualResource = this.makeResourceTile(tile);
                         // Place Wolf on dual-resource tiles
                         if (isDualResource) {
-                            const wolf = getMonsterById('wolf');
+                            const wolf = getMonsterCardById('wolf');
                             if (wolf) {
                                 tile.monster = wolf;
                             }
@@ -167,7 +167,7 @@ export class RandomMapGenerator {
                     if (this.seededRandom() < 0.5) {
                         this.makeResourceTile(tile, true); // Better resources
                         // Place Bandit on all Tier 2 resource tiles
-                        const bandit = getMonsterById('bandit');
+                        const bandit = getMonsterCardById('bandit');
                         if (bandit) {
                             tile.monster = bandit;
                         }

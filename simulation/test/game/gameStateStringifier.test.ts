@@ -20,8 +20,8 @@ describe('GameStateStringifier', () => {
 - Home: (0,7)
 - Resource stockpile: 1 food, 2 wood
 - champion1 at (3,3)
-  - Has rustyShield
-  - Has brokenSword
+  - Has broken-shield
+  - Has rusty-sword
 - champion2 at (3,5)
 - champion1 at (2,5)
 - boat1 at (sw)
@@ -248,7 +248,7 @@ function createSampleGameState(): GameState {
                     id: 1,
                     position: { row: 3, col: 3 },
                     playerId: 1,
-                    treasures: ['rustyShield', 'brokenSword']
+                    treasures: ['broken-shield', 'rusty-sword']
                 },
                 {
                     id: 2,
