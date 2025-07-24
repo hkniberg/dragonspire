@@ -11,6 +11,7 @@ interface MonsterCardProps {
       };
   size?: "s" | "m" | "l";
   showStats?: boolean;
+  backside?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -60,16 +61,120 @@ const formatResources = (
   return formatted || "None";
 };
 
+const getBiomeDisplayName = (biome: string): string => {
+  switch (biome) {
+    case "plains":
+      return "Plains";
+    case "mountains":
+      return "Mountains";
+    case "woodlands":
+      return "Woodlands";
+    default:
+      return biome;
+  }
+};
+
 export const MonsterCard = ({
   monster,
   size = "m",
   showStats = false,
+  backside = false,
   className,
   style,
 }: MonsterCardProps) => {
   const sizeConfig = getSizeConfig(size);
   const tier = "tier" in monster ? monster.tier : undefined;
+  const biome = "biome" in monster ? monster.biome : undefined;
   const backgroundColor = getTierBackgroundColor(tier);
+
+  // If showing backside, render simplified back view
+  if (backside) {
+    return (
+      <div
+        className={className}
+        style={{
+          width: `${sizeConfig.width}px`,
+          height: `${sizeConfig.height}px`,
+          backgroundImage: biome ? `url(/biomes/${biome}.png)` : undefined,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          backgroundColor: biome ? "transparent" : backgroundColor,
+          borderRadius: "6px",
+          border: "2px solid #8B0000",
+          boxShadow: "0 4px 8px rgba(0,0,0,0.4)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "4px",
+          position: "relative",
+          ...style,
+        }}
+        title={`Monster Card Back - ${
+          biome ? getBiomeDisplayName(biome) : "Unknown"
+        } (Tier ${tier || "?"})`}
+      >
+        {/* Semi-transparent overlay for better text readability */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(255, 255, 255, 0.4)",
+            borderRadius: "4px",
+          }}
+        />
+        <div
+          style={{
+            fontSize: `${sizeConfig.fontSize + 4}px`,
+            fontWeight: "bold",
+            color: "#333",
+            textAlign: "center",
+            lineHeight: "1.2",
+            textTransform: "uppercase",
+            letterSpacing: "1px",
+            position: "relative",
+            zIndex: 1,
+            textShadow: "1px 1px 2px rgba(255, 255, 255, 0.8)",
+          }}
+        >
+          ADVENTURE
+        </div>
+        {tier && (
+          <div
+            style={{
+              width: `${sizeConfig.fontSize * 2.5}px`,
+              height: `${sizeConfig.fontSize * 2.5}px`,
+              borderRadius: "50%",
+              backgroundColor:
+                tier === 1 ? "#4CAF50" : tier === 2 ? "#FF9800" : "#F44336",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginTop: "8px",
+              position: "relative",
+              zIndex: 1,
+              boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+            }}
+          >
+            <span
+              style={{
+                fontSize: `${sizeConfig.fontSize + 2}px`,
+                fontWeight: "bold",
+                color: "white",
+                textShadow: "1px 1px 2px rgba(0, 0, 0, 0.5)",
+              }}
+            >
+              {tier === 1 ? "I" : tier === 2 ? "II" : "III"}
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div

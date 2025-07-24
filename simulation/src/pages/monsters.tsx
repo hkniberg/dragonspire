@@ -1,7 +1,32 @@
+import { useState } from "react";
 import { MonsterCard } from "../components/MonsterCard";
 import { MONSTERS } from "../lib/content/monsterCards";
 
 export default function MonstersPage() {
+  const [allFlipped, setAllFlipped] = useState(false);
+  const [individualFlips, setIndividualFlips] = useState<
+    Record<number, boolean>
+  >({});
+
+  const handleFlipAll = () => {
+    setAllFlipped(!allFlipped);
+    setIndividualFlips({}); // Reset individual flips when doing global flip
+  };
+
+  const handleCardClick = (index: number) => {
+    setIndividualFlips((prev) => ({
+      ...prev,
+      [index]: !prev[index],
+    }));
+  };
+
+  const isCardFlipped = (index: number) => {
+    // If there's an individual flip state, use that, otherwise use global state
+    return individualFlips[index] !== undefined
+      ? individualFlips[index]
+      : allFlipped;
+  };
+
   return (
     <div
       style={{
@@ -13,7 +38,7 @@ export default function MonstersPage() {
       <h1
         style={{
           textAlign: "center",
-          marginBottom: "30px",
+          marginBottom: "20px",
           color: "#333",
           fontSize: "2.5rem",
           fontWeight: "bold",
@@ -21,6 +46,37 @@ export default function MonstersPage() {
       >
         Lords of Doomspire - Bestiary
       </h1>
+
+      {/* Flip All Button */}
+      <div style={{ textAlign: "center", marginBottom: "30px" }}>
+        <button
+          onClick={handleFlipAll}
+          style={{
+            padding: "10px 20px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            backgroundColor: allFlipped ? "#dc3545" : "#007bff",
+            color: "white",
+            border: "none",
+            borderRadius: "6px",
+            cursor: "pointer",
+            transition: "background-color 0.2s ease",
+            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = allFlipped
+              ? "#c82333"
+              : "#0056b3";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = allFlipped
+              ? "#dc3545"
+              : "#007bff";
+          }}
+        >
+          {allFlipped ? "Show Fronts" : "Show Backs"}
+        </button>
+      </div>
 
       <div
         style={{
@@ -38,6 +94,7 @@ export default function MonstersPage() {
             key={`${monster.name}-${index}`}
             style={{
               transition: "transform 0.2s ease",
+              cursor: "pointer",
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = "scale(1.05)";
@@ -45,8 +102,15 @@ export default function MonstersPage() {
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = "scale(1)";
             }}
+            onClick={() => handleCardClick(index)}
+            title="Click to flip card"
           >
-            <MonsterCard monster={monster} size="l" showStats={true} />
+            <MonsterCard
+              monster={monster}
+              size="l"
+              showStats={!isCardFlipped(index)}
+              backside={isCardFlipped(index)}
+            />
           </div>
         ))}
       </div>
