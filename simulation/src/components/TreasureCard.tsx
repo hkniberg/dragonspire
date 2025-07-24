@@ -1,22 +1,10 @@
 import type { TreasureCard as TreasureCardType } from "../content/treasureCards";
+import { getTierBackgroundColor } from "../lib/uiConstants";
 
 interface TreasureCardProps {
   treasure: TreasureCardType;
   showDescription?: boolean;
 }
-
-const getTierBackgroundColor = (tier: number) => {
-  switch (tier) {
-    case 1:
-      return "#E8F5E8"; // Light green
-    case 2:
-      return "#FFF3CD"; // Light yellow
-    case 3:
-      return "#F8D7DA"; // Light red
-    default:
-      return "white"; // Default white
-  }
-};
 
 export const TreasureCard = ({
   treasure,
@@ -51,11 +39,18 @@ export const TreasureCard = ({
           justifyContent: "center",
           borderRadius: "4px",
           overflow: "hidden",
-          fontSize: "48px",
-          backgroundColor: "#f9f9f9",
         }}
       >
-        <span style={{ fontSize: "48px" }}>{treasure.icon}</span>
+        <img
+          src={`/treasures/${treasure.id}.png`}
+          alt={treasure.name}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            objectPosition: "center",
+          }}
+        />
       </div>
 
       <div

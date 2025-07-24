@@ -1,4 +1,5 @@
 import type { Champion, ResourceType, Tile } from "../lib/types";
+import { getTierSolidColor } from "../lib/uiConstants";
 import { ChampionComponent } from "./Champion";
 import { ClaimFlag } from "./ClaimFlag";
 import { MonsterCard } from "./MonsterCard";
@@ -511,12 +512,7 @@ ${
                     fontWeight: "bold",
                     border: "2px solid rgba(0, 0, 0, 0.3)",
                     boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
-                    color:
-                      effectiveTile.tier === 1
-                        ? "#4CAF50" // Green for tier 1
-                        : effectiveTile.tier === 2
-                        ? "#FF9800" // Orange for tier 2
-                        : "#F44336", // Red for tier 3
+                    color: getTierSolidColor(effectiveTile.tier),
                   }}
                 >
                   ?

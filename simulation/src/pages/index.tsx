@@ -684,7 +684,7 @@ export default function GameSimulation() {
           }}
         >
           <a
-            href="/monsters"
+            href="/cards"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -704,10 +704,10 @@ export default function GameSimulation() {
               e.currentTarget.style.backgroundColor = "#8B0000";
             }}
           >
-            📖 View Bestiary
+            🃏 View Card Gallery
           </a>
           <p style={{ margin: "10px 0 0 0", color: "#666", fontSize: "14px" }}>
-            Explore all creatures you may encounter in Lords of Doomspire
+            Explore all cards: monsters, events, treasures, and encounters
           </p>
         </div>
 

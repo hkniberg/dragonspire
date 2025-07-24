@@ -1,3 +1,10 @@
+import {
+  getBiomeDisplayName,
+  getTierBackgroundColor,
+  getTierDisplayText,
+  getTierSolidColor,
+} from "../lib/uiConstants";
+
 interface AdventureCardBacksideProps {
   monster: {
     tier?: number;
@@ -15,32 +22,6 @@ const getSizeConfig = (size: "s" | "m" | "l" = "m") => {
     l: { width: 160, height: 190, imageHeight: 155, fontSize: 16 },
   };
   return configs[size];
-};
-
-const getTierBackgroundColor = (tier: number | undefined) => {
-  switch (tier) {
-    case 1:
-      return "#E8F5E8"; // Light green
-    case 2:
-      return "#FFF3CD"; // Light yellow
-    case 3:
-      return "#F8D7DA"; // Light red
-    default:
-      return "white"; // Default white
-  }
-};
-
-const getBiomeDisplayName = (biome: string): string => {
-  switch (biome) {
-    case "plains":
-      return "Plains";
-    case "mountains":
-      return "Mountains";
-    case "woodlands":
-      return "Woodlands";
-    default:
-      return biome;
-  }
 };
 
 export const AdventureCardBackside = ({
@@ -114,8 +95,7 @@ export const AdventureCardBackside = ({
             width: `${sizeConfig.fontSize * 2.5}px`,
             height: `${sizeConfig.fontSize * 2.5}px`,
             borderRadius: "50%",
-            backgroundColor:
-              tier === 1 ? "#4CAF50" : tier === 2 ? "#FF9800" : "#F44336",
+            backgroundColor: getTierSolidColor(tier),
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -133,7 +113,7 @@ export const AdventureCardBackside = ({
               textShadow: "1px 1px 2px rgba(0, 0, 0, 0.5)",
             }}
           >
-            {tier === 1 ? "I" : tier === 2 ? "II" : "III"}
+            {getTierDisplayText(tier)}
           </span>
         </div>
       )}

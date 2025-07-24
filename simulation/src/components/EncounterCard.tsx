@@ -1,16 +1,16 @@
-import type { EventCard as EventCardType } from "../content/eventCards";
+import type { Encounter } from "../content/encounterCards";
 import { getTierBackgroundColor } from "../lib/uiConstants";
 
-interface EventCardProps {
-  event: EventCardType;
+interface EncounterCardProps {
+  encounter: Encounter;
   showDescription?: boolean;
 }
 
-export const EventCard = ({
-  event,
+export const EncounterCard = ({
+  encounter,
   showDescription = false,
-}: EventCardProps) => {
-  const backgroundColor = getTierBackgroundColor(event.tier);
+}: EncounterCardProps) => {
+  const backgroundColor = getTierBackgroundColor(encounter.tier);
 
   return (
     <div
@@ -19,7 +19,7 @@ export const EventCard = ({
         height: "190px",
         backgroundColor: "white",
         borderRadius: "6px",
-        border: "2px solid #4B0082",
+        border: "2px solid #2E8B57",
         boxShadow: "0 4px 8px rgba(0,0,0,0.4)",
         display: "flex",
         flexDirection: "column",
@@ -28,7 +28,7 @@ export const EventCard = ({
         padding: "4px",
         gap: "0px",
       }}
-      title={`Event: ${event.name} (Tier ${event.tier})`}
+      title={`Encounter: ${encounter.name} (Tier ${encounter.tier})`}
     >
       <div
         style={{
@@ -42,8 +42,8 @@ export const EventCard = ({
         }}
       >
         <img
-          src={`/events/${event.id}.png`}
-          alt={event.name}
+          src={`/encounters/${encounter.id}.png`}
+          alt={encounter.name}
           style={{
             width: "100%",
             height: "100%",
@@ -69,7 +69,7 @@ export const EventCard = ({
           padding: "2px 4px",
         }}
       >
-        {event.name}
+        {encounter.name}
       </div>
 
       {showDescription && (
@@ -85,7 +85,7 @@ export const EventCard = ({
             height: "47px",
           }}
         >
-          <div style={{ marginBottom: "1px" }}>Tier {event.tier}</div>
+          <div style={{ marginBottom: "1px" }}>Tier {encounter.tier}</div>
           <div
             style={{
               fontSize: "10px",
@@ -96,8 +96,22 @@ export const EventCard = ({
               WebkitBoxOrient: "vertical",
             }}
           >
-            {event.description}
+            {encounter.description}
           </div>
+          {encounter.follower && (
+            <div
+              style={{
+                fontSize: "8px",
+                backgroundColor: "#007bff",
+                color: "white",
+                padding: "1px 3px",
+                borderRadius: "2px",
+                marginTop: "2px",
+              }}
+            >
+              Follower
+            </div>
+          )}
         </div>
       )}
     </div>

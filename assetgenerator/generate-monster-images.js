@@ -36,14 +36,25 @@ class MonsterImageGenerator {
     this.openai = new OpenAI({ apiKey: openaiKey });
     this.anthropic = new Anthropic({ apiKey: anthropicKey });
 
-    // Load the image style template
+    // Load the monster prompt template
     try {
-      this.imageStyleTemplate = readFileSync(
-        join(__dirname, "image-style.md"),
+      this.monsterPromptTemplate = readFileSync(
+        join(__dirname, "prompts", "monster-prompt-template.md"),
         "utf-8"
       );
     } catch (error) {
-      console.error("❌ Error: Could not read image-style.md file");
+      console.error("❌ Error: Could not read monster-prompt-template.md file");
+      process.exit(1);
+    }
+
+    // Load the visual style template
+    try {
+      this.visualStyleTemplate = readFileSync(
+        join(__dirname, "prompts", "visual-style.md"),
+        "utf-8"
+      );
+    } catch (error) {
+      console.error("❌ Error: Could not read visual-style.md file");
       process.exit(1);
     }
   }
@@ -61,32 +72,55 @@ class MonsterImageGenerator {
         "..",
         "simulation",
         "src",
-        "lib",
         "content",
         "monsterCards.ts"
       );
       const fileContent = readFileSync(monsterCardsPath, "utf-8");
 
-      // Extract monster names using regex to find the MONSTERS array
+      // Extract monsters using regex to find the MONSTER_CARDS array
       const monstersMatch = fileContent.match(
-        /export const MONSTERS: Monster\[\] = \[([\s\S]*?)\];/
+        /export const MONSTER_CARDS: MonsterCard\[\] = \[([\s\S]*?)\];/
       );
       if (!monstersMatch) {
-        throw new Error("Could not find MONSTERS array in monsterCards.ts");
+        throw new Error(
+          "Could not find MONSTER_CARDS array in monsterCards.ts"
+        );
       }
 
-      // Extract monster names from the array
+      // Parse the monsters array content to extract monster objects
       const monstersArrayContent = monstersMatch[1];
-      const nameMatches = monstersArrayContent.match(/name: '([^']+)'/g);
 
-      if (!nameMatches) {
-        throw new Error("Could not extract monster names from MONSTERS array");
+      // Extract individual monster objects
+      const monsterMatches = monstersArrayContent.match(/\{[\s\S]*?\}/g);
+
+      if (!monsterMatches) {
+        throw new Error(
+          "Could not extract monster objects from MONSTER_CARDS array"
+        );
       }
 
-      const monsterNames = nameMatches.map((match) =>
-        match.replace(/name: '([^']+)'/, "$1")
-      );
-      return monsterNames;
+      const monsters = monsterMatches
+        .map((monsterString) => {
+          const nameMatch = monsterString.match(/name: ['"]([^'"]+)['"]/);
+          const descriptionMatch = monsterString.match(
+            /description: ['"]([^'"]*(?:[^'"\\]|\\.[^'"]*)*)['"]/
+          );
+          const tierMatch = monsterString.match(/tier: (\d+)/);
+
+          if (!nameMatch || !descriptionMatch || !tierMatch) {
+            console.warn("Could not parse monster:", monsterString);
+            return null;
+          }
+
+          return {
+            name: nameMatch[1],
+            description: descriptionMatch[1],
+            tier: parseInt(tierMatch[1]),
+          };
+        })
+        .filter((monster) => monster !== null);
+
+      return monsters;
     } catch (error) {
       console.error(
         "❌ Error loading monsters from monsterCards.ts:",
@@ -126,17 +160,8 @@ class MonsterImageGenerator {
     const allMonsters = this.loadMonstersFromFile();
     const existingImages = this.getExistingMonsterImages();
 
-    // Convert existing image names back to monster names for comparison
-    const existingMonsterNames = existingImages.map((filename) => {
-      // Convert filename back to monster name format
-      return filename
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-    });
-
     const missingMonsters = allMonsters.filter((monster) => {
-      const expectedFilename = this.monsterNameToFilename(monster).replace(
+      const expectedFilename = this.monsterNameToFilename(monster.name).replace(
         ".png",
         ""
       );
@@ -146,33 +171,24 @@ class MonsterImageGenerator {
     return missingMonsters;
   }
 
-  async generatePromptWithClaude(monsterName) {
-    const systemPrompt = `You are an expert at creating detailed image prompts for board game illustrations. 
+  async generatePromptWithClaude(monster) {
+    // Create card info section
+    const cardInfo = `Name: ${monster.name}
+Description: ${monster.description}`;
 
-Given a monster name and an image style template, create a specific, detailed image prompt that:
-1. Replaces the placeholder in the template with monster-specific content
-2. Maintains the hand-drawn cartoon style described
-3. Makes the monster the central focus while keeping it appropriate for a board game tile
-4. Ensures the monster fits the whimsical, storybook aesthetic
-
-Focus on visual details like the monster's appearance, pose, environment, and how it interacts with the scene.`;
-
-    const userMessage = `Monster name: "${monsterName}"
-
-Image style template:
-${this.imageStyleTemplate}
-
-Please create a specific image prompt by replacing the "[insert main subject: ...]" placeholder with detailed monster content. Make the monster the clear focus while maintaining the described art style. Return only the final image prompt, no explanations.`;
+    // Substitute placeholders in the template (using regex to handle any whitespace variations)
+    let templatePrompt = this.monsterPromptTemplate
+      .replace(/\{\{\s*card-info\s*\}\}/g, cardInfo)
+      .replace(/\{\{\s*visual-style\s*\}\}/g, this.visualStyleTemplate);
 
     try {
       const response = await this.anthropic.messages.create({
         model: DEFAULT_CLAUDE_MODEL,
-        max_tokens: 1000,
-        system: systemPrompt,
+        max_tokens: 5000,
         messages: [
           {
             role: "user",
-            content: userMessage,
+            content: templatePrompt,
           },
         ],
       });
@@ -193,9 +209,17 @@ Please create a specific image prompt by replacing the "[insert main subject: ..
     try {
       console.log(`🎨 Generating image for "${monsterName}"...`);
 
+      const finalPrompt =
+        prompt + "\n\nIMPORTANT: Do not include any text in the image.";
+
+      console.log("\n📝 Final prompt sent to OpenAI:");
+      console.log("─".repeat(60));
+      console.log(finalPrompt);
+      console.log("─".repeat(60));
+
       const response = await this.openai.images.generate({
         model: OPENAI_MODEL,
-        prompt: prompt,
+        prompt: finalPrompt,
         size: SIZE,
         quality: "medium",
       });
@@ -237,9 +261,21 @@ Please create a specific image prompt by replacing the "[insert main subject: ..
     try {
       console.log(`🐉 Generating image for monster: "${monsterName}"`);
 
+      // Find the monster by name
+      const allMonsters = this.loadMonstersFromFile();
+      const monster = allMonsters.find(
+        (m) => m.name.toLowerCase() === monsterName.toLowerCase()
+      );
+
+      if (!monster) {
+        throw new Error(
+          `Monster "${monsterName}" not found in monsterCards.ts`
+        );
+      }
+
       // Step 1: Generate specific prompt with Claude
       console.log("🤖 Creating detailed prompt with Claude...");
-      const detailedPrompt = await this.generatePromptWithClaude(monsterName);
+      const detailedPrompt = await this.generatePromptWithClaude(monster);
 
       console.log("\n📝 Generated prompt:");
       console.log("─".repeat(60));
@@ -247,7 +283,7 @@ Please create a specific image prompt by replacing the "[insert main subject: ..
       console.log("─".repeat(60));
 
       // Step 2: Generate image with OpenAI
-      const imagePath = await this.generateImage(detailedPrompt, monsterName);
+      const imagePath = await this.generateImage(detailedPrompt, monster.name);
 
       return imagePath;
     } catch (error) {
@@ -268,7 +304,9 @@ Please create a specific image prompt by replacing the "[insert main subject: ..
       }
 
       console.log(`📋 Found ${missingMonsters.length} missing monsters:`);
-      missingMonsters.forEach((monster) => console.log(`  - ${monster}`));
+      missingMonsters.forEach((monster) =>
+        console.log(`  - ${monster.name} (Tier ${monster.tier})`)
+      );
 
       // Apply MAX_MONSTERS limit for testing
       const monstersToGenerate = missingMonsters.slice(0, MAX_MONSTERS);
@@ -278,7 +316,9 @@ Please create a specific image prompt by replacing the "[insert main subject: ..
           `⚠️  Limited to ${MAX_MONSTERS} monsters for testing (MAX_MONSTERS = ${MAX_MONSTERS})`
         );
         console.log("📝 Generating images for:");
-        monstersToGenerate.forEach((monster) => console.log(`  - ${monster}`));
+        monstersToGenerate.forEach((monster) =>
+          console.log(`  - ${monster.name} (Tier ${monster.tier})`)
+        );
       }
 
       // Step 1: Generate all prompts in parallel
@@ -286,17 +326,21 @@ Please create a specific image prompt by replacing the "[insert main subject: ..
         `\n🤖 Generating ${monstersToGenerate.length} prompts in parallel...`
       );
 
-      const promptPromises = monstersToGenerate.map(async (monsterName) => {
+      const promptPromises = monstersToGenerate.map(async (monster) => {
         try {
-          console.log(`🤖 Creating prompt for "${monsterName}"...`);
-          const prompt = await this.generatePromptWithClaude(monsterName);
-          return { monster: monsterName, prompt, success: true };
+          console.log(`🤖 Creating prompt for "${monster.name}"...`);
+          const prompt = await this.generatePromptWithClaude(monster);
+          return { monster: monster.name, prompt, success: true };
         } catch (error) {
           console.error(
-            `❌ Failed to generate prompt for ${monsterName}:`,
+            `❌ Failed to generate prompt for ${monster.name}:`,
             error.message
           );
-          return { monster: monsterName, success: false, error: error.message };
+          return {
+            monster: monster.name,
+            success: false,
+            error: error.message,
+          };
         }
       });
 
@@ -379,23 +423,23 @@ function showUsage() {
 🐉 Doomspire Monster Image Generator
 
 Usage:
-  node generate-monster-image.js "Monster Name"     # Generate single monster
-  node generate-monster-image.js --all              # Generate all missing monsters
+  node generate-monster-images.js "Monster Name"     # Generate single monster
+  node generate-monster-images.js --all              # Generate all missing monsters
 
 Examples:
-  node generate-monster-image.js "Fire Dragon"
-  node generate-monster-image.js "Shadow Wolf"
-  node generate-monster-image.js --all
+  node generate-monster-images.js "Fire Dragon"
+  node generate-monster-images.js "Shadow Wolf"
+  node generate-monster-images.js --all
 
 The --all option will:
-1. Load all monsters from simulation/src/lib/content/monsterCards.ts
+1. Load all monsters from simulation/src/content/monsterCards.ts
 2. Check existing images in simulation/public/monsters/
 3. Generate missing monster images in parallel (limited by MAX_MONSTERS = ${MAX_MONSTERS})
 4. Save images with format: <monster-name>.png
 
 Requirements:
 - OPENAI_API_KEY and ANTHROPIC_API_KEY in .env file
-- image-style.md file in the same directory
+- monster-prompt-template.md and visual-style.md files in prompts/ directory
     `);
 }
 

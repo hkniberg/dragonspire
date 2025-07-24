@@ -8,9 +8,17 @@ A collection of CLI utilities for generating game assets using AI.
 
 Simple CLI utility for generating images using OpenAI's DALL-E.
 
-### 2. Monster Image Generator (`generate-monster-image.js`)
+### 2. Monster Image Generator (`generate-monster-images.js`)
 
 Advanced script that uses Claude to create detailed prompts and DALL-E to generate monster images in landscape format.
+
+### 3. Event Image Generator (`generate-event-images.js`)
+
+Advanced script that generates event card images by loading events from `eventCards.ts`, using both the event name and description to create detailed prompts with Claude, then generating images with DALL-E.
+
+### 4. Treasure Image Generator (`generate-treasure-images.js`)
+
+Advanced script that generates treasure card images by loading treasures from `treasureCards.ts`, using both the treasure name and description to create detailed prompts with Claude, then generating images with DALL-E.
 
 ## Setup
 
@@ -41,23 +49,73 @@ node generate-image.js "your prompt" --output custom-name.png
 ### Monster Image Generator
 
 ```bash
-node generate-monster-image.js "Monster Name"
+node generate-monster-images.js "Monster Name"
+node generate-monster-images.js --all    # Generate all missing monsters
 ```
 
 **Examples:**
 
 ```bash
-node generate-monster-image.js "Fire Dragon"
-node generate-monster-image.js "Shadow Wolf"
-node generate-monster-image.js "Crystal Golem"
+node generate-monster-images.js "Fire Dragon"
+node generate-monster-images.js "Shadow Wolf"
+node generate-monster-images.js "Crystal Golem"
+node generate-monster-images.js --all
 ```
 
 **Process:**
 
 1. Uses Claude AI to create a detailed image prompt based on the monster name and `image-style.md`
 2. Prints the generated prompt to console
-3. Uses OpenAI DALL-E to generate a landscape image (1792x1024)
-4. Saves to `output/monster-{name}-{id}.png`
+3. Uses OpenAI DALL-E to generate images (1024x1024)
+4. Saves to `simulation/public/monsters/{monster-name}.png`
+
+### Event Image Generator
+
+```bash
+node generate-event-images.js "Event Name"
+node generate-event-images.js --all    # Generate all missing events
+```
+
+**Examples:**
+
+```bash
+node generate-event-images.js "Market day"
+node generate-event-images.js "Thug Ambush"
+node generate-event-images.js "Dragon raid"
+node generate-event-images.js --all
+```
+
+**Process:**
+
+1. Loads event data from `simulation/src/content/eventCards.ts`
+2. Uses Claude AI to create detailed prompts based on event name, description, and tier
+3. Prints the generated prompt to console
+4. Uses OpenAI DALL-E to generate square images (1024x1024)
+5. Saves to `simulation/public/events/{event-name}.png`
+
+### Treasure Image Generator
+
+```bash
+node generate-treasure-images.js "Treasure Name"
+node generate-treasure-images.js --all    # Generate all missing treasures
+```
+
+**Examples:**
+
+```bash
+node generate-treasure-images.js "Broken Shield"
+node generate-treasure-images.js "A rusty sword"
+node generate-treasure-images.js "Mysterious Ring"
+node generate-treasure-images.js --all
+```
+
+**Process:**
+
+1. Loads treasure data from `simulation/src/content/treasureCards.ts`
+2. Uses Claude AI to create detailed prompts based on treasure name, description, and tier
+3. Prints the generated prompt to console
+4. Uses OpenAI DALL-E to generate square images (1024x1024)
+5. Saves to `simulation/public/treasures/{treasure-name}.png`
 
 ### Examples for Game Assets
 
@@ -77,10 +135,31 @@ node generate-image.js "pile of gold coins, game icon, simple design, transparen
 #### Monster Generator
 
 ```bash
-# Generate monster cards for the game
-node generate-monster-image.js "Flame Serpent"
-node generate-monster-image.js "Ice Troll"
-node generate-monster-image.js "Lightning Drake"
+# Generate all missing monster cards for the game
+node generate-monster-images.js --all
+
+# Generate specific monster
+node generate-monster-images.js "Troll Lord"
+```
+
+#### Event Generator
+
+```bash
+# Generate all missing event cards for the game
+node generate-event-images.js --all
+
+# Generate specific event
+node generate-event-images.js "Market day"
+```
+
+#### Treasure Generator
+
+```bash
+# Generate all missing treasure cards for the game
+node generate-treasure-images.js --all
+
+# Generate specific treasure
+node generate-treasure-images.js "Broken Shield"
 ```
 
 ## Files
@@ -91,9 +170,11 @@ node generate-monster-image.js "Lightning Drake"
 
 ## Output
 
-- **Basic generator**: Square images (1024x1024) saved as PNG
-- **Monster generator**: Landscape images (1792x1024) saved as PNG with monster name in filename
-- All images use "standard" quality for faster generation
+- **Basic generator**: Square images (1024x1024) saved to `output/` directory
+- **Monster generator**: Square images (1024x1024) saved to `simulation/public/monsters/` with kebab-case filenames
+- **Event generator**: Square images (1024x1024) saved to `simulation/public/events/` with kebab-case filenames
+- **Treasure generator**: Square images (1024x1024) saved to `simulation/public/treasures/` with kebab-case filenames
+- All images use "medium" quality for balance between speed and quality
 
 ## Requirements
 

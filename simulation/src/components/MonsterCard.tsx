@@ -1,22 +1,10 @@
 import type { Monster } from "../lib/types";
+import { getTierBackgroundColor } from "../lib/uiConstants";
 
 interface MonsterCardProps {
   monster: Monster;
   showStats?: boolean;
 }
-
-const getTierBackgroundColor = (tier: number | undefined) => {
-  switch (tier) {
-    case 1:
-      return "#E8F5E8"; // Light green
-    case 2:
-      return "#FFF3CD"; // Light yellow
-    case 3:
-      return "#F8D7DA"; // Light red
-    default:
-      return "white"; // Default white
-  }
-};
 
 const formatResources = (
   resources: Record<string, number> | undefined
