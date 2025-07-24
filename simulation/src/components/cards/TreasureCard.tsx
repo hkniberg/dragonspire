@@ -1,3 +1,4 @@
+import ReactMarkdown from "react-markdown";
 import type { TreasureCard as TreasureCardType } from "../../content/treasureCards";
 import {
   CARD_HEIGHT,
@@ -94,7 +95,6 @@ export const TreasureCard = ({
             justifyContent: "flex-start",
           }}
         >
-          <div style={{ marginBottom: "4px", flexShrink: 0 }}>Carryable</div>
           <div
             style={{
               fontSize: "10px",
@@ -104,7 +104,50 @@ export const TreasureCard = ({
               alignItems: "flex-start",
             }}
           >
-            {treasure.description}
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <span>{children}</span>,
+                strong: ({ children }) => (
+                  <strong style={{ fontWeight: "bold", color: "#333" }}>
+                    {children}
+                  </strong>
+                ),
+                em: ({ children }) => (
+                  <em style={{ fontStyle: "italic", color: "#555" }}>
+                    {children}
+                  </em>
+                ),
+                code: ({ children }) => (
+                  <code
+                    style={{
+                      backgroundColor: "#f0f0f0",
+                      padding: "1px 3px",
+                      borderRadius: "2px",
+                      fontFamily: "monospace",
+                      fontSize: "9px",
+                      color: "#d63384",
+                    }}
+                  >
+                    {children}
+                  </code>
+                ),
+              }}
+            >
+              {treasure.description}
+            </ReactMarkdown>
+          </div>
+          <div
+            style={{
+              fontSize: "8px",
+              backgroundColor: "#ff6600",
+              color: "white",
+              padding: "1px 3px",
+              borderRadius: "2px",
+              marginTop: "2px",
+              flexShrink: 0,
+            }}
+          >
+            Item
           </div>
         </div>
       )}

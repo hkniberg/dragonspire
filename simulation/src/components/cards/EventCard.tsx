@@ -1,3 +1,4 @@
+import ReactMarkdown from "react-markdown";
 import type { EventCard as EventCardType } from "../../content/eventCards";
 import {
   CARD_HEIGHT,
@@ -94,9 +95,6 @@ export const EventCard = ({
             justifyContent: "flex-start",
           }}
         >
-          <div style={{ marginBottom: "4px", flexShrink: 0 }}>
-            Tier {event.tier}
-          </div>
           <div
             style={{
               fontSize: "10px",
@@ -106,7 +104,37 @@ export const EventCard = ({
               alignItems: "flex-start",
             }}
           >
-            {event.description}
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <span>{children}</span>,
+                strong: ({ children }) => (
+                  <strong style={{ fontWeight: "bold", color: "#333" }}>
+                    {children}
+                  </strong>
+                ),
+                em: ({ children }) => (
+                  <em style={{ fontStyle: "italic", color: "#555" }}>
+                    {children}
+                  </em>
+                ),
+                code: ({ children }) => (
+                  <code
+                    style={{
+                      backgroundColor: "#f0f0f0",
+                      padding: "1px 3px",
+                      borderRadius: "2px",
+                      fontFamily: "monospace",
+                      fontSize: "9px",
+                      color: "#d63384",
+                    }}
+                  >
+                    {children}
+                  </code>
+                ),
+              }}
+            >
+              {event.description}
+            </ReactMarkdown>
           </div>
         </div>
       )}

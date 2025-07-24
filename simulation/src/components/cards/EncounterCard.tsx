@@ -1,3 +1,4 @@
+import ReactMarkdown from "react-markdown";
 import type { Encounter } from "../../content/encounterCards";
 import {
   CARD_HEIGHT,
@@ -94,9 +95,6 @@ export const EncounterCard = ({
             justifyContent: "flex-start",
           }}
         >
-          <div style={{ marginBottom: "4px", flexShrink: 0 }}>
-            Tier {encounter.tier}
-          </div>
           <div
             style={{
               fontSize: "10px",
@@ -106,13 +104,43 @@ export const EncounterCard = ({
               alignItems: "flex-start",
             }}
           >
-            {encounter.description}
+            <ReactMarkdown
+              components={{
+                p: ({ children }) => <span>{children}</span>,
+                strong: ({ children }) => (
+                  <strong style={{ fontWeight: "bold", color: "#333" }}>
+                    {children}
+                  </strong>
+                ),
+                em: ({ children }) => (
+                  <em style={{ fontStyle: "italic", color: "#555" }}>
+                    {children}
+                  </em>
+                ),
+                code: ({ children }) => (
+                  <code
+                    style={{
+                      backgroundColor: "#f0f0f0",
+                      padding: "1px 3px",
+                      borderRadius: "2px",
+                      fontFamily: "monospace",
+                      fontSize: "9px",
+                      color: "#d63384",
+                    }}
+                  >
+                    {children}
+                  </code>
+                ),
+              }}
+            >
+              {encounter.description}
+            </ReactMarkdown>
           </div>
           {encounter.follower && (
             <div
               style={{
                 fontSize: "8px",
-                backgroundColor: "#007bff",
+                backgroundColor: "#28a745",
                 color: "white",
                 padding: "1px 3px",
                 borderRadius: "2px",
