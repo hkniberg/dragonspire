@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AdventureCardBackside } from "../components/AdventureCardBackside";
 import { MonsterCard } from "../components/MonsterCard";
 import { MONSTERS } from "../content/monsterCards";
 
@@ -105,12 +106,11 @@ export default function MonstersPage() {
             onClick={() => handleCardClick(index)}
             title="Click to flip card"
           >
-            <MonsterCard
-              monster={monster}
-              size="l"
-              showStats={!isCardFlipped(index)}
-              backside={isCardFlipped(index)}
-            />
+            {isCardFlipped(index) ? (
+              <AdventureCardBackside monster={monster} size="l" />
+            ) : (
+              <MonsterCard monster={monster} size="l" showStats={true} />
+            )}
           </div>
         ))}
       </div>
