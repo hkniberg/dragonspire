@@ -77,6 +77,10 @@ const convertTrioToTiles = (
 export default function PrintTiles() {
   const emptyChampions: Champion[] = [];
 
+  // Tile size constant for easy experimentation
+  const TILE_SCALE = 1.5; // Scale factor for tile visual size (1.0 = normal, 1.5 = 150% larger)
+  const TILE_SIZE = 120 * TILE_SCALE; // Grid spacing - should be larger than 120 * TILE_SCALE
+
   // Combine all trios
   const homeTriosCount = HOME_TILE_TRIOS.length;
   const tier1TriosCount = TIER_1_TRIOS.length;
@@ -151,8 +155,8 @@ export default function PrintTiles() {
     backTier3Tiles.push(backTile);
   });
 
-  // Split trios into pages (6 trios per page = 3x2 layout)
-  const TRIOS_PER_PAGE = 6;
+  // Split trios into pages (4 trios per page = 2x2 layout)
+  const TRIOS_PER_PAGE = 4;
   const frontPages: (typeof frontTrios)[] = [];
   const backPages: (typeof backTrios)[] = [];
 
@@ -192,8 +196,8 @@ export default function PrintTiles() {
 
         .trios-grid {
           display: grid;
-          grid-template-columns: repeat(4, 120px);
-          grid-template-rows: repeat(6, 120px);
+          grid-template-columns: repeat(4, ${TILE_SIZE}px);
+          grid-template-rows: repeat(4, ${TILE_SIZE}px);
           gap: 0px;
           justify-content: center;
         }
@@ -204,7 +208,7 @@ export default function PrintTiles() {
 
         .tier3-grid {
           display: grid;
-          grid-template-columns: repeat(4, 120px);
+          grid-template-columns: repeat(4, ${TILE_SIZE}px);
           gap: 0px;
           justify-content: center;
           margin-top: 20px;
@@ -241,15 +245,15 @@ export default function PrintTiles() {
 
           .trios-grid {
             display: grid;
-            grid-template-columns: repeat(4, 120px);
-            grid-template-rows: repeat(6, 120px);
+            grid-template-columns: repeat(4, ${TILE_SIZE}px);
+            grid-template-rows: repeat(4, ${TILE_SIZE}px);
             gap: 0px;
             justify-content: center;
           }
 
           .tier3-grid {
             display: grid;
-            grid-template-columns: repeat(4, 120px);
+            grid-template-columns: repeat(4, ${TILE_SIZE}px);
             gap: 0px;
             justify-content: center;
             margin-top: 20px;
@@ -273,7 +277,6 @@ export default function PrintTiles() {
             <React.Fragment key={`page-pair-${pageIndex}`}>
               {/* Front page */}
               <div className="print-page">
-                <h3>Front Side - Page {pageIndex + 1}</h3>
                 <div className="trios-grid">
                   {frontPageTrios.map((trioData, trioIndex) => {
                     // Calculate trio position in 3x2 grid
@@ -294,14 +297,24 @@ export default function PrintTiles() {
                                 style={{
                                   gridRow: gridRow,
                                   gridColumn: gridCol,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
                                 }}
                               >
-                                <TileComponent
-                                  tile={tile}
-                                  champions={emptyChampions}
-                                  debugMode={false}
-                                  getPlayerColor={getPlayerColor}
-                                />
+                                <div
+                                  style={{
+                                    transform: `scale(${TILE_SCALE})`,
+                                    transformOrigin: "center",
+                                  }}
+                                >
+                                  <TileComponent
+                                    tile={tile}
+                                    champions={emptyChampions}
+                                    debugMode={false}
+                                    getPlayerColor={getPlayerColor}
+                                  />
+                                </div>
                               </div>
                             );
                           }
@@ -314,7 +327,6 @@ export default function PrintTiles() {
 
               {/* Back page */}
               <div className="print-page">
-                <h3>Back Side - Page {pageIndex + 1}</h3>
                 <div className="trios-grid" style={{ transform: "scaleX(-1)" }}>
                   {backPageTrios.map((trioData, trioIndex) => {
                     // Calculate trio position in 3x2 grid
@@ -335,14 +347,24 @@ export default function PrintTiles() {
                                 style={{
                                   gridRow: gridRow,
                                   gridColumn: gridCol,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
                                 }}
                               >
-                                <TileComponent
-                                  tile={tile}
-                                  champions={emptyChampions}
-                                  debugMode={false}
-                                  getPlayerColor={getPlayerColor}
-                                />
+                                <div
+                                  style={{
+                                    transform: `scale(${TILE_SCALE})`,
+                                    transformOrigin: "center",
+                                  }}
+                                >
+                                  <TileComponent
+                                    tile={tile}
+                                    champions={emptyChampions}
+                                    debugMode={false}
+                                    getPlayerColor={getPlayerColor}
+                                  />
+                                </div>
                               </div>
                             );
                           }
@@ -358,32 +380,60 @@ export default function PrintTiles() {
 
         {/* Tier 3 tiles front page */}
         <div className="print-page">
-          <h3>Tier 3 Tiles - Front Side</h3>
           <div className="tier3-grid">
             {frontTier3Tiles.map((tile, index) => (
-              <TileComponent
+              <div
                 key={`tier3-front-${index}`}
-                tile={tile}
-                champions={emptyChampions}
-                debugMode={false}
-                getPlayerColor={getPlayerColor}
-              />
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    transform: `scale(${TILE_SCALE})`,
+                    transformOrigin: "center",
+                  }}
+                >
+                  <TileComponent
+                    tile={tile}
+                    champions={emptyChampions}
+                    debugMode={false}
+                    getPlayerColor={getPlayerColor}
+                  />
+                </div>
+              </div>
             ))}
           </div>
         </div>
 
         {/* Tier 3 tiles back page */}
         <div className="print-page">
-          <h3>Tier 3 Tiles - Back Side</h3>
           <div className="tier3-grid" style={{ transform: "scaleX(-1)" }}>
             {backTier3Tiles.map((tile, index) => (
-              <TileComponent
+              <div
                 key={`tier3-back-${index}`}
-                tile={tile}
-                champions={emptyChampions}
-                debugMode={false}
-                getPlayerColor={getPlayerColor}
-              />
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <div
+                  style={{
+                    transform: `scale(${TILE_SCALE})`,
+                    transformOrigin: "center",
+                  }}
+                >
+                  <TileComponent
+                    tile={tile}
+                    champions={emptyChampions}
+                    debugMode={false}
+                    getPlayerColor={getPlayerColor}
+                  />
+                </div>
+              </div>
             ))}
           </div>
         </div>
