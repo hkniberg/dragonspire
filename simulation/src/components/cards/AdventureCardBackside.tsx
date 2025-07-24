@@ -3,44 +3,27 @@ import {
   getTierBackgroundColor,
   getTierDisplayText,
   getTierSolidColor,
-} from "../lib/uiConstants";
+} from "../../lib/uiConstants";
 
 interface AdventureCardBacksideProps {
   monster: {
     tier?: number;
     biome?: string;
   };
-  size?: "s" | "m" | "l";
-  className?: string;
-  style?: React.CSSProperties;
 }
-
-const getSizeConfig = (size: "s" | "m" | "l" = "m") => {
-  const configs = {
-    s: { width: 60, height: 70, imageHeight: 52, fontSize: 8 },
-    m: { width: 75, height: 85, imageHeight: 68, fontSize: 9 },
-    l: { width: 160, height: 190, imageHeight: 155, fontSize: 16 },
-  };
-  return configs[size];
-};
 
 export const AdventureCardBackside = ({
   monster,
-  size = "m",
-  className,
-  style,
 }: AdventureCardBacksideProps) => {
-  const sizeConfig = getSizeConfig(size);
   const tier = monster.tier;
   const biome = monster.biome;
   const backgroundColor = getTierBackgroundColor(tier);
 
   return (
     <div
-      className={className}
       style={{
-        width: `${sizeConfig.width}px`,
-        height: `${sizeConfig.height}px`,
+        width: "160px",
+        height: "190px",
         backgroundImage: biome ? `url(/biomes/${biome}.png)` : undefined,
         backgroundSize: "cover",
         backgroundPosition: "center",
@@ -55,7 +38,6 @@ export const AdventureCardBackside = ({
         justifyContent: "center",
         padding: "4px",
         position: "relative",
-        ...style,
       }}
       title={`Monster Card Back - ${
         biome ? getBiomeDisplayName(biome) : "Unknown"
@@ -75,7 +57,7 @@ export const AdventureCardBackside = ({
       />
       <div
         style={{
-          fontSize: `${sizeConfig.fontSize + 4}px`,
+          fontSize: "20px",
           fontWeight: "bold",
           color: "#333",
           textAlign: "center",
@@ -92,8 +74,8 @@ export const AdventureCardBackside = ({
       {tier && (
         <div
           style={{
-            width: `${sizeConfig.fontSize * 2.5}px`,
-            height: `${sizeConfig.fontSize * 2.5}px`,
+            width: "40px",
+            height: "40px",
             borderRadius: "50%",
             backgroundColor: getTierSolidColor(tier),
             display: "flex",
@@ -107,7 +89,7 @@ export const AdventureCardBackside = ({
         >
           <span
             style={{
-              fontSize: `${sizeConfig.fontSize + 2}px`,
+              fontSize: "18px",
               fontWeight: "bold",
               color: "white",
               textShadow: "1px 1px 2px rgba(0, 0, 0, 0.5)",

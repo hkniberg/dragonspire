@@ -1,5 +1,5 @@
-import type { TreasureCard as TreasureCardType } from "../content/treasureCards";
-import { getTierBackgroundColor } from "../lib/uiConstants";
+import type { TreasureCard as TreasureCardType } from "../../content/treasureCards";
+import { getTierBackgroundColor } from "../../lib/uiConstants";
 
 interface TreasureCardProps {
   treasure: TreasureCardType;
@@ -28,7 +28,7 @@ export const TreasureCard = ({
         padding: "4px",
         gap: "0px",
       }}
-      title={`Treasure: ${treasure.name} (Tier ${treasure.tier})`}
+      title={`Treasure: ${treasure.name}`}
     >
       <div
         style={{
@@ -85,7 +85,7 @@ export const TreasureCard = ({
             height: "47px",
           }}
         >
-          <div style={{ marginBottom: "1px" }}>Tier {treasure.tier}</div>
+          <div style={{ marginBottom: "1px" }}>Carryable</div>
           <div
             style={{
               fontSize: "10px",

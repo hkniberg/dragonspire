@@ -1,5 +1,5 @@
-import type { EventCard as EventCardType } from "../content/eventCards";
-import { getTierBackgroundColor } from "../lib/uiConstants";
+import type { EventCard as EventCardType } from "../../content/eventCards";
+import { getTierBackgroundColor } from "../../lib/uiConstants";
 
 interface EventCardProps {
   event: EventCardType;

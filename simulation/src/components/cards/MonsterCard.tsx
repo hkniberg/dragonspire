@@ -1,5 +1,5 @@
-import type { Monster } from "../lib/types";
-import { getTierBackgroundColor } from "../lib/uiConstants";
+import type { Monster } from "../../lib/types";
+import { getTierBackgroundColor } from "../../lib/uiConstants";
 
 interface MonsterCardProps {
   monster: Monster;

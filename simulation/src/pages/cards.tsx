@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { AdventureCardBackside } from "../components/AdventureCardBackside";
-import { EncounterCard } from "../components/EncounterCard";
-import { EventCard } from "../components/EventCard";
-import { MonsterCard } from "../components/MonsterCard";
-import { TreasureCard } from "../components/TreasureCard";
+import { AdventureCardBackside } from "../components/cards/AdventureCardBackside";
+import { EncounterCard } from "../components/cards/EncounterCard";
+import { EventCard } from "../components/cards/EventCard";
+import { MonsterCard } from "../components/cards/MonsterCard";
+import { TreasureCard } from "../components/cards/TreasureCard";
 import { ENCOUNTERS } from "../content/encounterCards";
 import { EVENT_CARDS } from "../content/eventCards";
 import { MONSTER_CARDS } from "../content/monsterCards";
@@ -85,7 +85,6 @@ export default function CardsPage() {
             biome:
               card.type === "monster" ? (card.data as any).biome : undefined,
           }}
-          size="l"
         />
       );
     }

@@ -2,7 +2,7 @@ import type { Champion, ResourceType, Tile } from "../lib/types";
 import { getTierSolidColor } from "../lib/uiConstants";
 import { ChampionComponent } from "./Champion";
 import { ClaimFlag } from "./ClaimFlag";
-import { MonsterCard } from "./MonsterCard";
+import { MonsterCard } from "./cards/MonsterCard";
 
 const getTileColor = (tile: Tile): string => {
   if (!tile.explored) {

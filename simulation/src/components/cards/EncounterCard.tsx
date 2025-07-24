@@ -1,5 +1,5 @@
-import type { Encounter } from "../content/encounterCards";
-import { getTierBackgroundColor } from "../lib/uiConstants";
+import type { Encounter } from "../../content/encounterCards";
+import { getTierBackgroundColor } from "../../lib/uiConstants";
 
 interface EncounterCardProps {
   encounter: Encounter;
