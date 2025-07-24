@@ -315,7 +315,7 @@ export default function PrintTiles() {
               {/* Back page */}
               <div className="print-page">
                 <h3>Back Side - Page {pageIndex + 1}</h3>
-                <div className="trios-grid">
+                <div className="trios-grid" style={{ transform: "scaleX(-1)" }}>
                   {backPageTrios.map((trioData, trioIndex) => {
                     // Calculate trio position in 3x2 grid
                     const trioRow = Math.floor(trioIndex / 2);
@@ -375,7 +375,7 @@ export default function PrintTiles() {
         {/* Tier 3 tiles back page */}
         <div className="print-page">
           <h3>Tier 3 Tiles - Back Side</h3>
-          <div className="tier3-grid">
+          <div className="tier3-grid" style={{ transform: "scaleX(-1)" }}>
             {backTier3Tiles.map((tile, index) => (
               <TileComponent
                 key={`tier3-back-${index}`}
