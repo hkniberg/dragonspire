@@ -21,14 +21,14 @@ export const TREASURE_CARDS: TreasureCard[] = [
         tier: 1,
         description: `Choose one:  
 Gain \`+1 ore\`, **OR**  
-Spend \`2 ore\` to gain \`+1 arms\``,
+Spend \`2 ore\` to gain \`+1 might\``,
         count: 2
     },
     {
         id: 'rusty-sword',
         name: 'Rusty sword',
         tier: 1,
-        description: 'Gain `+2 arms`. This **item breaks** after *one fight*.',
+        description: 'Gain `+2 might`. This **item breaks** after *one fight*.',
         count: 2
     },
     {
@@ -38,7 +38,7 @@ Spend \`2 ore\` to gain \`+1 arms\``,
         description: `Roll \`1d3\`:  
 **(1)** The ring is *stuck* and does nothing (can be removed at the **chapel**)  
 **(2)** **Swap** your location with any other player  
-**(3)** Gain *immunity to fire* and \`+3 arms\` when fighting **dragons** and *drakes*`,
+**(3)** Gain *immunity to fire* and \`+3 might\` when fighting **dragons** and *drakes*`,
         count: 1
     },
 
@@ -47,14 +47,14 @@ Spend \`2 ore\` to gain \`+1 arms\``,
         id: 'long-sword',
         name: 'Löng Swörd',
         tier: 2,
-        description: "It's a **löng swörd**. Gain `+2 arms`.",
+        description: "It's a **löng swörd**. Gain `+2 might`.",
         count: 1
     },
     {
         id: 'porcupine',
         name: 'Porcupine',
         tier: 2,
-        description: 'If the opponent has **more arms**, this *shield* grants `+2 arms`.',
+        description: 'If the opponent has **more might**, this *shield* grants `+2 might`.',
         count: 1
     },
     {
@@ -62,8 +62,8 @@ Spend \`2 ore\` to gain \`+1 arms\``,
         name: 'Sword in a stone',
         tier: 2,
         description: `Card stays here until someone **pulls it out**. Roll \`3+D3\`:  
-**(3)** You break off half and gain \`+4 arms\`  
-**(4)** You gain **Cloudslicer** (\`+4\` the *Legendary sword*, \`+2 arms\`)`,
+**(3)** You break off half and gain \`+4 might\`  
+**(4)** You gain **Cloudslicer** (\`+4\` the *Legendary sword*, \`+2 might\`)`,
         count: 1
     }
 ];

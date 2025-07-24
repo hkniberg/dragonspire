@@ -37,7 +37,7 @@ export const EVENT_CARDS: EventCard[] = [
         tier: 1,
         description: `Roll \`1+D3\`:  
 **(1)** They steal \`1 gold\`  
-**(2)** Fight *bandit* \`arms 3\`  
+**(2)** Fight *bandit* \`might 3\`  
 **(3)** You scare them off \`+1 fame\``,
         count: 2
     },
@@ -71,7 +71,7 @@ export const EVENT_CARDS: EventCard[] = [
         id: 'druid-rampage',
         name: 'Druid rampage',
         tier: 2,
-        description: 'A *wild-eyed Druid* hands you a **runed dagger**. `+1 arms`. Once you leave, he turns into a *Bear* `A:5`.',
+        description: 'A *wild-eyed Druid* hands you a **runed dagger**. `+1 might`. Once you leave, he turns into a *Bear* `A:5`.',
         count: 1
     },
     {
@@ -87,7 +87,7 @@ export const EVENT_CARDS: EventCard[] = [
         id: 'curse-of-the-earth',
         name: 'Curse of the earth',
         tier: 3,
-        description: 'All players lose `−2 arms`, as their **weapons** *rust and crumble*.',
+        description: 'All players lose `−2 might`, as their **weapons** *rust and crumble*.',
         count: 1
     },
     {

@@ -42,7 +42,7 @@ export const ENCOUNTERS: Encounter[] = [
         id: 'proud-mercenary',
         name: 'Proud Mercenary',
         tier: 2,
-        description: 'Each **combat** you may pay `3x gold` and gain ten temporary `+2 arms`.',
+        description: 'Each **combat** you may pay `3x gold` and gain ten temporary `+2 might`.',
         follower: true,
         count: 1
     },
@@ -50,7 +50,7 @@ export const ENCOUNTERS: Encounter[] = [
         id: 'brawler',
         name: 'Brawler',
         tier: 2,
-        description: 'Each **combat** you may feed him `3x food` and gain temporary `+2 arms`.',
+        description: 'Each **combat** you may feed him `3x food` and gain temporary `+2 might`.',
         follower: true,
         count: 1
     },
@@ -59,9 +59,9 @@ export const ENCOUNTERS: Encounter[] = [
         name: 'Witch',
         tier: 2,
         description: `Each **combat** you may roll \`1xD3\`:  
-**(1-2)** \`+1 arms\`  
+**(1-2)** \`+1 might\`  
 **(2)** *Run away* for free  
-**(3)** \`+2 arms\``,
+**(3)** \`+2 might\``,
         follower: true,
         count: 1
     }
