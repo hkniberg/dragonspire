@@ -1,4 +1,4 @@
-import type { Champion, Player, ResourceType, Tile } from "../lib/types";
+import type { Champion, ResourceType, Tile } from "../lib/types";
 import { ChampionComponent } from "./Champion";
 import { ClaimFlag } from "./ClaimFlag";
 import { MonsterCard } from "./MonsterCard";
@@ -130,16 +130,12 @@ const getSpecialLocationLabel = (tile: Tile): string => {
 export const TileComponent = ({
   tile,
   champions,
-  currentPlayer,
   debugMode = false,
-  printMode = false,
   getPlayerColor,
 }: {
   tile: Tile;
   champions: Champion[];
-  currentPlayer: Player;
   debugMode?: boolean;
-  printMode?: boolean;
   getPlayerColor: (playerId: number) => {
     main: string;
     light: string;
@@ -162,14 +158,14 @@ export const TileComponent = ({
   const getResourceSymbolStyle = () => {
     return {
       backgroundColor: "#ffffff",
-      border: "1px solid #ccc",
+      border: "1px solid black",
       borderRadius: "4px",
-      width: "24px",
-      height: "24px",
+      width: "32px",
+      height: "32px",
       display: "inline-flex",
       alignItems: "center",
       justifyContent: "center",
-      fontSize: "14px",
+      fontSize: "18px",
       margin: "1px",
     };
   };
@@ -383,7 +379,8 @@ ${
             <div style={getResourceSymbolStyle()}>🌾</div>
             <div style={getResourceSymbolStyle()}>🪵</div>
           </div>
-        ) : specialLabel ? (
+        ) : specialLabel &&
+          !(effectiveTile.tileType === "home" && !tile.explored) ? (
           <>
             {effectiveTile.tileType !== "chapel" &&
               effectiveTile.tileType !== "trader" &&
@@ -415,7 +412,6 @@ ${
               gap: "2px",
               alignItems: "center",
               fontSize: "16px",
-              flexWrap: "wrap",
               justifyContent: "center",
             }}
           >
@@ -463,12 +459,12 @@ ${
       )}
 
       {/* Star indicator for starred tiles */}
-      {effectiveTile.isStarred && (
+      {effectiveTile.isStarred && effectiveTile.explored && (
         <div
           style={{
             position: "absolute",
-            top: "4px",
-            right: "4px",
+            top: "8px",
+            right: "8px",
             fontSize: "16px",
           }}
         >
