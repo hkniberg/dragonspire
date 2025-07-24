@@ -530,12 +530,16 @@ ${
       {effectiveTile.monster && effectiveTile.explored && (
         <MonsterCard
           monster={effectiveTile.monster}
-          size="m"
           style={{
             position: "absolute",
             top: "40%",
             left: "50%",
-            transform: "translate(-50%, -50%)",
+            transform: `translate(-50%, -55%) scale(0.5) rotate(${
+              ((effectiveTile.position.row * 7 +
+                effectiveTile.position.col * 11) %
+                21) -
+              10
+            }deg)`,
             zIndex: 8,
           }}
         />

@@ -2,20 +2,10 @@ import type { Monster } from "../lib/types";
 
 interface MonsterCardProps {
   monster: Monster;
-  size?: "s" | "m" | "l";
   showStats?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
-
-const getSizeConfig = (size: "s" | "m" | "l" = "m") => {
-  const configs = {
-    s: { width: 60, height: 70, imageHeight: 52, fontSize: 8 },
-    m: { width: 75, height: 85, imageHeight: 68, fontSize: 9 },
-    l: { width: 160, height: 190, imageHeight: 155, fontSize: 16 },
-  };
-  return configs[size];
-};
 
 const getTierBackgroundColor = (tier: number | undefined) => {
   switch (tier) {
@@ -55,12 +45,10 @@ const formatResources = (
 
 export const MonsterCard = ({
   monster,
-  size = "m",
   showStats = false,
   className,
   style,
 }: MonsterCardProps) => {
-  const sizeConfig = getSizeConfig(size);
   const tier = "tier" in monster ? monster.tier : undefined;
   const backgroundColor = getTierBackgroundColor(tier);
 
@@ -68,8 +56,8 @@ export const MonsterCard = ({
     <div
       className={className}
       style={{
-        width: `${sizeConfig.width}px`,
-        height: `${sizeConfig.height}px`,
+        width: "160px",
+        height: "190px",
         backgroundColor: "white",
         borderRadius: "6px",
         border: "2px solid #8B0000",
@@ -86,10 +74,8 @@ export const MonsterCard = ({
     >
       <div
         style={{
-          width: `${sizeConfig.width - 8}px`,
-          height: `${
-            showStats ? sizeConfig.imageHeight * 0.65 : sizeConfig.imageHeight
-          }px`,
+          width: "152px",
+          height: `${showStats ? "100px" : "155px"}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -111,7 +97,7 @@ export const MonsterCard = ({
 
       <div
         style={{
-          fontSize: `${sizeConfig.fontSize + 1}px`,
+          fontSize: "17px",
           fontWeight: "bold",
           color: "#333",
           textAlign: "center",
@@ -131,7 +117,7 @@ export const MonsterCard = ({
       {showStats && (
         <div
           style={{
-            fontSize: `${sizeConfig.fontSize - 1}px`,
+            fontSize: "15px",
             textAlign: "center",
             lineHeight: "1.1",
             width: "100%",

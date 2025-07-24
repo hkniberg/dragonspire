@@ -239,6 +239,7 @@ export class BoardBuilder {
             const wolfMonster = getMonsterCardById('wolf');
             if (wolfMonster) {
                 tile.monster = {
+                    id: wolfMonster.id,
                     name: wolfMonster.name,
                     tier: wolfMonster.tier,
                     icon: wolfMonster.icon,
@@ -254,6 +255,7 @@ export class BoardBuilder {
             const banditMonster = getMonsterCardById('bandit');
             if (banditMonster) {
                 tile.monster = {
+                    id: banditMonster.id,
                     name: banditMonster.name,
                     tier: banditMonster.tier,
                     icon: banditMonster.icon,

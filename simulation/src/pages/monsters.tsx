@@ -109,7 +109,7 @@ export default function MonstersPage() {
             {isCardFlipped(index) ? (
               <AdventureCardBackside monster={monster} size="l" />
             ) : (
-              <MonsterCard monster={monster} size="l" showStats={true} />
+              <MonsterCard monster={monster} showStats={true} />
             )}
           </div>
         ))}
