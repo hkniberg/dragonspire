@@ -79,6 +79,7 @@ interface AdventureCardProps {
   bottomTag?: string; // optional tag at bottom
   title?: string; // for tooltip
   contentFontSize?: string; // font size for content text
+  printMode?: boolean; // disable shadows for print
 }
 
 export const AdventureCard = ({
@@ -93,6 +94,7 @@ export const AdventureCard = ({
   bottomTag,
   title,
   contentFontSize = "9px",
+  printMode = false,
 }: AdventureCardProps) => {
   const backgroundColor = getTierBackgroundColor(tier);
 
@@ -110,7 +112,7 @@ export const AdventureCard = ({
           backgroundColor: biome ? "transparent" : backgroundColor,
           borderRadius: "6px",
           border: `2px solid ${borderColor}`,
-          boxShadow: "0 4px 8px rgba(0,0,0,0.4)",
+          boxShadow: printMode ? "none" : "0 4px 8px rgba(0,0,0,0.4)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -166,7 +168,7 @@ export const AdventureCard = ({
               marginTop: "8px",
               position: "relative",
               zIndex: 1,
-              boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+              boxShadow: printMode ? "none" : "0 2px 4px rgba(0,0,0,0.3)",
             }}
           >
             <span
@@ -202,7 +204,7 @@ export const AdventureCard = ({
         backgroundColor: "white",
         borderRadius: "6px",
         border: `2px solid ${borderColor}`,
-        boxShadow: "0 4px 8px rgba(0,0,0,0.4)",
+        boxShadow: printMode ? "none" : "0 4px 8px rgba(0,0,0,0.4)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",

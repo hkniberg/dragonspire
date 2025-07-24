@@ -28,9 +28,27 @@ export default function PrintPage() {
               borderRadius: "4px",
               fontSize: "1.1rem",
               marginRight: "1rem",
+              marginBottom: "1rem",
             }}
           >
             Print Tiles
+          </Link>
+
+          <Link
+            href="/print/cards"
+            style={{
+              display: "inline-block",
+              padding: "1rem 2rem",
+              backgroundColor: "#2196F3",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: "4px",
+              fontSize: "1.1rem",
+              marginRight: "1rem",
+              marginBottom: "1rem",
+            }}
+          >
+            Print Cards
           </Link>
         </div>
 
