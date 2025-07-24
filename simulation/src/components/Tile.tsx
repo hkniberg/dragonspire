@@ -191,7 +191,9 @@ export const TileComponent = ({
             ? "transparent"
             : getTileColor(effectiveTile),
         backgroundImage: effectiveTile.explored
-          ? effectiveTile.tileType === "chapel"
+          ? effectiveTile.tileType === "empty"
+            ? "url(/tiles/empty.png)"
+            : effectiveTile.tileType === "chapel"
             ? "url(/tiles/chapel.png)"
             : effectiveTile.tileType === "trader"
             ? "url(/tiles/trader.png)"

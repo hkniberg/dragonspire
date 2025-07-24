@@ -2,7 +2,7 @@
 
 export type Resource = 'food' | 'wood' | 'ore' | 'gold';
 export type ResourceList = Resource[];
-export type TileDef = 'home' | 'adventure' | 'adventure2' | 'adventure3' | 'doomspire' | 'chapel' | 'trader' | 'mercenary' | 'oasis' | 'oasis2' | ResourceList | Resource;
+export type TileDef = 'home' | 'empty' | 'adventure' | 'adventure2' | 'adventure3' | 'doomspire' | 'chapel' | 'trader' | 'mercenary' | 'oasis' | 'oasis2' | ResourceList | Resource;
 
 // L-shaped tile group.
 export interface TileTrioDef {

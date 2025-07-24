@@ -92,6 +92,10 @@ export function convertTileDefToTile(
                 tile.resources = { food: 0, wood: 0, ore: 0, gold: 1 };
                 break;
 
+            case 'empty':
+                tile.tileType = 'empty';
+                break;
+
             default:
                 throw new Error(`Unknown tile definition: ${tileDef}`);
         }
