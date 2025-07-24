@@ -131,7 +131,6 @@ export const GameBoard = ({
                   champions={gameState.players.flatMap(
                     (player) => player.champions
                   )}
-                  currentPlayer={currentPlayer}
                   debugMode={debugMode}
                   getPlayerColor={getPlayerColor}
                 />
