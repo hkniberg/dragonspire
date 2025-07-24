@@ -1,14 +1,14 @@
 import Head from "next/head";
 import React from "react";
 import { TileComponent } from "../../components/Tile";
-import { convertTileDefToTile, TileColors } from "../../lib/TileConverter";
 import {
   HOME_TILE_TRIOS,
   TIER_1_TRIOS,
   TIER_2_TRIOS,
   TileDef,
   TileTrioDef,
-} from "../../lib/content/tilesDefs";
+} from "../../content/tilesDefs";
+import { convertTileDefToTile, TileColors } from "../../lib/TileConverter";
 import type { Champion, Tile } from "../../lib/types";
 
 const getPlayerColor = (playerId: number) => ({

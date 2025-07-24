@@ -1,4 +1,4 @@
-import { TileTier } from '../types';
+import { TileTier } from '../lib/types';
 
 export interface Encounter {
     name: string;

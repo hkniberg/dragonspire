@@ -1,4 +1,4 @@
-import { BiomeType, TileTier } from '../types';
+import { BiomeType, TileTier } from '../lib/types';
 
 export interface Monster {
     name: string;

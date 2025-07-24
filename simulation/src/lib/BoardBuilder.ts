@@ -1,8 +1,8 @@
 // Lords of Doomspire Board Builder
 
+import { getMonsterByName } from '../content/monsterCards';
+import { HOME_TILE_TRIOS, TIER_1_TRIOS, TIER_2_TRIOS, type TileDef, type TileTrioDef } from '../content/tilesDefs';
 import { Board } from './Board';
-import { getMonsterByName } from './content/monsterCards';
-import { HOME_TILE_TRIOS, TIER_1_TRIOS, TIER_2_TRIOS, type TileDef, type TileTrioDef } from './content/tilesDefs';
 import { convertTileDefToTile, TileColors } from './TileConverter';
 import { calculateTrioPlacement, type Rotation } from './tilePlacementUtils';
 import type {

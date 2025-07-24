@@ -1,7 +1,7 @@
 // Lords of Doomspire Random Map Generator
 
+import { getMonsterByName } from '../content/monsterCards';
 import { Board } from './Board';
-import { getMonsterByName } from './content/monsterCards';
 import type {
     Position,
     ResourceType,

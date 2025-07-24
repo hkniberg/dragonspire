@@ -1,7 +1,7 @@
-import { ENCOUNTERS } from './content/encounterCards';
-import { EVENTS } from './content/eventCards';
-import { MONSTERS } from './content/monsterCards';
-import { TREASURES } from './content/treasureCards';
+import { ENCOUNTERS } from '../content/encounterCards';
+import { EVENTS } from '../content/eventCards';
+import { MONSTERS } from '../content/monsterCards';
+import { TREASURES } from '../content/treasureCards';
 import { BiomeType, TileTier } from './types';
 
 export type CardType = 'monster' | 'event' | 'treasure' | 'encounter' | 'follower';

@@ -1,4 +1,4 @@
-import type { TileDef } from './content/tilesDefs';
+import type { TileDef } from '../content/tilesDefs';
 import type { Position, ResourceType, Tile } from './types';
 
 /**

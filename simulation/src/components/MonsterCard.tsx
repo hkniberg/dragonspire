@@ -1,4 +1,4 @@
-import type { Monster } from "../lib/content/monsterCards";
+import type { Monster } from "../content/monsterCards";
 
 interface MonsterCardProps {
   monster:

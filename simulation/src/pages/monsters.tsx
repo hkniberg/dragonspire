@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { MonsterCard } from "../components/MonsterCard";
-import { MONSTERS } from "../lib/content/monsterCards";
+import { MONSTERS } from "../content/monsterCards";
 
 export default function MonstersPage() {
   const [allFlipped, setAllFlipped] = useState(false);
