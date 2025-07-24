@@ -35,7 +35,7 @@ export default function PrintPage() {
           </Link>
 
           <Link
-            href="/print/cards"
+            href="/print/PrintCards"
             style={{
               display: "inline-block",
               padding: "1rem 2rem",
@@ -49,6 +49,23 @@ export default function PrintPage() {
             }}
           >
             Print Cards
+          </Link>
+
+          <Link
+            href="/print/PrintCardsCompact"
+            style={{
+              display: "inline-block",
+              padding: "1rem 2rem",
+              backgroundColor: "#9C27B0",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: "4px",
+              fontSize: "1.1rem",
+              marginRight: "1rem",
+              marginBottom: "1rem",
+            }}
+          >
+            Print Compact Cards
           </Link>
         </div>
 
