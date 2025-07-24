@@ -84,14 +84,29 @@ export class ActionExecutor {
             };
         }
 
-        const destination = action.path[action.path.length - 1];
+        // Check for unexplored tiles along the path and stop at the first one
+        let actualDestination = action.path[action.path.length - 1];
+        let stoppedAtUnexploredTile = false;
 
-        // Handle champion arrival at destination using the TileArrivalHandler
+        // Skip the starting position (index 0) and check each subsequent position
+        for (let i = 1; i < action.path.length; i++) {
+            const position = action.path[i];
+            const tile = gameState.getTile(position);
+
+            // If the tile is unexplored (explored === false), stop here
+            if (tile && tile.explored === false) {
+                actualDestination = position;
+                stoppedAtUnexploredTile = true;
+                break;
+            }
+        }
+
+        // Handle champion arrival at the actual destination using the TileArrivalHandler
         const arrivalResult = this.tileArrivalHandler.handleChampionArrival(
             gameState,
             action.playerId,
             action.championId,
-            destination,
+            actualDestination,
             { claimTile: action.claimTile, gameDecks }
         );
 
@@ -104,9 +119,21 @@ export class ActionExecutor {
             };
         }
 
+        // Create appropriate summary message
+        let summary = `Moved champion${action.championId} from (${champion.position.row}, ${champion.position.col}) to (${actualDestination.row}, ${actualDestination.col})`;
+
+        if (stoppedAtUnexploredTile) {
+            const originalDestination = action.path[action.path.length - 1];
+            if (actualDestination.row !== originalDestination.row || actualDestination.col !== originalDestination.col) {
+                summary += ` (stopped at unexplored tile instead of intended destination (${originalDestination.row}, ${originalDestination.col}))`;
+            }
+        }
+
+        summary += `. ${arrivalResult.summary}`;
+
         return {
             newGameState: arrivalResult.newGameState,
-            summary: `Moved champion${action.championId} from (${champion.position.row}, ${champion.position.col}) to (${destination.row}, ${destination.col}). ${arrivalResult.summary}`,
+            summary,
             success: true,
             diceValuesUsed: diceValues
         };

@@ -157,6 +157,7 @@ Each action die can be used for ONE of the following:
 
 - Spend an action die to move horizontally or vertically (no diagonal movement), up to the number of steps indicated by the die. You can also move 0 steps if you want to stay in the same tile and interact with it (for example to draw another adventure card).
 - You cannot have multiple champions in the same tile (except when respawning in the home tile).
+- A champion must stop when entering an unexplored tile - you cannot pass through unexplored tiles.
 - If you end your movement in a tile with another champion, battle will ensue, unless it is a non-combat zone (such as the chapel, trader, mercenary camp).
 - A champion cannot enter another player's home tile.
 - You can pass through other champions, but when passing another player's champion, they may choose to initiate combat, in which case your champion is forced to stop and fight and cannot pass through.
