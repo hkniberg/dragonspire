@@ -1,6 +1,7 @@
 // Lords of Doomspire Board Builder
 
 import { Board } from './Board';
+import { getMonsterByName } from './content/monsterCards';
 import { HOME_TILE_TRIOS, TIER_1_TRIOS, TIER_2_TRIOS, type TileDef, type TileTrioDef } from './content/tilesDefs';
 import { convertTileDefToTile, TileColors } from './TileConverter';
 import { calculateTrioPlacement, type Rotation } from './tilePlacementUtils';
@@ -221,10 +222,48 @@ export class BoardBuilder {
             }
 
             const tile = convertTileDefToTile(tileDef, positions[index], explored, backColor, borderColor, groupId);
+
+            // Add monsters to appropriate tiles
+            this.addMonsterToTile(tile, backColor);
+
             board.setTile(tile);
         });
     }
 
+    /**
+     * Adds monsters to tiles based on tier and tile type
+     */
+    private addMonsterToTile(tile: any, backColor: string): void {
+        // For tier 1 zone (light green), place Wolf on starred resource tiles
+        if (backColor === TileColors.tier1Back && tile.tileType === 'resource' && tile.isStarred) {
+            const wolfMonster = getMonsterByName('Wolf');
+            if (wolfMonster) {
+                tile.monster = {
+                    name: wolfMonster.name,
+                    tier: wolfMonster.tier,
+                    icon: wolfMonster.icon,
+                    might: wolfMonster.might,
+                    fame: wolfMonster.fame,
+                    resources: wolfMonster.resources
+                };
+            }
+        }
+
+        // For tier 2 zone (orange), place Bandit on all resource tiles
+        if (backColor === TileColors.tier2Back && tile.tileType === 'resource') {
+            const banditMonster = getMonsterByName('Bandit');
+            if (banditMonster) {
+                tile.monster = {
+                    name: banditMonster.name,
+                    tier: banditMonster.tier,
+                    icon: banditMonster.icon,
+                    might: banditMonster.might,
+                    fame: banditMonster.fame,
+                    resources: banditMonster.resources
+                };
+            }
+        }
+    }
 
 
     /**
