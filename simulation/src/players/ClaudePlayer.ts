@@ -3,6 +3,7 @@
 import { GameStateStringifier } from '@/game/gameStateStringifier';
 import { GameState } from '../game/GameState';
 import { formatActionLogEntry } from '../lib/actionLogFormatter';
+import { decisionSchema, diceActionSchema } from '../lib/claudeSchemas';
 import { templateProcessor, TemplateVariables } from '../lib/templateProcessor';
 import { Claude2 } from '../llm/claude2';
 import {
@@ -40,74 +41,13 @@ export class ClaudePlayer implements Player {
         turnContext: TurnContext
     ): Promise<DiceAction> {
         const playerId = gameState.getCurrentPlayer().id;
-        const dieValue = turnContext.remainingDiceValues[0];
 
         try {
             // Prepare the user message with current context
             const userMessage = await this.prepareDiceActionMessage(gameState, playerId, gameLog, turnContext);
 
-            // Define JSON schema for DiceAction response
-            const responseSchema = {
-                type: "object",
-                properties: {
-                    type: {
-                        type: "string",
-                        enum: ["moveChampion", "moveBoat", "harvest"],
-                        description: "The type of action to perform"
-                    },
-                    playerId: {
-                        type: "number",
-                        description: "The player ID performing the action"
-                    },
-                    championId: {
-                        type: "number",
-                        description: "Champion ID (for moveChampion actions)"
-                    },
-                    path: {
-                        type: "array",
-                        description: "Path for movement actions",
-                        items: {
-                            type: "object",
-                            properties: {
-                                row: { type: "number" },
-                                col: { type: "number" }
-                            },
-                            required: ["row", "col"]
-                        }
-                    },
-                    claimTile: {
-                        type: "boolean",
-                        description: "Whether to claim the destination tile (moveChampion only)"
-                    },
-                    boatId: {
-                        type: "number",
-                        description: "Boat ID (for moveBoat actions)"
-                    },
-                    championDropPosition: {
-                        type: "object",
-                        description: "Where to drop off champion (moveBoat only)",
-                        properties: {
-                            row: { type: "number" },
-                            col: { type: "number" }
-                        }
-                    },
-                    resources: {
-                        type: "object",
-                        description: "Resources to harvest (harvest actions only)",
-                        properties: {
-                            food: { type: "number" },
-                            wood: { type: "number" },
-                            ore: { type: "number" },
-                            gold: { type: "number" }
-                        },
-                        required: ["food", "wood", "ore", "gold"]
-                    }
-                },
-                required: ["type", "playerId"]
-            };
-
             // Get LLM response with structured JSON
-            const response = await this.claude2.useClaude(userMessage, responseSchema);
+            const response = await this.claude2.useClaude(userMessage, diceActionSchema);
 
             // Ensure playerId is correct
             response.playerId = playerId;
@@ -133,14 +73,12 @@ export class ClaudePlayer implements Player {
     ): Promise<Decision> {
         try {
             // Prepare decision context message
-            const userMessage = this.prepareDecisionMessage(gameState, gameLog, decisionContext);
+            const userMessage = await this.prepareDecisionMessage(gameState, gameLog, decisionContext);
 
-            // Get text response for decision
-            const response = await this.claude2.useClaude(userMessage);
+            // Get structured JSON response for decision
+            const response = await this.claude2.useClaude(userMessage, decisionSchema);
 
-            // Parse the response to extract the decision
-            // For now, we'll use simple text parsing. In future, we could use JSON schema too.
-            return this.parseDecisionResponse(response, decisionContext);
+            return response as Decision;
 
         } catch (error) {
             console.error(`${this.name} encountered an error during decision:`, error);
@@ -159,7 +97,7 @@ export class ClaudePlayer implements Player {
     ): Promise<string | undefined> {
         try {
             const playerId = gameState.getCurrentPlayer().id;
-            const userMessage = this.prepareDiaryMessage(gameState, playerId, gameLog);
+            const userMessage = await this.prepareDiaryMessage(gameState, playerId, gameLog);
 
             // Get text response for diary entry
             const diaryEntry = await this.claude2.useClaude(userMessage);
@@ -248,69 +186,48 @@ export class ClaudePlayer implements Player {
             ? ` (${turnContext.remainingDiceValues.length - 1} dice remaining after this one)`
             : ' (last die)';
 
-        return `<player-context>
-You are player ${player.name}.
-</player-context>
+        const variables: TemplateVariables = {
+            playerName: player.name,
+            gameLog: gameLogText,
+            boardState: boardState,
+            diceRolled: turnContext.diceRolled.join(', '),
+            dieValue: dieValue,
+            remainingDiceText: remainingDiceText,
+            extraInstructions: extraInstructionsText
+        };
 
-<game-log>
-${gameLogText}
-</game-log>
-
-<current-board-state>
-${boardState}
-</current-board-state>
-
-<dice-action-request>
-It is your turn as ${player.name}. You have rolled dice: ${turnContext.diceRolled.join(', ')}.
-
-You are now deciding what to do with a die showing ${dieValue}${remainingDiceText}.
-
-Respond with a JSON object specifying your dice action. You can choose from:
-1. moveChampion: Move a champion along a path, optionally claiming the destination tile
-2. moveBoat: Move a boat, optionally transporting a champion  
-3. harvest: Collect resources from your claimed tiles
-
-Make sure your action is legal according to the game rules and the current board state.
-</dice-action-request>${extraInstructionsText}`;
+        return await templateProcessor.processTemplate('diceAction', variables);
     }
 
-    private prepareDecisionMessage(
+    private async prepareDecisionMessage(
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
         decisionContext: DecisionContext
-    ): string {
+    ): Promise<string> {
         const player = gameState.getCurrentPlayer();
         const gameLogText = this.formatGameLogForPrompt(gameLog);
         const boardState = GameStateStringifier.stringify(gameState);
 
-        return `<player-context>
-You are player ${player.name}.
-</player-context>
+        const optionsText = decisionContext.options.map((option, i) =>
+            `${i + 1}. ${JSON.stringify(option)}`
+        ).join('\n');
 
-<current-situation>
-${decisionContext.description}
+        const variables: TemplateVariables = {
+            playerName: player.name,
+            description: decisionContext.description,
+            options: optionsText,
+            boardState: boardState,
+            gameLog: gameLogText
+        };
 
-Available options:
-${decisionContext.options.map((option, i) => `${i + 1}. ${JSON.stringify(option)}`).join('\n')}
-</current-situation>
-
-<current-board-state>
-${boardState}
-</current-board-state>
-
-<game-log>
-${gameLogText}
-</game-log>
-
-Please choose one of the available options and explain your reasoning briefly.
-Respond with your choice clearly indicated.`;
+        return await templateProcessor.processTemplate('makeDecision', variables);
     }
 
-    private prepareDiaryMessage(
+    private async prepareDiaryMessage(
         gameState: GameState,
         playerId: number,
         gameLog: readonly GameLogEntry[]
-    ): string {
+    ): Promise<string> {
         const player = gameState.getPlayerById(playerId);
         if (!player) {
             throw new Error(`Player with ID ${playerId} not found`);
@@ -319,23 +236,13 @@ Respond with your choice clearly indicated.`;
         const boardState = GameStateStringifier.stringify(gameState);
         const gameLogText = this.formatGameLogForPrompt(gameLog);
 
-        return `<player-context>
-You are player ${player.name}.
-</player-context>
+        const variables: TemplateVariables = {
+            playerName: player.name,
+            boardState: boardState,
+            gameLog: gameLogText
+        };
 
-<current-board-state>
-${boardState}
-</current-board-state>
-
-<game-log>
-${gameLogText}
-</game-log>
-
-<diary-request>
-Write a brief diary entry reflecting on the current situation, your strategy, and your plans.
-This will help you maintain strategic focus across turns.
-Keep it concise (1-2 sentences maximum).
-</diary-request>`;
+        return await templateProcessor.processTemplate('diaryEntry', variables);
     }
 
     private formatGameLogForPrompt(gameLog: readonly GameLogEntry[]): string {
@@ -362,38 +269,6 @@ Keep it concise (1-2 sentences maximum).
             });
 
         return formattedRounds.join('\n\n');
-    }
-
-    private parseDecisionResponse(response: string, decisionContext: DecisionContext): Decision {
-        // Simple parsing for now - look for option numbers or specific choices
-        const lowerResponse = response.toLowerCase();
-
-        // Try to find "option 1", "option 2", etc.
-        for (let i = 0; i < decisionContext.options.length; i++) {
-            if (lowerResponse.includes(`option ${i + 1}`) || lowerResponse.includes(`choice ${i + 1}`)) {
-                return {
-                    choice: decisionContext.options[i],
-                    reasoning: response.trim()
-                };
-            }
-        }
-
-        // Try to match option content directly
-        for (let i = 0; i < decisionContext.options.length; i++) {
-            const optionStr = JSON.stringify(decisionContext.options[i]).toLowerCase();
-            if (lowerResponse.includes(optionStr)) {
-                return {
-                    choice: decisionContext.options[i],
-                    reasoning: response.trim()
-                };
-            }
-        }
-
-        // Fallback to first option
-        return {
-            choice: decisionContext.options.length > 0 ? decisionContext.options[0] : null,
-            reasoning: `Could not parse decision, chose first option. Response: ${response.trim()}`
-        };
     }
 
     // Legacy helper methods for backwards compatibility
