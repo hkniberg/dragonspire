@@ -175,16 +175,18 @@ Each action die can be used for ONE of the following:
 ### Action: Harvest Resources
 
 - Spend an action die to collect resources from tiles you own (tiles with your flag on it).
-- Die value = total resources you can collect
-- You can collect from multiple tiles, up to the amount printed on each tile.
-- You can't harvest from tiles that you claimed during this turn - it takes one turn for a newly claimed tile to start producing resources.
+- Die value = number of different resource tiles you can harvest from
+- When you harvest from a tile, you receive ALL the resources that tile produces.
 - If an opposing champion is on one of your tiles, you cannot harvest from it.
-- Your starting home tile is a special resource tile. It can always provide a wood OR a food, but not both, and it can't be blockaded or conquered by another champion. It is permanently claimed by you from the start of the game.
+- If you are blockading another player's tile, that tile is available for you to harvest from.
+- Your starting home tile is a special resource tile that provides 1 wood and 1 food when harvested. It can't be blockaded or conquered by another champion. It is permanently claimed by you from the start of the game.
 
 **Examples**:
 
-- Player 1 owns a 1x food tile and a 2x gold tile. They roll a 2 and use that die to harvest. So they can either harvest 1 food and 1 gold, or 2 gold.
-- Player 1 owns a 1x wood tile and a 1x ore tile. They roll a 3 and use that die to harvest. They can harvest 1 wood and 1 ore, but no more, since you can't harvest more than the tile's value.
+- Player 1 owns a 1x food tile and a 2x gold tile. They roll a 2 and use that die to harvest. They can choose to harvest from both tiles, gaining 1 food and 2 gold.
+- Player 1 owns a 1x wood tile, a 1x ore tile, and a 3x gold tile. They roll a 2 and use that die to harvest. They can choose any 2 of their tiles to harvest from - for example, they might choose the wood tile (gaining 1 wood) and the gold tile (gaining 3 gold).
+- Player 1 rolls a 1 and chooses to harvest from their 2x gold tile. They receive 2 gold (the full amount the tile produces).
+- Player 1 rolls a 2 and chooses to harvest from their home tile and a 1x ore tile. They receive 1 wood, 1 food, and 1 ore.
 
 ### Action: Build & Recruit
 
