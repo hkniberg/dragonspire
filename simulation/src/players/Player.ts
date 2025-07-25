@@ -1,7 +1,7 @@
 // Lords of Doomspire Player Interface
 
 import { GameState } from "../game/GameState";
-import { GameAction } from "../lib/types";
+import { GameAction } from "../lib/actionTypes";
 
 export type PlayerType = "random" | "claude" | "human";
 

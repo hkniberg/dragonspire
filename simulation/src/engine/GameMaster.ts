@@ -1,10 +1,14 @@
 // Lords of Doomspire Game Master
 
 import { GameState, rollMultipleD3 } from "../game/GameState";
+import { GameAction } from "../lib/actionTypes";
 import { CARDS, GameDecks } from "../lib/cards";
-import { GameAction } from "../lib/types";
 import { ActionResult, DecisionContext, GameLogEntry, Player, TurnContext } from "../players/Player";
-import { ActionExecutor } from "./ActionExecutor";
+import { checkVictory } from "./actions/checkVictory";
+import { executeHarvest } from "./actions/executeHarvest";
+import { executeBoatMove, executeChampionMove } from "./actions/executeMove";
+import { CombatResolver } from "./CombatResolver";
+import { TileArrivalHandler } from "./TileArrivalHandler";
 
 export type GameMasterState = "setup" | "playing" | "finished";
 
@@ -21,7 +25,7 @@ export class GameMaster {
   private maxRounds: number;
   private gameLog: GameLogEntry[];
   private gameDecks: GameDecks;
-  private actionExecutor: ActionExecutor;
+  private tileArrivalHandler: TileArrivalHandler;
 
   constructor(config: GameMasterConfig) {
     // Create GameState with the correct player names from the start
@@ -32,7 +36,7 @@ export class GameMaster {
     this.maxRounds = config.maxRounds || 100; // Default limit to prevent infinite games
     this.gameLog = [];
     this.gameDecks = new GameDecks(CARDS);
-    this.actionExecutor = new ActionExecutor();
+    this.tileArrivalHandler = new TileArrivalHandler(new CombatResolver());
   }
 
   /**
@@ -123,13 +127,8 @@ export class GameMaster {
 
         console.log(`Die ${dieValue}: ${this.actionToString(diceAction)}`);
 
-        // Execute the action using ActionExecutor
-        const result = await this.executeActionWithDecisionHandling(
-          currentState,
-          diceAction,
-          [dieValue],
-          currentPlayer,
-        );
+        // Execute the action
+        const result = await this.executeAction(currentState, diceAction, playerId, [dieValue], currentPlayer);
 
         // Log the action and result
         this.addLogEntry({
@@ -159,7 +158,7 @@ export class GameMaster {
     this.gameState = currentState;
 
     // Step 4: Check for victory conditions
-    const victoryCheck = this.actionExecutor.checkVictory(this.gameState);
+    const victoryCheck = checkVictory(this.gameState);
     if (victoryCheck.won) {
       this.endGame(victoryCheck.playerId, victoryCheck.condition);
       return;
@@ -179,15 +178,166 @@ export class GameMaster {
   /**
    * Execute an action and handle any runtime decisions that arise
    */
-  private async executeActionWithDecisionHandling(
+  private async executeAction(
     gameState: GameState,
     action: GameAction,
+    playerId: number,
     diceValues: number[],
     currentPlayer: Player,
   ): Promise<ActionResult> {
-    // For now, use the existing ActionExecutor directly
-    // In the future, we'll integrate decision handling here
-    return await this.actionExecutor.executeAction(gameState, action, diceValues, this.gameDecks, currentPlayer);
+    try {
+      switch (action.type) {
+        case "moveChampion":
+          return await this.executeMoveChampion(gameState, action, playerId, diceValues, currentPlayer);
+        case "moveBoat":
+          return await this.executeMoveBoat(gameState, action, playerId, diceValues, currentPlayer);
+        case "harvest":
+          return this.executeHarvestAction(gameState, action, playerId, diceValues);
+        default:
+          return {
+            newGameState: gameState,
+            summary: `Unknown action type: ${(action as any).type}`,
+            success: false,
+            diceValuesUsed: diceValues,
+          };
+      }
+    } catch (error) {
+      return {
+        newGameState: gameState,
+        summary: `Error executing action: ${error instanceof Error ? error.message : "Unknown error"}`,
+        success: false,
+        diceValuesUsed: diceValues,
+      };
+    }
+  }
+
+  private async executeMoveChampion(
+    gameState: GameState,
+    action: GameAction & { type: "moveChampion" },
+    playerId: number,
+    diceValues: number[],
+    currentPlayer: Player,
+  ): Promise<ActionResult> {
+    // Execute the movement
+    const moveResult = await executeChampionMove(gameState, action, playerId, diceValues);
+
+    if (!moveResult.success) {
+      return {
+        newGameState: gameState,
+        summary: moveResult.errorMessage!,
+        success: false,
+        diceValuesUsed: diceValues,
+      };
+    }
+
+    let updatedGameState = moveResult.gameState;
+    const actualDestination = moveResult.actualDestination;
+    const champion = gameState.getChampionById(playerId, action.championId);
+
+    // Handle tile arrival and interactions
+    const arrivalResult = await this.tileArrivalHandler.handleChampionArrival(
+      updatedGameState,
+      playerId,
+      action.championId,
+      actualDestination,
+      { claimTile: action.claimTile, gameDecks: this.gameDecks, currentPlayer },
+    );
+
+    if (!arrivalResult.success) {
+      return {
+        newGameState: gameState,
+        summary: arrivalResult.summary,
+        success: false,
+        diceValuesUsed: diceValues,
+      };
+    }
+
+    // Create appropriate summary message
+    let summary = `Moved champion${action.championId} from (${champion!.position.row}, ${champion!.position.col}) to (${actualDestination.row}, ${actualDestination.col})`;
+
+    // Check if movement was stopped by unexplored tile
+    const originalDestination = action.path[action.path.length - 1];
+    if (actualDestination.row !== originalDestination.row || actualDestination.col !== originalDestination.col) {
+      summary += ` (stopped at unexplored tile instead of intended destination (${originalDestination.row}, ${originalDestination.col}))`;
+    }
+
+    summary += `. ${arrivalResult.summary}`;
+
+    return {
+      newGameState: arrivalResult.newGameState,
+      summary,
+      success: true,
+      diceValuesUsed: diceValues,
+    };
+  }
+
+  private async executeMoveBoat(
+    gameState: GameState,
+    action: GameAction & { type: "moveBoat" },
+    playerId: number,
+    diceValues: number[],
+    currentPlayer: Player,
+  ): Promise<ActionResult> {
+    const moveResult = await executeBoatMove(gameState, action, playerId, diceValues);
+
+    if (!moveResult.success) {
+      return {
+        newGameState: gameState,
+        summary: moveResult.errorMessage!,
+        success: false,
+        diceValuesUsed: diceValues,
+      };
+    }
+
+    let updatedGameState = moveResult.gameState;
+    const destination = action.path[action.path.length - 1];
+    let summary = `Moved boat${action.boatId} to ${destination}`;
+
+    // Handle champion transport and tile interaction
+    if (action.championId && action.championDropPosition) {
+      const arrivalResult = await this.tileArrivalHandler.handleChampionArrival(
+        updatedGameState,
+        playerId,
+        action.championId,
+        action.championDropPosition,
+        { gameDecks: this.gameDecks, currentPlayer },
+      );
+
+      if (!arrivalResult.success) {
+        return {
+          newGameState: gameState,
+          summary: `${summary}, but champion transport failed: ${arrivalResult.summary}`,
+          success: false,
+          diceValuesUsed: diceValues,
+        };
+      }
+
+      updatedGameState = arrivalResult.newGameState;
+      summary += ` and transported champion${action.championId} to (${action.championDropPosition.row}, ${action.championDropPosition.col}). ${arrivalResult.summary}`;
+    }
+
+    return {
+      newGameState: updatedGameState,
+      summary,
+      success: true,
+      diceValuesUsed: diceValues,
+    };
+  }
+
+  private executeHarvestAction(
+    gameState: GameState,
+    action: GameAction & { type: "harvest" },
+    playerId: number,
+    diceValues: number[],
+  ): ActionResult {
+    const harvestResult = executeHarvest(gameState, action, playerId, diceValues);
+
+    return {
+      newGameState: harvestResult.gameState,
+      summary: harvestResult.summary,
+      success: harvestResult.success,
+      diceValuesUsed: diceValues,
+    };
   }
 
   /**

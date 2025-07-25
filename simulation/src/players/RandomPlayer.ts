@@ -64,7 +64,6 @@ export class RandomPlayer implements Player {
     // Last resort: minimal harvest action
     return {
       type: "harvest",
-      playerId: playerId,
       resources: { food: 0, wood: 0, ore: 0, gold: 0 },
     };
   }
@@ -131,7 +130,6 @@ export class RandomPlayer implements Player {
 
     return {
       type: "moveChampion",
-      playerId: playerId,
       championId: champion.id,
       path: selectedPath,
       claimTile: shouldClaimTile,
@@ -173,7 +171,6 @@ export class RandomPlayer implements Player {
 
     return {
       type: "harvest",
-      playerId: playerId,
       resources: harvestResources,
     };
   }

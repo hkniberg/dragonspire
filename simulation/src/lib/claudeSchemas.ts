@@ -1,27 +1,19 @@
 // Claude AI JSON Schemas for Lords of Doomspire
 
 /**
- * Schema for dice action responses from Claude
+ * Schema for moveChampion action parameters
  */
-export const diceActionSchema = {
+export const moveChampionSchema = {
   type: "object",
+  description: "Parameters for moveChampion action",
   properties: {
-    type: {
-      type: "string",
-      enum: ["moveChampion", "moveBoat", "harvest"],
-      description: "The type of action to perform",
-    },
-    playerId: {
-      type: "number",
-      description: "The player ID performing the action",
-    },
     championId: {
       type: "number",
-      description: "Champion ID (for moveChampion actions)",
+      description: "Champion ID being moved",
     },
     path: {
       type: "array",
-      description: "Path for movement actions",
+      description: "Path for movement, including the starting position",
       items: {
         type: "object",
         properties: {
@@ -33,23 +25,57 @@ export const diceActionSchema = {
     },
     claimTile: {
       type: "boolean",
-      description: "Whether to claim the destination tile (moveChampion only)",
+      description: "Whether to claim the destination tile",
     },
+  },
+  required: ["championId", "path"],
+};
+
+/**
+ * Schema for moveBoat action parameters
+ */
+export const moveBoatSchema = {
+  type: "object",
+  description: "Parameters for moveBoat action",
+  properties: {
     boatId: {
       type: "number",
-      description: "Boat ID (for moveBoat actions)",
+      description: "Boat ID",
+    },
+    path: {
+      type: "array",
+      description: "Ocean path as array of strings",
+      items: {
+        type: "string",
+      },
+    },
+    championId: {
+      type: "number",
+      description: "Optional champion being picked up",
     },
     championDropPosition: {
       type: "object",
-      description: "Where to drop off champion (moveBoat only)",
+      description: "Where to drop off champion",
       properties: {
         row: { type: "number" },
         col: { type: "number" },
       },
+      required: ["row", "col"],
     },
+  },
+  required: ["boatId", "path"],
+};
+
+/**
+ * Schema for harvest action parameters
+ */
+export const harvestSchema = {
+  type: "object",
+  description: "Parameters for harvest action",
+  properties: {
     resources: {
       type: "object",
-      description: "Resources to harvest (harvest actions only)",
+      description: "Resources to harvest",
       properties: {
         food: { type: "number" },
         wood: { type: "number" },
@@ -58,12 +84,30 @@ export const diceActionSchema = {
       },
       required: ["food", "wood", "ore", "gold"],
     },
+  },
+  required: ["resources"],
+};
+
+/**
+ * Schema for dice action responses from Claude using nested structure
+ */
+export const diceActionSchema = {
+  type: "object",
+  properties: {
+    type: {
+      type: "string",
+      enum: ["moveChampion", "moveBoat", "harvest"],
+      description: "The type of action to perform",
+    },
+    moveChampion: moveChampionSchema,
+    moveBoat: moveBoatSchema,
+    harvest: harvestSchema,
     reasoning: {
       type: "string",
       description: "Brief explanation of why this action was chosen",
     },
   },
-  required: ["type", "playerId", "reasoning"],
+  required: ["type", "reasoning"],
 };
 
 /**
