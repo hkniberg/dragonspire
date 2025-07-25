@@ -5,13 +5,13 @@ export const ChampionComponent = ({
   getPlayerColor,
 }: {
   champion: Champion;
-  getPlayerColor: (playerId: number) => {
+  getPlayerColor: (playerName: string) => {
     main: string;
     light: string;
     dark: string;
   };
 }) => {
-  const playerColors = getPlayerColor(champion.playerId);
+  const playerColors = getPlayerColor(champion.playerName);
 
   return (
     <div
@@ -30,7 +30,7 @@ export const ChampionComponent = ({
         boxShadow: "0 3px 6px rgba(0,0,0,0.4)",
         position: "relative",
       }}
-      title={`Champion ${champion.id} (Player ${champion.playerId})`}
+      title={`Champion ${champion.id} (${champion.playerName})`}
     >
       <img
         src="/knights/knight.png"

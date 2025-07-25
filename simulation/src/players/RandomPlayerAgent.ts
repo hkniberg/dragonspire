@@ -1,11 +1,12 @@
 // Lords of Doomspire Random Player
 
+import { DiceAction } from "@/lib/actionTypes";
+import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
-import { ResourceType } from "../lib/types";
-import { Decision, DecisionContext, DiceAction, GameLogEntry, Player, PlayerType, TurnContext } from "./Player";
+import { PlayerAgent } from "./PlayerAgent";
 import { generateAllPaths, getHarvestableResourcesInfo, getReachableTiles } from "./PlayerUtils";
 
-export class RandomPlayer implements Player {
+export class RandomPlayerAgent implements PlayerAgent {
   private name: string;
 
   constructor(name: string = "Random Player") {
@@ -34,7 +35,7 @@ export class RandomPlayer implements Player {
     gameLog: readonly GameLogEntry[],
     turnContext: TurnContext,
   ): Promise<DiceAction> {
-    const playerId = gameState.getCurrentPlayer().id;
+    const playerName = gameState.getCurrentPlayer().name;
 
     // Use the first remaining die value
     const dieValue = turnContext.remainingDiceValues[0];
@@ -43,20 +44,20 @@ export class RandomPlayer implements Player {
     const shouldHarvest = Math.random() < 0.2 && turnContext.remainingDiceValues.length < turnContext.diceRolled.length;
 
     if (shouldHarvest) {
-      const harvestAction = this.generateRandomHarvestAction(gameState, playerId, dieValue);
+      const harvestAction = this.generateRandomHarvestAction(gameState, playerName, dieValue);
       if (harvestAction) {
         return harvestAction;
       }
     }
 
     // Default to champion movement
-    const moveAction = this.generateRandomChampionMoveAction(gameState, playerId, dieValue);
+    const moveAction = this.generateRandomChampionMoveAction(gameState, playerName, dieValue);
     if (moveAction) {
       return moveAction;
     }
 
     // Fallback to harvest if movement failed
-    const harvestAction = this.generateRandomHarvestAction(gameState, playerId, dieValue);
+    const harvestAction = this.generateRandomHarvestAction(gameState, playerName, dieValue);
     if (harvestAction) {
       return harvestAction;
     }
@@ -64,7 +65,10 @@ export class RandomPlayer implements Player {
     // Last resort: minimal harvest action
     return {
       type: "harvest",
-      resources: { food: 0, wood: 0, ore: 0, gold: 0 },
+      diceValueUsed: dieValue,
+      harvest: {
+        tilePositions: [], // Empty harvest
+      },
     };
   }
 
@@ -89,10 +93,10 @@ export class RandomPlayer implements Player {
 
   private generateRandomChampionMoveAction(
     gameState: GameState,
-    playerId: number,
+    playerName: string,
     dieValue: number,
   ): DiceAction | null {
-    const player = gameState.getPlayerById(playerId);
+    const player = gameState.getPlayer(playerName);
     if (!player || player.champions.length === 0) {
       return null;
     }
@@ -102,7 +106,7 @@ export class RandomPlayer implements Player {
     const champion = player.champions[randomChampionIndex];
 
     // Get all reachable tiles within movement range, excluding tiles with other champions
-    const reachableTiles = getReachableTiles(gameState, champion.position, dieValue, champion.id, playerId);
+    const reachableTiles = getReachableTiles(gameState, champion.position, dieValue, champion.id, playerName);
 
     if (reachableTiles.length === 0) {
       return null;
@@ -113,7 +117,7 @@ export class RandomPlayer implements Player {
     const targetTile = reachableTiles[randomTileIndex];
 
     // Generate all possible paths to the target tile
-    const allPaths = generateAllPaths(gameState, champion.position, targetTile, dieValue, champion.id, playerId);
+    const allPaths = generateAllPaths(gameState, champion.position, targetTile, dieValue, champion.id, playerName);
 
     if (allPaths.length === 0) {
       return null;
@@ -123,27 +127,25 @@ export class RandomPlayer implements Player {
     const randomPathIndex = Math.floor(Math.random() * allPaths.length);
     const selectedPath = allPaths[randomPathIndex];
 
-    // Check if we should claim the destination tile
-    const destinationTile = gameState.getTile(targetTile);
-    const shouldClaimTile =
-      destinationTile && destinationTile.tileType === "resource" && destinationTile.claimedBy === undefined;
-
     return {
       type: "moveChampion",
-      championId: champion.id,
-      path: selectedPath,
-      claimTile: shouldClaimTile,
+      diceValueUsed: dieValue,
+      moveChampion: {
+        championId: champion.id,
+        pathIncludingStartPosition: selectedPath,
+        claimTile: false,
+      },
     };
   }
 
-  private generateRandomHarvestAction(gameState: GameState, playerId: number, dieValue: number): DiceAction | null {
-    const player = gameState.getPlayerById(playerId);
+  private generateRandomHarvestAction(gameState: GameState, playerName: string, dieValue: number): DiceAction | null {
+    const player = gameState.getPlayer(playerName);
     if (!player) {
       return null;
     }
 
     // Get detailed information about harvestable resources, taking blockading into account
-    const harvestInfo = getHarvestableResourcesInfo(gameState, playerId);
+    const harvestInfo = getHarvestableResourcesInfo(gameState, playerName);
 
     // Check if there are any harvestable resources
     const totalHarvestable =
@@ -155,23 +157,23 @@ export class RandomPlayer implements Player {
       return null;
     }
 
-    // Pick a random resource type that has available resources
-    const resourceTypes: ResourceType[] = ["food", "wood", "ore", "gold"];
-    const availableTypes = resourceTypes.filter((type) => harvestInfo.totalHarvestableResources[type] > 0);
+    // Collect all harvestable tile positions
+    const harvestableTiles = [
+      ...harvestInfo.ownedNonBlockedTiles,
+      ...harvestInfo.blockadedOpponentTiles,
+    ];
 
-    if (availableTypes.length === 0) {
+    if (harvestableTiles.length === 0) {
       return null;
     }
 
-    const randomResourceType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
-    const harvestAmount = Math.min(dieValue, harvestInfo.totalHarvestableResources[randomResourceType]);
-
-    const harvestResources: Record<ResourceType, number> = { food: 0, wood: 0, ore: 0, gold: 0 };
-    harvestResources[randomResourceType] = harvestAmount;
-
+    // Harvest from all available tiles
     return {
       type: "harvest",
-      resources: harvestResources,
+      diceValueUsed: dieValue,
+      harvest: {
+        tilePositions: harvestableTiles.map((tile) => tile.position),
+      },
     };
   }
 }

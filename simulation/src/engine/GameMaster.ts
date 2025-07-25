@@ -1,42 +1,45 @@
 // Lords of Doomspire Game Master
 
-import { GameState, rollMultipleD3 } from "../game/GameState";
-import { GameAction } from "../lib/actionTypes";
+import { HarvestAction, MoveBoatAction, MoveChampionAction } from "@/lib/actionTypes";
+import { GameLogEntry, GameLogEntryType, NON_COMBAT_TILES, Player, Tile, TurnContext } from "@/lib/types";
+import { formatPosition, formatResources } from "@/lib/utils";
+import { GameState } from "../game/GameState";
 import { CARDS, GameDecks } from "../lib/cards";
-import { ActionResult, DecisionContext, GameLogEntry, Player, TurnContext } from "../players/Player";
-import { checkVictory } from "./actions/checkVictory";
-import { executeHarvest } from "./actions/executeHarvest";
-import { executeBoatMove, executeChampionMove } from "./actions/executeMove";
-import { CombatResolver } from "./CombatResolver";
-import { TileArrivalHandler } from "./TileArrivalHandler";
+import { GameSettings } from "../lib/GameSettings";
+import { PlayerAgent } from "../players/PlayerAgent";
+import { resolveChampionBattle, resolveDragonBattle, resolveMonsterBattle } from "./actions/battleCalculator";
+import { calculateHarvest } from "./actions/harvestCalculator";
+import { calculateBoatMove, calculateChampionMove } from "./actions/moveCalculator";
+import { checkVictory } from "./actions/victoryChecker";
+import { DiceRoller, RandomDiceRoller } from "./DiceRoller";
 
 export type GameMasterState = "setup" | "playing" | "finished";
 
 export interface GameMasterConfig {
-  players: Player[];
+  players: PlayerAgent[];
   maxRounds?: number; // Optional limit for testing
   startingValues?: { fame?: number; might?: number }; // Optional starting fame and might
 }
 
 export class GameMaster {
+  private diceRoller: DiceRoller;
   private gameState: GameState;
-  private players: Player[];
+  private playerAgents: PlayerAgent[];
   private masterState: GameMasterState;
   private maxRounds: number;
   private gameLog: GameLogEntry[];
   private gameDecks: GameDecks;
-  private tileArrivalHandler: TileArrivalHandler;
 
   constructor(config: GameMasterConfig) {
     // Create GameState with the correct player names from the start
+    this.diceRoller = new RandomDiceRoller();
     const playerNames = config.players.map((player) => player.getName());
     this.gameState = GameState.createWithPlayerNames(playerNames, config.startingValues);
-    this.players = config.players;
+    this.playerAgents = config.players;
     this.masterState = "setup";
     this.maxRounds = config.maxRounds || 100; // Default limit to prevent infinite games
     this.gameLog = [];
     this.gameDecks = new GameDecks(CARDS);
-    this.tileArrivalHandler = new TileArrivalHandler(new CombatResolver());
   }
 
   /**
@@ -48,19 +51,10 @@ export class GameMaster {
     }
 
     console.log("=== Lords of Doomspire Game Session Starting ===");
-    console.log(`Players: ${this.players.map((p) => p.getName()).join(", ")}`);
+    console.log(`Players: ${this.playerAgents.map((p) => p.getName()).join(", ")}`);
     console.log("================================================");
 
     this.masterState = "playing";
-
-    // Add initial system log entry
-    this.addLogEntry({
-      round: 0,
-      playerId: -1,
-      playerName: "System",
-      type: "system",
-      content: `Game started with players: ${this.players.map((p) => p.getName()).join(", ")}`,
-    });
   }
 
   /**
@@ -71,97 +65,72 @@ export class GameMaster {
       throw new Error(`Cannot execute turn: session is in state ${this.masterState}`);
     }
 
-    const currentPlayer = this.players[this.gameState.currentPlayerIndex];
-    const playerId = this.gameState.getCurrentPlayer().id;
+    const currentPlayerAgent = this.playerAgents[this.gameState.currentPlayerIndex];
+    const playerId = this.gameState.currentPlayerIndex; // Use index as player ID
 
-    console.log(`\n--- ${currentPlayer.getName()}'s Turn (Round ${this.gameState.currentRound}) ---`);
+    console.log(`\n--- ${currentPlayerAgent.getName()}'s Turn (Round ${this.gameState.currentRound}) ---`);
 
     // Step 1: Roll dice for player
-    const additionalChampions = this.gameState.getCurrentPlayer().champions.length - 1;
-    const diceCount = 2 + additionalChampions;
-    const diceRolls = rollMultipleD3(diceCount);
+    const currentPlayer = this.gameState.getCurrentPlayer();
+    const championCount = currentPlayer.champions.length;
+    const diceCount = 1 + championCount;
+    const diceRolls = this.diceRoller.rollMultipleD3(diceCount);
 
-    console.log(`${currentPlayer.getName()} rolled: ${diceRolls.join(", ")}`);
-    this.addLogEntry({
-      round: this.gameState.currentRound,
-      playerId: playerId,
-      playerName: currentPlayer.getName(),
-      type: "system",
-      content: `Rolled dice: ${diceRolls.join(", ")}`,
-    });
+    this.addGameLogEntry("dice", `Rolled dice: ${diceRolls.join(", ")}`);
 
     // Step 2: Ask player for strategic assessment (strategic reflection) - now with dice context
-    try {
-      const strategicAssessment = await currentPlayer.makeStrategicAssessment(this.gameState, this.gameLog, diceRolls);
-      if (strategicAssessment) {
-        console.log(`${currentPlayer.getName()}'s assessment: ${strategicAssessment}`);
-        this.addLogEntry({
-          round: this.gameState.currentRound,
-          playerId: playerId,
-          playerName: currentPlayer.getName(),
-          type: "assessment",
-          content: strategicAssessment,
-        });
-      }
-    } catch (error) {
-      console.error(`Error getting strategic assessment from ${currentPlayer.getName()}:`, error);
+    const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRolls);
+    if (strategicAssessment) {
+      this.addGameLogEntry("assessment", strategicAssessment);
     }
 
-    // Step 3: For each die, ask player to decide action and execute it
+    // Step 3: Ask the player to execute actions until they run out of dice.
     let remainingDice = [...diceRolls];
     let currentState = this.gameState;
 
-    for (let dieIndex = 0; dieIndex < diceRolls.length; dieIndex++) {
-      const dieValue = diceRolls[dieIndex];
+    while (remainingDice.length > 0) {
+      // Create turn context for this die
+      const turnContext: TurnContext = {
+        turnNumber: this.gameState.currentRound,
+        diceRolled: diceRolls,
+        remainingDiceValues: remainingDice,
+      };
 
-      try {
-        // Create turn context for this die
-        const turnContext: TurnContext = {
-          turnNumber: this.gameState.currentRound,
-          diceRolled: diceRolls,
-          remainingDiceValues: remainingDice,
-        };
+      // Ask player decide on a dice action
+      const diceAction = await currentPlayerAgent.decideDiceAction(currentState, this.gameLog, turnContext);
+      const diceValueUsed = diceAction.diceValueUsed;
 
-        // Ask player what they want to do with this die
-        const diceAction = await currentPlayer.decideDiceAction(currentState, this.gameLog, turnContext);
-
-        console.log(`Die ${dieValue}: ${this.actionToString(diceAction)}`);
-
-        // Execute the action
-        const result = await this.executeAction(currentState, diceAction, playerId, [dieValue], currentPlayer);
-
-        // Log the action and result
-        this.addLogEntry({
-          round: this.gameState.currentRound,
-          playerId: playerId,
-          playerName: currentPlayer.getName(),
-          type: this.getActionType(diceAction),
-          content: result.summary,
-        });
-
-        if (result.success) {
-          currentState = result.newGameState;
-          console.log(`✓ ${result.summary}`);
-        } else {
-          console.log(`✗ ${result.summary}`);
-        }
-
-        // Remove this die from remaining dice
-        remainingDice = remainingDice.slice(1);
-      } catch (error) {
-        console.error(`Error during ${currentPlayer.getName()}'s dice action ${dieIndex + 1}:`, error);
-        remainingDice = remainingDice.slice(1);
+      // Remove the first occurrence of the used dice value from remainingDice. If not present, throw error.
+      const diceIndex = remainingDice.findIndex(v => v === diceValueUsed);
+      if (diceIndex === -1) {
+        throw new Error(
+          `Dice value ${diceValueUsed} not found in remaining dice [${remainingDice.join(", ")}]`
+        );
       }
-    }
+      remainingDice.splice(diceIndex, 1);
 
-    // Update game state to final state after all actions
-    this.gameState = currentState;
+      // Execute the action
+      const actionType = diceAction.type;
+      if (actionType == "moveChampion") {
+        const moveChampionAction = diceAction.moveChampion!;
+        await this.executeMoveChampion(currentPlayer, moveChampionAction, diceValueUsed);
+      } else if (actionType === "moveBoat") {
+        const moveBoatAction = diceAction.moveBoat!;
+        await this.executeMoveBoat(currentPlayer, moveBoatAction, diceValueUsed);
+      } else if (actionType === "harvest") {
+        const harvestAction = diceAction.harvest!;
+        await this.executeHarvest(currentPlayer, harvestAction, diceValueUsed);
+      } else {
+        throw new Error(`Unknown action type: ${actionType}`);
+      }
 
-    // Step 4: Check for victory conditions
-    const victoryCheck = checkVictory(this.gameState);
-    if (victoryCheck.won) {
-      this.endGame(victoryCheck.playerId, victoryCheck.condition);
-      return;
+      // Step 4: Check for victory conditions
+      const victoryCheck = checkVictory(this.gameState);
+      if (victoryCheck.won) {
+        this.endGame(victoryCheck.playerName, victoryCheck.condition);
+        return;
+      }
+
     }
 
     // Check for max rounds limit
@@ -175,197 +144,213 @@ export class GameMaster {
     this.gameState = this.gameState.advanceToNextPlayer();
   }
 
-  /**
-   * Execute an action and handle any runtime decisions that arise
-   */
-  private async executeAction(
-    gameState: GameState,
-    action: GameAction,
-    playerId: number,
-    diceValues: number[],
-    currentPlayer: Player,
-  ): Promise<ActionResult> {
-    try {
-      switch (action.type) {
-        case "moveChampion":
-          return await this.executeMoveChampion(gameState, action, playerId, diceValues, currentPlayer);
-        case "moveBoat":
-          return await this.executeMoveBoat(gameState, action, playerId, diceValues, currentPlayer);
-        case "harvest":
-          return this.executeHarvestAction(gameState, action, playerId, diceValues);
-        default:
-          return {
-            newGameState: gameState,
-            summary: `Unknown action type: ${(action as any).type}`,
-            success: false,
-            diceValuesUsed: diceValues,
-          };
-      }
-    } catch (error) {
-      return {
-        newGameState: gameState,
-        summary: `Error executing action: ${error instanceof Error ? error.message : "Unknown error"}`,
-        success: false,
-        diceValuesUsed: diceValues,
-      };
-    }
-  }
-
   private async executeMoveChampion(
-    gameState: GameState,
-    action: GameAction & { type: "moveChampion" },
-    playerId: number,
-    diceValues: number[],
-    currentPlayer: Player,
-  ): Promise<ActionResult> {
-    // Execute the movement
-    const moveResult = await executeChampionMove(gameState, action, playerId, diceValues);
+    player: Player,
+    action: MoveChampionAction,
+    diceValueUsed: number,
+  ): Promise<void> {
 
-    if (!moveResult.success) {
-      return {
-        newGameState: gameState,
-        summary: moveResult.errorMessage!,
-        success: false,
-        diceValuesUsed: diceValues,
-      };
-    }
+    // Execute the movement calculation
+    const moveResult = calculateChampionMove(this.gameState, player.name, action.pathIncludingStartPosition, diceValueUsed);
 
-    let updatedGameState = moveResult.gameState;
-    const actualDestination = moveResult.actualDestination;
-    const champion = gameState.getChampionById(playerId, action.championId);
+    // Update champion position 
+    const tile = this.gameState.updateChampionPosition(player.name, action.championId, moveResult.endPosition);
+    this.addGameLogEntry("movement", `Champion${action.championId} moved to ${formatPosition(moveResult.endPosition)}`);
 
-    // Handle tile arrival and interactions
-    const arrivalResult = await this.tileArrivalHandler.handleChampionArrival(
-      updatedGameState,
-      playerId,
-      action.championId,
-      actualDestination,
-      { claimTile: action.claimTile, gameDecks: this.gameDecks, currentPlayer },
-    );
-
-    if (!arrivalResult.success) {
-      return {
-        newGameState: gameState,
-        summary: arrivalResult.summary,
-        success: false,
-        diceValuesUsed: diceValues,
-      };
-    }
-
-    // Create appropriate summary message
-    let summary = `Moved champion${action.championId} from (${champion!.position.row}, ${champion!.position.col}) to (${actualDestination.row}, ${actualDestination.col})`;
-
-    // Check if movement was stopped by unexplored tile
-    const originalDestination = action.path[action.path.length - 1];
-    if (actualDestination.row !== originalDestination.row || actualDestination.col !== originalDestination.col) {
-      summary += ` (stopped at unexplored tile instead of intended destination (${originalDestination.row}, ${originalDestination.col}))`;
-    }
-
-    summary += `. ${arrivalResult.summary}`;
-
-    return {
-      newGameState: arrivalResult.newGameState,
-      summary,
-      success: true,
-      diceValuesUsed: diceValues,
-    };
+    this.executeChampionArrivalAtTile(player, tile, action.championId, !!action.claimTile);
   }
 
-  private async executeMoveBoat(
-    gameState: GameState,
-    action: GameAction & { type: "moveBoat" },
-    playerId: number,
-    diceValues: number[],
-    currentPlayer: Player,
-  ): Promise<ActionResult> {
-    const moveResult = await executeBoatMove(gameState, action, playerId, diceValues);
+  private async executeMoveBoat(player: Player, action: MoveBoatAction, diceValueUsed: number): Promise<void> {
+    const championId = action.championId;
+    const champion = championId ? this.gameState.getChampion(player.name, championId) : undefined;
+    const championStartPosition = champion ? champion.position : undefined;
+    const boatMoveResult = calculateBoatMove(action.pathIncludingStartPosition, diceValueUsed, championStartPosition, action.championDropPosition);
+    if (boatMoveResult.championMoveResult === "championMoved") {
+      const tile = this.gameState.updateChampionPosition(player.name, championId!, action.championDropPosition!);
+      this.addGameLogEntry("boat", `Boat ${action.boatId} moved to ${boatMoveResult.endPosition}, transporting champion ${championId} from ${formatPosition(championStartPosition!)} to ${formatPosition(action.championDropPosition!)}`);
+      this.executeChampionArrivalAtTile(player, tile, championId!, !!action.claimTile);
+    } else if (boatMoveResult.championMoveResult === "championNotReachableByBoat") {
+      this.addGameLogEntry("boat", `Boat ${action.boatId} moved to ${boatMoveResult.endPosition} and tried to move champion ${championId} at ${formatPosition(championStartPosition!)} but the champion was not reachable by this boat`);
+    } else if (boatMoveResult.championMoveResult === "targetPositionNotReachableByBoat") {
+      this.addGameLogEntry("boat", `Boat ${action.boatId} moved to ${boatMoveResult.endPosition} and tried to move champion ${championId} to ${formatPosition(action.championDropPosition!)} but that position was not reachable by this boat`);
+    } else {
+      throw new Error(`Unknown boat move result: ${boatMoveResult.championMoveResult}`);
+    }
+  }
 
-    if (!moveResult.success) {
-      return {
-        newGameState: gameState,
-        summary: moveResult.errorMessage!,
-        success: false,
-        diceValuesUsed: diceValues,
-      };
+  private executeChampionArrivalAtTile(player: Player, tile: Tile, championId: number, claimTile: boolean): void {
+    // Step 1: Exploration (if tile wasn't explored)
+    if (!tile.explored) {
+      tile.explored = true;
+      if (tile.tileGroup) {
+        this.gameState.board.setTileGroupToExplored(tile.tileGroup);
+      }
+      player.fame += GameSettings.FAME_AWARD_FOR_EXPLORATION;
+      this.addGameLogEntry("exploration", `Explored new territory and got ${GameSettings.FAME_AWARD_FOR_EXPLORATION} fame`);
     }
 
-    let updatedGameState = moveResult.gameState;
-    const destination = action.path[action.path.length - 1];
-    let summary = `Moved boat${action.boatId} to ${destination}`;
 
-    // Handle champion transport and tile interaction
-    if (action.championId && action.championDropPosition) {
-      const arrivalResult = await this.tileArrivalHandler.handleChampionArrival(
-        updatedGameState,
-        playerId,
-        action.championId,
-        action.championDropPosition,
-        { gameDecks: this.gameDecks, currentPlayer },
-      );
+    // Step 2: Champion combat (if opposing champion on tile)
+    const opposingChampions = this.gameState.getOpposingChampionsAtPosition(player.name, tile.position);
 
-      if (!arrivalResult.success) {
-        return {
-          newGameState: gameState,
-          summary: `${summary}, but champion transport failed: ${arrivalResult.summary}`,
-          success: false,
-          diceValuesUsed: diceValues,
-        };
+    if (opposingChampions.length > 0 && tile.tileType && !NON_COMBAT_TILES.includes(tile.tileType)) {
+      const opposingChampion = opposingChampions[0];
+      const opposingPlayer = this.gameState.getPlayer(opposingChampion.playerName);
+      if (!opposingPlayer) {
+        throw new Error(`Opposing player ${opposingChampion.playerName} not found`);
       }
 
-      updatedGameState = arrivalResult.newGameState;
-      summary += ` and transported champion${action.championId} to (${action.championDropPosition.row}, ${action.championDropPosition.col}). ${arrivalResult.summary}`;
+      const combatResult = resolveChampionBattle(player.might, opposingPlayer.might);
+
+      if (combatResult.attackerWins) {
+        // Attacker won, award fame and send defending champion home
+        player.fame += 1; // Winner gains 1 fame
+
+        // Send defending champion home and make them pay healing cost
+        opposingChampion.position = opposingPlayer.homePosition;
+        // Defender pays healing cost
+        if (opposingPlayer.resources.gold > 0) {
+          opposingPlayer.resources.gold -= 1;
+          this.addGameLogEntry("combat", `Defeated ${opposingChampion.playerName}'s champion (${combatResult.attackerTotal} vs ${combatResult.defenderTotal}), who went home and paid 1 gold to heal`);
+        } else {
+          opposingPlayer.fame = Math.max(0, opposingPlayer.fame - 1);
+          this.addGameLogEntry("combat", `Defeated ${opposingChampion.playerName}'s champion (${combatResult.attackerTotal} vs ${combatResult.defenderTotal}), who went home and had no gold to heal so lost 1 fame`);
+        }
+      } else {
+        // Attacker lost, go home, pay healing cost
+        this.gameState.moveChampionToHome(player.name, championId);
+
+        // Pay 1 gold to heal, or lose 1 fame if no gold
+        if (player.resources.gold > 0) {
+          player.resources.gold -= 1;
+          this.addGameLogEntry("combat", `was defeated by ${opposingChampion.playerName}'s champion (${combatResult.attackerTotal} vs ${combatResult.defenderTotal}), went home, paid 1 gold to heal`);
+        } else {
+          player.fame = Math.max(0, player.fame - 1);
+          this.addGameLogEntry("combat", `was defeated by ${opposingChampion.playerName}'s champion (${combatResult.attackerTotal} vs ${combatResult.defenderTotal}), went home, had no gold to heal so lost 1 fame`);
+        }
+        return;
+      }
+
     }
 
-    return {
-      newGameState: updatedGameState,
-      summary,
-      success: true,
-      diceValuesUsed: diceValues,
-    };
-  }
+    // Step 3: Monster combat (if tile has monster)
+    if (tile.monster) {
+      const monster = tile.monster;
+      const combatResult = resolveMonsterBattle(player.might, monster.might);
 
-  private executeHarvestAction(
-    gameState: GameState,
-    action: GameAction & { type: "harvest" },
-    playerId: number,
-    diceValues: number[],
-  ): ActionResult {
-    const harvestResult = executeHarvest(gameState, action, playerId, diceValues);
+      if (combatResult.championWins) {
+        // Champion won, remove monster and award rewards
+        const fameAwarded = monster.fame || 0;
+        player.fame += fameAwarded;
+        player.resources.food += monster.resources.food;
+        player.resources.wood += monster.resources.wood;
+        player.resources.ore += monster.resources.ore;
+        player.resources.gold += monster.resources.gold;
 
-    return {
-      newGameState: harvestResult.gameState,
-      summary: harvestResult.summary,
-      success: harvestResult.success,
-      diceValuesUsed: diceValues,
-    };
-  }
+        tile.monster = undefined;
+        this.addGameLogEntry("combat", `Defeated ${monster.name} (${combatResult.championTotal} vs ${combatResult.monsterTotal}), gained ${fameAwarded} fame and got ${formatResources(monster.resources)}`);
+      } else {
+        // Champion lost, update position to home
+        this.gameState.moveChampionToHome(player.name, championId);
 
-  /**
-   * Handle a runtime decision by asking the current player
-   */
-  public async handleRuntimeDecision(player: Player, decisionContext: DecisionContext): Promise<any> {
-    try {
-      const decision = await player.makeDecision(this.gameState, this.gameLog, decisionContext);
-
-      // Log the decision
-      this.addLogEntry({
-        round: this.gameState.currentRound,
-        playerId: this.gameState.getCurrentPlayer().id,
-        playerName: player.getName(),
-        type: "event",
-        content: `Decision: ${decisionContext.description} -> ${JSON.stringify(decision.choice)}`,
-        metadata: { reasoning: decision.reasoning },
-      });
-
-      return decision.choice;
-    } catch (error) {
-      console.error(`Error getting decision from ${player.getName()}:`, error);
-
-      // Fallback to first available option
-      if (decisionContext.options.length > 0) {
-        return decisionContext.options[0];
+        // Pay 1 gold to heal, or lose 1 fame if no gold
+        if (player.resources.gold > 0) {
+          player.resources.gold -= 1;
+          this.addGameLogEntry("combat", `Fought ${monster.name}, but was defeated (${combatResult.championTotal} vs ${combatResult.monsterTotal}), returned home, paid 1 gold to heal`);
+        } else {
+          player.fame = Math.max(0, player.fame - 1);
+          this.addGameLogEntry("combat", `fought ${monster.name}, but was defeated (${combatResult.championTotal} vs ${combatResult.monsterTotal}), returned home, had no gold to heal so lost 1 fame`)
+        }
+        // Nothing more to do
+        return;
       }
-      return null;
+    }
+
+    // Step 4: Doomspire tile (dragon)
+    if (tile.tileType === "doomspire") {
+      // Check alternative victory conditions first
+      if (player.fame >= GameSettings.VICTORY_FAME_THRESHOLD) {
+        this.addGameLogEntry("victory", `Fame Victory! ${player.name} reached ${GameSettings.VICTORY_FAME_THRESHOLD} fame and recruited the dragon with fame!`);
+        this.endGame(player.name, "Fame Victory");
+        return;
+      }
+
+      if (player.resources.gold >= GameSettings.VICTORY_GOLD_THRESHOLD) {
+        this.addGameLogEntry("victory", `Gold Victory! ${player.name} reached ${GameSettings.VICTORY_GOLD_THRESHOLD} gold and bribed the dragon with gold!`);
+        this.endGame(player.name, "Gold Victory");
+        return;
+      }
+
+      const starredTileCount = this.gameState.getStarredTileCount(player.name);
+      if (starredTileCount >= GameSettings.VICTORY_STARRED_TILES_THRESHOLD) {
+        this.addGameLogEntry("victory", `Economic Victory! ${player.name} reached ${GameSettings.VICTORY_STARRED_TILES_THRESHOLD} starred tiles and impressed the dragon with their economic prowess!`);
+        this.endGame(player.name, "Economic Victory");
+        return;
+      }
+
+      // Must fight the dragon
+      // TODO may choose to fight the dragon
+      // TODO dragon might should be set when discovered, and then not change.
+      const dragonResult = resolveDragonBattle(player.might);
+
+      if (!dragonResult.championWins) {
+        // Champion was eaten by dragon (removed from game). TODO implement this. For now, send champion home.
+        this.gameState.moveChampionToHome(player.name, championId);
+        this.addGameLogEntry("combat", `was eaten by the dragon (${dragonResult.championTotal} vs ${dragonResult.dragonMight})! Actually, that's not implemented yet, so champion is just sent home.`);
+        return;
+      } else {
+        // Champion won - COMBAT VICTORY!
+        this.addGameLogEntry("victory", `Combat Victory! ${player.name} defeated the dragon (${dragonResult.championTotal} vs ${dragonResult.dragonMight})!`);
+        this.endGame(player.name, "Combat Victory");
+        return;
+      }
+    }
+
+    // Step 4: Tile claiming (if requested and valid)
+    if (claimTile && tile.tileType === "resource" && tile.claimedBy === undefined) {
+      const currentClaimedCount = this.gameState.board.findTiles((tile) => tile.claimedBy === player.name).length;
+
+      if (currentClaimedCount < player.maxClaims) {
+        tile.claimedBy = player.name;
+        this.addGameLogEntry("event", `Champion${championId} claimed resource tile (${tile.position.row}, ${tile.position.col}), which gives ${formatResources(tile.resources)}`);
+      } else {
+        this.addGameLogEntry("event", `Champion${championId} could not claim resource tile (${tile.position.row}, ${tile.position.col}) (max claims reached)`);
+      }
+    }
+
+    // Step 6: Adventure/oasis tiles
+    if ((tile.tileType === "adventure" || tile.tileType === "oasis") &&
+      tile.adventureTokens && tile.adventureTokens > 0) {
+      tile.adventureTokens = Math.max(0, tile.adventureTokens - 1);
+      // TODO choose which pile to draw from.
+      const adventureCard = this.gameDecks.drawCard(tile.tier!, 1);
+
+      if (!adventureCard) {
+        console.log(`No adventure card found for tier ${tile.tier}`);
+      } else {
+        // TODO implement adventure card drawing and resolution
+        this.addGameLogEntry("event", `Champion${championId} drew adventure card ${adventureCard.id}, but this isn't implemented yet.`);
+      }
+    }
+
+    // TODO chapel, mercenary camp, trader
+  }
+
+  private async executeHarvest(player: Player, action: HarvestAction, diceValueUsed: number): Promise<void> {
+    // Use the harvest calculator to determine the results
+    const harvestResult = calculateHarvest(this.gameState, player.name, action.tilePositions, diceValueUsed);
+
+    // Add the harvested resources to the player's pool
+    player.resources.food += harvestResult.harvestedResources.food;
+    player.resources.wood += harvestResult.harvestedResources.wood;
+    player.resources.ore += harvestResult.harvestedResources.ore;
+    player.resources.gold += harvestResult.harvestedResources.gold;
+
+    // Log the harvest action
+    if (harvestResult.harvestedTileCount > 0) {
+      this.addGameLogEntry("harvest", `Harvested from ${harvestResult.harvestedTileCount} tiles and gained ${formatResources(harvestResult.harvestedResources)}`);
+    } else {
+      this.addGameLogEntry("harvest", "Attempted to harvest but no tiles were harvestable for some reason.");
     }
   }
 
@@ -414,91 +399,38 @@ export class GameMaster {
   /**
    * Add an entry to the game log
    */
-  private addLogEntry(entry: GameLogEntry): void {
+  private addGameLogEntry(type: GameLogEntryType, content: string): void {
+    const entry: GameLogEntry = {
+      round: this.gameState.currentRound,
+      playerName: this.gameState.getCurrentPlayer().name,
+      type: type,
+      content: content,
+    };
+    console.log(`${entry.playerName} ${entry.type}: ${entry.content}`);
     this.gameLog.push(entry);
   }
 
-  /**
-   * Convert GameAction to readable string
-   */
-  private actionToString(action: GameAction): string {
-    switch (action.type) {
-      case "moveChampion":
-        const pathStr = action.path.map((p) => `(${p.row},${p.col})`).join(" -> ");
-        let moveStr = `Move champion ${action.championId} along path: ${pathStr}`;
-        if (action.claimTile) {
-          moveStr += " and claim tile";
-        }
-        return moveStr;
-
-      case "moveBoat":
-        const boatPathStr = action.path.join(" -> ");
-        let str = `Move boat ${action.boatId} to: ${boatPathStr}`;
-        if (action.championId && action.championDropPosition) {
-          str += ` (transporting champion ${action.championId} to (${action.championDropPosition.row},${action.championDropPosition.col}))`;
-        }
-        return str;
-
-      case "harvest":
-        const resources = Object.entries(action.resources)
-          .filter(([_, amount]) => amount > 0)
-          .map(([type, amount]) => `${amount} ${type}`)
-          .join(", ");
-        return `Harvest: ${resources || "nothing"}`;
-
-      default:
-        return `Unknown action: ${(action as any).type}`;
-    }
-  }
-
-  /**
-   * Determine log entry type based on action
-   */
-  private getActionType(action: GameAction): "movement" | "combat" | "harvest" | "assessment" | "event" | "system" {
-    switch (action.type) {
-      case "moveChampion":
-      case "moveBoat":
-        return "movement";
-      case "harvest":
-        return "harvest";
-      default:
-        return "system";
-    }
-  }
-
-  private endGame(winnerId?: number, condition?: string): void {
+  private endGame(winnerName?: string, condition?: string): void {
     this.masterState = "finished";
 
-    if (winnerId) {
-      const winner = this.players.find((p) => this.gameState.getPlayerById(winnerId)?.id === winnerId);
+    if (winnerName !== undefined) {
+      const winner = this.playerAgents.find(agent => agent.getName() === winnerName);
       console.log(`\n🎉 GAME WON! 🎉`);
-      console.log(`Winner: ${winner?.getName() || `Player ${winnerId}`}`);
+      console.log(`Winner: ${winner?.getName() || winnerName}`);
       if (condition) {
         console.log(`Victory Condition: ${condition}`);
       }
 
-      this.addLogEntry({
-        round: this.gameState.currentRound,
-        playerId: winnerId,
-        playerName: winner?.getName() || `Player ${winnerId}`,
-        type: "system",
-        content: `VICTORY! ${condition || "Game won"}`,
-      });
+      this.addGameLogEntry("system", `VICTORY! ${condition || "Game won"}`);
     } else {
       console.log(`\nGame ended without a winner`);
-      this.addLogEntry({
-        round: this.gameState.currentRound,
-        playerId: -1,
-        playerName: "System",
-        type: "system",
-        content: "Game ended without a winner",
-      });
+      this.addGameLogEntry("system", "Game ended without a winner");
     }
 
-    this.gameState = this.gameState.withUpdates({
-      gameEnded: true,
-      winner: winnerId,
-    });
+    this.gameState.gameEnded = true;
+    // Find the player index for the winner
+    const winnerIndex = winnerName ? this.gameState.players.findIndex(p => p.name === winnerName) : undefined;
+    this.gameState.winner = winnerIndex;
   }
 
   private printGameSummary(): void {

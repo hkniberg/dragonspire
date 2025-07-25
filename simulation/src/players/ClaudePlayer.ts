@@ -1,62 +1,22 @@
 // Lords of Doomspire Claude AI Player
 
 import { GameStateStringifier } from "@/game/gameStateStringifier";
+import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
-import { DiceAction, GameAction } from "../lib/actionTypes";
+import { DiceAction } from "../lib/actionTypes";
 import { decisionSchema, diceActionSchema } from "../lib/claudeSchemas";
 import { templateProcessor, TemplateVariables } from "../lib/templateProcessor";
 import { Claude } from "../llm/claude";
-import { Decision, DecisionContext, GameLogEntry, Player, PlayerType, TurnContext } from "./Player";
-
-/**
- * Converts the nested DiceAction from Claude to a flat GameAction for the game engine
- */
-function convertDiceActionToGameAction(diceAction: DiceAction): GameAction {
-    switch (diceAction.type) {
-        case "moveChampion":
-            if (!diceAction.moveChampion) {
-                throw new Error("moveChampion parameters required for moveChampion action");
-            }
-            return {
-                type: "moveChampion",
-                championId: diceAction.moveChampion.championId,
-                path: diceAction.moveChampion.path,
-                claimTile: diceAction.moveChampion.claimTile,
-            };
-
-        case "moveBoat":
-            if (!diceAction.moveBoat) {
-                throw new Error("moveBoat parameters required for moveBoat action");
-            }
-            return {
-                type: "moveBoat",
-                boatId: diceAction.moveBoat.boatId,
-                path: diceAction.moveBoat.path,
-                championId: diceAction.moveBoat.championId,
-                championDropPosition: diceAction.moveBoat.championDropPosition,
-            };
-
-        case "harvest":
-            if (!diceAction.harvest) {
-                throw new Error("harvest parameters required for harvest action");
-            }
-            return {
-                type: "harvest",
-                resources: diceAction.harvest.resources,
-            };
-
-        default:
-            throw new Error(`Unknown action type: ${(diceAction as any).type}`);
-    }
-}
-
-export class ClaudePlayer implements Player {
+import { PlayerAgent } from "./PlayerAgent";
+export class ClaudePlayerAgent implements PlayerAgent {
     private name: string;
     private claude: Claude;
+    private extraInstructions: string;
 
     constructor(name: string, claude: Claude) {
         this.name = name;
         this.claude = claude;
+        this.extraInstructions = "";
     }
 
     getName(): string {
@@ -71,27 +31,15 @@ export class ClaudePlayer implements Player {
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
         turnContext: TurnContext,
-    ): Promise<GameAction> {
-        const playerId = gameState.getCurrentPlayer().id;
+    ): Promise<DiceAction> {
+        // Prepare the user message with current context
+        const userMessage = await this.prepareDiceActionMessage(gameState, gameLog, turnContext);
 
-        try {
-            // Prepare the user message with current context
-            const userMessage = await this.prepareDiceActionMessage(gameState, playerId, gameLog, turnContext);
+        // Get LLM response with structured JSON
+        const response = await this.claude.useClaude(userMessage, diceActionSchema, 2000, 3000);
 
-            // Get LLM response with structured JSON
-            const response = await this.claude.useClaude(userMessage, diceActionSchema, 2000, 3000);
-
-            // Convert the nested response to flat GameAction format
-            return convertDiceActionToGameAction(response as DiceAction);
-        } catch (error) {
-            console.error(`${this.name} encountered an error during dice action:`, error);
-
-            // Fallback to simple harvest action
-            return {
-                type: "harvest",
-                resources: { food: 0, wood: 0, ore: 0, gold: 0 },
-            };
-        }
+        // Convert the nested response to flat GameAction format
+        return response as DiceAction;
     }
 
     async makeDecision(
@@ -124,8 +72,7 @@ export class ClaudePlayer implements Player {
         diceRolls?: number[],
     ): Promise<string | undefined> {
         try {
-            const playerId = gameState.getCurrentPlayer().id;
-            const userMessage = await this.prepareAssessmentMessage(gameState, playerId, gameLog, diceRolls);
+            const userMessage = await this.prepareAssessmentMessage(gameState, gameLog, diceRolls);
 
             // Get text response for strategic assessment
             const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 4000, 6000);
@@ -139,13 +86,12 @@ export class ClaudePlayer implements Player {
 
     private async prepareDiceActionMessage(
         gameState: GameState,
-        playerId: number,
         gameLog: readonly GameLogEntry[],
         turnContext: TurnContext,
     ): Promise<string> {
-        const player = gameState.getPlayerById(playerId);
+        const player = gameState.getPlayer(this.name);
         if (!player) {
-            throw new Error(`Player with ID ${playerId} not found`);
+            throw new Error(`Player with name ${this.name} not found`);
         }
 
         // Use the readable stringified game state
@@ -202,13 +148,12 @@ export class ClaudePlayer implements Player {
 
     private async prepareAssessmentMessage(
         gameState: GameState,
-        playerId: number,
         gameLog: readonly GameLogEntry[],
         diceRolls?: number[],
     ): Promise<string> {
-        const player = gameState.getPlayerById(playerId);
+        const player = gameState.getPlayer(this.name);
         if (!player) {
-            throw new Error(`Player with ID ${playerId} not found`);
+            throw new Error(`Player with name ${this.name} not found`);
         }
 
         const boardState = GameStateStringifier.stringify(gameState);

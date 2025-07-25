@@ -11,7 +11,7 @@ export const moveChampionSchema = {
       type: "number",
       description: "Champion ID being moved",
     },
-    path: {
+    pathIncludingStartPosition: {
       type: "array",
       description: "Path for movement, including the starting position",
       items: {
@@ -28,7 +28,7 @@ export const moveChampionSchema = {
       description: "Whether to claim the destination tile",
     },
   },
-  required: ["championId", "path"],
+  required: ["championId", "pathIncludingStartPosition"],
 };
 
 /**
@@ -42,9 +42,9 @@ export const moveBoatSchema = {
       type: "number",
       description: "Boat ID",
     },
-    path: {
+    pathIncludingStartPosition: {
       type: "array",
-      description: "Ocean path as array of strings",
+      description: "Ocean path as array of strings representing ocean positions, including start position. Valid values for each string is 'nw', 'ne', 'sw', 'se'",
       items: {
         type: "string",
       },
@@ -62,8 +62,12 @@ export const moveBoatSchema = {
       },
       required: ["row", "col"],
     },
+    claimTile: {
+      type: "boolean",
+      description: "Whether to claim the tile at champion drop position (if it is a resource tile)",
+    },
   },
-  required: ["boatId", "path"],
+  required: ["boatId", "pathIncludingStartPosition"],
 };
 
 /**
@@ -73,16 +77,14 @@ export const harvestSchema = {
   type: "object",
   description: "Parameters for harvest action",
   properties: {
-    resources: {
-      type: "object",
-      description: "Resources to harvest",
-      properties: {
-        food: { type: "number" },
-        wood: { type: "number" },
-        ore: { type: "number" },
-        gold: { type: "number" },
+    tilePositions: {
+      type: "array",
+      description: "Positions of tiles to harvest from",
+      items: {
+        type: "object",
+        properties: { row: { type: "number" }, col: { type: "number" } },
+        required: ["row", "col"],
       },
-      required: ["food", "wood", "ore", "gold"],
     },
   },
   required: ["resources"],
@@ -102,12 +104,16 @@ export const diceActionSchema = {
     moveChampion: moveChampionSchema,
     moveBoat: moveBoatSchema,
     harvest: harvestSchema,
+    diceValueUsed: {
+      type: "number",
+      description: "The dice value used for this action",
+    },
     reasoning: {
       type: "string",
       description: "Brief explanation of why this action was chosen",
     },
   },
-  required: ["type", "reasoning"],
+  required: ["type", "diceValueUsed", "reasoning"],
 };
 
 /**

@@ -6,7 +6,7 @@ import { GameSettings } from "../../lib/GameSettings";
 /**
  * Check victory conditions for all players
  */
-export function checkVictory(gameState: GameState): { won: boolean; playerId?: number; condition?: string } {
+export function checkVictory(gameState: GameState): { won: boolean; playerName?: string; condition?: string } {
   // Check each player for victory conditions
   for (const player of gameState.players) {
     // Check if any champion is on doomspire tile
@@ -22,7 +22,7 @@ export function checkVictory(gameState: GameState): { won: boolean; playerId?: n
       if (player.fame >= GameSettings.VICTORY_FAME_THRESHOLD) {
         return {
           won: true,
-          playerId: player.id,
+          playerName: player.name,
           condition: `achieved fame victory with ${player.fame} fame`,
         };
       }
@@ -31,20 +31,20 @@ export function checkVictory(gameState: GameState): { won: boolean; playerId?: n
       if (player.resources.gold >= GameSettings.VICTORY_GOLD_THRESHOLD) {
         return {
           won: true,
-          playerId: player.id,
+          playerName: player.name,
           condition: `achieved gold victory with ${player.resources.gold} gold`,
         };
       }
 
       // Check starred tiles victory (3+ starred resource tiles)
       const starredTileCount = gameState.board.findTiles(
-        (tile) => tile.tileType === "resource" && tile.isStarred === true && tile.claimedBy === player.id,
+        (tile) => tile.tileType === "resource" && tile.isStarred === true && tile.claimedBy === player.name,
       ).length;
 
       if (starredTileCount >= GameSettings.VICTORY_STARRED_TILES_THRESHOLD) {
         return {
           won: true,
-          playerId: player.id,
+          playerName: player.name,
           condition: `achieved economic victory with ${starredTileCount} starred resource tiles`,
         };
       }

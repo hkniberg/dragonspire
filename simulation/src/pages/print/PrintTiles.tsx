@@ -1,17 +1,11 @@
 import Head from "next/head";
 import React from "react";
 import { TileComponent } from "../../components/Tile";
-import {
-  HOME_TILE_TRIOS,
-  TIER_1_TRIOS,
-  TIER_2_TRIOS,
-  TileDef,
-  TileTrioDef,
-} from "../../content/tilesDefs";
+import { HOME_TILE_TRIOS, TIER_1_TRIOS, TIER_2_TRIOS, TileDef, TileTrioDef } from "../../content/tilesDefs";
 import { convertTileDefToTile, TileColors } from "../../lib/TileConverter";
 import type { Champion, Tile } from "../../lib/types";
 
-const getPlayerColor = (playerId: number) => ({
+const getPlayerColor = () => ({
   main: "#0070f3",
   light: "#66b3ff",
   dark: "#0056b3",
@@ -21,7 +15,7 @@ const getPlayerColor = (playerId: number) => ({
 const convertTrioToTiles = (
   trioDef: TileTrioDef,
   showBackside: boolean = false,
-  tier: 1 | 2 = 1
+  tier: 1 | 2 = 1,
 ): { tile: Tile; gridPosition: { row: number; col: number } }[] => {
   const tileDefs = [trioDef.corner, trioDef.right, trioDef.below];
   const gridPositions = [
@@ -50,14 +44,7 @@ const convertTrioToTiles = (
       borderColor = TileColors.tier1Border;
     }
 
-    const tile = convertTileDefToTile(
-      tileDef,
-      position,
-      true,
-      backColor,
-      borderColor,
-      1
-    );
+    const tile = convertTileDefToTile(tileDef, position, true, backColor, borderColor, 1);
 
     if (showBackside) {
       tile.explored = false;
@@ -118,37 +105,18 @@ export default function PrintTiles() {
   });
 
   // Create tier 3 tiles (not in trios)
-  const tier3TileDefs: TileDef[] = [
-    "adventure3",
-    "adventure3",
-    "adventure3",
-    "doomspire",
-  ];
+  const tier3TileDefs: TileDef[] = ["adventure3", "adventure3", "adventure3", "doomspire"];
   const frontTier3Tiles: Tile[] = [];
   const backTier3Tiles: Tile[] = [];
 
   tier3TileDefs.forEach((tileDef) => {
     const position = { row: 0, col: 0 };
 
-    const frontTile = convertTileDefToTile(
-      tileDef,
-      position,
-      false,
-      TileColors.tier3Back,
-      TileColors.tier3Border,
-      1
-    );
+    const frontTile = convertTileDefToTile(tileDef, position, false, TileColors.tier3Back, TileColors.tier3Border, 1);
     frontTile.explored = true;
     frontTile.adventureTokens = 0;
 
-    const backTile = convertTileDefToTile(
-      tileDef,
-      position,
-      false,
-      TileColors.tier3Back,
-      TileColors.tier3Border,
-      1
-    );
+    const backTile = convertTileDefToTile(tileDef, position, false, TileColors.tier3Back, TileColors.tier3Border, 1);
     backTile.explored = false;
 
     frontTier3Tiles.push(frontTile);
@@ -261,10 +229,7 @@ export default function PrintTiles() {
         }
       `}</style>
 
-      <div
-        className="outer-container"
-        style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}
-      >
+      <div className="outer-container" style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
         <button className="print-button" onClick={() => window.print()}>
           📄 Print / Save as PDF
         </button>
@@ -285,40 +250,38 @@ export default function PrintTiles() {
 
                     return (
                       <div key={`trio-${trioIndex}`} className="trio-container">
-                        {trioData.tiles.map(
-                          ({ tile, gridPosition }, tileIndex) => {
-                            // Calculate absolute grid position for this tile
-                            const gridRow = trioRow * 2 + gridPosition.row;
-                            const gridCol = trioCol * 2 + gridPosition.col;
+                        {trioData.tiles.map(({ tile, gridPosition }, tileIndex) => {
+                          // Calculate absolute grid position for this tile
+                          const gridRow = trioRow * 2 + gridPosition.row;
+                          const gridCol = trioCol * 2 + gridPosition.col;
 
-                            return (
+                          return (
+                            <div
+                              key={`tile-${tileIndex}`}
+                              style={{
+                                gridRow: gridRow,
+                                gridColumn: gridCol,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
                               <div
-                                key={`tile-${tileIndex}`}
                                 style={{
-                                  gridRow: gridRow,
-                                  gridColumn: gridCol,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
+                                  transform: `scale(${TILE_SCALE})`,
+                                  transformOrigin: "center",
                                 }}
                               >
-                                <div
-                                  style={{
-                                    transform: `scale(${TILE_SCALE})`,
-                                    transformOrigin: "center",
-                                  }}
-                                >
-                                  <TileComponent
-                                    tile={tile}
-                                    champions={emptyChampions}
-                                    debugMode={false}
-                                    getPlayerColor={getPlayerColor}
-                                  />
-                                </div>
+                                <TileComponent
+                                  tile={tile}
+                                  champions={emptyChampions}
+                                  debugMode={false}
+                                  getPlayerColor={getPlayerColor}
+                                />
                               </div>
-                            );
-                          }
-                        )}
+                            </div>
+                          );
+                        })}
                       </div>
                     );
                   })}
@@ -335,40 +298,38 @@ export default function PrintTiles() {
 
                     return (
                       <div key={`trio-${trioIndex}`} className="trio-container">
-                        {trioData.tiles.map(
-                          ({ tile, gridPosition }, tileIndex) => {
-                            // Calculate absolute grid position for this tile
-                            const gridRow = trioRow * 2 + gridPosition.row;
-                            const gridCol = trioCol * 2 + gridPosition.col;
+                        {trioData.tiles.map(({ tile, gridPosition }, tileIndex) => {
+                          // Calculate absolute grid position for this tile
+                          const gridRow = trioRow * 2 + gridPosition.row;
+                          const gridCol = trioCol * 2 + gridPosition.col;
 
-                            return (
+                          return (
+                            <div
+                              key={`tile-${tileIndex}`}
+                              style={{
+                                gridRow: gridRow,
+                                gridColumn: gridCol,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}
+                            >
                               <div
-                                key={`tile-${tileIndex}`}
                                 style={{
-                                  gridRow: gridRow,
-                                  gridColumn: gridCol,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
+                                  transform: `scale(${TILE_SCALE})`,
+                                  transformOrigin: "center",
                                 }}
                               >
-                                <div
-                                  style={{
-                                    transform: `scale(${TILE_SCALE})`,
-                                    transformOrigin: "center",
-                                  }}
-                                >
-                                  <TileComponent
-                                    tile={tile}
-                                    champions={emptyChampions}
-                                    debugMode={false}
-                                    getPlayerColor={getPlayerColor}
-                                  />
-                                </div>
+                                <TileComponent
+                                  tile={tile}
+                                  champions={emptyChampions}
+                                  debugMode={false}
+                                  getPlayerColor={getPlayerColor}
+                                />
                               </div>
-                            );
-                          }
-                        )}
+                            </div>
+                          );
+                        })}
                       </div>
                     );
                   })}

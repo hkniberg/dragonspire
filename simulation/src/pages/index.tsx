@@ -2,16 +2,16 @@ import { templateProcessor } from "@/lib/templateProcessor";
 import { Claude } from "@/llm/claude";
 import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
-import { ActionLog } from "../components/ActionLog";
 import { ApiKeyModal } from "../components/ApiKeyModal";
 import { ControlPanel } from "../components/ControlPanel";
 import { GameBoard } from "../components/GameBoard";
+import { GameLog } from "../components/GameLog";
 import { GameStatus } from "../components/GameStatus";
 import { GameMaster, GameMasterConfig } from "../engine/GameMaster";
 import { GameState } from "../game/GameState";
-import { ClaudePlayer } from "../players/ClaudePlayer";
-import { Player } from "../players/Player";
-import { RandomPlayer } from "../players/RandomPlayer";
+import { ClaudePlayerAgent } from "../players/ClaudePlayer";
+import { PlayerAgent } from "../players/PlayerAgent";
+import { RandomPlayerAgent } from "../players/RandomPlayerAgent";
 
 // Simple spinner for loading states (used only in main component now)
 const Spinner = ({ size = 20 }: { size?: number }) => (
@@ -56,8 +56,7 @@ export default function GameSimulation() {
   // Game simulation state
   const [gameSession, setGameSession] = useState<GameMaster | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
-  const [simulationState, setSimulationState] =
-    useState<SimulationState>("setup");
+  const [simulationState, setSimulationState] = useState<SimulationState>("setup");
   const [actionLog, setActionLog] = useState<any[]>([]);
 
   // Player configuration state
@@ -160,21 +159,18 @@ export default function GameSimulation() {
     }
   };
 
-  const createPlayer = async (config: PlayerConfig): Promise<Player> => {
+  const createPlayer = async (config: PlayerConfig): Promise<PlayerAgent> => {
     switch (config.type) {
       case "random":
-        return new RandomPlayer(config.name);
+        return new RandomPlayerAgent(config.name);
       case "claude":
         if (!apiKey.trim()) {
           throw new Error("API key is required for Claude players");
         }
         // Get the system message for Claude
-        const systemMessage = await templateProcessor.processTemplate(
-          "SystemPrompt",
-          {}
-        );
+        const systemMessage = await templateProcessor.processTemplate("SystemPrompt", {});
         const claude = new Claude(apiKey.trim(), systemMessage);
-        return new ClaudePlayer(config.name, claude);
+        return new ClaudePlayerAgent(config.name, claude);
       default:
         throw new Error(`Unknown player type: ${config.type}`);
     }
@@ -183,9 +179,7 @@ export default function GameSimulation() {
   const startNewGame = async () => {
     try {
       // Check if Claude players need API key
-      const hasClaudePlayers = playerConfigs.some(
-        (config) => config.type === "claude"
-      );
+      const hasClaudePlayers = playerConfigs.some((config) => config.type === "claude");
       if (hasClaudePlayers && !apiKey.trim()) {
         setShowApiKeyModal(true);
         return;
@@ -194,9 +188,7 @@ export default function GameSimulation() {
       setIsStartingGame(true);
 
       // Create all players asynchronously
-      const players = await Promise.all(
-        playerConfigs.map((config) => createPlayer(config))
-      );
+      const players = await Promise.all(playerConfigs.map((config) => createPlayer(config)));
 
       // Validate player names
       const playerNames = players.map((p) => p.getName());
@@ -206,9 +198,7 @@ export default function GameSimulation() {
       }
 
       // Validate player types
-      const hasValidTypes = players.every((p) =>
-        ["random", "claude", "human"].includes(p.getType())
-      );
+      const hasValidTypes = players.every((p) => ["random", "claude", "human"].includes(p.getType()));
       if (!hasValidTypes) {
         setErrorMessage("Invalid player type detected");
         return;
@@ -235,27 +225,18 @@ export default function GameSimulation() {
 
       console.log(
         "New game started with players:",
-        players.map((p) => `${p.getName()} (${p.getType()})`)
+        players.map((p) => `${p.getName()} (${p.getType()})`),
       );
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       alert(`Failed to start game: ${errorMessage}`);
     } finally {
       setIsStartingGame(false);
     }
   };
 
-  const updatePlayerConfig = (
-    index: number,
-    field: keyof PlayerConfig,
-    value: string
-  ) => {
-    setPlayerConfigs((prev) =>
-      prev.map((config, i) =>
-        i === index ? { ...config, [field]: value } : config
-      )
-    );
+  const updatePlayerConfig = (index: number, field: keyof PlayerConfig, value: string) => {
+    setPlayerConfigs((prev) => prev.map((config, i) => (i === index ? { ...config, [field]: value } : config)));
   };
 
   const toggleAutoPlay = () => {
@@ -274,24 +255,20 @@ export default function GameSimulation() {
     setAutoPlay(false);
   };
 
-  const handleExtraInstructionsChange = (
-    playerId: number,
-    instructions: string
-  ) => {
+  const handleExtraInstructionsChange = (playerName: string, instructions: string) => {
     if (gameState && gameSession) {
-      const updatedGameState = gameState.updatePlayerExtraInstructions(
-        playerId,
-        instructions
-      );
-      setGameState(updatedGameState);
-      // Also update the game session's internal state
-      gameSession.updateGameState(updatedGameState);
+      const player = gameState.getPlayer(playerName);
+      if (player) {
+        player.extraInstructions = instructions;
+        // Force a re-render by creating a new state object
+        setGameState(gameState);
+        // Update the game session's internal state
+        gameSession.updateGameState(gameState);
+      }
     }
   };
 
-  const hasClaudePlayers = playerConfigs.some(
-    (config) => config.type === "claude"
-  );
+  const hasClaudePlayers = playerConfigs.some((config) => config.type === "claude");
 
   // Show loading state until client-side rendering is ready
   if (!mounted) {
@@ -322,10 +299,7 @@ export default function GameSimulation() {
     <>
       <Head>
         <title>Lords of Doomspire - Game Simulation</title>
-        <meta
-          name="description"
-          content="Lords of Doomspire Board Game Simulation"
-        />
+        <meta name="description" content="Lords of Doomspire Board Game Simulation" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
         <style dangerouslySetInnerHTML={{ __html: spinnerStyles }} />
@@ -361,9 +335,7 @@ export default function GameSimulation() {
               border: "1px solid #ddd",
             }}
           >
-            <h2 style={{ marginBottom: "15px", color: "#2c3e50" }}>
-              Player Configuration
-            </h2>
+            <h2 style={{ marginBottom: "15px", color: "#2c3e50" }}>Player Configuration</h2>
 
             {/* API Key Status */}
             {hasClaudePlayers && (
@@ -379,9 +351,7 @@ export default function GameSimulation() {
                     borderRadius: "4px",
                   }}
                 >
-                  <span style={{ fontSize: "20px" }}>
-                    {apiKey ? "🔑" : "⚠️"}
-                  </span>
+                  <span style={{ fontSize: "20px" }}>{apiKey ? "🔑" : "⚠️"}</span>
                   <div style={{ flex: 1 }}>
                     <strong style={{ color: apiKey ? "#155724" : "#721c24" }}>
                       {apiKey ? "API Key Configured" : "API Key Required"}
@@ -433,9 +403,7 @@ export default function GameSimulation() {
                     backgroundColor: "#f8f9fa",
                   }}
                 >
-                  <h4 style={{ marginBottom: "10px", color: "#2c3e50" }}>
-                    Player {index + 1}
-                  </h4>
+                  <h4 style={{ marginBottom: "10px", color: "#2c3e50" }}>Player {index + 1}</h4>
 
                   <div style={{ marginBottom: "10px" }}>
                     <label
@@ -451,9 +419,7 @@ export default function GameSimulation() {
                     <input
                       type="text"
                       value={config.name}
-                      onChange={(e) =>
-                        updatePlayerConfig(index, "name", e.target.value)
-                      }
+                      onChange={(e) => updatePlayerConfig(index, "name", e.target.value)}
                       style={{
                         width: "100%",
                         padding: "6px",
@@ -476,13 +442,7 @@ export default function GameSimulation() {
                     </label>
                     <select
                       value={config.type}
-                      onChange={(e) =>
-                        updatePlayerConfig(
-                          index,
-                          "type",
-                          e.target.value as PlayerType
-                        )
-                      }
+                      onChange={(e) => updatePlayerConfig(index, "type", e.target.value as PlayerType)}
                       style={{
                         width: "100%",
                         padding: "6px",
@@ -500,9 +460,7 @@ export default function GameSimulation() {
 
             {/* Game Configuration */}
             <div style={{ marginTop: "20px" }}>
-              <h3 style={{ marginBottom: "15px", color: "#2c3e50" }}>
-                Game Configuration
-              </h3>
+              <h3 style={{ marginBottom: "15px", color: "#2c3e50" }}>Game Configuration</h3>
               <div
                 style={{
                   display: "grid",
@@ -626,15 +584,11 @@ export default function GameSimulation() {
 
         {/* Game Status */}
         {gameState && (
-          <GameStatus
-            gameState={gameState}
-            simulationState={simulationState}
-            actionLogLength={actionLog.length}
-          />
+          <GameStatus gameState={gameState} simulationState={simulationState} actionLogLength={actionLog.length} />
         )}
 
         {/* Action Log */}
-        <ActionLog actionLog={actionLog} isVisible={showActionLog} />
+        <GameLog gameLog={actionLog} isVisible={showActionLog} />
 
         {/* Game Board */}
         {gameState ? (
@@ -654,9 +608,7 @@ export default function GameSimulation() {
               border: "2px dashed #ddd",
             }}
           >
-            <h2 style={{ color: "#6c757d", marginBottom: "20px" }}>
-              Welcome to Lords of Doomspire!
-            </h2>
+            <h2 style={{ color: "#6c757d", marginBottom: "20px" }}>Welcome to Lords of Doomspire!</h2>
             <p
               style={{
                 color: "#6c757d",
@@ -667,8 +619,7 @@ export default function GameSimulation() {
               Configure your players above and click "Start New Game" to begin.
             </p>
             <p style={{ color: "#6c757d", fontSize: "14px" }}>
-              Choose between Random AI and Claude AI players for strategic
-              gameplay!
+              Choose between Random AI and Claude AI players for strategic gameplay!
             </p>
           </div>
         ) : null}

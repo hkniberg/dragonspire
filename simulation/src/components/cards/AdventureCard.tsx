@@ -1,3 +1,4 @@
+import { formatResources } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import {
   CARD_HEIGHT,
@@ -7,30 +8,6 @@ import {
   getTierDisplayText,
   getTierSolidColor,
 } from "../../lib/uiConstants";
-
-// Helper function to format monster resources as emojis
-const formatResources = (
-  resources: Record<string, number> | undefined
-): string => {
-  if (!resources) return "None";
-
-  const resourceSymbols = {
-    food: "🌾",
-    wood: "🪵",
-    ore: "🪨",
-    gold: "💰",
-  };
-
-  const formatted = Object.entries(resources)
-    .filter(([_, amount]) => amount > 0)
-    .map(([type, amount]) => {
-      const symbol = resourceSymbols[type as keyof typeof resourceSymbols];
-      return amount > 1 ? `${amount}${symbol}` : symbol;
-    })
-    .join(" ");
-
-  return formatted || "None";
-};
 
 // Helper functions to format content for each card type
 export const formatMonsterContent = (monster: any): string => {
@@ -120,12 +97,7 @@ export const AdventureCard = ({
           padding: "4px",
           position: "relative",
         }}
-        title={
-          title ||
-          `Monster Card Back - ${
-            biome ? getBiomeDisplayName(biome) : "Unknown"
-          } (Tier ${tier || "?"})`
-        }
+        title={title || `Monster Card Back - ${biome ? getBiomeDisplayName(biome) : "Unknown"} (Tier ${tier || "?"})`}
       >
         {/* Semi-transparent overlay for better text readability */}
         <div
@@ -294,16 +266,8 @@ export const AdventureCard = ({
             <ReactMarkdown
               components={{
                 p: ({ children }) => <span>{children}</span>,
-                strong: ({ children }) => (
-                  <strong style={{ fontWeight: "bold", color: "#333" }}>
-                    {children}
-                  </strong>
-                ),
-                em: ({ children }) => (
-                  <em style={{ fontStyle: "italic", color: "#555" }}>
-                    {children}
-                  </em>
-                ),
+                strong: ({ children }) => <strong style={{ fontWeight: "bold", color: "#333" }}>{children}</strong>,
+                em: ({ children }) => <em style={{ fontStyle: "italic", color: "#555" }}>{children}</em>,
                 code: ({ children }) => (
                   <code
                     style={{
@@ -329,8 +293,7 @@ export const AdventureCard = ({
             <div
               style={{
                 fontSize: "8px",
-                backgroundColor:
-                  bottomTag === "Follower" ? "#28a745" : "#ff6600",
+                backgroundColor: bottomTag === "Follower" ? "#28a745" : "#ff6600",
                 color: "white",
                 padding: "1px 3px",
                 borderRadius: "2px",

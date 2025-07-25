@@ -1,14 +1,14 @@
 interface ClaimFlagProps {
-  playerId: number;
-  getPlayerColor: (playerId: number) => {
+  playerName: string;
+  getPlayerColor: (playerName: string) => {
     main: string;
     light: string;
     dark: string;
   };
 }
 
-export const ClaimFlag = ({ playerId, getPlayerColor }: ClaimFlagProps) => {
-  const playerColors = getPlayerColor(playerId);
+export const ClaimFlag = ({ playerName, getPlayerColor }: ClaimFlagProps) => {
+  const playerColors = getPlayerColor(playerName);
 
   return (
     <div

@@ -1,19 +1,20 @@
 import type { Player } from "../lib/types";
 
-// Function to get boat image path based on player ID
-const getBoatImagePath = (playerId: number): string => {
+// Function to get boat image path based on player index
+const getBoatImagePath = (playerIndex: number): string => {
   const boatColors = ["red", "blue", "green", "orange"];
-  const colorIndex = (playerId - 1) % boatColors.length;
+  const colorIndex = playerIndex % boatColors.length;
   return `/boats/boat-${boatColors[colorIndex]}.png`;
 };
 
 interface PlayerInfoBoxProps {
   player: Player;
+  playerIndex: number; // Add playerIndex to replace the non-existent player.id
   isCurrentPlayer: boolean;
   claimedTiles: number;
   playerType?: string; // Added to identify if this is a Claude player
-  onExtraInstructionsChange?: (playerId: number, instructions: string) => void; // Callback for updating extra instructions
-  getPlayerColor: (playerId: number) => {
+  onExtraInstructionsChange?: (playerName: string, instructions: string) => void; // Callback for updating extra instructions
+  getPlayerColor: (playerName: string) => {
     main: string;
     light: string;
     dark: string;
@@ -22,13 +23,14 @@ interface PlayerInfoBoxProps {
 
 export const PlayerInfoBox = ({
   player,
+  playerIndex,
   isCurrentPlayer,
   claimedTiles,
   playerType,
   onExtraInstructionsChange,
   getPlayerColor,
 }: PlayerInfoBoxProps) => {
-  const colors = getPlayerColor(player.id);
+  const colors = getPlayerColor(player.name);
 
   return (
     <div
@@ -40,123 +42,94 @@ export const PlayerInfoBox = ({
         boxShadow: isCurrentPlayer ? `0 0 8px ${colors.main}40` : "none",
       }}
     >
-      {/* Player Header */}
+      {/* Player Name and Fame/Might */}
       <div
         style={{
           display: "flex",
+          justifyContent: "space-between",
           alignItems: "center",
           marginBottom: "8px",
         }}
       >
-        <div
-          style={{
-            width: "16px",
-            height: "16px",
-            backgroundColor: colors.main,
-            borderRadius: "50%",
-            marginRight: "8px",
-            border: "2px solid white",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
-          }}
-        />
-        <strong style={{ fontSize: "16px", color: colors.dark }}>
-          {player.name}
-        </strong>
-        {isCurrentPlayer && (
-          <span
+        <div>
+          <h4
             style={{
-              marginLeft: "8px",
+              margin: "0 0 2px 0",
               fontSize: "14px",
-              color: colors.main,
               fontWeight: "bold",
+              color: isCurrentPlayer ? colors.main : "#2c3e50",
             }}
           >
-            ◀ Current
-          </span>
+            {player.name}
+            {isCurrentPlayer && " ⭐"}
+          </h4>
+          <div style={{ fontSize: "11px", color: "#6c757d" }}>
+            Fame: {player.fame} | Might: {player.might}
+          </div>
+        </div>
+
+        {/* Player Type Badge */}
+        {playerType && (
+          <div
+            style={{
+              fontSize: "10px",
+              backgroundColor: playerType === "claude" ? "#007bff" : "#6c757d",
+              color: "white",
+              padding: "2px 6px",
+              borderRadius: "4px",
+              textTransform: "uppercase",
+            }}
+          >
+            {playerType}
+          </div>
         )}
       </div>
 
-      {/* Player Stats */}
-      <div
-        style={{
-          fontSize: "13px",
-          color: "#495057",
-          lineHeight: "1.4",
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>Fame:</span>
-          <strong>{player.fame}</strong>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>Might:</span>
-          <strong>{player.might}</strong>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>Claims:</span>
-          <strong>
-            {claimedTiles}/{player.maxClaims}
-          </strong>
-        </div>
-      </div>
-
       {/* Resources */}
-      <div style={{ marginTop: "8px", fontSize: "12px" }}>
-        <div
-          style={{
-            fontWeight: "bold",
-            marginBottom: "4px",
-            color: "#495057",
-          }}
-        >
-          Resources:
-        </div>
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-          }}
-        >
-          <span>🌾 {player.resources.food}</span>
-          <span>🪵 {player.resources.wood}</span>
-          <span>🪨 {player.resources.ore}</span>
-          <span>💰 {player.resources.gold}</span>
+      <div style={{ marginBottom: "8px" }}>
+        <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px", color: "#495057" }}>Resources:</div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", fontSize: "10px" }}>
+          <span style={{ backgroundColor: "#4caf50", color: "white", padding: "1px 4px", borderRadius: "3px" }}>
+            F: {player.resources.food}
+          </span>
+          <span style={{ backgroundColor: "#8d6e63", color: "white", padding: "1px 4px", borderRadius: "3px" }}>
+            W: {player.resources.wood}
+          </span>
+          <span style={{ backgroundColor: "#757575", color: "white", padding: "1px 4px", borderRadius: "3px" }}>
+            O: {player.resources.ore}
+          </span>
+          <span style={{ backgroundColor: "#ffc107", color: "black", padding: "1px 4px", borderRadius: "3px" }}>
+            G: {player.resources.gold}
+          </span>
         </div>
       </div>
 
       {/* Champions */}
-      <div style={{ marginTop: "8px", fontSize: "12px" }}>
-        <div
-          style={{
-            fontWeight: "bold",
-            marginBottom: "4px",
-            color: "#495057",
-          }}
-        >
-          Champions:
+      <div style={{ marginBottom: "8px" }}>
+        <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px", color: "#495057" }}>
+          Champions: ({player.champions.length})
         </div>
-        {player.champions.map((champion) => (
-          <div key={champion.id} style={{ marginBottom: "2px" }}>
-            <span style={{ color: colors.main, fontWeight: "bold" }}>
-              ⚔️ C{champion.id}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "2px", fontSize: "10px" }}>
+          {player.champions.map((champion) => (
+            <span
+              key={champion.id}
+              style={{
+                backgroundColor: colors.main,
+                color: "white",
+                padding: "1px 4px",
+                borderRadius: "3px",
+              }}
+            >
+              C{champion.id} ({champion.position.row},{champion.position.col})
             </span>
-            <span style={{ marginLeft: "4px", color: "#6c757d" }}>
-              ({champion.position.row + 1},{champion.position.col + 1})
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Boats */}
-      <div style={{ marginTop: "8px", fontSize: "12px" }}>
-        <div
-          style={{
-            fontWeight: "bold",
-            marginBottom: "4px",
-            color: "#495057",
-          }}
-        >
-          Boats:
+      <div style={{ marginBottom: "8px" }}>
+        <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px", color: "#495057" }}>
+          Boats: ({player.boats.length})
         </div>
         {player.boats.map((boat) => (
           <div
@@ -168,7 +141,7 @@ export const PlayerInfoBox = ({
             }}
           >
             <img
-              src={getBoatImagePath(player.id)}
+              src={getBoatImagePath(playerIndex)}
               alt={`Boat ${boat.id}`}
               style={{
                 width: "16px",
@@ -177,12 +150,8 @@ export const PlayerInfoBox = ({
                 marginRight: "4px",
               }}
             />
-            <span style={{ color: colors.main, fontWeight: "bold" }}>
-              B{boat.id}
-            </span>
-            <span style={{ marginLeft: "4px", color: "#6c757d" }}>
-              {boat.position.toUpperCase()}
-            </span>
+            <span style={{ color: colors.main, fontWeight: "bold" }}>B{boat.id}</span>
+            <span style={{ marginLeft: "4px", color: "#6c757d" }}>{boat.position.toUpperCase()}</span>
           </div>
         ))}
       </div>
@@ -201,9 +170,7 @@ export const PlayerInfoBox = ({
           </div>
           <textarea
             value={player.extraInstructions || ""}
-            onChange={(e) =>
-              onExtraInstructionsChange(player.id, e.target.value)
-            }
+            onChange={(e) => onExtraInstructionsChange(player.name, e.target.value)}
             placeholder="Enter additional instructions for this AI player..."
             style={{
               width: "100%",

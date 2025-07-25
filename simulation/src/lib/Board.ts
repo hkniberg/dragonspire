@@ -54,12 +54,12 @@ export class Board {
   /**
    * Get a tile at a specific position
    */
-  getTileAt(position: Position): Tile | null {
+  getTileAt(position: Position): Tile | undefined {
     const { row, col } = position;
     if (this.isValidPosition(position)) {
       return this.tiles[row][col];
     }
-    return null;
+    return undefined;
   }
 
   /**
@@ -102,5 +102,15 @@ export class Board {
         callback(tile, position);
       }
     }
+  }
+
+  setTileGroupToExplored(tileGroup: number) {
+    this.tiles.forEach(row => {
+      row.forEach(tile => {
+        if (tile.tileGroup === tileGroup) {
+          tile.explored = true;
+        }
+      });
+    });
   }
 }

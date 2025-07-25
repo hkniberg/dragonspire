@@ -9,32 +9,24 @@ interface GameStatusProps {
   actionLogLength: number;
 }
 
-export const GameStatus: React.FC<GameStatusProps> = ({
-  gameState,
-  simulationState,
-  actionLogLength,
-}) => {
+export const GameStatus: React.FC<GameStatusProps> = ({ gameState, simulationState, actionLogLength }) => {
   return (
     <div style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>
       <div>
-        <strong>Round:</strong> {gameState.currentRound} |
-        <strong> Current Player:</strong>{" "}
+        <strong>Round:</strong> {gameState.currentRound} |<strong> Current Player:</strong>{" "}
         <span
           style={{
-            color: ["#e74c3c", "#3498db", "#2ecc71", "#f39c12"][
-              (gameState.getCurrentPlayer().id - 1) % 4
-            ],
+            color: gameState.getCurrentPlayer().color,
             fontWeight: "bold",
           }}
         >
           {gameState.getCurrentPlayer().name}
         </span>{" "}
         |<strong> Game Status:</strong> {simulationState}
-        {simulationState === "finished" && gameState.winner && (
+        {simulationState === "finished" && gameState.winner !== undefined && (
           <span style={{ color: "#28a745", fontWeight: "bold" }}>
             {" "}
-            | 🎉 Winner:{" "}
-            {gameState.players.find((p) => p.id === gameState.winner)?.name}
+            | 🎉 Winner: {gameState.players[gameState.winner]?.name}
           </span>
         )}
       </div>

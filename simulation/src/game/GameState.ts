@@ -2,15 +2,16 @@
 
 import { Board } from "../lib/Board";
 import { BoardBuilder } from "../lib/BoardBuilder";
-import type { Champion, Player, Position, Tile } from "../lib/types";
+import type { Boat, Champion, Player, Position, Tile } from "../lib/types";
 
 export class GameState {
-  public readonly board: Board;
-  public readonly players: Player[];
-  public readonly currentPlayerIndex: number;
-  public readonly currentRound: number;
-  public readonly gameEnded: boolean;
-  public readonly winner?: number;
+
+  public board: Board;
+  public players: Player[];
+  public currentPlayerIndex: number;
+  public currentRound: number;
+  public gameEnded: boolean;
+  public winner?: number;
 
   constructor(
     board: Board,
@@ -58,26 +59,35 @@ export class GameState {
     ];
     const oceanPositions = ["nw", "ne", "sw", "se"] as const;
 
+    // Predefined player colors - matches the UI color scheme
+    const playerColors = [
+      "#e74c3c", // Red
+      "#3498db", // Blue
+      "#2ecc71", // Green
+      "#f39c12", // Orange
+    ];
+
     const startingFame = startingValues?.fame ?? 0;
     const startingMight = startingValues?.might ?? 0;
 
     for (let i = 0; i < 4; i++) {
+      const playerName = playerNames[i];
       const champion: Champion = {
         id: 1,
         position: startingPositions[i],
-        playerId: i + 1,
+        playerName: playerName,
         treasures: [],
       };
 
-      const boat = {
+      const boat: Boat = {
         id: 1,
-        playerId: i + 1,
+        playerName: playerName,
         position: oceanPositions[i],
       };
 
       players.push({
-        id: i + 1,
         name: playerNames[i],
+        color: playerColors[i],
         fame: startingFame,
         might: startingMight,
         resources: { food: 1, wood: 1, ore: 0, gold: 0 },
@@ -96,62 +106,54 @@ export class GameState {
     return this.players[this.currentPlayerIndex];
   }
 
-  public getPlayerById(playerId: number): Player | undefined {
-    return this.players.find((p) => p.id === playerId);
+  public getPlayer(playerName: string): Player | undefined {
+    return this.players.find((p) => p.name === playerName);
   }
 
   public getTile(position: Position): Tile | undefined {
     return this.board.getTileAt(position) || undefined;
   }
 
-  public getChampionById(playerId: number, championId: number): Champion | undefined {
-    const player = this.getPlayerById(playerId);
+  public getChampion(playerName: string, championId: number): Champion | undefined {
+    const player = this.getPlayer(playerName);
+    if (!player) {
+      return undefined;
+    }
     return player?.champions.find((c) => c.id === championId);
   }
 
-  public updatePlayerExtraInstructions(playerId: number, extraInstructions: string): GameState {
-    const updatedPlayers = this.players.map((player) =>
-      player.id === playerId ? { ...player, extraInstructions } : player,
-    );
-
-    return this.withUpdates({ players: updatedPlayers });
-  }
-
-  public getValidActions(diceRolls: number[]): string[] {
-    const currentPlayer = this.getCurrentPlayer();
-    const actions: string[] = [];
-
-    for (const dieValue of diceRolls) {
-      actions.push(`Move & Act (die value ${dieValue}): Move a champion up to ${dieValue} tiles and perform an action`);
-      actions.push(`Harvest (die value ${dieValue}): Collect up to ${dieValue} resources from claimed tiles`);
-      actions.push(`Build: Construct a building in your castle (die value doesn't matter)`);
-      actions.push(`Boat Travel (die value ${dieValue}): Move boat and transport champion`);
+  public getOpposingChampionsAtPosition(playerName: string, position: Position): Champion[] {
+    const player = this.players.find((p) => p.name === playerName);
+    if (!player) {
+      throw new Error(`Player ${playerName} not found`);
     }
 
-    return actions;
+    const opposingChampions: Champion[] = [];
+
+    // Iterate through all players
+    for (const otherPlayer of this.players) {
+      // Skip the current player
+      if (otherPlayer.name === playerName) {
+        continue;
+      }
+
+      // Check all champions of this other player
+      for (const champion of otherPlayer.champions) {
+        // If champion is at the specified position, add to result
+        if (champion.position.row === position.row && champion.position.col === position.col) {
+          opposingChampions.push(champion);
+        }
+      }
+    }
+
+    return opposingChampions;
   }
 
-  /**
-   * Creates a new immutable GameState with updated properties
-   */
-  public withUpdates(
-    updates: Partial<{
-      board: Board;
-      players: Player[];
-      currentPlayerIndex: number;
-      currentRound: number;
-      gameEnded: boolean;
-      winner: number;
-    }>,
-  ): GameState {
-    return new GameState(
-      updates.board || this.board,
-      updates.players || this.players,
-      updates.currentPlayerIndex !== undefined ? updates.currentPlayerIndex : this.currentPlayerIndex,
-      updates.currentRound !== undefined ? updates.currentRound : this.currentRound,
-      updates.gameEnded !== undefined ? updates.gameEnded : this.gameEnded,
-      updates.winner !== undefined ? updates.winner : this.winner,
-    );
+  public getStarredTileCount(playerName: string): number {
+    const starredTileCount = this.board.findTiles(
+      (tile) => tile.tileType === "resource" && tile.isStarred === true && tile.claimedBy === playerName,
+    ).length;
+    return starredTileCount;
   }
 
   /**
@@ -161,10 +163,51 @@ export class GameState {
     const nextPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
     const nextRound = nextPlayerIndex === 0 ? this.currentRound + 1 : this.currentRound;
 
-    return this.withUpdates({
-      currentPlayerIndex: nextPlayerIndex,
-      currentRound: nextRound,
-    });
+    this.currentPlayerIndex = nextPlayerIndex;
+    this.currentRound = nextRound;
+    return this;
+  }
+
+  public updateChampionPosition(playerName: string, championId: number, endPosition: Position): Tile {
+    const player = this.players.find((p) => p.name === playerName);
+    if (!player) {
+      throw new Error(`Player ${playerName} not found`);
+    }
+    const champion = player.champions.find((c) => c.id === championId);
+    if (!champion) {
+      throw new Error(`Champion ${championId} not found for player ${playerName}`);
+    }
+    const tile = this.getTile(endPosition);
+    if (!tile) {
+      throw new Error(`Tile at (${endPosition.row}, ${endPosition.col}) does not exist`);
+    }
+
+    champion.position = endPosition;
+    return tile;
+  }
+
+  public moveChampionToHome(playerName: string, championId: number) {
+    const player = this.players.find((p) => p.name === playerName);
+    if (!player) {
+      throw new Error(`Player ${playerName} not found`);
+    }
+    const champion = player.champions.find((c) => c.id === championId);
+    if (!champion) {
+      throw new Error(`Champion ${championId} not found for player ${playerName}`);
+    }
+    champion.position = player.homePosition;
+  }
+
+  public getClaimedTiles(playerName: string): Tile[] {
+    const claimedTiles: Tile[] = [];
+    for (const row of this.board.getTilesGrid()) {
+      for (const tile of row) {
+        if (tile.claimedBy === playerName) {
+          claimedTiles.push(tile);
+        }
+      }
+    }
+    return claimedTiles;
   }
 
   public toJSON() {
@@ -216,15 +259,4 @@ export class GameState {
       winner: this.winner,
     };
   }
-}
-
-// Utility function to roll D3 dice (showing 1,1,2,2,3,3)
-export function rollD3(): number {
-  const outcomes = [1, 1, 2, 2, 3, 3];
-  return outcomes[Math.floor(Math.random() * outcomes.length)];
-}
-
-// Utility function to roll multiple D3 dice
-export function rollMultipleD3(count: number): number[] {
-  return Array.from({ length: count }, () => rollD3());
 }

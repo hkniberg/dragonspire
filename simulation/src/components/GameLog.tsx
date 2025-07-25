@@ -1,0 +1,264 @@
+import { GameLogEntry, GameLogEntryType } from "@/lib/types";
+import React, { useState } from "react";
+import { LuCopy, LuDownload, LuMaximize2, LuMinimize2 } from "react-icons/lu";
+
+interface GameLogProps {
+  gameLog: GameLogEntry[];
+  isVisible: boolean;
+}
+
+interface GroupedLogEntry {
+  round: number;
+  entries: GameLogEntry[];
+}
+
+// Helper function to group log entries by round
+function groupGameLogEntriesByRound(entries: GameLogEntry[]): GroupedLogEntry[] {
+  const grouped = entries.reduce(
+    (acc, entry) => {
+      if (!acc[entry.round]) {
+        acc[entry.round] = [];
+      }
+      acc[entry.round].push(entry);
+      return acc;
+    },
+    {} as Record<number, GameLogEntry[]>,
+  );
+
+  return Object.entries(grouped)
+    .map(([round, entries]) => ({ round: parseInt(round), entries }))
+    .sort((a, b) => a.round - b.round);
+}
+
+// Helper function to format a single log entry
+function formatGameLogEntry(entry: GameLogEntry): string {
+  const typeEmoji = getEntryEmoji(entry.type);
+  return `${typeEmoji} ${entry.playerName}: ${entry.content}`;
+}
+
+// Helper function to get emoji for entry type
+function getEntryEmoji(type: GameLogEntryType): string {
+  switch (type) {
+    case "dice":
+      return "🎲";
+    case "movement":
+      return "🚶";
+    case "boat":
+      return "⛵";
+    case "exploration":
+      return "🔍";
+    case "combat":
+      return "⚔️";
+    case "harvest":
+      return "🌾";
+    case "assessment":
+      return "🤔";
+    case "event":
+      return "📜";
+    case "system":
+      return "⚙️";
+    case "victory":
+      return "👑";
+    default:
+      return "📝";
+  }
+}
+
+// Helper function to get color for entry type
+function getEntryColor(type: GameLogEntryType): string {
+  switch (type) {
+    case "system":
+      return "#2c3e50";
+    case "assessment":
+      return "#0c5460";
+    case "movement":
+    case "boat":
+      return "#28a745";
+    case "combat":
+      return "#dc3545";
+    case "harvest":
+      return "#6f42c1";
+    case "event":
+      return "#fd7e14";
+    case "exploration":
+      return "#17a2b8";
+    case "dice":
+      return "#ffc107";
+    case "victory":
+      return "#e83e8c";
+    default:
+      return "#495057";
+  }
+}
+
+export const GameLog: React.FC<GameLogProps> = ({ gameLog, isVisible }) => {
+  const [isMaximized, setIsMaximized] = useState(false);
+
+  if (!isVisible || gameLog.length === 0) {
+    return null;
+  }
+
+  const convertToMarkdown = (): string => {
+    let markdown = "# Game Log\n\n";
+    const groupedEntries = groupGameLogEntriesByRound(gameLog);
+
+    groupedEntries.forEach(({ round, entries }) => {
+      markdown += `## Round ${round}\n\n`;
+      entries.forEach((entry) => {
+        const formattedEntry = formatGameLogEntry(entry);
+        markdown += `- ${formattedEntry}\n`;
+      });
+      markdown += "\n";
+    });
+
+    return markdown;
+  };
+
+  const handleCopy = async () => {
+    try {
+      const markdown = convertToMarkdown();
+      await navigator.clipboard.writeText(markdown);
+      alert("Game log copied to clipboard as markdown!");
+    } catch (err) {
+      console.error("Failed to copy to clipboard:", err);
+      alert("Failed to copy to clipboard");
+    }
+  };
+
+  const handleDownload = () => {
+    const markdown = convertToMarkdown();
+    const blob = new Blob([markdown], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `game-log-${new Date().toISOString().split("T")[0]}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const buttonStyle = {
+    padding: "6px 8px",
+    margin: "0 2px",
+    backgroundColor: "transparent",
+    color: "#6c757d",
+    border: "1px solid #dee2e6",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "14px",
+    transition: "all 0.2s ease",
+  };
+
+  const containerStyle = {
+    marginBottom: "20px",
+    padding: "15px",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderRadius: "8px",
+    border: "1px solid #ddd",
+    maxHeight: isMaximized ? "80vh" : "400px",
+    overflowY: "auto" as const,
+    position: isMaximized ? ("fixed" as const) : ("relative" as const),
+    top: isMaximized ? "10vh" : "auto",
+    left: isMaximized ? "10vw" : "auto",
+    width: isMaximized ? "80vw" : "auto",
+    zIndex: isMaximized ? 1000 : "auto",
+  };
+
+  const groupedEntries = groupGameLogEntriesByRound(gameLog);
+
+  return (
+    <div style={containerStyle}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "10px",
+        }}
+      >
+        <h3 style={{ margin: 0, color: "#2c3e50" }}>📋 Game Log</h3>
+        <div>
+          <button
+            style={{
+              ...buttonStyle,
+              backgroundColor: isMaximized ? "#f8f9fa" : "transparent",
+            }}
+            onClick={() => setIsMaximized(!isMaximized)}
+            title={isMaximized ? "Minimize" : "Maximize"}
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f8f9fa")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = isMaximized ? "#f8f9fa" : "transparent")}
+          >
+            {isMaximized ? <LuMinimize2 size={16} /> : <LuMaximize2 size={16} />}
+          </button>
+          <button
+            style={buttonStyle}
+            onClick={handleCopy}
+            title="Copy as Markdown"
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f8f9fa")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+          >
+            <LuCopy size={16} />
+          </button>
+          <button
+            style={buttonStyle}
+            onClick={handleDownload}
+            title="Download as Markdown"
+            onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#f8f9fa")}
+            onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+          >
+            <LuDownload size={16} />
+          </button>
+        </div>
+      </div>
+      <div
+        style={{
+          fontFamily: "monospace",
+          fontSize: "12px",
+          lineHeight: "1.4",
+        }}
+      >
+        {groupedEntries.map(({ round, entries }) => (
+          <div
+            key={round}
+            style={{
+              marginBottom: "15px",
+              padding: "10px",
+              backgroundColor: "#f8f9fa",
+              borderRadius: "4px",
+              border: "1px solid #e9ecef",
+            }}
+          >
+            <div
+              style={{
+                fontWeight: "bold",
+                color: "#2c3e50",
+                marginBottom: "8px",
+                fontSize: "14px",
+              }}
+            >
+              🎲 Round {round}
+            </div>
+            {entries.map((entry, entryIndex) => {
+              const formattedEntry = formatGameLogEntry(entry);
+
+              return (
+                <div
+                  key={entryIndex}
+                  style={{
+                    marginBottom: "2px",
+                    color: getEntryColor(entry.type),
+                    fontStyle: entry.type === "assessment" ? "italic" : "normal",
+                    fontWeight: entry.type === "system" ? "bold" : "normal",
+                  }}
+                >
+                  {formattedEntry}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};

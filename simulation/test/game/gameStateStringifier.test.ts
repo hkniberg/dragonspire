@@ -136,7 +136,7 @@ function createSampleGameState(): GameState {
     tileType: "resource",
     resources: { food: 2, wood: 0, ore: 0, gold: 1 },
     isStarred: true,
-    claimedBy: 1,
+    claimedBy: "Jim",
   });
 
   // Tile (0,7) - Resource tile, claimed by Jim, with Jim champion1
@@ -146,7 +146,7 @@ function createSampleGameState(): GameState {
     explored: true,
     tileType: "resource",
     resources: { food: 0, wood: 0, ore: 1, gold: 0 },
-    claimedBy: 1,
+    claimedBy: "Jim",
   });
 
   // Tile (2,6) - Resource tile with monster
@@ -236,8 +236,8 @@ function createSampleGameState(): GameState {
   // Create players
   const players: Player[] = [
     {
-      id: 1,
       name: "Jim",
+      color: "#0000FF",
       fame: 3,
       might: 0,
       resources: { food: 1, wood: 2, ore: 0, gold: 0 },
@@ -247,27 +247,27 @@ function createSampleGameState(): GameState {
         {
           id: 1,
           position: { row: 3, col: 3 },
-          playerId: 1,
+          playerName: "Jim",
           treasures: ["broken-shield", "rusty-sword"],
         },
         {
           id: 2,
           position: { row: 3, col: 5 },
-          playerId: 1,
+          playerName: "Jim",
           treasures: [],
         },
       ],
       boats: [
         {
           id: 1,
-          playerId: 1,
+          playerName: "Jim",
           position: "sw",
         },
       ],
     },
     {
-      id: 2,
       name: "Bob",
+      color: "#FF0000",
       fame: 2,
       might: 1,
       resources: { food: 0, wood: 0, ore: 1, gold: 0 },
@@ -277,26 +277,26 @@ function createSampleGameState(): GameState {
         {
           id: 1,
           position: { row: 0, col: 5 },
-          playerId: 2,
+          playerName: "Bob",
           treasures: [],
         },
       ],
       boats: [
         {
           id: 1,
-          playerId: 2,
+          playerName: "Bob",
           position: "ne",
         },
         {
           id: 2,
-          playerId: 2,
+          playerName: "Bob",
           position: "se",
         },
       ],
     },
     {
-      id: 3,
       name: "Alice",
+      color: "#00FF00",
       fame: 0,
       might: 0,
       resources: { food: 1, wood: 1, ore: 0, gold: 0 },
@@ -306,21 +306,21 @@ function createSampleGameState(): GameState {
         {
           id: 1,
           position: { row: 7, col: 0 },
-          playerId: 3,
+          playerName: "Alice",
           treasures: [],
         },
       ],
       boats: [
         {
           id: 1,
-          playerId: 3,
+          playerName: "Alice",
           position: "sw",
         },
       ],
     },
     {
-      id: 4,
       name: "David",
+      color: "#FFFF00",
       fame: 0,
       might: 0,
       resources: { food: 1, wood: 1, ore: 0, gold: 0 },
@@ -330,14 +330,14 @@ function createSampleGameState(): GameState {
         {
           id: 1,
           position: { row: 7, col: 7 },
-          playerId: 4,
+          playerName: "David",
           treasures: [],
         },
       ],
       boats: [
         {
           id: 1,
-          playerId: 4,
+          playerName: "David",
           position: "se",
         },
       ],
@@ -348,7 +348,7 @@ function createSampleGameState(): GameState {
   players[0].champions.push({
     id: 1, // This will be confusing with multiple champion1s, but it matches the example
     position: { row: 2, col: 5 },
-    playerId: 1,
+    playerName: "Jim",
     treasures: [],
   });
 

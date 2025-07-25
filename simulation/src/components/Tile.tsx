@@ -45,6 +45,98 @@ const getTileColor = (tile: Tile): string => {
   }
 };
 
+const getBackgroundColor = (tile: Tile): string => {
+  if (!tile.explored) {
+    return getTileColor(tile);
+  }
+
+  const transparentTileTypes = ["chapel", "trader", "mercenary", "doomspire", "adventure", "oasis"];
+  if (transparentTileTypes.includes(tile.tileType || "")) {
+    return "transparent";
+  }
+
+  return getTileColor(tile);
+};
+
+const getResourceTileImage = (tile: Tile): string => {
+  if (!tile.resources) return "none";
+
+  const resources = tile.resources;
+  const hasFood = resources.food > 0;
+  const hasWood = resources.wood > 0;
+  const hasOre = resources.ore > 0;
+  const hasGold = resources.gold > 0;
+
+  // Single resource tiles
+  if (hasFood && !hasWood && !hasOre && !hasGold) return "url(/tiles/food.png)";
+  if (hasWood && !hasFood && !hasOre && !hasGold) return "url(/tiles/wood.png)";
+  if (hasGold && !hasFood && !hasWood && !hasOre) return "url(/tiles/gold.png)";
+  if (hasOre && !hasFood && !hasWood && !hasGold) return "url(/tiles/ore.png)";
+
+  // Dual resource tiles
+  if (hasFood && hasGold && !hasWood && !hasOre) return "url(/tiles/food-gold.png)";
+  if (hasFood && hasOre && !hasWood && !hasGold) return "url(/tiles/food-ore.png)";
+  if (hasFood && hasWood && !hasOre && !hasGold) return "url(/tiles/food-wood.png)";
+  if (hasGold && hasOre && !hasFood && !hasWood) return "url(/tiles/gold-ore.png)";
+  if (hasGold && hasWood && !hasFood && !hasOre) return "url(/tiles/gold-wood.png)";
+  if (hasOre && hasWood && !hasFood && !hasGold) return "url(/tiles/ore-wood.png)";
+
+  return "none";
+};
+
+const getBackgroundImage = (tile: Tile): string => {
+  if (!tile.explored) {
+    return "none";
+  }
+
+  // Simple tile types with direct image mapping
+  const simpleTileImages: Record<string, string> = {
+    empty: "url(/tiles/empty.png)",
+    chapel: "url(/tiles/chapel.png)",
+    trader: "url(/tiles/trader.png)",
+    mercenary: "url(/tiles/mercenary.png)",
+    doomspire: "url(/tiles/dragon.png)",
+    home: "url(/tiles/home.png)",
+  };
+
+  if (tile.tileType && simpleTileImages[tile.tileType]) {
+    return simpleTileImages[tile.tileType];
+  }
+
+  // Adventure tiles by tier
+  if (tile.tileType === "adventure") {
+    switch (tile.tier) {
+      case 1:
+        return "url(/tiles/adventure-tier1.png)";
+      case 2:
+        return "url(/tiles/adventure-tier2.png)";
+      case 3:
+        return "url(/tiles/adventure-tier3.png)";
+      default:
+        return "none";
+    }
+  }
+
+  // Oasis tiles by tier
+  if (tile.tileType === "oasis") {
+    switch (tile.tier) {
+      case 1:
+        return "url(/tiles/oasis-tier1.png)";
+      case 2:
+        return "url(/tiles/oasis-tier2.png)";
+      default:
+        return "none";
+    }
+  }
+
+  // Resource tiles with complex logic
+  if (tile.tileType === "resource") {
+    return getResourceTileImage(tile);
+  }
+
+  return "none";
+};
+
 const getTileSymbol = (tile: Tile): string => {
   if (!tile.explored) {
     return "";
@@ -137,16 +229,14 @@ export const TileComponent = ({
   tile: Tile;
   champions: Champion[];
   debugMode?: boolean;
-  getPlayerColor: (playerId: number) => {
+  getPlayerColor: (playerName: string) => {
     main: string;
     light: string;
     dark: string;
   };
 }) => {
   const championsOnTile = champions.filter(
-    (champion) =>
-      champion.position.row === tile.position.row &&
-      champion.position.col === tile.position.col
+    (champion) => champion.position.row === tile.position.row && champion.position.col === tile.position.col,
   );
 
   // Create an effective tile state that considers debug mode
@@ -181,139 +271,8 @@ export const TileComponent = ({
       style={{
         width: "120px",
         height: "120px",
-        backgroundColor:
-          effectiveTile.explored &&
-          (effectiveTile.tileType === "chapel" ||
-            effectiveTile.tileType === "trader" ||
-            effectiveTile.tileType === "mercenary" ||
-            effectiveTile.tileType === "doomspire" ||
-            effectiveTile.tileType === "adventure" ||
-            effectiveTile.tileType === "oasis")
-            ? "transparent"
-            : getTileColor(effectiveTile),
-        backgroundImage: effectiveTile.explored
-          ? effectiveTile.tileType === "empty"
-            ? "url(/tiles/empty.png)"
-            : effectiveTile.tileType === "chapel"
-            ? "url(/tiles/chapel.png)"
-            : effectiveTile.tileType === "trader"
-            ? "url(/tiles/trader.png)"
-            : effectiveTile.tileType === "mercenary"
-            ? "url(/tiles/mercenary.png)"
-            : effectiveTile.tileType === "doomspire"
-            ? "url(/tiles/dragon.png)"
-            : effectiveTile.tileType === "home"
-            ? "url(/tiles/home.png)"
-            : effectiveTile.tileType === "adventure"
-            ? effectiveTile.tier === 1
-              ? "url(/tiles/adventure-tier1.png)"
-              : effectiveTile.tier === 2
-              ? "url(/tiles/adventure-tier2.png)"
-              : effectiveTile.tier === 3
-              ? "url(/tiles/adventure-tier3.png)"
-              : "none"
-            : effectiveTile.tileType === "oasis"
-            ? effectiveTile.tier === 1
-              ? "url(/tiles/oasis-tier1.png)"
-              : effectiveTile.tier === 2
-              ? "url(/tiles/oasis-tier2.png)"
-              : "none"
-            : effectiveTile.tileType === "resource" &&
-              effectiveTile.resources &&
-              effectiveTile.resources.food > 0 &&
-              (!effectiveTile.resources.wood ||
-                effectiveTile.resources.wood === 0) &&
-              (!effectiveTile.resources.ore ||
-                effectiveTile.resources.ore === 0) &&
-              (!effectiveTile.resources.gold ||
-                effectiveTile.resources.gold === 0)
-            ? "url(/tiles/food.png)"
-            : effectiveTile.tileType === "resource" &&
-              effectiveTile.resources &&
-              effectiveTile.resources.wood > 0 &&
-              (!effectiveTile.resources.food ||
-                effectiveTile.resources.food === 0) &&
-              (!effectiveTile.resources.ore ||
-                effectiveTile.resources.ore === 0) &&
-              (!effectiveTile.resources.gold ||
-                effectiveTile.resources.gold === 0)
-            ? "url(/tiles/wood.png)"
-            : effectiveTile.tileType === "resource" &&
-              effectiveTile.resources &&
-              effectiveTile.resources.gold > 0 &&
-              (!effectiveTile.resources.food ||
-                effectiveTile.resources.food === 0) &&
-              (!effectiveTile.resources.wood ||
-                effectiveTile.resources.wood === 0) &&
-              (!effectiveTile.resources.ore ||
-                effectiveTile.resources.ore === 0)
-            ? "url(/tiles/gold.png)"
-            : effectiveTile.tileType === "resource" &&
-              effectiveTile.resources &&
-              effectiveTile.resources.ore > 0 &&
-              (!effectiveTile.resources.food ||
-                effectiveTile.resources.food === 0) &&
-              (!effectiveTile.resources.wood ||
-                effectiveTile.resources.wood === 0) &&
-              (!effectiveTile.resources.gold ||
-                effectiveTile.resources.gold === 0)
-            ? "url(/tiles/ore.png)"
-            : effectiveTile.tileType === "resource" &&
-              effectiveTile.resources &&
-              effectiveTile.resources.food > 0 &&
-              effectiveTile.resources.gold > 0 &&
-              (!effectiveTile.resources.wood ||
-                effectiveTile.resources.wood === 0) &&
-              (!effectiveTile.resources.ore ||
-                effectiveTile.resources.ore === 0)
-            ? "url(/tiles/food-gold.png)"
-            : effectiveTile.tileType === "resource" &&
-              effectiveTile.resources &&
-              effectiveTile.resources.food > 0 &&
-              effectiveTile.resources.ore > 0 &&
-              (!effectiveTile.resources.wood ||
-                effectiveTile.resources.wood === 0) &&
-              (!effectiveTile.resources.gold ||
-                effectiveTile.resources.gold === 0)
-            ? "url(/tiles/food-ore.png)"
-            : effectiveTile.tileType === "resource" &&
-              effectiveTile.resources &&
-              effectiveTile.resources.food > 0 &&
-              effectiveTile.resources.wood > 0 &&
-              (!effectiveTile.resources.ore ||
-                effectiveTile.resources.ore === 0) &&
-              (!effectiveTile.resources.gold ||
-                effectiveTile.resources.gold === 0)
-            ? "url(/tiles/food-wood.png)"
-            : effectiveTile.tileType === "resource" &&
-              effectiveTile.resources &&
-              effectiveTile.resources.gold > 0 &&
-              effectiveTile.resources.ore > 0 &&
-              (!effectiveTile.resources.food ||
-                effectiveTile.resources.food === 0) &&
-              (!effectiveTile.resources.wood ||
-                effectiveTile.resources.wood === 0)
-            ? "url(/tiles/gold-ore.png)"
-            : effectiveTile.tileType === "resource" &&
-              effectiveTile.resources &&
-              effectiveTile.resources.gold > 0 &&
-              effectiveTile.resources.wood > 0 &&
-              (!effectiveTile.resources.food ||
-                effectiveTile.resources.food === 0) &&
-              (!effectiveTile.resources.ore ||
-                effectiveTile.resources.ore === 0)
-            ? "url(/tiles/gold-wood.png)"
-            : effectiveTile.tileType === "resource" &&
-              effectiveTile.resources &&
-              effectiveTile.resources.ore > 0 &&
-              effectiveTile.resources.wood > 0 &&
-              (!effectiveTile.resources.food ||
-                effectiveTile.resources.food === 0) &&
-              (!effectiveTile.resources.gold ||
-                effectiveTile.resources.gold === 0)
-            ? "url(/tiles/ore-wood.png)"
-            : "none"
-          : "none",
+        backgroundColor: getBackgroundColor(effectiveTile),
+        backgroundImage: getBackgroundImage(effectiveTile),
         backgroundSize: "cover",
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
@@ -332,9 +291,7 @@ export const TileComponent = ({
       }}
       title={`${effectiveTile.tileType || "Terrain"} (Tier ${
         effectiveTile.tier
-      }) - Position: ${effectiveTile.position.row + 1}, ${
-        effectiveTile.position.col + 1
-      }
+      }) - Position: ${effectiveTile.position.row + 1}, ${effectiveTile.position.col + 1}
 ${
   effectiveTile.resources && Object.keys(effectiveTile.resources).length > 0
     ? `Resources: ${Object.entries(effectiveTile.resources)
@@ -343,9 +300,7 @@ ${
         .join(", ")}${effectiveTile.isStarred ? " ⭐" : ""}`
     : ""
 }
-${
-  effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}` : ""
-}${
+${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}` : ""}${
         effectiveTile.monster && effectiveTile.explored
           ? `\nMonster: ${effectiveTile.monster.name} (Might: ${effectiveTile.monster.might})`
           : ""
@@ -382,16 +337,13 @@ ${
             <div style={getResourceSymbolStyle()}>🌾</div>
             <div style={getResourceSymbolStyle()}>🪵</div>
           </div>
-        ) : specialLabel &&
-          !(effectiveTile.tileType === "home" && !tile.explored) ? (
+        ) : specialLabel && !(effectiveTile.tileType === "home" && !tile.explored) ? (
           <>
             {effectiveTile.tileType !== "chapel" &&
               effectiveTile.tileType !== "trader" &&
               effectiveTile.tileType !== "mercenary" &&
               effectiveTile.tileType !== "doomspire" && (
-                <div style={{ fontSize: "24px" }}>
-                  {getTileSymbol(effectiveTile)}
-                </div>
+                <div style={{ fontSize: "24px" }}>{getTileSymbol(effectiveTile)}</div>
               )}
             {effectiveTile.tileType !== "chapel" &&
               effectiveTile.tileType !== "trader" &&
@@ -430,10 +382,7 @@ ${
                   };
                   const symbol = resourceSymbols[type as ResourceType];
                   return Array.from({ length: amount }, (_, index) => (
-                    <div
-                      key={`${type}-${index}`}
-                      style={getResourceSymbolStyle()}
-                    >
+                    <div key={`${type}-${index}`} style={getResourceSymbolStyle()}>
                       {symbol}
                     </div>
                   ));
@@ -454,10 +403,7 @@ ${
             left: "4px",
           }}
         >
-          <ClaimFlag
-            playerId={effectiveTile.claimedBy}
-            getPlayerColor={getPlayerColor}
-          />
+          <ClaimFlag playerName={effectiveTile.claimedBy} getPlayerColor={getPlayerColor} />
         </div>
       )}
 
@@ -476,8 +422,7 @@ ${
       )}
 
       {/* Adventure tokens as question mark circles */}
-      {(effectiveTile.tileType === "adventure" ||
-        effectiveTile.tileType === "oasis") &&
+      {(effectiveTile.tileType === "adventure" || effectiveTile.tileType === "oasis") &&
         effectiveTile.explored &&
         !!effectiveTile.adventureTokens &&
         effectiveTile.adventureTokens > 0 && (
@@ -495,30 +440,27 @@ ${
               zIndex: 5,
             }}
           >
-            {Array.from(
-              { length: effectiveTile.adventureTokens },
-              (_, index) => (
-                <div
-                  key={index}
-                  style={{
-                    backgroundColor: "#ffffff",
-                    borderRadius: "50%",
-                    width: "40px",
-                    height: "40px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "18px",
-                    fontWeight: "bold",
-                    border: "2px solid rgba(0, 0, 0, 0.3)",
-                    boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
-                    color: getTierSolidColor(effectiveTile.tier),
-                  }}
-                >
-                  ?
-                </div>
-              )
-            )}
+            {Array.from({ length: effectiveTile.adventureTokens }, (_, index) => (
+              <div
+                key={index}
+                style={{
+                  backgroundColor: "#ffffff",
+                  borderRadius: "50%",
+                  width: "40px",
+                  height: "40px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                  border: "2px solid rgba(0, 0, 0, 0.3)",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                  color: getTierSolidColor(effectiveTile.tier),
+                }}
+              >
+                ?
+              </div>
+            ))}
           </div>
         )}
 
@@ -530,10 +472,7 @@ ${
             top: "40%",
             left: "50%",
             transform: `translate(-50%, -55%) scale(0.7) rotate(${
-              ((effectiveTile.position.row * 7 +
-                effectiveTile.position.col * 11) %
-                21) -
-              10
+              ((effectiveTile.position.row * 7 + effectiveTile.position.col * 11) % 21) - 10
             }deg)`,
             zIndex: 8,
           }}
@@ -567,11 +506,7 @@ ${
           }}
         >
           {championsOnTile.map((champion) => (
-            <ChampionComponent
-              key={champion.id}
-              champion={champion}
-              getPlayerColor={getPlayerColor}
-            />
+            <ChampionComponent key={champion.id} champion={champion} getPlayerColor={getPlayerColor} />
           ))}
         </div>
       )}

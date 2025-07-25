@@ -60,7 +60,7 @@ export class GameStateStringifier {
     }
 
     // Claims
-    const claimedTiles = this.getClaimedTiles(player.id, gameState);
+    const claimedTiles = gameState.getClaimedTiles(player.name);
     if (claimedTiles.length > 0) {
       lines.push(`- claims (${claimedTiles.length} tiles of max ${player.maxClaims}):`);
       for (const tile of claimedTiles) {
@@ -84,17 +84,6 @@ export class GameStateStringifier {
     return line;
   }
 
-  private static getClaimedTiles(playerId: number, gameState: GameState): Tile[] {
-    const claimedTiles: Tile[] = [];
-    for (const row of gameState.board.getTilesGrid()) {
-      for (const tile of row) {
-        if (tile.claimedBy === playerId) {
-          claimedTiles.push(tile);
-        }
-      }
-    }
-    return claimedTiles;
-  }
 
   private static formatClaimedTile(tile: Tile, gameState: GameState): string {
     let line = `  - Tile ${this.formatPosition(tile.position)}`;
@@ -108,12 +97,12 @@ export class GameStateStringifier {
 
     // Check if blockaded
     const blockadingChampions = this.getChampionsOnTile(tile.position, gameState).filter(
-      (champ) => champ.playerId !== tile.claimedBy,
+      (champ) => champ.playerName != tile.claimedBy,
     );
 
     if (blockadingChampions.length > 0) {
       const blockader = blockadingChampions[0];
-      const player = gameState.getPlayerById(blockader.playerId);
+      const player = gameState.getPlayer(blockader.playerName);
       line += ` (blockaded by ${player?.name} champion${blockader.id})`;
     }
 
@@ -175,7 +164,7 @@ export class GameStateStringifier {
             lines.push("- Starred");
           }
           if (tile.claimedBy) {
-            const player = gameState.getPlayerById(tile.claimedBy);
+            const player = gameState.getPlayer(tile.claimedBy);
             lines.push(`- Claimed by ${player?.name || "unknown"}`);
           } else {
             lines.push("- Unclaimed");
@@ -213,7 +202,7 @@ export class GameStateStringifier {
     // Add champions on this tile
     const championsOnTile = this.getChampionsOnTile(tile.position, gameState);
     for (const champion of championsOnTile) {
-      const player = gameState.getPlayerById(champion.playerId);
+      const player = gameState.getPlayer(champion.playerName);
       lines.push(`- ${player?.name || "unknown"} champion${champion.id} is here`);
     }
 

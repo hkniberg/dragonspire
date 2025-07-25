@@ -28,7 +28,7 @@ export function hasOtherChampionsAtPosition(
   gameState: GameState,
   position: Position,
   excludeChampionId?: number,
-  excludePlayerId?: number,
+  excludePlayerName?: string,
 ): boolean {
   for (const player of gameState.players) {
     for (const champion of player.champions) {
@@ -38,7 +38,7 @@ export function hasOtherChampionsAtPosition(
           continue;
         }
         // Skip if this is the player we're excluding
-        if (excludePlayerId && champion.playerId === excludePlayerId) {
+        if (excludePlayerName && champion.playerName === excludePlayerName) {
           continue;
         }
         return true;
@@ -56,7 +56,7 @@ export function getReachableTiles(
   championPosition: Position,
   dieValue: number,
   excludeChampionId?: number,
-  excludePlayerId?: number,
+  excludePlayerName?: string,
 ): Position[] {
   const reachableTiles: Position[] = [];
 
@@ -70,7 +70,7 @@ export function getReachableTiles(
     const { position, steps } = queue.shift()!;
 
     // Add current position if it's not the starting position and has no other champions
-    if (steps > 0 && !hasOtherChampionsAtPosition(gameState, position, excludeChampionId, excludePlayerId)) {
+    if (steps > 0 && !hasOtherChampionsAtPosition(gameState, position, excludeChampionId, excludePlayerName)) {
       reachableTiles.push(position);
     }
 
@@ -117,7 +117,7 @@ export function generateAllPaths(
   targetPosition: Position,
   maxSteps: number,
   excludeChampionId?: number,
-  excludePlayerId?: number,
+  excludePlayerName?: string,
 ): Position[][] {
   const paths: Position[][] = [];
 
@@ -160,7 +160,7 @@ export function generateAllPaths(
 
       // Check if there are other champions at this position (except at target)
       const isTarget = nextPos.row === targetPosition.row && nextPos.col === targetPosition.col;
-      if (!isTarget && hasOtherChampionsAtPosition(gameState, nextPos, excludeChampionId, excludePlayerId)) {
+      if (!isTarget && hasOtherChampionsAtPosition(gameState, nextPos, excludeChampionId, excludePlayerName)) {
         continue;
       }
 
@@ -187,14 +187,14 @@ export interface HarvestableResourcesInfo {
   totalHarvestableResources: Record<ResourceType, number>;
 }
 
-export function getHarvestableResourcesInfo(gameState: GameState, playerId: number): HarvestableResourcesInfo {
+export function getHarvestableResourcesInfo(gameState: GameState, playerName: string): HarvestableResourcesInfo {
   const ownedNonBlockedTiles: Tile[] = [];
   const ownedBlockedTiles: Tile[] = [];
   const blockadedOpponentTiles: Tile[] = [];
   const totalHarvestableResources: Record<ResourceType, number> = { food: 0, wood: 0, ore: 0, gold: 0 };
 
   // Get the player's champions positions
-  const player = gameState.getPlayerById(playerId);
+  const player = gameState.getPlayer(playerName);
   if (!player) {
     return {
       ownedNonBlockedTiles,
@@ -222,7 +222,7 @@ export function getHarvestableResourcesInfo(gameState: GameState, playerId: numb
       // Check if any opposing champions are on this tile
       let hasOpposingChampion = false;
       for (const otherPlayer of gameState.players) {
-        if (otherPlayer.id === playerId) {
+        if (otherPlayer.name === playerName) {
           continue; // Skip the current player
         }
 
@@ -238,7 +238,7 @@ export function getHarvestableResourcesInfo(gameState: GameState, playerId: numb
       }
 
       // Case 1: Tile is claimed by the player
-      if (tile.claimedBy === playerId) {
+      if (tile.claimedBy === playerName) {
         if (!hasOpposingChampion) {
           // Player owns this tile and it's not blockaded
           ownedNonBlockedTiles.push(tile);
@@ -252,7 +252,7 @@ export function getHarvestableResourcesInfo(gameState: GameState, playerId: numb
       }
 
       // Case 2: Tile is claimed by an opposing player and player's champion is on it (blockading)
-      if (tile.claimedBy !== undefined && tile.claimedBy !== playerId && hasPlayerChampion) {
+      if (tile.claimedBy !== undefined && tile.claimedBy !== playerName && hasPlayerChampion) {
         blockadedOpponentTiles.push(tile);
         for (const [resourceType, amount] of Object.entries(tile.resources)) {
           totalHarvestableResources[resourceType as ResourceType] += amount as number;
@@ -276,6 +276,6 @@ export function getHarvestableResourcesInfo(gameState: GameState, playerId: numb
  * - Any tile that is claimed by them and doesn't have an opposing champion on it
  * - Any tile that is claimed by an opposing player and has their champion on it (blockading)
  */
-export function getHarvestableResources(gameState: GameState, playerId: number): Record<ResourceType, number> {
-  return getHarvestableResourcesInfo(gameState, playerId).totalHarvestableResources;
+export function getHarvestableResources(gameState: GameState, playerName: string): Record<ResourceType, number> {
+  return getHarvestableResourcesInfo(gameState, playerName).totalHarvestableResources;
 }

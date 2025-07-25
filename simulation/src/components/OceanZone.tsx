@@ -16,11 +16,7 @@ const getBoatImagePath = (playerId: number): string => {
 };
 
 // Function to generate boat positions for multiple boats in the same zone
-const getBoatPosition = (
-  zonePosition: string,
-  boatIndex: number,
-  boatId: number
-): { x: number; y: number } => {
+const getBoatPosition = (zonePosition: string, boatIndex: number, boatId: number): { x: number; y: number } => {
   // Small random variation for natural look (based on boat ID)
   const seed = boatId * 1337;
   const randomX = (((seed * 9301) % 233280) / 233280) * 10 - 5; // ±5px variation
@@ -30,10 +26,7 @@ const getBoatPosition = (
   const spacing = 135; // 540px usable space ÷ 4 intervals = 135px
 
   // Calculate grid position based on boat index using 5x5 grid
-  const getGridPosition = (
-    index: number,
-    zonePos: string
-  ): { gridX: number; gridY: number } => {
+  const getGridPosition = (index: number, zonePos: string): { gridX: number; gridY: number } => {
     if (index === 0) {
       // Corner positions
       switch (zonePos) {
@@ -130,7 +123,7 @@ export const OceanZoneComponent = ({
 }: {
   zone: (typeof oceanZones)[0];
   players: Player[];
-  getPlayerColor?: (playerId: number) => {
+  getPlayerColor?: (playerName: string) => {
     main: string;
     light: string;
     dark: string;
@@ -148,15 +141,13 @@ export const OceanZoneComponent = ({
   const boatsInZone = players
     .flatMap((player) =>
       player.boats
-        .filter((boat) =>
-          zonePositionMap[zone.position]?.includes(boat.position)
-        )
-        .map((boat) => ({ ...boat, player }))
+        .filter((boat) => zonePositionMap[zone.position]?.includes(boat.position))
+        .map((boat) => ({ ...boat, player })),
     )
     .sort((a, b) => {
-      // Sort first by player ID, then by boat ID for consistent positioning
-      if (a.player.id !== b.player.id) {
-        return a.player.id - b.player.id;
+      // Sort first by player name, then by boat ID for consistent positioning
+      if (a.player.name !== b.player.name) {
+        return a.player.name.localeCompare(b.player.name);
       }
       return a.id - b.id;
     });
@@ -413,16 +404,16 @@ export const OceanZoneComponent = ({
             >
               {boatsInZone.map((boatWithPlayer, boatIndex) => {
                 const playerColors = getPlayerColor
-                  ? getPlayerColor(boatWithPlayer.player.id)
+                  ? getPlayerColor(boatWithPlayer.player.name)
                   : { main: "#666", light: "#ccc", dark: "#333" };
-                const offset = getBoatPosition(
-                  zone.position,
-                  boatIndex,
-                  boatWithPlayer.id
-                );
+                const offset = getBoatPosition(zone.position, boatIndex, boatWithPlayer.id);
+
+                // Find player index for boat image
+                const playerIndex = players.findIndex((p) => p.name === boatWithPlayer.player.name);
+
                 return (
                   <div
-                    key={`${boatWithPlayer.player.id}-${boatWithPlayer.id}`}
+                    key={`${boatWithPlayer.player.name}-${boatWithPlayer.id}`}
                     style={{
                       position: "absolute",
                       backgroundColor: "transparent",
@@ -439,7 +430,7 @@ export const OceanZoneComponent = ({
                     title={`Boat ${boatWithPlayer.id} (${boatWithPlayer.player.name})`}
                   >
                     <img
-                      src={getBoatImagePath(boatWithPlayer.player.id)}
+                      src={getBoatImagePath(playerIndex)}
                       alt={`Boat ${boatWithPlayer.id}`}
                       style={{
                         width: "96px",

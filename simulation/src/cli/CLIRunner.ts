@@ -3,9 +3,9 @@
 import * as dotenv from "dotenv";
 import { GameMaster, GameMasterConfig } from "../engine/GameMaster";
 import { Claude } from "../llm/claude";
-import { ClaudePlayer } from "../players/ClaudePlayer";
-import { Player } from "../players/Player";
-import { RandomPlayer } from "../players/RandomPlayer";
+import { ClaudePlayerAgent } from "../players/ClaudePlayer";
+import { PlayerAgent } from "../players/PlayerAgent";
+import { RandomPlayerAgent } from "../players/RandomPlayerAgent";
 
 // Load environment variables
 dotenv.config();
@@ -23,10 +23,10 @@ export interface CLIConfig {
 }
 
 export class CLIRunner {
-  private static async createPlayer(config: PlayerConfig): Promise<Player> {
+  private static async createPlayer(config: PlayerConfig): Promise<PlayerAgent> {
     switch (config.type) {
       case "random":
-        return new RandomPlayer(config.name);
+        return new RandomPlayerAgent(config.name);
       case "claude":
         const apiKey = process.env.ANTHROPIC_API_KEY;
         if (!apiKey) {
@@ -38,7 +38,7 @@ export class CLIRunner {
         const systemPrompt = await templateProcessor.processTemplate("SystemPrompt", {});
 
         const claude = new Claude(apiKey, systemPrompt);
-        return new ClaudePlayer(config.name, claude);
+        return new ClaudePlayerAgent(config.name, claude);
       default:
         throw new Error(`Unknown player type: ${config.type}`);
     }
