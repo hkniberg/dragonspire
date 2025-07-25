@@ -1,8 +1,9 @@
 // Lords of Doomspire Game Master
 
 import { HarvestAction, MoveBoatAction, MoveChampionAction } from "@/lib/actionTypes";
-import { GameLogEntry, GameLogEntryType, NON_COMBAT_TILES, Player, Tile, TurnContext } from "@/lib/types";
+import { GameLogEntry, GameLogEntryType, Monster, NON_COMBAT_TILES, Player, Tile, TurnContext } from "@/lib/types";
 import { formatPosition, formatResources } from "@/lib/utils";
+import { getMonsterCardById } from "../content/monsterCards";
 import { GameState } from "../game/GameState";
 import { CARDS, GameDecks } from "../lib/cards";
 import { GameSettings } from "../lib/GameSettings";
@@ -157,7 +158,7 @@ export class GameMaster {
     const tile = this.gameState.updateChampionPosition(player.name, action.championId, moveResult.endPosition);
     this.addGameLogEntry("movement", `Champion${action.championId} moved to ${formatPosition(moveResult.endPosition)}`);
 
-    this.executeChampionArrivalAtTile(player, tile, action.championId, !!action.claimTile);
+    await this.executeChampionArrivalAtTile(player, tile, action.championId, !!action.claimTile);
   }
 
   private async executeMoveBoat(player: Player, action: MoveBoatAction, diceValueUsed: number): Promise<void> {
@@ -168,7 +169,7 @@ export class GameMaster {
     if (boatMoveResult.championMoveResult === "championMoved") {
       const tile = this.gameState.updateChampionPosition(player.name, championId!, action.championDropPosition!);
       this.addGameLogEntry("boat", `Boat ${action.boatId} moved to ${boatMoveResult.endPosition}, transporting champion ${championId} from ${formatPosition(championStartPosition!)} to ${formatPosition(action.championDropPosition!)}`);
-      this.executeChampionArrivalAtTile(player, tile, championId!, !!action.claimTile);
+      await this.executeChampionArrivalAtTile(player, tile, championId!, !!action.claimTile);
     } else if (boatMoveResult.championMoveResult === "championNotReachableByBoat") {
       this.addGameLogEntry("boat", `Boat ${action.boatId} moved to ${boatMoveResult.endPosition} and tried to move champion ${championId} at ${formatPosition(championStartPosition!)} but the champion was not reachable by this boat`);
     } else if (boatMoveResult.championMoveResult === "targetPositionNotReachableByBoat") {
@@ -178,7 +179,7 @@ export class GameMaster {
     }
   }
 
-  private executeChampionArrivalAtTile(player: Player, tile: Tile, championId: number, claimTile: boolean): void {
+  private async executeChampionArrivalAtTile(player: Player, tile: Tile, championId: number, claimTile: boolean): Promise<void> {
     // Step 1: Exploration (if tile wasn't explored)
     if (!tile.explored) {
       tile.explored = true;
@@ -328,12 +329,78 @@ export class GameMaster {
       if (!adventureCard) {
         console.log(`No adventure card found for tier ${tile.tier}`);
       } else {
-        // TODO implement adventure card drawing and resolution
-        this.addGameLogEntry("event", `Champion${championId} drew adventure card ${adventureCard.id}, but this isn't implemented yet.`);
+        await this.handleAdventureCard(player, tile, championId, adventureCard);
       }
     }
 
     // TODO chapel, mercenary camp, trader
+  }
+
+  /**
+   * Handle drawing and resolving an adventure card
+   */
+  private async handleAdventureCard(player: Player, tile: Tile, championId: number, adventureCard: any): Promise<void> {
+    const cardType = adventureCard.type;
+    const cardId = adventureCard.id;
+
+    if (cardType === "monster") {
+      // Look up the monster details
+      const monsterCard = getMonsterCardById(cardId);
+      if (!monsterCard) {
+        this.addGameLogEntry("event", `Champion${championId} drew unknown monster card ${cardId}`);
+        return;
+      }
+
+      // Create a Monster object and place it on the tile
+      const monster: Monster = {
+        id: monsterCard.id,
+        name: monsterCard.name,
+        tier: monsterCard.tier,
+        icon: monsterCard.icon,
+        might: monsterCard.might,
+        fame: monsterCard.fame,
+        resources: {
+          food: monsterCard.resources.food || 0,
+          wood: monsterCard.resources.wood || 0,
+          ore: monsterCard.resources.ore || 0,
+          gold: monsterCard.resources.gold || 0,
+        },
+      };
+
+      tile.monster = monster;
+      this.addGameLogEntry("event", `Champion${championId} drew monster card: ${monster.name}!`);
+
+      // Now handle monster combat using the existing logic
+      const combatResult = resolveMonsterBattle(player.might, monster.might);
+
+      if (combatResult.championWins) {
+        // Champion won, remove monster and award rewards
+        const fameAwarded = monster.fame || 0;
+        player.fame += fameAwarded;
+        player.resources.food += monster.resources.food;
+        player.resources.wood += monster.resources.wood;
+        player.resources.ore += monster.resources.ore;
+        player.resources.gold += monster.resources.gold;
+
+        tile.monster = undefined;
+        this.addGameLogEntry("combat", `Defeated ${monster.name} (${combatResult.championTotal} vs ${combatResult.monsterTotal}), gained ${fameAwarded} fame and got ${formatResources(monster.resources)}`);
+      } else {
+        // Champion lost, monster stays on tile, champion goes home
+        this.gameState.moveChampionToHome(player.name, championId);
+
+        // Pay 1 gold to heal, or lose 1 fame if no gold
+        if (player.resources.gold > 0) {
+          player.resources.gold -= 1;
+          this.addGameLogEntry("combat", `Fought ${monster.name}, but was defeated (${combatResult.championTotal} vs ${combatResult.monsterTotal}), returned home, paid 1 gold to heal. ${monster.name} remains on the tile.`);
+        } else {
+          player.fame = Math.max(0, player.fame - 1);
+          this.addGameLogEntry("combat", `Fought ${monster.name}, but was defeated (${combatResult.championTotal} vs ${combatResult.monsterTotal}), returned home, had no gold to heal so lost 1 fame. ${monster.name} remains on the tile.`);
+        }
+      }
+    } else {
+      // Other card types (event, treasure, encounter, follower) - not yet implemented
+      this.addGameLogEntry("event", `Champion${championId} drew ${cardType} card ${cardId}, but ${cardType} cards aren't implemented yet.`);
+    }
   }
 
   private async executeHarvest(player: Player, action: HarvestAction, diceValueUsed: number): Promise<void> {
