@@ -5,12 +5,9 @@ function runSingleTurn(extraArgs = []) {
   console.log("🎮 Running single turn test...\n");
   try {
     const argsStr = extraArgs.length > 0 ? ` ${extraArgs.join(" ")}` : "";
-    execSync(
-      `./node_modules/.bin/tsx src/cli/CLIRunner.ts --single-turn${argsStr}`,
-      {
-        stdio: "inherit",
-      }
-    );
+    execSync(`./node_modules/.bin/tsx src/cli/CLIRunner.ts --single-turn${argsStr}`, {
+      stdio: "inherit",
+    });
   } catch (error) {
     console.error("❌ Failed to run single turn test");
     process.exit(1);
@@ -34,12 +31,9 @@ function runSpecificTurns(numTurns, extraArgs = []) {
   console.log(`🎮 Running ${numTurns} turn(s) simulation...\n`);
   try {
     const argsStr = extraArgs.length > 0 ? ` ${extraArgs.join(" ")}` : "";
-    execSync(
-      `./node_modules/.bin/tsx src/cli/CLIRunner.ts --turns ${numTurns}${argsStr}`,
-      {
-        stdio: "inherit",
-      }
-    );
+    execSync(`./node_modules/.bin/tsx src/cli/CLIRunner.ts --turns ${numTurns}${argsStr}`, {
+      stdio: "inherit",
+    });
   } catch (error) {
     console.error(`❌ Failed to run ${numTurns} turn(s) simulation`);
     process.exit(1);
@@ -82,9 +76,7 @@ if (args.includes("--single-turn") || args.includes("-s")) {
   const numTurns = parseInt(args[turnsIndex + 1]);
 
   if (isNaN(numTurns) || numTurns < 1) {
-    console.error(
-      "❌ Invalid number of turns. Please provide a positive integer."
-    );
+    console.error("❌ Invalid number of turns. Please provide a positive integer.");
     console.log("Example: node run-test.js --turns 5");
     process.exit(1);
   }
@@ -99,32 +91,18 @@ if (args.includes("--single-turn") || args.includes("-s")) {
   console.log("  npm run test-turn                # Test one turn");
   console.log("  npm run simulate                 # Run complete game");
   console.log("\nAdditional Options:");
-  console.log(
-    "  --max-rounds N                   # Set maximum rounds for complete games"
-  );
+  console.log("  --max-rounds N                   # Set maximum rounds for complete games");
   console.log("\nPlayer Configuration:");
-  console.log(
-    "  p1=random p2=claude p3=random p4=claude  # Specify player types"
-  );
+  console.log("  p1=random p2=claude p3=random p4=claude  # Specify player types");
   console.log("  Available types: random, claude");
   console.log("  Default: All players are 'random' if not specified");
   console.log("\nEnvironment Setup:");
   console.log("  Create a .env file with: ANTHROPIC_API_KEY=your_api_key_here");
   console.log("  This is required when using claude players");
   console.log("\nExamples:");
-  console.log(
-    "  node run-test.js --turns 3                          # 3 turns, all random players"
-  );
-  console.log(
-    "  node run-test.js --single-turn p1=claude            # 1 turn, Player 1 is Claude AI"
-  );
-  console.log(
-    "  node run-test.js --complete p1=random p2=claude     # Complete game, mixed players"
-  );
-  console.log(
-    "  node run-test.js --complete --max-rounds 25         # Complete game with 25 max rounds"
-  );
-  console.log(
-    "  node run-test.js -t 5 p1=claude p2=claude p3=claude # 5 turns, first 3 players are Claude AI"
-  );
+  console.log("  node run-test.js --turns 3                          # 3 turns, all random players");
+  console.log("  node run-test.js --single-turn p1=claude            # 1 turn, Player 1 is Claude AI");
+  console.log("  node run-test.js --complete p1=random p2=claude     # Complete game, mixed players");
+  console.log("  node run-test.js --complete --max-rounds 25         # Complete game with 25 max rounds");
+  console.log("  node run-test.js -t 5 p1=claude p2=claude p3=claude # 5 turns, first 3 players are Claude AI");
 }

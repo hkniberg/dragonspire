@@ -11,7 +11,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test-turn": "node run-test.js --single-turn",
-    "simulate": "node run-test.js --complete"
+    "simulate": "node run-test.js --complete",
+    "format": "prettier --write \"**/*.{js,ts,json,css,md}\""
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.56.0",
@@ -29,6 +30,7 @@
     "@types/react-dom": "^19",
     "esbuild-wasm": "^0.25.8",
     "jest": "^30.0.4",
+    "prettier": "^3.0.0",
     "ts-jest": "^29.4.0",
     "tsx": "^4.20.3",
     "typescript": "^5"
