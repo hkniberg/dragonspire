@@ -2,16 +2,13 @@
 
 import { GameStateStringifier } from '@/game/gameStateStringifier';
 import { GameState } from '../game/GameState';
-import { formatActionLogEntry } from '../lib/actionLogFormatter';
 import { decisionSchema, diceActionSchema } from '../lib/claudeSchemas';
 import { templateProcessor, TemplateVariables } from '../lib/templateProcessor';
-import { Claude2 } from '../llm/claude2';
+import { Claude } from '../llm/claude';
 import {
-    ActionLogEntry,
     Decision,
     DecisionContext,
     DiceAction,
-    ExecuteActionFunction,
     GameLogEntry,
     Player,
     PlayerType,
@@ -20,11 +17,11 @@ import {
 
 export class ClaudePlayer implements Player {
     private name: string;
-    private claude2: Claude2;
+    private claude: Claude;
 
-    constructor(name: string, claude2: Claude2) {
+    constructor(name: string, claude: Claude) {
         this.name = name;
-        this.claude2 = claude2;
+        this.claude = claude;
     }
 
     getName(): string {
@@ -47,7 +44,7 @@ export class ClaudePlayer implements Player {
             const userMessage = await this.prepareDiceActionMessage(gameState, playerId, gameLog, turnContext);
 
             // Get LLM response with structured JSON
-            const response = await this.claude2.useClaude(userMessage, diceActionSchema, 2000, 3000);
+            const response = await this.claude.useClaude(userMessage, diceActionSchema, 2000, 3000);
 
             // Ensure playerId is correct
             response.playerId = playerId;
@@ -76,7 +73,7 @@ export class ClaudePlayer implements Player {
             const userMessage = await this.prepareDecisionMessage(gameState, gameLog, decisionContext);
 
             // Get structured JSON response for decision
-            const response = await this.claude2.useClaude(userMessage, decisionSchema, 2000, 3000);
+            const response = await this.claude.useClaude(userMessage, decisionSchema, 2000, 3000);
 
             return response as Decision;
 
@@ -101,7 +98,7 @@ export class ClaudePlayer implements Player {
             const userMessage = await this.prepareAssessmentMessage(gameState, playerId, gameLog, diceRolls);
 
             // Get text response for strategic assessment
-            const strategicAssessment = await this.claude2.useClaude(userMessage, undefined, 4000, 6000);
+            const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 4000, 6000);
 
             return strategicAssessment.trim() || undefined;
 
@@ -109,55 +106,6 @@ export class ClaudePlayer implements Player {
             console.error(`${this.name} encountered an error during strategic assessment:`, error);
             return undefined;
         }
-    }
-
-    // Legacy method for backwards compatibility
-    async executeTurn(
-        gameState: GameState,
-        diceRolls: number[],
-        executeAction: ExecuteActionFunction,
-        actionLog: readonly ActionLogEntry[]
-    ): Promise<string | undefined> {
-        const playerId = gameState.getCurrentPlayer().id;
-
-        try {
-            // Prepare the system prompt and user message
-            const systemPrompt = await this.prepareSystemPrompt();
-            const userMessage = await this.prepareUserMessage(gameState, playerId, diceRolls, actionLog);
-
-            // Use the old Claude interface with tools if available
-            const claude = (this.claude2 as any).claude; // Access underlying Claude if available
-            if (claude) {
-                const { createGameActionTools } = await import('../lib/tools');
-                const tools = createGameActionTools(executeAction, playerId);
-                const strategicAssessment = await claude.useClaude(systemPrompt, userMessage, tools);
-                return strategicAssessment.trim() || undefined;
-            }
-
-            // Fallback: return undefined
-            return undefined;
-
-        } catch (error) {
-            console.error(`${this.name} encountered an error during legacy turn execution:`, error);
-            return undefined;
-        }
-    }
-
-    // Legacy method for backwards compatibility
-    async handleEventCardChoice(
-        gameState: GameState,
-        eventCardId: string,
-        availableChoices: any[]
-    ): Promise<any> {
-        const decisionContext: DecisionContext = {
-            type: 'event_card_choice',
-            description: `Choose response to event card: ${eventCardId}`,
-            options: availableChoices,
-            metadata: { eventCardId }
-        };
-
-        const decision = await this.makeDecision(gameState, [], decisionContext);
-        return decision.choice;
     }
 
     private async prepareDiceActionMessage(
@@ -272,45 +220,5 @@ export class ClaudePlayer implements Player {
             });
 
         return formattedRounds.join('\n\n');
-    }
-
-    // Legacy helper methods for backwards compatibility
-    private async prepareSystemPrompt(): Promise<string> {
-        return await templateProcessor.processTemplate('SystemPrompt', {});
-    }
-
-    private async prepareUserMessage(gameState: GameState, playerId: number, diceRolls: number[], actionLog: readonly ActionLogEntry[]): Promise<string> {
-        const player = gameState.getPlayerById(playerId);
-        if (!player) {
-            throw new Error(`Player with ID ${playerId} not found`);
-        }
-
-        // Use the readable stringified game state instead of JSON
-        const boardState = GameStateStringifier.stringify(gameState);
-
-        // Format the complete game log using the action log formatter
-        // Only show strategic assessments for the current player
-        const gameLogLines: string[] = [];
-        for (const entry of actionLog) {
-            const formattedEntry = formatActionLogEntry(entry, playerId);
-            gameLogLines.push(...formattedEntry);
-            gameLogLines.push(''); // Add empty line between turns
-        }
-        const gameLog = gameLogLines.join('\n').trim();
-
-        // Prepare extra instructions if they exist, formatted in a special block
-        const extraInstructionsText = player.extraInstructions?.trim()
-            ? `\n<additional-instructions-provided-by-player>\n${player.extraInstructions.trim()}\n</additional-instructions-provided-by-player>\n`
-            : '';
-
-        const variables: TemplateVariables = {
-            playerName: player.name,
-            diceRolls: diceRolls.join(' and '),
-            boardState: boardState,
-            gameLog: gameLog
-        };
-
-        const baseMessage = await templateProcessor.processTemplate('makeMove', variables);
-        return baseMessage + extraInstructionsText;
     }
 } 

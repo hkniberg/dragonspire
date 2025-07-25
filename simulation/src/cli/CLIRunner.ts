@@ -2,7 +2,7 @@
 
 import * as dotenv from 'dotenv';
 import { GameMaster, GameMasterConfig } from '../engine/GameMaster';
-import { Claude2 } from '../llm/claude2';
+import { Claude } from '../llm/claude';
 import { ClaudePlayer } from '../players/ClaudePlayer';
 import { Player } from '../players/Player';
 import { RandomPlayer } from '../players/RandomPlayer';
@@ -37,8 +37,8 @@ export class CLIRunner {
                 const { templateProcessor } = await import('../lib/templateProcessor');
                 const systemPrompt = await templateProcessor.processTemplate('SystemPrompt', {});
 
-                const claude2 = new Claude2(apiKey, systemPrompt);
-                return new ClaudePlayer(config.name, claude2);
+                const claude = new Claude(apiKey, systemPrompt);
+                return new ClaudePlayer(config.name, claude);
             default:
                 throw new Error(`Unknown player type: ${config.type}`);
         }

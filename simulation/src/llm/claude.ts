@@ -1,107 +1,64 @@
-
 import { Anthropic } from "@anthropic-ai/sdk";
-import { Tool, convertToolsToAnthropicDefinitions } from "../lib/tools";
 
 const DEFAULT_MODEL = "claude-sonnet-4-0";
-//const DEFAULT_MODEL = "claude-3-5-haiku-latest"
-const PROMPT_CACHING_ENABLED = true; // Enable prompt caching for system prompts and user messages
-const CALL_LOOP_LIMIT = 10;
-
-// Logging configuration
-const MAX_LOG_MESSAGE_LENGTH = 1000;
-
-// Helper function to truncate long messages for logging
-function truncateForLog(message: string, maxLength: number = MAX_LOG_MESSAGE_LENGTH): string {
-    if (message.length <= maxLength) {
-        return message;
-    }
-    return message.substring(0, maxLength) + "...[truncated]";
-}
+const DEFAULT_RESPONSE_TOKENS = 10000;
+const DEFAULT_THINKING_TOKENS = 2000;
 
 // Helper function to log with timestamp
 function log(label: string, content: any) {
     const timestamp = new Date().toISOString();
-    console.log(`[${timestamp}] ${label}:\n`, content);
+    console.log(`\n[${timestamp}] Claude ${label}:\n`, content);
 }
-
-type ToolResult = {
-    type: "tool_result";
-    tool_use_id: string;
-    content: string;
-    is_error?: boolean;
-};
 
 export class Claude {
     private anthropic: Anthropic;
     private model: string;
+    private systemMessage: string;
 
-    constructor(apiKey: string, model: string = DEFAULT_MODEL) {
+    constructor(apiKey: string, systemMessage: string, model: string = DEFAULT_MODEL) {
         this.anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
         this.model = model;
+        this.systemMessage = systemMessage;
     }
 
-    async useClaude(systemPrompt: string | null, userMessage: string, tools: Tool[] = []): Promise<string> {
-        // Log input
-        log("LLM System Prompt", systemPrompt ? truncateForLog(systemPrompt) : "None");
-        log("LLM User Message", userMessage);
+    /**
+     * Send a user message and get either a structured JSON response (if schema provided) or plain text response
+     */
+    async useClaude(
+        userMessage: string,
+        responseSchema?: any,
+        thinkingTokens: number = DEFAULT_THINKING_TOKENS,
+        responseTokens: number = DEFAULT_RESPONSE_TOKENS
+    ): Promise<any> {
+        // Only append JSON instruction if schema is provided
+        const fullUserMessage = responseSchema
+            ? userMessage + `\n\nRespond with a JSON object matching the given schema: ${JSON.stringify(responseSchema, null, 2)}\n\nDo not add any other text before or after.`
+            : userMessage;
 
-        // Create user message with cache control if enabled
-        const userMessageParam: Anthropic.Messages.MessageParam = {
-            role: "user",
-            content: PROMPT_CACHING_ENABLED ? [
+        log("User Message", userMessage);
+
+        const params: Anthropic.Messages.MessageCreateParamsNonStreaming = {
+            model: this.model,
+            // Always cache the system message
+            system: [
                 {
                     type: "text",
-                    text: userMessage,
+                    text: this.systemMessage,
                     cache_control: { type: "ephemeral" }
                 }
-            ] : userMessage
+            ],
+            messages: [{
+                role: "user",
+                content: fullUserMessage
+            }],
+            thinking: {
+                type: "enabled",
+                budget_tokens: thinkingTokens
+            },
+            max_tokens: responseTokens,
         };
 
-        const messages: Anthropic.Messages.MessageParam[] = [userMessageParam];
-        let finalResponse = '';
-        let toolCallsRemaining = true;
-        let callLoopCount = 0;
-
-        log("LLM Model", this.model);
-        log("LLM Available Tools", tools.map(tool => tool.name));
-
-        while (toolCallsRemaining) {
-            callLoopCount++;
-            if (callLoopCount > CALL_LOOP_LIMIT) {
-                throw new Error(`Tool call loop limit exceeded: ${CALL_LOOP_LIMIT}`);
-            }
-
-            const params: Anthropic.Messages.MessageCreateParamsNonStreaming = {
-                model: this.model,
-                messages,
-                max_tokens: 16000,
-                tools: convertToolsToAnthropicDefinitions(tools),
-                thinking: {
-                    type: "enabled",
-                    budget_tokens: 5000
-                },
-            };
-
-            // Add system prompt with cache control if provided
-            if (systemPrompt) {
-                if (PROMPT_CACHING_ENABLED) {
-                    params.system = [
-                        {
-                            type: "text",
-                            text: systemPrompt,
-                            cache_control: { type: "ephemeral" }
-                        }
-                    ];
-                } else {
-                    params.system = systemPrompt;
-                }
-            }
-
-            // Add cache control to the last tool definition if prompt caching is enabled
-            if (PROMPT_CACHING_ENABLED && params.tools && params.tools.length > 0) {
-                (params.tools[params.tools.length - 1] as any).cache_control = { type: "ephemeral" };
-            }
-
+        try {
             const response = await this.anthropic.messages.create(params);
 
             // Log each content block in sequence
@@ -115,80 +72,29 @@ export class Claude {
                 );
             }
 
-            // Check if there are tool calls
-            const toolUseBlocks = response.content.filter(
-                (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
-            );
+            // Extract text content
+            const textContent = response.content
+                .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+                .map(block => block.text)
+                .join('');
 
-            if (toolUseBlocks.length > 0) {
-                // Add assistant message with tool calls
-                messages.push({
-                    role: "assistant",
-                    content: response.content
-                });
-
-                // Execute tools and collect results
-                const toolResults: ToolResult[] = [];
-
-                for (const toolCall of toolUseBlocks) {
-                    try {
-                        // Find the tool implementation
-                        const tool = tools.find(t => t.name === toolCall.name);
-                        if (!tool) {
-                            throw new Error(`Tool ${toolCall.name} is not available`);
-                        }
-
-                        // Execute the tool
-                        const result = await tool.execute(toolCall.input);
-
-                        log("Tool Result", { id: toolCall.id, name: toolCall.name, result });
-
-                        toolResults.push({
-                            type: "tool_result",
-                            tool_use_id: toolCall.id,
-                            content: result
-                        });
-                    } catch (error) {
-                        console.error(`Tool call ${toolCall.name} failed:`, error);
-
-                        const errorMessage = error instanceof Error ? error.message : String(error);
-                        toolResults.push({
-                            type: "tool_result",
-                            tool_use_id: toolCall.id,
-                            content: `The tool call failed with error: ${errorMessage}`,
-                            is_error: true
-                        });
-                    }
-                }
-
-                // Add tool results as user message
-                messages.push({
-                    role: "user",
-                    content: toolResults
-                });
-            } else {
-                // No tool calls, extract final response
-                toolCallsRemaining = false;
-
-                finalResponse = response.content
-                    .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-                    .map(block => block.text)
-                    .join('');
-
-                // Add final response to messages
-                messages.push({
-                    role: "assistant",
-                    content: response.content
-                });
+            // If no schema provided, return raw text response
+            if (!responseSchema) {
+                return textContent;
             }
+
+            // Parse JSON response
+            const parsedResponse = JSON.parse(textContent.trim());
+
+            log("Parsed Response", parsedResponse);
+
+            return parsedResponse;
+
+        } catch (error) {
+            if (error instanceof SyntaxError && responseSchema) {
+                throw new Error(`Failed to parse JSON response: ${error.message}`);
+            }
+            throw error;
         }
-
-        log("LLM Complete", {
-            responseLength: finalResponse.length,
-            totalMessages: messages.length,
-            loopCount: callLoopCount
-        });
-
-        return finalResponse;
     }
 } 

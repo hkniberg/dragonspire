@@ -1,5 +1,5 @@
 import { templateProcessor } from "@/lib/templateProcessor";
-import { Claude2 } from "@/llm/claude2";
+import { Claude } from "@/llm/claude";
 import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
 import { ActionLog } from "../components/ActionLog";
@@ -168,13 +168,13 @@ export default function GameSimulation() {
         if (!apiKey.trim()) {
           throw new Error("API key is required for Claude players");
         }
-        // Get the system message for Claude2
+        // Get the system message for Claude
         const systemMessage = await templateProcessor.processTemplate(
           "SystemPrompt",
           {}
         );
-        const claude2 = new Claude2(apiKey.trim(), systemMessage);
-        return new ClaudePlayer(config.name, claude2);
+        const claude = new Claude(apiKey.trim(), systemMessage);
+        return new ClaudePlayer(config.name, claude);
       default:
         throw new Error(`Unknown player type: ${config.type}`);
     }

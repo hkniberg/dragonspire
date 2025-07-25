@@ -96,6 +96,19 @@ export interface Player {
     getType(): PlayerType;
 
     /**
+     * Provide strategic assessment at the start of each turn
+     * @param gameState Current game state
+     * @param gameLog Sequential log of all game events so far
+     * @param diceRolls Optional dice rolls for this turn to provide strategic context
+     * @returns String describing strategic assessment (situation, strategy, tactical plan) or undefined to skip
+     */
+    makeStrategicAssessment(
+        gameState: GameState,
+        gameLog: readonly GameLogEntry[],
+        diceRolls?: number[]
+    ): Promise<string | undefined>;
+
+    /**
      * Decide what to do with a single die value
      * @param gameState Current game state
      * @param gameLog Sequential log of all game events so far
@@ -121,37 +134,6 @@ export interface Player {
         decisionContext: DecisionContext
     ): Promise<Decision>;
 
-    /**
-     * Provide strategic assessment at the start of each turn
-     * @param gameState Current game state
-     * @param gameLog Sequential log of all game events so far
-     * @param diceRolls Optional dice rolls for this turn to provide strategic context
-     * @returns String describing strategic assessment (situation, strategy, tactical plan) or undefined to skip
-     */
-    makeStrategicAssessment(
-        gameState: GameState,
-        gameLog: readonly GameLogEntry[],
-        diceRolls?: number[]
-    ): Promise<string | undefined>;
 
-    /**
-     * Legacy method for backwards compatibility - will be removed
-     * @deprecated Use the new decideDiceAction/makeDecision pattern instead
-     */
-    executeTurn?(
-        gameState: GameState,
-        diceRolls: number[],
-        executeAction: ExecuteActionFunction,
-        actionLog: readonly ActionLogEntry[]
-    ): Promise<string | undefined>;
 
-    /**
-     * Legacy method for backwards compatibility - will be removed  
-     * @deprecated Use the new makeDecision method instead
-     */
-    handleEventCardChoice?(
-        gameState: GameState,
-        eventCardId: string,
-        availableChoices: any[]
-    ): Promise<any>;
 } 
