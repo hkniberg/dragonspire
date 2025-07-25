@@ -1,5 +1,7 @@
 # Lords of Doomspire - Simulation Architecture
 
+DEPRECATED: This document is no longer accurate.
+
 ## Overview
 
 This document outlines the target architecture for the Lords of Doomspire game simulation system. The primary purpose is to create a robust platform for playtesting the board game with AI players to analyze game balance, strategies, and rule effectiveness.

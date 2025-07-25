@@ -57,9 +57,13 @@ export const diceActionSchema = {
                 gold: { type: "number" }
             },
             required: ["food", "wood", "ore", "gold"]
+        },
+        reasoning: {
+            type: "string",
+            description: "Brief explanation of why this action was chosen"
         }
     },
-    required: ["type", "playerId"]
+    required: ["type", "playerId", "reasoning"]
 };
 
 /**

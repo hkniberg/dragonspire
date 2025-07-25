@@ -88,12 +88,12 @@ export class RandomPlayer implements Player {
         };
     }
 
-    async writeDiaryEntry(
+    async makeStrategicAssessment(
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
         diceRolls?: number[]
     ): Promise<string | undefined> {
-        // RandomPlayer doesn't write diary entries
+        // RandomPlayer doesn't provide strategic assessments
         return undefined;
     }
 
@@ -140,7 +140,7 @@ export class RandomPlayer implements Player {
             }
         }
 
-        // RandomPlayer doesn't generate diary entries
+        // RandomPlayer doesn't generate strategic assessments
         return undefined;
     }
 

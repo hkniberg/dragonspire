@@ -1,6 +1,6 @@
 // Action Log Formatter Utilities for consistent formatting across CLI and web
 
-import { ActionLogEntry, ActionResult } from '../players/Player';
+import { ActionLogEntry, ActionResult, GameLogEntry } from '../players/Player';
 
 /**
  * Format individual action result with dice value for concise display
@@ -20,9 +20,9 @@ export function formatActionResult(result: ActionResult): string {
 }
 
 /**
- * Format turn log with diary entry for unified display (CLI and web)
+ * Format turn log with strategic assessment for unified display (CLI and web)
  */
-export function formatActionLogEntry(turnLog: ActionLogEntry, onlyShowDiaryForPlayerId?: number): string[] {
+export function formatActionLogEntry(turnLog: ActionLogEntry, onlyShowAssessmentForPlayerId?: number): string[] {
     const lines: string[] = [];
 
     // Turn header with dice
@@ -61,11 +61,52 @@ export function formatActionLogEntry(turnLog: ActionLogEntry, onlyShowDiaryForPl
         }
     }
 
-    // Add diary entry if it exists and if we should show it for this player
-    if (turnLog.diaryEntry && (onlyShowDiaryForPlayerId === undefined || turnLog.playerId === onlyShowDiaryForPlayerId)) {
+    // Add strategic assessment if available and should be shown
+    if (turnLog.strategicAssessment && (onlyShowAssessmentForPlayerId === undefined || turnLog.playerId === onlyShowAssessmentForPlayerId)) {
         lines.push('');
-        lines.push(`💭 Player Diary: ${turnLog.diaryEntry}`);
+        lines.push(`💭 Strategic Assessment: ${turnLog.strategicAssessment}`);
     }
 
     return lines;
+}
+
+/**
+ * Format GameLogEntry (new format used by GameMaster) for display
+ */
+export function formatGameLogEntry(logEntry: GameLogEntry): string {
+    const typeEmoji = {
+        'movement': '🚶',
+        'combat': '⚔️',
+        'harvest': '🌾',
+        'assessment': '💭',
+        'event': '🎯',
+        'system': '🔧'
+    };
+
+    const emoji = typeEmoji[logEntry.type] || '📝';
+    const prefix = `[Round ${logEntry.round}] ${emoji}`;
+
+    if (logEntry.type === 'system' && logEntry.playerId === -1) {
+        return `${prefix} ${logEntry.content}`;
+    } else {
+        return `${prefix} ${logEntry.playerName}: ${logEntry.content}`;
+    }
+}
+
+/**
+ * Group GameLogEntries by round for better display
+ */
+export function groupGameLogEntriesByRound(gameLog: GameLogEntry[]): Array<{ round: number; entries: GameLogEntry[] }> {
+    const groupedByRound: Record<number, GameLogEntry[]> = {};
+
+    for (const entry of gameLog) {
+        if (!groupedByRound[entry.round]) {
+            groupedByRound[entry.round] = [];
+        }
+        groupedByRound[entry.round].push(entry);
+    }
+
+    return Object.entries(groupedByRound)
+        .map(([round, entries]) => ({ round: parseInt(round), entries }))
+        .sort((a, b) => a.round - b.round);
 } 

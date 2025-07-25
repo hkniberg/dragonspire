@@ -1,10 +1,28 @@
 import React, { useState } from "react";
 import { LuCopy, LuDownload, LuMaximize2, LuMinimize2 } from "react-icons/lu";
-import { formatActionLogEntry } from "../lib/actionLogFormatter";
+import {
+  formatActionLogEntry,
+  formatGameLogEntry,
+  groupGameLogEntriesByRound,
+} from "../lib/actionLogFormatter";
+import { GameLogEntry } from "../players/Player";
 
 interface ActionLogProps {
-  actionLog: any[];
+  actionLog: any[] | GameLogEntry[]; // Support both old and new formats
   isVisible: boolean;
+}
+
+// Type guard to check if we have new GameLogEntry format
+function isGameLogEntry(entry: any): entry is GameLogEntry {
+  return (
+    entry &&
+    typeof entry === "object" &&
+    "round" in entry &&
+    "playerId" in entry &&
+    "playerName" in entry &&
+    "type" in entry &&
+    "content" in entry
+  );
 }
 
 export const ActionLog: React.FC<ActionLogProps> = ({
@@ -17,25 +35,44 @@ export const ActionLog: React.FC<ActionLogProps> = ({
     return null;
   }
 
+  // Check if we have the new GameLogEntry format
+  const isNewFormat = actionLog.length > 0 && isGameLogEntry(actionLog[0]);
+
   const convertToMarkdown = (): string => {
     let markdown = "# Action Log\n\n";
 
-    actionLog.forEach((turn, index) => {
-      const messages = formatActionLogEntry(turn);
-      markdown += `## Turn ${index + 1}\n\n`;
+    if (isNewFormat) {
+      // Handle new GameLogEntry format
+      const gameLog = actionLog as GameLogEntry[];
+      const groupedEntries = groupGameLogEntriesByRound(gameLog);
 
-      messages.forEach((message) => {
-        if (message.includes("---")) {
-          markdown += `### ${message.replace(/---/g, "").trim()}\n\n`;
-        } else if (message.includes("Player Diary:")) {
-          markdown += `> ${message}\n\n`;
-        } else {
-          markdown += `- ${message}\n`;
-        }
+      groupedEntries.forEach(({ round, entries }) => {
+        markdown += `## Round ${round}\n\n`;
+        entries.forEach((entry) => {
+          const formattedEntry = formatGameLogEntry(entry);
+          markdown += `- ${formattedEntry}\n`;
+        });
+        markdown += "\n";
       });
+    } else {
+      // Handle old ActionLogEntry format
+      actionLog.forEach((turn, index) => {
+        const messages = formatActionLogEntry(turn);
+        markdown += `## Turn ${index + 1}\n\n`;
 
-      markdown += "\n";
-    });
+        messages.forEach((message) => {
+          if (message.includes("---")) {
+            markdown += `### ${message.replace(/---/g, "").trim()}\n\n`;
+          } else if (message.includes("Player Diary:")) {
+            markdown += `> ${message}\n\n`;
+          } else {
+            markdown += `- ${message}\n`;
+          }
+        });
+
+        markdown += "\n";
+      });
+    }
 
     return markdown;
   };
@@ -91,6 +128,114 @@ export const ActionLog: React.FC<ActionLogProps> = ({
     zIndex: isMaximized ? 1000 : "auto",
   };
 
+  const renderNewFormatLog = () => {
+    const gameLog = actionLog as GameLogEntry[];
+    const groupedEntries = groupGameLogEntriesByRound(gameLog);
+
+    return groupedEntries.map(({ round, entries }) => (
+      <div
+        key={round}
+        style={{
+          marginBottom: "15px",
+          padding: "10px",
+          backgroundColor: "#f8f9fa",
+          borderRadius: "4px",
+          border: "1px solid #e9ecef",
+        }}
+      >
+        <div
+          style={{
+            fontWeight: "bold",
+            color: "#2c3e50",
+            marginBottom: "8px",
+            fontSize: "14px",
+          }}
+        >
+          🎲 Round {round}
+        </div>
+        {entries.map((entry, entryIndex) => {
+          const formattedEntry = formatGameLogEntry(entry);
+
+          return (
+            <div
+              key={entryIndex}
+              style={{
+                marginBottom: "2px",
+                color: getEntryColor(entry.type),
+                fontStyle: entry.type === "assessment" ? "italic" : "normal",
+                fontWeight: entry.type === "system" ? "bold" : "normal",
+              }}
+            >
+              {formattedEntry}
+            </div>
+          );
+        })}
+      </div>
+    ));
+  };
+
+  const getEntryColor = (type: string): string => {
+    switch (type) {
+      case "system":
+        return "#2c3e50";
+      case "assessment":
+        return "#0c5460";
+      case "movement":
+        return "#28a745";
+      case "combat":
+        return "#dc3545";
+      case "harvest":
+        return "#6f42c1";
+      case "event":
+        return "#fd7e14";
+      default:
+        return "#495057";
+    }
+  };
+
+  const renderOldFormatLog = () => {
+    return actionLog.map((turn, index) => {
+      const messages = formatActionLogEntry(turn);
+
+      return (
+        <div
+          key={index}
+          style={{
+            marginBottom: "15px",
+            padding: "10px",
+            backgroundColor: "#f8f9fa",
+            borderRadius: "4px",
+            border: "1px solid #e9ecef",
+          }}
+        >
+          {messages.map((message, msgIndex) => (
+            <div
+              key={msgIndex}
+              style={{
+                marginBottom: "2px",
+                color: message.includes("---")
+                  ? "#2c3e50"
+                  : message.includes("Player Diary:")
+                  ? "#0c5460"
+                  : message.includes("Dice rolled:")
+                  ? "#495057"
+                  : message.includes("Total harvested:")
+                  ? "#6f42c1"
+                  : "#28a745", // Default green for action results
+                fontStyle: message.includes("Player Diary:")
+                  ? "italic"
+                  : "normal",
+                fontWeight: message.includes("---") ? "bold" : "normal",
+              }}
+            >
+              {message}
+            </div>
+          ))}
+        </div>
+      );
+    });
+  };
+
   return (
     <div style={containerStyle}>
       <div
@@ -101,7 +246,7 @@ export const ActionLog: React.FC<ActionLogProps> = ({
           marginBottom: "10px",
         }}
       >
-        <h3 style={{ margin: 0, color: "#2c3e50" }}>📋 Detailed Action Log</h3>
+        <h3 style={{ margin: 0, color: "#2c3e50" }}>📋 Game Log</h3>
         <div>
           <button
             style={{
@@ -160,46 +305,7 @@ export const ActionLog: React.FC<ActionLogProps> = ({
           lineHeight: "1.4",
         }}
       >
-        {actionLog.map((turn, index) => {
-          const messages = formatActionLogEntry(turn);
-
-          return (
-            <div
-              key={index}
-              style={{
-                marginBottom: "15px",
-                padding: "10px",
-                backgroundColor: "#f8f9fa",
-                borderRadius: "4px",
-                border: "1px solid #e9ecef",
-              }}
-            >
-              {messages.map((message, msgIndex) => (
-                <div
-                  key={msgIndex}
-                  style={{
-                    marginBottom: "2px",
-                    color: message.includes("---")
-                      ? "#2c3e50"
-                      : message.includes("Player Diary:")
-                      ? "#0c5460"
-                      : message.includes("Dice rolled:")
-                      ? "#495057"
-                      : message.includes("Total harvested:")
-                      ? "#6f42c1"
-                      : "#28a745", // Default green for action results
-                    fontStyle: message.includes("Player Diary:")
-                      ? "italic"
-                      : "normal",
-                    fontWeight: message.includes("---") ? "bold" : "normal",
-                  }}
-                >
-                  {message}
-                </div>
-              ))}
-            </div>
-          );
-        })}
+        {isNewFormat ? renderNewFormatLog() : renderOldFormatLog()}
       </div>
     </div>
   );

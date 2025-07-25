@@ -47,7 +47,7 @@ export class ClaudePlayer implements Player {
             const userMessage = await this.prepareDiceActionMessage(gameState, playerId, gameLog, turnContext);
 
             // Get LLM response with structured JSON
-            const response = await this.claude2.useClaude(userMessage, diceActionSchema);
+            const response = await this.claude2.useClaude(userMessage, diceActionSchema, 2000, 3000);
 
             // Ensure playerId is correct
             response.playerId = playerId;
@@ -76,7 +76,7 @@ export class ClaudePlayer implements Player {
             const userMessage = await this.prepareDecisionMessage(gameState, gameLog, decisionContext);
 
             // Get structured JSON response for decision
-            const response = await this.claude2.useClaude(userMessage, decisionSchema);
+            const response = await this.claude2.useClaude(userMessage, decisionSchema, 2000, 3000);
 
             return response as Decision;
 
@@ -91,22 +91,22 @@ export class ClaudePlayer implements Player {
         }
     }
 
-    async writeDiaryEntry(
+    async makeStrategicAssessment(
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
         diceRolls?: number[]
     ): Promise<string | undefined> {
         try {
             const playerId = gameState.getCurrentPlayer().id;
-            const userMessage = await this.prepareDiaryMessage(gameState, playerId, gameLog, diceRolls);
+            const userMessage = await this.prepareAssessmentMessage(gameState, playerId, gameLog, diceRolls);
 
-            // Get text response for diary entry
-            const diaryEntry = await this.claude2.useClaude(userMessage);
+            // Get text response for strategic assessment
+            const strategicAssessment = await this.claude2.useClaude(userMessage, undefined, 4000, 6000);
 
-            return diaryEntry.trim() || undefined;
+            return strategicAssessment.trim() || undefined;
 
         } catch (error) {
-            console.error(`${this.name} encountered an error during diary entry:`, error);
+            console.error(`${this.name} encountered an error during strategic assessment:`, error);
             return undefined;
         }
     }
@@ -130,8 +130,8 @@ export class ClaudePlayer implements Player {
             if (claude) {
                 const { createGameActionTools } = await import('../lib/tools');
                 const tools = createGameActionTools(executeAction, playerId);
-                const diaryEntry = await claude.useClaude(systemPrompt, userMessage, tools);
-                return diaryEntry.trim() || undefined;
+                const strategicAssessment = await claude.useClaude(systemPrompt, userMessage, tools);
+                return strategicAssessment.trim() || undefined;
             }
 
             // Fallback: return undefined
@@ -224,7 +224,7 @@ export class ClaudePlayer implements Player {
         return await templateProcessor.processTemplate('makeDecision', variables);
     }
 
-    private async prepareDiaryMessage(
+    private async prepareAssessmentMessage(
         gameState: GameState,
         playerId: number,
         gameLog: readonly GameLogEntry[],
@@ -245,7 +245,7 @@ export class ClaudePlayer implements Player {
             diceRolls: diceRolls ? diceRolls.join(', ') : 'Not yet rolled'
         };
 
-        return await templateProcessor.processTemplate('diaryEntry', variables);
+        return await templateProcessor.processTemplate('strategicAssessment', variables);
     }
 
     private formatGameLogForPrompt(gameLog: readonly GameLogEntry[]): string {
@@ -289,7 +289,7 @@ export class ClaudePlayer implements Player {
         const boardState = GameStateStringifier.stringify(gameState);
 
         // Format the complete game log using the action log formatter
-        // Only show diary entries for the current player
+        // Only show strategic assessments for the current player
         const gameLogLines: string[] = [];
         for (const entry of actionLog) {
             const formattedEntry = formatActionLogEntry(entry, playerId);

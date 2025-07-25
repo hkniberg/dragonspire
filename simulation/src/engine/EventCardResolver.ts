@@ -2,7 +2,7 @@
 
 import { getEventCardById } from '../content/eventCards';
 import { GameState } from '../game/GameState';
-import { Player } from '../players/Player';
+import { DecisionContext, Player } from '../players/Player';
 
 export interface EventResolutionResult {
     newGameState: GameState;
@@ -58,12 +58,17 @@ export class EventCardResolver {
             };
         }
 
+        // Create decision context for the current player
+        const decisionContext: DecisionContext = {
+            type: 'event_card_choice',
+            description: 'Hungry Pests: Choose which player should lose 1 food',
+            options: otherPlayers,
+            metadata: { eventCardId: 'hungry-pests' }
+        };
+
         // Let the current player choose which player should lose food
-        const chosenPlayer = await currentPlayer.handleEventCardChoice(
-            gameState,
-            'hungry-pests',
-            otherPlayers
-        );
+        const decision = await currentPlayer.makeDecision(gameState, [], decisionContext);
+        const chosenPlayer = decision.choice;
 
         // Validate the choice
         if (!chosenPlayer || !otherPlayers.find(p => p.id === chosenPlayer.id)) {

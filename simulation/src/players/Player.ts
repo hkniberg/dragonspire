@@ -59,7 +59,7 @@ export interface GameLogEntry {
     round: number;
     playerId: number;
     playerName: string;
-    type: 'movement' | 'combat' | 'harvest' | 'diary' | 'event' | 'system';
+    type: 'movement' | 'combat' | 'harvest' | 'assessment' | 'event' | 'system';
     content: string; // High-level description of what happened
     metadata?: any; // Additional structured data if needed
 }
@@ -73,7 +73,7 @@ export interface ActionLogEntry {
     playerName: string;
     diceRolls: number[];
     actions: Array<{ action: GameAction; result: ActionResult }>;
-    diaryEntry?: string; // Optional diary entry from the player
+    strategicAssessment?: string; // Optional strategic assessment from the player
 }
 
 /**
@@ -122,13 +122,13 @@ export interface Player {
     ): Promise<Decision>;
 
     /**
-     * Write a high-level diary entry for strategic reflection at the start of each turn
+     * Provide strategic assessment at the start of each turn
      * @param gameState Current game state
      * @param gameLog Sequential log of all game events so far
      * @param diceRolls Optional dice rolls for this turn to provide strategic context
-     * @returns String describing the player's thoughts and strategy (or undefined to skip)
+     * @returns String describing strategic assessment (situation, strategy, tactical plan) or undefined to skip
      */
-    writeDiaryEntry(
+    makeStrategicAssessment(
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
         diceRolls?: number[]

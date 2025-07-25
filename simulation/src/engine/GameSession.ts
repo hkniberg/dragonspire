@@ -87,9 +87,11 @@ export class GameSession {
         };
 
         // Let the player execute their turn
-        let diaryEntry: string | undefined;
+        let strategicAssessment: string | undefined;
         try {
-            diaryEntry = await currentPlayer.executeTurn(this.gameState, diceRolls, executeAction, this.actionLog);
+            if (currentPlayer.executeTurn) {
+                strategicAssessment = await currentPlayer.executeTurn(this.gameState, diceRolls, executeAction, this.actionLog);
+            }
         } catch (error) {
             console.error(`Error during ${currentPlayer.getName()}'s turn:`, error);
         }
@@ -104,7 +106,7 @@ export class GameSession {
             playerName: currentPlayer.getName(),
             diceRolls: diceRolls,
             actions: turnActions,
-            diaryEntry: diaryEntry
+            strategicAssessment: strategicAssessment
         };
 
         // Log using unified format (includes diary entries)

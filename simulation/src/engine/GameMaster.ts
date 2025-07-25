@@ -92,21 +92,21 @@ export class GameMaster {
             content: `Rolled dice: ${diceRolls.join(', ')}`
         });
 
-        // Step 2: Ask player for diary entry (strategic reflection) - now with dice context
+        // Step 2: Ask player for strategic assessment (strategic reflection) - now with dice context
         try {
-            const diaryEntry = await currentPlayer.writeDiaryEntry(this.gameState, this.gameLog, diceRolls);
-            if (diaryEntry) {
-                console.log(`${currentPlayer.getName()}'s diary: ${diaryEntry}`);
+            const strategicAssessment = await currentPlayer.makeStrategicAssessment(this.gameState, this.gameLog, diceRolls);
+            if (strategicAssessment) {
+                console.log(`${currentPlayer.getName()}'s assessment: ${strategicAssessment}`);
                 this.addLogEntry({
                     round: this.gameState.currentRound,
                     playerId: playerId,
                     playerName: currentPlayer.getName(),
-                    type: 'diary',
-                    content: diaryEntry
+                    type: 'assessment',
+                    content: strategicAssessment
                 });
             }
         } catch (error) {
-            console.error(`Error getting diary entry from ${currentPlayer.getName()}:`, error);
+            console.error(`Error getting strategic assessment from ${currentPlayer.getName()}:`, error);
         }
 
         // Step 3: For each die, ask player to decide action and execute it
@@ -320,7 +320,7 @@ export class GameMaster {
     /**
      * Determine log entry type based on action
      */
-    private getActionType(action: GameAction): 'movement' | 'combat' | 'harvest' | 'diary' | 'event' | 'system' {
+    private getActionType(action: GameAction): 'movement' | 'combat' | 'harvest' | 'assessment' | 'event' | 'system' {
         switch (action.type) {
             case 'moveChampion':
             case 'moveBoat':

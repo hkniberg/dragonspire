@@ -21,5 +21,5 @@ Respond with a JSON object specifying your dice action. You can choose from:
 2. moveBoat: Move a boat, optionally transporting a champion
 3. harvest: Collect resources from your claimed tiles
 
-Make sure your action is legal according to the game rules and the current board state.
+Make sure your action is legal according to the game rules and the current board state. Include a brief reasoning field explaining why you chose this specific action.
 </dice-action-request>{{extraInstructions}}

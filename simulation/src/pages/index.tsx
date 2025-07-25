@@ -1,3 +1,5 @@
+import { templateProcessor } from "@/lib/templateProcessor";
+import { Claude2 } from "@/llm/claude2";
 import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
 import { ActionLog } from "../components/ActionLog";
@@ -5,10 +7,10 @@ import { ApiKeyModal } from "../components/ApiKeyModal";
 import { ControlPanel } from "../components/ControlPanel";
 import { GameBoard } from "../components/GameBoard";
 import { GameStatus } from "../components/GameStatus";
-import { GameSession, GameSessionConfig } from "../engine/GameSession";
+import { GameMaster, GameMasterConfig } from "../engine/GameMaster";
 import { GameState } from "../game/GameState";
-import { Claude } from "../llm/claude";
 import { ClaudePlayer } from "../players/ClaudePlayer";
+import { Player } from "../players/Player";
 import { RandomPlayer } from "../players/RandomPlayer";
 
 // Simple spinner for loading states (used only in main component now)
@@ -52,7 +54,7 @@ export default function GameSimulation() {
   const [mounted, setMounted] = useState(false);
 
   // Game simulation state
-  const [gameSession, setGameSession] = useState<GameSession | null>(null);
+  const [gameSession, setGameSession] = useState<GameMaster | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [simulationState, setSimulationState] =
     useState<SimulationState>("setup");
@@ -78,6 +80,8 @@ export default function GameSimulation() {
   const [autoPlaySpeed, setAutoPlaySpeed] = useState(1000); // ms between turns
   const [showActionLog, setShowActionLog] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
+  const [isStartingGame, setIsStartingGame] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Ref to hold the autoplay interval
   const autoPlayInterval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -137,13 +141,13 @@ export default function GameSimulation() {
       await gameSession.executeTurn();
 
       const updatedGameState = gameSession.getGameState();
-      const updatedActionLog = gameSession.getActionLog();
+      const updatedGameLog = gameSession.getGameLog();
 
       setGameState(updatedGameState);
-      setActionLog(updatedActionLog);
+      setActionLog(Array.from(updatedGameLog)); // Now using GameMaster's game log
 
-      // Check if game ended
-      if (gameSession.getSessionState() === "finished") {
+      // Check if game is finished
+      if (gameSession.getMasterState() === "finished") {
         setSimulationState("finished");
         setAutoPlay(false);
         console.log("Game finished!");
@@ -156,7 +160,7 @@ export default function GameSimulation() {
     }
   };
 
-  const createPlayer = (config: PlayerConfig) => {
+  const createPlayer = async (config: PlayerConfig): Promise<Player> => {
     switch (config.type) {
       case "random":
         return new RandomPlayer(config.name);
@@ -164,14 +168,19 @@ export default function GameSimulation() {
         if (!apiKey.trim()) {
           throw new Error("API key is required for Claude players");
         }
-        const claude = new Claude(apiKey.trim());
-        return new ClaudePlayer(config.name, claude);
+        // Get the system message for Claude2
+        const systemMessage = await templateProcessor.processTemplate(
+          "SystemPrompt",
+          {}
+        );
+        const claude2 = new Claude2(apiKey.trim(), systemMessage);
+        return new ClaudePlayer(config.name, claude2);
       default:
         throw new Error(`Unknown player type: ${config.type}`);
     }
   };
 
-  const startNewGame = () => {
+  const startNewGame = async () => {
     try {
       // Check if Claude players need API key
       const hasClaudePlayers = playerConfigs.some(
@@ -182,11 +191,31 @@ export default function GameSimulation() {
         return;
       }
 
-      // Create players based on configuration
-      const players = playerConfigs.map((config) => createPlayer(config));
+      setIsStartingGame(true);
+
+      // Create all players asynchronously
+      const players = await Promise.all(
+        playerConfigs.map((config) => createPlayer(config))
+      );
+
+      // Validate player names
+      const playerNames = players.map((p) => p.getName());
+      if (new Set(playerNames).size !== playerNames.length) {
+        setErrorMessage("Player names must be unique");
+        return;
+      }
+
+      // Validate player types
+      const hasValidTypes = players.every((p) =>
+        ["random", "claude", "human"].includes(p.getType())
+      );
+      if (!hasValidTypes) {
+        setErrorMessage("Invalid player type detected");
+        return;
+      }
 
       // Create game session
-      const sessionConfig: GameSessionConfig = {
+      const sessionConfig: GameMasterConfig = {
         players: players,
         maxRounds: 20, // Reasonable limit for web interface
         startingValues: {
@@ -195,7 +224,7 @@ export default function GameSimulation() {
         },
       };
 
-      const session = new GameSession(sessionConfig);
+      const session = new GameMaster(sessionConfig);
       session.start();
 
       setGameSession(session);
@@ -212,6 +241,8 @@ export default function GameSimulation() {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
       alert(`Failed to start game: ${errorMessage}`);
+    } finally {
+      setIsStartingGame(false);
     }
   };
 
