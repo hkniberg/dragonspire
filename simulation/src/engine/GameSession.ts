@@ -72,8 +72,8 @@ export class GameSession {
 
         // Create the execute action function that the player will use
         let currentState = this.gameState;
-        const executeAction: ExecuteActionFunction = (action: GameAction, diceValues?: number[]) => {
-            const result = this.actionExecutor.executeAction(currentState, action, diceValues, this.gameDecks);
+        const executeAction: ExecuteActionFunction = async (action: GameAction, diceValues?: number[]) => {
+            const result = await this.actionExecutor.executeAction(currentState, action, diceValues, this.gameDecks, currentPlayer);
 
             // Track the action
             turnActions.push({ action, result });

@@ -53,6 +53,72 @@ export class ClaudePlayer implements Player {
         }
     }
 
+    async handleEventCardChoice(
+        gameState: GameState,
+        eventCardId: string,
+        availableChoices: any[]
+    ): Promise<any> {
+        if (availableChoices.length === 0) {
+            return null;
+        }
+
+        try {
+            if (eventCardId === 'hungry-pests') {
+                // For hungry-pests, availableChoices are Player objects
+                const choicePrompt = this.prepareEventChoicePrompt(gameState, eventCardId, availableChoices);
+
+                // Use Claude to make the choice
+                const response = await this.claude.useClaude(
+                    "You are a strategic board game player making tactical decisions.",
+                    choicePrompt
+                );
+
+                // Parse the response to extract the chosen player
+                const chosenPlayerMatch = response.match(/Player (\d+)/);
+                if (chosenPlayerMatch) {
+                    const chosenPlayerId = parseInt(chosenPlayerMatch[1]);
+                    const chosenPlayer = availableChoices.find(p => p.id === chosenPlayerId);
+                    if (chosenPlayer) {
+                        return chosenPlayer;
+                    }
+                }
+
+                // Fallback to first available choice if parsing fails
+                return availableChoices[0];
+            }
+
+            // Default to first choice for unknown events
+            return availableChoices[0];
+
+        } catch (error) {
+            console.error(`${this.name} encountered an error during event card choice:`, error);
+            // Fallback to random choice
+            const randomIndex = Math.floor(Math.random() * availableChoices.length);
+            return availableChoices[randomIndex];
+        }
+    }
+
+    private prepareEventChoicePrompt(gameState: GameState, eventCardId: string, availableChoices: any[]): string {
+        if (eventCardId === 'hungry-pests') {
+            const currentPlayer = gameState.getCurrentPlayer();
+            let prompt = `You drew a "Hungry pests" event card! The card says: "Choose 1 player who loses 1 food to a mischief of starved rats."\n\n`;
+
+            prompt += `You are ${currentPlayer.name} and you must choose which other player should lose 1 food.\n\n`;
+            prompt += `Available players to choose from:\n`;
+
+            for (const player of availableChoices) {
+                prompt += `- Player ${player.id} (${player.name}): Has ${player.resources.food} food\n`;
+            }
+
+            prompt += `\nPlease respond with your choice in the format: "Player X" where X is the player ID you want to target.`;
+            prompt += `\nConsider strategic implications - you might want to target a player who has more food, or a player who is currently ahead.`;
+
+            return prompt;
+        }
+
+        return `Event card ${eventCardId} - please choose from: ${JSON.stringify(availableChoices)}`;
+    }
+
     private async prepareSystemPrompt(): Promise<string> {
         return await templateProcessor.processTemplate('SystemPrompt', {});
     }

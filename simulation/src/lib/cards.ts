@@ -4,13 +4,25 @@ import { MONSTER_CARDS } from '../content/monsterCards';
 import { TREASURE_CARDS } from '../content/treasureCards';
 import { BiomeType, TileTier } from './types';
 
+/**
+ * Deck Rigging:
+ * 
+ * Set ONLY_INCLUDE_CARDS to an array of card IDs to only include those cards in the deck.
+ * Set to undefined to include all cards as usual.
+ * 
+ * Example: const ONLY_INCLUDE_CARDS = ['wolf', 'bear', 'landslide'];
+ * 
+ * This is useful for testing specific cards or gameplay situations.
+ */
+let ONLY_INCLUDE_CARDS: string[] | undefined = undefined; //["sudden-storm"];
+
 export type CardType = 'monster' | 'event' | 'treasure' | 'encounter' | 'follower';
 
 export interface Card {
     type: CardType;
     tier: TileTier;
     biome: BiomeType;
-    name: string;
+    id: string;
 }
 
 class CardDeck {
@@ -170,47 +182,55 @@ function buildCardDeck(): Card[] {
 
     // Auto-generate monster cards from MONSTERS array
     MONSTER_CARDS.forEach(monster => {
-        deck.addCard(monster.count, {
-            type: 'monster',
-            tier: monster.tier,
-            biome: monster.biome,
-            name: monster.name
-        });
+        if (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(monster.id)) {
+            deck.addCard(monster.count, {
+                type: 'monster',
+                tier: monster.tier,
+                biome: monster.biome,
+                id: monster.id
+            });
+        }
     });
 
     // Auto-generate treasure cards from TREASURES array with random biomes
     TREASURE_CARDS.forEach(treasure => {
-        for (let i = 0; i < treasure.count; i++) {
-            deck.addToTop({
-                type: 'treasure',
-                tier: treasure.tier,
-                biome: getRandomBiome(), // Random biome assignment
-                name: treasure.name
-            });
+        if (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(treasure.id)) {
+            for (let i = 0; i < treasure.count; i++) {
+                deck.addToTop({
+                    type: 'treasure',
+                    tier: treasure.tier,
+                    biome: getRandomBiome(), // Random biome assignment
+                    id: treasure.id
+                });
+            }
         }
     });
 
     // Auto-generate encounter cards from ENCOUNTERS array with random biomes
     ENCOUNTERS.forEach(encounter => {
-        for (let i = 0; i < encounter.count; i++) {
-            deck.addToTop({
-                type: 'encounter',
-                tier: encounter.tier,
-                biome: getRandomBiome(), // Random biome assignment
-                name: encounter.name
-            });
+        if (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(encounter.id)) {
+            for (let i = 0; i < encounter.count; i++) {
+                deck.addToTop({
+                    type: 'encounter',
+                    tier: encounter.tier,
+                    biome: getRandomBiome(), // Random biome assignment
+                    id: encounter.id
+                });
+            }
         }
     });
 
     // Auto-generate event cards from EVENTS array with random biomes
     EVENT_CARDS.forEach(event => {
-        for (let i = 0; i < event.count; i++) {
-            deck.addToTop({
-                type: 'event',
-                tier: event.tier,
-                biome: getRandomBiome(), // Random biome assignment
-                name: event.name
-            });
+        if (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(event.id)) {
+            for (let i = 0; i < event.count; i++) {
+                deck.addToTop({
+                    type: 'event',
+                    tier: event.tier,
+                    biome: getRandomBiome(), // Random biome assignment
+                    id: event.id
+                });
+            }
         }
     });
 

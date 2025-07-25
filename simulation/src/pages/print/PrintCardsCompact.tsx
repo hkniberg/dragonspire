@@ -27,7 +27,7 @@ export default function PrintCardsCompact() {
     (card) => card.type === "monster"
   )
     .map((card, index) => {
-      const originalData = MONSTER_CARDS.find((m) => m.name === card.name);
+      const originalData = MONSTER_CARDS.find((m) => m.id === card.id);
       return {
         ...card,
         originalData,
@@ -40,7 +40,7 @@ export default function PrintCardsCompact() {
     (card) => card.type === "treasure"
   )
     .map((card, index) => {
-      const originalData = TREASURE_CARDS.find((t) => t.name === card.name);
+      const originalData = TREASURE_CARDS.find((t) => t.id === card.id);
       return {
         ...card,
         originalData,
@@ -50,8 +50,12 @@ export default function PrintCardsCompact() {
     .filter((card) => card.originalData);
 
   // Add 4 extra wolves and 4 extra bears
-  const wolfCard = monsterCards.find((card) => card.name === "Wolf");
-  const bearCard = monsterCards.find((card) => card.name === "Bear");
+  const wolfCard = monsterCards.find(
+    (card) => card.originalData.name === "Wolf"
+  );
+  const bearCard = monsterCards.find(
+    (card) => card.originalData.name === "Bear"
+  );
 
   const extraCards: ExtendedCard[] = [];
 
@@ -84,7 +88,7 @@ export default function PrintCardsCompact() {
     const commonProps = {
       tier: card.tier,
       borderColor: getBorderColor(card.type),
-      name: card.name,
+      name: card.originalData.name,
       compactMode: true,
       printMode: true,
     };

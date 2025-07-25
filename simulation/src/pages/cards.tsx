@@ -36,16 +36,16 @@ export default function CardsPage() {
 
     switch (card.type) {
       case "monster":
-        originalData = MONSTER_CARDS.find((m) => m.name === card.name);
+        originalData = MONSTER_CARDS.find((m) => m.id === card.id);
         break;
       case "event":
-        originalData = EVENT_CARDS.find((e) => e.name === card.name);
+        originalData = EVENT_CARDS.find((e) => e.id === card.id);
         break;
       case "treasure":
-        originalData = TREASURE_CARDS.find((t) => t.name === card.name);
+        originalData = TREASURE_CARDS.find((t) => t.id === card.id);
         break;
       case "encounter":
-        originalData = ENCOUNTERS.find((e) => e.name === card.name);
+        originalData = ENCOUNTERS.find((e) => e.id === card.id);
         break;
       default:
         originalData = null;
@@ -63,7 +63,7 @@ export default function CardsPage() {
   if (hideDuplicates) {
     const seenCards = new Set<string>();
     cardsToShow = allCards.filter((card) => {
-      const key = `${card.type}-${card.name}`;
+      const key = `${card.type}-${card.id}`;
       if (seenCards.has(key)) {
         return false;
       }
@@ -108,10 +108,10 @@ export default function CardsPage() {
     const commonProps = {
       tier: card.tier,
       borderColor: getBorderColor(card.type),
-      name: card.name,
+      name: card.originalData.name,
       compactMode,
       title: `${card.type.charAt(0).toUpperCase() + card.type.slice(1)}: ${
-        card.name
+        card.originalData.name
       } (Tier ${card.tier}, ${card.biome})`,
     };
 
@@ -468,9 +468,7 @@ export default function CardsPage() {
             <h3 style={{ color: "#555", fontSize: "16px" }}>Deck Summary</h3>
             <div style={{ fontSize: "14px", color: "#666" }}>
               <div>Total cards: {allCards.length}</div>
-              <div>
-                Unique cards: {new Set(allCards.map((c) => c.name)).size}
-              </div>
+              <div>Unique cards: {new Set(allCards.map((c) => c.id)).size}</div>
               {hideDuplicates && (
                 <div
                   style={{

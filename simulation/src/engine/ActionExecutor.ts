@@ -11,7 +11,7 @@ import type {
     MoveChampionAction,
     ResourceType
 } from '../lib/types';
-import { ActionResult } from '../players/Player';
+import { ActionResult, Player } from '../players/Player';
 import { CombatResolver } from './CombatResolver';
 import { TileArrivalHandler } from './TileArrivalHandler';
 
@@ -25,13 +25,13 @@ export class ActionExecutor {
     /**
      * Validates and executes a game action, returning the new state and summary
      */
-    executeAction(gameState: GameState, action: GameAction, diceValues?: number[], gameDecks?: GameDecks): ActionResult {
+    async executeAction(gameState: GameState, action: GameAction, diceValues?: number[], gameDecks?: GameDecks, currentPlayer?: Player): Promise<ActionResult> {
         try {
             switch (action.type) {
                 case 'moveChampion':
-                    return this.executeMoveChampion(gameState, action, diceValues, gameDecks);
+                    return await this.executeMoveChampion(gameState, action, diceValues, gameDecks, currentPlayer);
                 case 'moveBoat':
-                    return this.executeMoveBoat(gameState, action, diceValues, gameDecks);
+                    return await this.executeMoveBoat(gameState, action, diceValues, gameDecks, currentPlayer);
                 case 'harvest':
                     return this.executeHarvest(gameState, action, diceValues);
                 default:
@@ -52,7 +52,7 @@ export class ActionExecutor {
         }
     }
 
-    private executeMoveChampion(gameState: GameState, action: MoveChampionAction, diceValues?: number[], gameDecks?: GameDecks): ActionResult {
+    private async executeMoveChampion(gameState: GameState, action: MoveChampionAction, diceValues?: number[], gameDecks?: GameDecks, currentPlayer?: Player): Promise<ActionResult> {
         const player = gameState.getPlayerById(action.playerId);
         if (!player) {
             return {
@@ -102,12 +102,12 @@ export class ActionExecutor {
         }
 
         // Handle champion arrival at the actual destination using the TileArrivalHandler
-        const arrivalResult = this.tileArrivalHandler.handleChampionArrival(
+        const arrivalResult = await this.tileArrivalHandler.handleChampionArrival(
             gameState,
             action.playerId,
             action.championId,
             actualDestination,
-            { claimTile: action.claimTile, gameDecks }
+            { claimTile: action.claimTile, gameDecks, currentPlayer }
         );
 
         if (!arrivalResult.success) {
@@ -139,7 +139,7 @@ export class ActionExecutor {
         };
     }
 
-    private executeMoveBoat(gameState: GameState, action: MoveBoatAction, diceValues?: number[], gameDecks?: GameDecks): ActionResult {
+    private async executeMoveBoat(gameState: GameState, action: MoveBoatAction, diceValues?: number[], gameDecks?: GameDecks, currentPlayer?: Player): Promise<ActionResult> {
         const player = gameState.getPlayerById(action.playerId);
         if (!player) {
             return {
@@ -200,12 +200,12 @@ export class ActionExecutor {
             }
 
             // Use the TileArrivalHandler for champion transport
-            const arrivalResult = this.tileArrivalHandler.handleChampionArrival(
+            const arrivalResult = await this.tileArrivalHandler.handleChampionArrival(
                 updatedGameState,
                 action.playerId,
                 action.championId,
                 action.championDropPosition,
-                { gameDecks }
+                { gameDecks, currentPlayer }
             );
 
             if (!arrivalResult.success) {

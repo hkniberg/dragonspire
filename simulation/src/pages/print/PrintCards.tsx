@@ -32,16 +32,16 @@ export default function PrintCards() {
 
     switch (card.type) {
       case "monster":
-        originalData = MONSTER_CARDS.find((m) => m.name === card.name);
+        originalData = MONSTER_CARDS.find((m) => m.id === card.id);
         break;
       case "event":
-        originalData = EVENT_CARDS.find((e) => e.name === card.name);
+        originalData = EVENT_CARDS.find((e) => e.id === card.id);
         break;
       case "treasure":
-        originalData = TREASURE_CARDS.find((t) => t.name === card.name);
+        originalData = TREASURE_CARDS.find((t) => t.id === card.id);
         break;
       case "encounter":
-        originalData = ENCOUNTERS.find((e) => e.name === card.name);
+        originalData = ENCOUNTERS.find((e) => e.id === card.id);
         break;
       default:
         originalData = null;
@@ -65,7 +65,7 @@ export default function PrintCards() {
     const commonProps = {
       tier: card.tier,
       borderColor: getBorderColor(card.type),
-      name: card.name,
+      name: card.originalData.name,
       compactMode: false,
     };
 

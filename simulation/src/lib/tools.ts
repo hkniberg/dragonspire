@@ -68,7 +68,7 @@ export class MoveChampionTool extends GameActionTool {
             claimTile: input.claimTile
         };
 
-        const result = this.executeAction(action, input.diceValues);
+        const result = await this.executeAction(action, input.diceValues);
         return result.summary;
     }
 }
@@ -127,7 +127,7 @@ export class MoveBoatTool extends GameActionTool {
             action.championDropPosition = input.championDropPosition;
         }
 
-        const result = this.executeAction(action, input.diceValues);
+        const result = await this.executeAction(action, input.diceValues);
         return result.summary;
     }
 }
@@ -166,7 +166,7 @@ export class HarvestTool extends GameActionTool {
             resources: input.resources
         };
 
-        const result = this.executeAction(action, input.diceValues);
+        const result = await this.executeAction(action, input.diceValues);
         return result.summary;
     }
 }

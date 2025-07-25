@@ -5,28 +5,34 @@ import { GameDecks } from '../lib/cards';
 import { GameSettings } from '../lib/GameSettings';
 import { GameUtilities } from '../lib/GameUtilities';
 import type { Monster, Position } from '../lib/types';
-import { ActionResult } from '../players/Player';
+import { ActionResult, Player } from '../players/Player';
 import { CombatResolver } from './CombatResolver';
+import { EventCardResolver } from './EventCardResolver';
 
 export interface ArrivalOptions {
     claimTile?: boolean;
     gameDecks?: GameDecks;
+    currentPlayer?: Player;
 }
 
 export class TileArrivalHandler {
-    constructor(private combatResolver: CombatResolver = new CombatResolver()) { }
+    private eventCardResolver: EventCardResolver;
+
+    constructor(private combatResolver: CombatResolver = new CombatResolver()) {
+        this.eventCardResolver = new EventCardResolver();
+    }
 
     /**
      * Handles all the logic for a champion arriving at a tile (exploration, battles, claiming, etc.)
      */
-    handleChampionArrival(
+    async handleChampionArrival(
         gameState: GameState,
         playerId: number,
         championId: number,
         destination: Position,
         options: ArrivalOptions = {}
-    ): ActionResult {
-        const { claimTile = false, gameDecks } = options;
+    ): Promise<ActionResult> {
+        const { claimTile = false, gameDecks, currentPlayer } = options;
 
         const player = gameState.getPlayerById(playerId);
         if (!player) {
@@ -230,17 +236,49 @@ export class TileArrivalHandler {
             destinationTile.claimedBy = playerId;
         }
 
+        // Initialize cardDrawn variable for tracking any card draws
+        let cardDrawn = undefined;
+
         // Handle adventure tile logic
         if (destinationTile.tileType === 'adventure' || destinationTile.tileType === 'oasis') {
             if (destinationTile.adventureTokens && destinationTile.adventureTokens > 0) {
                 // Remove one adventure token
                 destinationTile.adventureTokens = Math.max(0, destinationTile.adventureTokens - 1);
 
-                // Award fame for exploration
-                updatedPlayer = {
-                    ...updatedPlayer,
-                    fame: updatedPlayer.fame + 1
-                };
+                // Note: Fame is only awarded for exploring new tiles, not for taking adventure tokens
+
+                // Draw a card if gameDecks is available
+                if (gameDecks && destinationTile.tier) {
+                    const drawnCard = gameDecks.drawCard(destinationTile.tier, 1);
+                    if (drawnCard) {
+                        if (drawnCard.type === 'event' && currentPlayer) {
+                            // Handle event card
+                            const eventResult = await this.eventCardResolver.resolveEventCard(
+                                updatedGameState,
+                                currentPlayer,
+                                drawnCard.id
+                            );
+                            updatedGameState = eventResult.newGameState;
+
+                            // Get the event definition to get the display name
+                            const eventCard = await import('../content/eventCards').then(m => m.getEventCardById(drawnCard.id));
+                            const displayName = eventCard ? eventCard.name : drawnCard.id;
+
+                            cardDrawn = {
+                                cardType: 'event',
+                                cardName: displayName,
+                                effect: eventResult.effect
+                            };
+                        } else {
+                            // For non-event cards or when currentPlayer is not available
+                            cardDrawn = {
+                                cardType: drawnCard.type,
+                                cardName: drawnCard.id,
+                                effect: `drew ${drawnCard.type} card (not yet implemented)`
+                            };
+                        }
+                    }
+                }
             }
         } else if (destinationTile.tileType === 'doomspire') {
             // Handle dragon encounter at doomspire
@@ -282,10 +320,17 @@ export class TileArrivalHandler {
             destination
         );
 
+        // Include card draw information in summary if a card was drawn
+        let fullSummary = `Champion${championId} ${arrivalSummary}${battleSummary}${existingMonsterCombatSummary}`;
+        if (cardDrawn) {
+            fullSummary += ` and drew ${cardDrawn.cardName} card: ${cardDrawn.effect}`;
+        }
+
         return {
             newGameState,
-            summary: `Champion${championId} ${arrivalSummary}${battleSummary}${existingMonsterCombatSummary}`,
-            success: true
+            summary: fullSummary,
+            success: true,
+            cardDrawn
         };
     }
 

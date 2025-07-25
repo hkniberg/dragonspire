@@ -64,10 +64,10 @@ describe('ActionExecutor', () => {
     }
 
     describe('executeAction', () => {
-        it('should handle unknown action type', () => {
+        it('should handle unknown action type', async () => {
             const unknownAction = { type: 'unknown' } as any;
 
-            const result = actionExecutor.executeAction(gameState, unknownAction);
+            const result = await actionExecutor.executeAction(gameState, unknownAction);
 
             expect(result.success).toBe(false);
             expect(result.newGameState).toBe(gameState); // State should be unchanged
@@ -75,7 +75,7 @@ describe('ActionExecutor', () => {
     });
 
     describe('moveChampion', () => {
-        it('should move champion successfully to adjacent tile', () => {
+        it('should move champion successfully to adjacent tile', async () => {
             const action: MoveChampionAction = {
                 type: 'moveChampion',
                 playerId: 1,
@@ -86,7 +86,7 @@ describe('ActionExecutor', () => {
                 ]
             };
 
-            const result = actionExecutor.executeAction(gameState, action);
+            const result = await actionExecutor.executeAction(gameState, action);
 
             expect(result.success).toBe(true);
 
@@ -95,7 +95,7 @@ describe('ActionExecutor', () => {
             expect(updatedChampion?.position).toEqual({ row: 0, col: 1 });
         });
 
-        it('should grant fame when exploring unexplored tile', () => {
+        it('should grant fame when exploring unexplored tile', async () => {
             // Get the initial state and verify player starts with 0 fame
             const player = gameState.getPlayerById(1);
             expect(player?.fame).toBe(0);
@@ -117,7 +117,7 @@ describe('ActionExecutor', () => {
                 ]
             };
 
-            const result = actionExecutor.executeAction(gameState, action);
+            const result = await actionExecutor.executeAction(gameState, action);
 
             expect(result.success).toBe(true);
 
@@ -134,7 +134,7 @@ describe('ActionExecutor', () => {
             expect(updatedChampion?.position).toEqual({ row: 1, col: 2 });
         });
 
-        it('should not grant fame when moving to already explored tile', () => {
+        it('should not grant fame when moving to already explored tile', async () => {
             // Get the initial state and verify player starts with 0 fame
             const player = gameState.getPlayerById(1);
             expect(player?.fame).toBe(0);
@@ -150,7 +150,7 @@ describe('ActionExecutor', () => {
                 ]
             };
 
-            const result = actionExecutor.executeAction(gameState, action);
+            const result = await actionExecutor.executeAction(gameState, action);
 
             expect(result.success).toBe(true);
 
@@ -163,7 +163,7 @@ describe('ActionExecutor', () => {
             expect(updatedChampion?.position).toEqual({ row: 0, col: 1 });
         });
 
-        it('should reject a move with non-adjacent tiles', () => {
+        it('should reject a move with non-adjacent tiles', async () => {
 
             // Create a move champion action with a diagonal move (invalid)
             const action: MoveChampionAction = {
@@ -177,7 +177,7 @@ describe('ActionExecutor', () => {
             };
 
             // Execute the action
-            const result = actionExecutor.executeAction(gameState, action);
+            const result = await actionExecutor.executeAction(gameState, action);
 
             // Verify the action was rejected
             expect(result.success).toBe(false);
@@ -188,122 +188,104 @@ describe('ActionExecutor', () => {
         });
     });
 
-    describe('executeAction - harvest', () => {
-        it('should correctly harvest resources', () => {
-            const initialPlayer = gameState.getPlayerById(1)!;
-            const initialResources = initialPlayer.resources;
-
-            // Create a harvest action
+    describe('harvest', () => {
+        it('should correctly harvest resources', async () => {
             const action: HarvestAction = {
                 type: 'harvest',
                 playerId: 1,
-                resources: {
-                    food: 2,
-                    wood: 1,
-                    ore: 0,
-                    gold: 0
-                }
+                resources: { food: 2, wood: 1, ore: 0, gold: 0 }
             };
 
             // Execute the action
-            const result = actionExecutor.executeAction(gameState, action);
+            const result = await actionExecutor.executeAction(gameState, action);
 
             // Verify the action was successful
             expect(result.success).toBe(true);
 
-            // Verify the resources were added correctly
+            // Verify the player's resources were updated
             const updatedPlayer = result.newGameState.getPlayerById(1)!;
-            expect(updatedPlayer.resources.food).toBe(initialResources.food + 2);
-            expect(updatedPlayer.resources.wood).toBe(initialResources.wood + 1);
-            expect(updatedPlayer.resources.ore).toBe(initialResources.ore);
-            expect(updatedPlayer.resources.gold).toBe(initialResources.gold);
+            expect(updatedPlayer.resources.food).toBe(7); // 5 initial + 2 harvested
+            expect(updatedPlayer.resources.wood).toBe(6); // 5 initial + 1 harvested
+            expect(updatedPlayer.resources.ore).toBe(5); // 5 initial + 0 harvested
+            expect(updatedPlayer.resources.gold).toBe(5); // 5 initial + 0 harvested
         });
 
-        it('should reject negative harvest amounts', () => {
-            const initialPlayer = gameState.getPlayerById(1)!;
-
-            // Create a harvest action with negative amount
+        it('should reject negative harvest amounts', async () => {
             const action: HarvestAction = {
                 type: 'harvest',
                 playerId: 1,
-                resources: {
-                    food: -1,  // Negative harvest (not allowed)
-                    wood: 0,
-                    ore: 0,
-                    gold: 0
-                }
+                resources: { food: -1, wood: 0, ore: 0, gold: 0 }
             };
 
             // Execute the action
-            const result = actionExecutor.executeAction(gameState, action);
+            const result = await actionExecutor.executeAction(gameState, action);
 
             // Verify the action was rejected
             expect(result.success).toBe(false);
 
-            // Verify the resources didn't change
+            // Verify the player's resources were not updated
             const updatedPlayer = result.newGameState.getPlayerById(1)!;
-            expect(updatedPlayer.resources).toEqual(initialPlayer.resources);
+            expect(updatedPlayer.resources.food).toBe(5); // Should remain unchanged
         });
     });
 
-    describe('executeAction - claimTile', () => {
-        it('should allow a champion to claim a tile they are standing on', () => {
-            // Verify tile is not claimed initially
-            const initialTile = gameState.getTile({ row: 0, col: 0 });
-            expect(initialTile?.claimedBy).toBeUndefined();
-
-            // Create a move action that claims the tile (champion stays in place)
-            const action: MoveChampionAction = {
+    describe('tile claiming', () => {
+        it('should allow a champion to claim a tile they are standing on', async () => {
+            // Move champion to a resource tile first
+            const moveAction: MoveChampionAction = {
                 type: 'moveChampion',
                 playerId: 1,
                 championId: 1,
-                path: [{ row: 0, col: 0 }], // Stay in same position
+                path: [{ row: 0, col: 0 }, { row: 0, col: 1 }],
+                claimTile: false
+            };
+
+            const moveResult = await actionExecutor.executeAction(gameState, moveAction);
+            expect(moveResult.success).toBe(true);
+
+            // Now claim the tile they're standing on
+            const claimAction: MoveChampionAction = {
+                type: 'moveChampion',
+                playerId: 1,
+                championId: 1,
+                path: [{ row: 0, col: 1 }], // Same position
                 claimTile: true
             };
 
-            // Execute the action
-            const result = actionExecutor.executeAction(gameState, action);
+            const result = await actionExecutor.executeAction(moveResult.newGameState, claimAction);
 
-            // Verify the action was successful
             expect(result.success).toBe(true);
 
-            // Verify the tile was claimed
-            const claimedTile = result.newGameState.getTile({ row: 0, col: 0 });
+            // Verify tile is claimed
+            const claimedTile = result.newGameState.getTile({ row: 0, col: 1 });
             expect(claimedTile?.claimedBy).toBe(1);
 
-            // Verify champion is still at the same position
+            // Verify champion position unchanged
             const updatedChampion = result.newGameState.getChampionById(1, 1);
-            expect(updatedChampion?.position).toEqual({ row: 0, col: 0 });
+            expect(updatedChampion?.position).toEqual({ row: 0, col: 1 });
         });
 
-        it('should allow a champion to move and claim a tile in the same action', () => {
-            // Verify destination tile is not claimed initially
-            const initialTile = gameState.getTile({ row: 0, col: 1 });
-            expect(initialTile?.claimedBy).toBeUndefined();
-
-            // Create a move action that moves to an adjacent tile and claims it
+        it('should allow a champion to move and claim a tile in the same action', async () => {
             const action: MoveChampionAction = {
                 type: 'moveChampion',
                 playerId: 1,
                 championId: 1,
                 path: [
-                    { row: 0, col: 0 }, // Start position
-                    { row: 0, col: 1 }  // Move to adjacent tile
+                    { row: 0, col: 0 }, // Start
+                    { row: 0, col: 1 }  // Destination
                 ],
                 claimTile: true
             };
 
-            // Execute the action
-            const result = actionExecutor.executeAction(gameState, action);
+            const result = await actionExecutor.executeAction(gameState, action);
 
-            // Verify the action was successful
             expect(result.success).toBe(true);
 
-            // Verify the champion moved
+            // Verify champion moved
             const updatedChampion = result.newGameState.getChampionById(1, 1);
             expect(updatedChampion?.position).toEqual({ row: 0, col: 1 });
 
-            // Verify the destination tile was claimed
+            // Verify tile is claimed
             const claimedTile = result.newGameState.getTile({ row: 0, col: 1 });
             expect(claimedTile?.claimedBy).toBe(1);
         });

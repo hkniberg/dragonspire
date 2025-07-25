@@ -34,7 +34,7 @@ export class RandomPlayer implements Player {
 
         if (useBothDiceForMovement && dice.length >= 2) {
             // Use both dice for a single movement action
-            const moveResult = this.executeRandomChampionMoveWithMultipleDice(
+            const moveResult = await this.executeRandomChampionMoveWithMultipleDice(
                 currentGameState,
                 playerId,
                 dice,
@@ -47,7 +47,7 @@ export class RandomPlayer implements Player {
             // Normal behavior: first die for movement, second for harvesting
             // Use first die to move a champion
             if (dice.length > 0) {
-                const moveResult = this.executeRandomChampionMove(currentGameState, playerId, dice[0], executeAction);
+                const moveResult = await this.executeRandomChampionMove(currentGameState, playerId, dice[0], executeAction);
                 if (moveResult.success) {
                     currentGameState = moveResult.newGameState;
                 }
@@ -55,7 +55,7 @@ export class RandomPlayer implements Player {
 
             // Use second die to harvest
             if (dice.length > 1) {
-                const harvestResult = this.executeRandomHarvest(currentGameState, playerId, dice[1], executeAction);
+                const harvestResult = await this.executeRandomHarvest(currentGameState, playerId, dice[1], executeAction);
                 if (harvestResult.success) {
                     currentGameState = harvestResult.newGameState;
                 }
@@ -66,7 +66,27 @@ export class RandomPlayer implements Player {
         return undefined;
     }
 
-    private executeRandomChampionMove(
+    async handleEventCardChoice(
+        gameState: GameState,
+        eventCardId: string,
+        availableChoices: any[]
+    ): Promise<any> {
+        if (availableChoices.length === 0) {
+            return null;
+        }
+
+        // For hungry-pests, availableChoices will be Player objects
+        if (eventCardId === 'hungry-pests') {
+            const randomIndex = Math.floor(Math.random() * availableChoices.length);
+            return availableChoices[randomIndex];
+        }
+
+        // Default random choice for other events
+        const randomIndex = Math.floor(Math.random() * availableChoices.length);
+        return availableChoices[randomIndex];
+    }
+
+    private async executeRandomChampionMove(
         gameState: GameState,
         playerId: number,
         dieValue: number,
@@ -135,10 +155,10 @@ export class RandomPlayer implements Player {
             claimTile: shouldClaimTile
         };
 
-        return executeAction(moveAction, [dieValue]);
+        return await executeAction(moveAction, [dieValue]);
     }
 
-    private executeRandomHarvest(
+    private async executeRandomHarvest(
         gameState: GameState,
         playerId: number,
         dieValue: number,
@@ -181,10 +201,10 @@ export class RandomPlayer implements Player {
             resources: harvestResources
         };
 
-        return executeAction(harvestAction, [dieValue]);
+        return await executeAction(harvestAction, [dieValue]);
     }
 
-    private executeRandomChampionMoveWithMultipleDice(
+    private async executeRandomChampionMoveWithMultipleDice(
         gameState: GameState,
         playerId: number,
         diceValues: number[],
@@ -252,7 +272,7 @@ export class RandomPlayer implements Player {
             claimTile: shouldClaimTile
         };
 
-        return executeAction(moveAction, diceValues);
+        return await executeAction(moveAction, diceValues);
     }
 
     private actionToString(action: GameAction): string {

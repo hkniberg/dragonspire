@@ -13,6 +13,11 @@ export interface ActionResult {
     summary: string;
     success: boolean;
     diceValuesUsed?: number[]; // Track which dice values were used for this action
+    cardDrawn?: {
+        cardType: string;
+        cardName: string;
+        effect: string; // Description of what happened
+    };
 }
 
 
@@ -31,7 +36,7 @@ export interface ActionLogEntry {
 /**
  * Function provided to players for executing actions during their turn
  */
-export type ExecuteActionFunction = (action: GameAction, diceValues?: number[]) => ActionResult;
+export type ExecuteActionFunction = (action: GameAction, diceValues?: number[]) => Promise<ActionResult>;
 
 
 /**
@@ -62,4 +67,17 @@ export interface Player {
         executeAction: ExecuteActionFunction,
         actionLog: readonly ActionLogEntry[]
     ): Promise<string | undefined>;
+
+    /**
+     * Handle an event card that requires a player choice
+     * @param gameState Current game state
+     * @param eventCardId The ID of the event card being resolved
+     * @param availableChoices Array of available choices (type depends on the event)
+     * @returns The chosen option
+     */
+    handleEventCardChoice(
+        gameState: GameState,
+        eventCardId: string,
+        availableChoices: any[]
+    ): Promise<any>;
 } 
