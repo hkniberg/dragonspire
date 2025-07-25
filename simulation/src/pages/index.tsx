@@ -81,6 +81,7 @@ export default function GameSimulation() {
   const [debugMode, setDebugMode] = useState(false);
   const [isStartingGame, setIsStartingGame] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [forceRender, setForceRender] = useState(0);
 
   // Ref to hold the autoplay interval
   const autoPlayInterval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -260,8 +261,8 @@ export default function GameSimulation() {
       const player = gameState.getPlayer(playerName);
       if (player) {
         player.extraInstructions = instructions;
-        // Force a re-render by creating a new state object
-        setGameState(gameState);
+        // Force a re-render by incrementing counter
+        setForceRender((prev) => prev + 1);
         // Update the game session's internal state
         gameSession.updateGameState(gameState);
       }

@@ -169,8 +169,8 @@ export const PlayerInfoBox = ({
             Extra Instructions:
           </div>
           <textarea
-            value={player.extraInstructions || ""}
-            onChange={(e) => onExtraInstructionsChange(player.name, e.target.value)}
+            defaultValue={player.extraInstructions || ""}
+            onBlur={(e) => onExtraInstructionsChange(player.name, e.target.value)}
             placeholder="Enter additional instructions for this AI player..."
             style={{
               width: "100%",
