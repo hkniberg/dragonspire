@@ -84,13 +84,51 @@ export class ActionExecutor {
             };
         }
 
-        // Check for unexplored tiles along the path and stop at the first one
-        let actualDestination = action.path[action.path.length - 1];
+        // Determine the actual path, handling whether it includes starting position or not
+        let pathToProcess = action.path;
+        const startsFromCurrentPosition = action.path.length > 0 &&
+            action.path[0].row === champion.position.row &&
+            action.path[0].col === champion.position.col;
+
+        if (startsFromCurrentPosition) {
+            // Path includes starting position, skip it for processing
+            pathToProcess = action.path.slice(1);
+        }
+
+        // If no movement after removing start position, champion stays in place
+        if (pathToProcess.length === 0) {
+            const arrivalResult = await this.tileArrivalHandler.handleChampionArrival(
+                gameState,
+                action.playerId,
+                action.championId,
+                champion.position,
+                { claimTile: action.claimTile, gameDecks, currentPlayer }
+            );
+
+            if (!arrivalResult.success) {
+                return {
+                    newGameState: gameState,
+                    summary: arrivalResult.summary,
+                    success: false,
+                    diceValuesUsed: diceValues
+                };
+            }
+
+            return {
+                newGameState: arrivalResult.newGameState,
+                summary: `Champion${action.championId} stayed at (${champion.position.row}, ${champion.position.col}). ${arrivalResult.summary}`,
+                success: true,
+                diceValuesUsed: diceValues
+            };
+        }
+
+        // Check for unexplored tiles along the movement path and stop at the first one
+        let actualDestination = pathToProcess[pathToProcess.length - 1];
         let stoppedAtUnexploredTile = false;
 
-        // Skip the starting position (index 0) and check each subsequent position
-        for (let i = 1; i < action.path.length; i++) {
-            const position = action.path[i];
+        // Check each position in the path (all are movement positions now)
+        for (let i = 0; i < pathToProcess.length; i++) {
+            const position = pathToProcess[i];
             const tile = gameState.getTile(position);
 
             // If the tile is unexplored (explored === false), stop here

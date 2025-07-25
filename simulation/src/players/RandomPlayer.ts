@@ -90,7 +90,8 @@ export class RandomPlayer implements Player {
 
     async writeDiaryEntry(
         gameState: GameState,
-        gameLog: readonly GameLogEntry[]
+        gameLog: readonly GameLogEntry[],
+        diceRolls?: number[]
     ): Promise<string | undefined> {
         // RandomPlayer doesn't write diary entries
         return undefined;

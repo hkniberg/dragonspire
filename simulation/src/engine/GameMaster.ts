@@ -78,9 +78,23 @@ export class GameMaster {
 
         console.log(`\n--- ${currentPlayer.getName()}'s Turn (Round ${this.gameState.currentRound}) ---`);
 
-        // Step 1: Ask player for diary entry (strategic reflection)
+        // Step 1: Roll dice for player
+        const additionalChampions = this.gameState.getCurrentPlayer().champions.length - 1;
+        const diceCount = 2 + additionalChampions;
+        const diceRolls = rollMultipleD3(diceCount);
+
+        console.log(`${currentPlayer.getName()} rolled: ${diceRolls.join(', ')}`);
+        this.addLogEntry({
+            round: this.gameState.currentRound,
+            playerId: playerId,
+            playerName: currentPlayer.getName(),
+            type: 'system',
+            content: `Rolled dice: ${diceRolls.join(', ')}`
+        });
+
+        // Step 2: Ask player for diary entry (strategic reflection) - now with dice context
         try {
-            const diaryEntry = await currentPlayer.writeDiaryEntry(this.gameState, this.gameLog);
+            const diaryEntry = await currentPlayer.writeDiaryEntry(this.gameState, this.gameLog, diceRolls);
             if (diaryEntry) {
                 console.log(`${currentPlayer.getName()}'s diary: ${diaryEntry}`);
                 this.addLogEntry({
@@ -94,20 +108,6 @@ export class GameMaster {
         } catch (error) {
             console.error(`Error getting diary entry from ${currentPlayer.getName()}:`, error);
         }
-
-        // Step 2: Roll dice for player
-        const additionalChampions = this.gameState.getCurrentPlayer().champions.length - 1;
-        const diceCount = 2 + additionalChampions;
-        const diceRolls = rollMultipleD3(diceCount);
-
-        console.log(`${currentPlayer.getName()} rolled: ${diceRolls.join(', ')}`);
-        this.addLogEntry({
-            round: this.gameState.currentRound,
-            playerId: playerId,
-            playerName: currentPlayer.getName(),
-            type: 'system',
-            content: `Rolled dice: ${diceRolls.join(', ')}`
-        });
 
         // Step 3: For each die, ask player to decide action and execute it
         let remainingDice = [...diceRolls];

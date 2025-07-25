@@ -93,11 +93,12 @@ export class ClaudePlayer implements Player {
 
     async writeDiaryEntry(
         gameState: GameState,
-        gameLog: readonly GameLogEntry[]
+        gameLog: readonly GameLogEntry[],
+        diceRolls?: number[]
     ): Promise<string | undefined> {
         try {
             const playerId = gameState.getCurrentPlayer().id;
-            const userMessage = await this.prepareDiaryMessage(gameState, playerId, gameLog);
+            const userMessage = await this.prepareDiaryMessage(gameState, playerId, gameLog, diceRolls);
 
             // Get text response for diary entry
             const diaryEntry = await this.claude2.useClaude(userMessage);
@@ -226,7 +227,8 @@ export class ClaudePlayer implements Player {
     private async prepareDiaryMessage(
         gameState: GameState,
         playerId: number,
-        gameLog: readonly GameLogEntry[]
+        gameLog: readonly GameLogEntry[],
+        diceRolls?: number[]
     ): Promise<string> {
         const player = gameState.getPlayerById(playerId);
         if (!player) {
@@ -239,7 +241,8 @@ export class ClaudePlayer implements Player {
         const variables: TemplateVariables = {
             playerName: player.name,
             boardState: boardState,
-            gameLog: gameLogText
+            gameLog: gameLogText,
+            diceRolls: diceRolls ? diceRolls.join(', ') : 'Not yet rolled'
         };
 
         return await templateProcessor.processTemplate('diaryEntry', variables);

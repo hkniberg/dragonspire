@@ -125,11 +125,13 @@ export interface Player {
      * Write a high-level diary entry for strategic reflection at the start of each turn
      * @param gameState Current game state
      * @param gameLog Sequential log of all game events so far
+     * @param diceRolls Optional dice rolls for this turn to provide strategic context
      * @returns String describing the player's thoughts and strategy (or undefined to skip)
      */
     writeDiaryEntry(
         gameState: GameState,
-        gameLog: readonly GameLogEntry[]
+        gameLog: readonly GameLogEntry[],
+        diceRolls?: number[]
     ): Promise<string | undefined>;
 
     /**
