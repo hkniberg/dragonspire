@@ -1,8 +1,9 @@
 // Lords of Doomspire Game Master
 
 import { HarvestAction, MoveBoatAction, MoveChampionAction } from "@/lib/actionTypes";
-import { GameLogEntry, GameLogEntryType, Monster, NON_COMBAT_TILES, Player, Tile, TurnContext } from "@/lib/types";
+import { DecisionContext, GameLogEntry, GameLogEntryType, Monster, NON_COMBAT_TILES, OceanPosition, Player, Tile, TurnContext } from "@/lib/types";
 import { formatPosition, formatResources } from "@/lib/utils";
+import { getEventCardById } from "../content/eventCards";
 import { getMonsterCardById } from "../content/monsterCards";
 import { GameState } from "../game/GameState";
 import { CARDS, GameDecks } from "../lib/cards";
@@ -340,6 +341,83 @@ export class GameMaster {
   }
 
   /**
+   * Handle event card effects
+   */
+  private async handleEventCard(eventCard: any, currentPlayer: Player, currentPlayerAgent: PlayerAgent): Promise<void> {
+    if (eventCard.id === "sudden-storm") {
+      this.addGameLogEntry("event", "Sudden Storm! All boats move into an adjacent sea. All oases gain +1 mystery card.");
+
+      // Move all boats to adjacent ocean positions
+      for (const player of this.gameState.players) {
+        for (const boat of player.boats) {
+          const newPosition = this.getAdjacentOceanPosition(boat.position);
+          boat.position = newPosition;
+          this.addGameLogEntry("event", `${player.name}'s boat moved from ocean to ${newPosition}`);
+        }
+      }
+
+      // Add +1 adventure token to all oasis tiles
+      let oasisCount = 0;
+      this.gameState.board.forEachTile((tile) => {
+        if (tile.tileType === "oasis") {
+          tile.adventureTokens = (tile.adventureTokens || 0) + 1;
+          oasisCount++;
+        }
+      });
+
+      if (oasisCount > 0) {
+        this.addGameLogEntry("event", `All ${oasisCount} oasis tiles gained +1 mystery card`);
+      }
+    } else if (eventCard.id === "hungry-pests") {
+      this.addGameLogEntry("event", "Hungry Pests! Choose 1 player who loses 1 food to starved rats.");
+
+      // Create decision context for choosing target player
+      const availablePlayers = this.gameState.players.map(p => ({
+        name: p.name,
+        displayName: `${p.name} (${p.resources.food} food)`
+      }));
+
+      const decisionContext: DecisionContext = {
+        type: "choose_target_player",
+        description: "Choose which player loses 1 food to the hungry pests",
+        options: availablePlayers
+      };
+
+      // Ask current player to make the decision
+      const decision = await currentPlayerAgent.makeDecision(this.gameState, this.gameLog, decisionContext);
+      const targetPlayerName = decision.choice.name;
+
+      // Apply the food loss to the chosen player
+      const targetPlayer = this.gameState.getPlayer(targetPlayerName);
+      if (targetPlayer) {
+        targetPlayer.resources.food = Math.max(0, targetPlayer.resources.food - 1);
+        this.addGameLogEntry("event", `${currentPlayer.name} chose ${targetPlayerName} to lose 1 food to hungry pests`);
+      } else {
+        this.addGameLogEntry("event", `Error: Could not find target player ${targetPlayerName}`);
+      }
+    } else {
+      // Other event cards not yet implemented
+      this.addGameLogEntry("event", `Event card ${eventCard.name} drawn, but not yet implemented`);
+    }
+  }
+
+  /**
+   * Get an adjacent ocean position for sudden storm event
+   */
+  private getAdjacentOceanPosition(currentPosition: OceanPosition): OceanPosition {
+    const adjacencyMap: Record<OceanPosition, OceanPosition[]> = {
+      "nw": ["ne", "sw"],
+      "ne": ["nw", "se"],
+      "sw": ["nw", "se"],
+      "se": ["ne", "sw"]
+    };
+
+    const adjacentPositions = adjacencyMap[currentPosition];
+    const randomIndex = Math.floor(Math.random() * adjacentPositions.length);
+    return adjacentPositions[randomIndex];
+  }
+
+  /**
    * Handle drawing and resolving an adventure card
    */
   private async handleAdventureCard(player: Player, tile: Tile, championId: number, adventureCard: any): Promise<void> {
@@ -382,6 +460,18 @@ export class GameMaster {
         // Champion lost, monster stays on tile, champion goes home
         this.handleChampionDefeat(player, championId, `Fought ${monster.name}, but was defeated (${combatResult.championTotal} vs ${combatResult.monsterTotal}), returned home. ${monster.name} remains on the tile`);
       }
+    } else if (cardType === "event") {
+      const eventCard = getEventCardById(cardId);
+      if (!eventCard) {
+        this.addGameLogEntry("event", `Champion${championId} drew unknown event card ${cardId}`);
+        return;
+      }
+
+      this.addGameLogEntry("event", `Champion${championId} drew event card: ${eventCard.name}!`);
+
+      // Get the current player agent for decision making
+      const currentPlayerAgent = this.playerAgents[this.gameState.currentPlayerIndex];
+      await this.handleEventCard(eventCard, player, currentPlayerAgent);
     } else {
       // Other card types (event, treasure, encounter, follower) - not yet implemented
       this.addGameLogEntry("event", `Champion${championId} drew ${cardType} card ${cardId}, but ${cardType} cards aren't implemented yet.`);
