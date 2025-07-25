@@ -145,6 +145,37 @@ export class GameMaster {
     this.gameState = this.gameState.advanceToNextPlayer();
   }
 
+  /**
+   * Handle champion defeat - send home and apply healing costs
+   */
+  private handleChampionDefeat(player: Player, championId: number, defeatContext: string): void {
+    this.gameState.moveChampionToHome(player.name, championId);
+
+    // Pay 1 gold to heal, or lose 1 fame if no gold
+    if (player.resources.gold > 0) {
+      player.resources.gold -= 1;
+      this.addGameLogEntry("combat", `${defeatContext}, went home, paid 1 gold to heal`);
+    } else {
+      player.fame = Math.max(0, player.fame - 1);
+      this.addGameLogEntry("combat", `${defeatContext}, went home, had no gold to heal so lost 1 fame`);
+    }
+  }
+
+  /**
+   * Handle monster victory - award fame and resources, remove monster from tile
+   */
+  private handleMonsterVictory(player: Player, monster: Monster, tile: Tile, combatResult: any): void {
+    const fameAwarded = monster.fame || 0;
+    player.fame += fameAwarded;
+    player.resources.food += monster.resources.food;
+    player.resources.wood += monster.resources.wood;
+    player.resources.ore += monster.resources.ore;
+    player.resources.gold += monster.resources.gold;
+
+    tile.monster = undefined;
+    this.addGameLogEntry("combat", `Defeated ${monster.name} (${combatResult.championTotal} vs ${combatResult.monsterTotal}), gained ${fameAwarded} fame and got ${formatResources(monster.resources)}`);
+  }
+
   private async executeMoveChampion(
     player: Player,
     action: MoveChampionAction,
@@ -219,16 +250,7 @@ export class GameMaster {
         }
       } else {
         // Attacker lost, go home, pay healing cost
-        this.gameState.moveChampionToHome(player.name, championId);
-
-        // Pay 1 gold to heal, or lose 1 fame if no gold
-        if (player.resources.gold > 0) {
-          player.resources.gold -= 1;
-          this.addGameLogEntry("combat", `was defeated by ${opposingChampion.playerName}'s champion (${combatResult.attackerTotal} vs ${combatResult.defenderTotal}), went home, paid 1 gold to heal`);
-        } else {
-          player.fame = Math.max(0, player.fame - 1);
-          this.addGameLogEntry("combat", `was defeated by ${opposingChampion.playerName}'s champion (${combatResult.attackerTotal} vs ${combatResult.defenderTotal}), went home, had no gold to heal so lost 1 fame`);
-        }
+        this.handleChampionDefeat(player, championId, `was defeated by ${opposingChampion.playerName}'s champion (${combatResult.attackerTotal} vs ${combatResult.defenderTotal})`);
         return;
       }
 
@@ -240,28 +262,10 @@ export class GameMaster {
       const combatResult = resolveMonsterBattle(player.might, monster.might);
 
       if (combatResult.championWins) {
-        // Champion won, remove monster and award rewards
-        const fameAwarded = monster.fame || 0;
-        player.fame += fameAwarded;
-        player.resources.food += monster.resources.food;
-        player.resources.wood += monster.resources.wood;
-        player.resources.ore += monster.resources.ore;
-        player.resources.gold += monster.resources.gold;
-
-        tile.monster = undefined;
-        this.addGameLogEntry("combat", `Defeated ${monster.name} (${combatResult.championTotal} vs ${combatResult.monsterTotal}), gained ${fameAwarded} fame and got ${formatResources(monster.resources)}`);
+        this.handleMonsterVictory(player, monster, tile, combatResult);
       } else {
         // Champion lost, update position to home
-        this.gameState.moveChampionToHome(player.name, championId);
-
-        // Pay 1 gold to heal, or lose 1 fame if no gold
-        if (player.resources.gold > 0) {
-          player.resources.gold -= 1;
-          this.addGameLogEntry("combat", `Fought ${monster.name}, but was defeated (${combatResult.championTotal} vs ${combatResult.monsterTotal}), returned home, paid 1 gold to heal`);
-        } else {
-          player.fame = Math.max(0, player.fame - 1);
-          this.addGameLogEntry("combat", `fought ${monster.name}, but was defeated (${combatResult.championTotal} vs ${combatResult.monsterTotal}), returned home, had no gold to heal so lost 1 fame`)
-        }
+        this.handleChampionDefeat(player, championId, `Fought ${monster.name}, but was defeated (${combatResult.championTotal} vs ${combatResult.monsterTotal})`);
         // Nothing more to do
         return;
       }
@@ -296,8 +300,7 @@ export class GameMaster {
 
       if (!dragonResult.championWins) {
         // Champion was eaten by dragon (removed from game). TODO implement this. For now, send champion home.
-        this.gameState.moveChampionToHome(player.name, championId);
-        this.addGameLogEntry("combat", `was eaten by the dragon (${dragonResult.championTotal} vs ${dragonResult.dragonMight})! Actually, that's not implemented yet, so champion is just sent home.`);
+        this.handleChampionDefeat(player, championId, `was eaten by the dragon (${dragonResult.championTotal} vs ${dragonResult.dragonMight})! Actually, that's not implemented yet, so champion is just sent home.`);
         return;
       } else {
         // Champion won - COMBAT VICTORY!
@@ -374,28 +377,10 @@ export class GameMaster {
       const combatResult = resolveMonsterBattle(player.might, monster.might);
 
       if (combatResult.championWins) {
-        // Champion won, remove monster and award rewards
-        const fameAwarded = monster.fame || 0;
-        player.fame += fameAwarded;
-        player.resources.food += monster.resources.food;
-        player.resources.wood += monster.resources.wood;
-        player.resources.ore += monster.resources.ore;
-        player.resources.gold += monster.resources.gold;
-
-        tile.monster = undefined;
-        this.addGameLogEntry("combat", `Defeated ${monster.name} (${combatResult.championTotal} vs ${combatResult.monsterTotal}), gained ${fameAwarded} fame and got ${formatResources(monster.resources)}`);
+        this.handleMonsterVictory(player, monster, tile, combatResult);
       } else {
         // Champion lost, monster stays on tile, champion goes home
-        this.gameState.moveChampionToHome(player.name, championId);
-
-        // Pay 1 gold to heal, or lose 1 fame if no gold
-        if (player.resources.gold > 0) {
-          player.resources.gold -= 1;
-          this.addGameLogEntry("combat", `Fought ${monster.name}, but was defeated (${combatResult.championTotal} vs ${combatResult.monsterTotal}), returned home, paid 1 gold to heal. ${monster.name} remains on the tile.`);
-        } else {
-          player.fame = Math.max(0, player.fame - 1);
-          this.addGameLogEntry("combat", `Fought ${monster.name}, but was defeated (${combatResult.championTotal} vs ${combatResult.monsterTotal}), returned home, had no gold to heal so lost 1 fame. ${monster.name} remains on the tile.`);
-        }
+        this.handleChampionDefeat(player, championId, `Fought ${monster.name}, but was defeated (${combatResult.championTotal} vs ${combatResult.monsterTotal}), returned home. ${monster.name} remains on the tile`);
       }
     } else {
       // Other card types (event, treasure, encounter, follower) - not yet implemented
