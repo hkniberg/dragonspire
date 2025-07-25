@@ -1,3 +1,6 @@
+import { readFile } from 'fs/promises';
+import { join } from 'path';
+
 export interface TemplateVariables {
     [key: string]: string | number | boolean;
 }
@@ -8,11 +11,9 @@ export class TemplateProcessor {
      */
     private async loadTemplate(templateName: string): Promise<string> {
         try {
-            const response = await fetch(`/prompts/${templateName}.md`);
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            return await response.text();
+            // In Node.js, we need to read from the file system
+            const templatePath = join(process.cwd(), 'public', 'prompts', `${templateName}.md`);
+            return await readFile(templatePath, 'utf-8');
         } catch (error) {
             throw new Error(`Failed to load template "${templateName}": ${error}`);
         }
@@ -23,11 +24,8 @@ export class TemplateProcessor {
      */
     private async loadGameRules(): Promise<string> {
         try {
-            const response = await fetch('/prompts/game-rules.md');
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            return await response.text();
+            const gameRulesPath = join(process.cwd(), 'public', 'prompts', 'game-rules.md');
+            return await readFile(gameRulesPath, 'utf-8');
         } catch (error) {
             throw new Error(`Failed to load game rules: ${error}`);
         }

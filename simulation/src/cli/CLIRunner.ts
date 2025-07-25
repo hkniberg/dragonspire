@@ -1,8 +1,8 @@
 // Lords of Doomspire CLI Runner
 
 import * as dotenv from 'dotenv';
-import { GameSession, GameSessionConfig } from '../engine/GameSession';
-import { Claude } from '../llm/claude';
+import { GameMaster, GameMasterConfig } from '../engine/GameMaster';
+import { Claude2 } from '../llm/claude2';
 import { ClaudePlayer } from '../players/ClaudePlayer';
 import { Player } from '../players/Player';
 import { RandomPlayer } from '../players/RandomPlayer';
@@ -23,7 +23,7 @@ export interface CLIConfig {
 }
 
 export class CLIRunner {
-    private static createPlayer(config: PlayerConfig): Player {
+    private static async createPlayer(config: PlayerConfig): Promise<Player> {
         switch (config.type) {
             case 'random':
                 return new RandomPlayer(config.name);
@@ -32,8 +32,13 @@ export class CLIRunner {
                 if (!apiKey) {
                     throw new Error('ANTHROPIC_API_KEY not found in environment variables. Please add it to your .env file.');
                 }
-                const claude = new Claude(apiKey);
-                return new ClaudePlayer(config.name, claude);
+
+                // Load system prompt from template
+                const { templateProcessor } = await import('../lib/templateProcessor');
+                const systemPrompt = await templateProcessor.processTemplate('SystemPrompt', {});
+
+                const claude2 = new Claude2(apiKey, systemPrompt);
+                return new ClaudePlayer(config.name, claude2);
             default:
                 throw new Error(`Unknown player type: ${config.type}`);
         }
@@ -92,33 +97,32 @@ export class CLIRunner {
         });
         console.log();
 
-        const players = playerConfigs.map(config => this.createPlayer(config));
+        const players = await Promise.all(playerConfigs.map(config => this.createPlayer(config)));
 
-        // Create game session with just 1 round for testing
-        const sessionConfig: GameSessionConfig = {
+        // Create game master with just 1 round for testing
+        const masterConfig: GameMasterConfig = {
             players: players,
             maxRounds: 1
         };
 
-        const session = new GameSession(sessionConfig);
+        const gameMaster = new GameMaster(masterConfig);
 
         try {
             // Execute just one turn
-            session.start();
-            await session.executeTurn();
+            gameMaster.start();
+            await gameMaster.executeTurn();
 
             console.log('\n=== Single Turn Test Complete ===');
             console.log('✅ Single turn execution successful!');
 
             // Print final game state summary
-            const gameState = session.getGameState();
-            const actionLog = session.getActionLog();
+            const gameState = gameMaster.getGameState();
+            const gameLog = gameMaster.getGameLog();
 
-            if (actionLog.length > 0) {
-                const turn = actionLog[0];
-                console.log(`\nTurn executed by: ${turn.playerName}`);
-                console.log(`Dice rolled: [${turn.diceRolls.join(', ')}]`);
-                console.log(`Actions taken: ${turn.actions.length}`);
+            if (gameLog.length > 0) {
+                const currentPlayer = gameState.getCurrentPlayer();
+                console.log(`\nTurn executed by: ${currentPlayer.name}`);
+                console.log(`Game log entries: ${gameLog.length}`);
             }
 
         } catch (error) {
@@ -148,27 +152,27 @@ export class CLIRunner {
         });
         console.log();
 
-        const players = playerConfigs.map(config => this.createPlayer(config));
+        const players = await Promise.all(playerConfigs.map(config => this.createPlayer(config)));
 
-        // Create game session with enough rounds to complete the requested turns
+        // Create game master with enough rounds to complete the requested turns
         // We need at least numTurns / players.length rounds, but let's be generous
         const maxRounds = Math.max(Math.ceil(numTurns / players.length), 10);
-        const sessionConfig: GameSessionConfig = {
+        const masterConfig: GameMasterConfig = {
             players: players,
             maxRounds: maxRounds
         };
 
-        const session = new GameSession(sessionConfig);
+        const gameMaster = new GameMaster(masterConfig);
 
         try {
-            session.start();
+            gameMaster.start();
 
             // Execute the specified number of turns
             for (let i = 0; i < numTurns; i++) {
-                await session.executeTurn();
+                await gameMaster.executeTurn();
 
                 // Check if game ended early due to victory condition
-                if (session.getGameState().gameEnded) {
+                if (gameMaster.getGameState().gameEnded) {
                     console.log(`\nGame ended after ${i + 1} turn(s) due to victory condition.`);
                     break;
                 }
@@ -178,9 +182,8 @@ export class CLIRunner {
             console.log('✅ Specific turns simulation successful!');
 
             // Print summary
-            const actionLog = session.getActionLog();
-            console.log(`\nTotal turns executed: ${actionLog.length}`);
-
+            const gameLog = gameMaster.getGameLog();
+            console.log(`\nTotal log entries: ${gameLog.length}`);
 
         } catch (error) {
             console.error(`❌ ${numTurns} turn(s) simulation failed:`, error);
@@ -208,18 +211,18 @@ export class CLIRunner {
         });
         console.log();
 
-        const players = playerConfigs.map(config => this.createPlayer(config));
+        const players = await Promise.all(playerConfigs.map(config => this.createPlayer(config)));
 
-        // Create game session
-        const sessionConfig: GameSessionConfig = {
+        // Create game master
+        const masterConfig: GameMasterConfig = {
             players: players,
             maxRounds: config.maxRounds || 10 // Limit for testing
         };
 
-        const session = new GameSession(sessionConfig);
+        const gameMaster = new GameMaster(masterConfig);
 
         try {
-            await session.runToCompletion();
+            await gameMaster.runToCompletion();
             console.log('✅ Complete game simulation successful!');
 
         } catch (error) {

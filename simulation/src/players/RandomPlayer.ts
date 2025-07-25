@@ -2,7 +2,16 @@
 
 import { GameState } from '../game/GameState';
 import { GameAction, ResourceType } from '../lib/types';
-import { ExecuteActionFunction, Player, PlayerType } from './Player';
+import {
+    Decision,
+    DecisionContext,
+    DiceAction,
+    ExecuteActionFunction,
+    GameLogEntry,
+    Player,
+    PlayerType,
+    TurnContext
+} from './Player';
 import { generateAllPaths, getHarvestableResourcesInfo, getReachableTiles } from './PlayerUtils';
 
 export class RandomPlayer implements Player {
@@ -20,6 +29,74 @@ export class RandomPlayer implements Player {
         return 'random';
     }
 
+    async decideDiceAction(
+        gameState: GameState,
+        gameLog: readonly GameLogEntry[],
+        turnContext: TurnContext
+    ): Promise<DiceAction> {
+        const playerId = gameState.getCurrentPlayer().id;
+
+        // Use the first remaining die value
+        const dieValue = turnContext.remainingDiceValues[0];
+
+        // 20% chance to do harvesting if it's not the first die and there are harvestable resources
+        const shouldHarvest = Math.random() < 0.2 && turnContext.remainingDiceValues.length < turnContext.diceRolled.length;
+
+        if (shouldHarvest) {
+            const harvestAction = this.generateRandomHarvestAction(gameState, playerId, dieValue);
+            if (harvestAction) {
+                return harvestAction;
+            }
+        }
+
+        // Default to champion movement
+        const moveAction = this.generateRandomChampionMoveAction(gameState, playerId, dieValue);
+        if (moveAction) {
+            return moveAction;
+        }
+
+        // Fallback to harvest if movement failed
+        const harvestAction = this.generateRandomHarvestAction(gameState, playerId, dieValue);
+        if (harvestAction) {
+            return harvestAction;
+        }
+
+        // Last resort: minimal harvest action
+        return {
+            type: 'harvest',
+            playerId: playerId,
+            resources: { food: 0, wood: 0, ore: 0, gold: 0 }
+        };
+    }
+
+    async makeDecision(
+        gameState: GameState,
+        gameLog: readonly GameLogEntry[],
+        decisionContext: DecisionContext
+    ): Promise<Decision> {
+        if (decisionContext.options.length === 0) {
+            return { choice: null, reasoning: 'No options available' };
+        }
+
+        // Make random choice
+        const randomIndex = Math.floor(Math.random() * decisionContext.options.length);
+        const choice = decisionContext.options[randomIndex];
+
+        return {
+            choice: choice,
+            reasoning: `RandomPlayer chose option ${randomIndex + 1} of ${decisionContext.options.length}`
+        };
+    }
+
+    async writeDiaryEntry(
+        gameState: GameState,
+        gameLog: readonly GameLogEntry[]
+    ): Promise<string | undefined> {
+        // RandomPlayer doesn't write diary entries
+        return undefined;
+    }
+
+    // Legacy method for backwards compatibility
     async executeTurn(
         gameState: GameState,
         diceRolls: number[],
@@ -66,6 +143,7 @@ export class RandomPlayer implements Player {
         return undefined;
     }
 
+    // Legacy method for backwards compatibility
     async handleEventCardChoice(
         gameState: GameState,
         eventCardId: string,
@@ -86,15 +164,14 @@ export class RandomPlayer implements Player {
         return availableChoices[randomIndex];
     }
 
-    private async executeRandomChampionMove(
+    private generateRandomChampionMoveAction(
         gameState: GameState,
         playerId: number,
-        dieValue: number,
-        executeAction: ExecuteActionFunction
-    ) {
+        dieValue: number
+    ): DiceAction | null {
         const player = gameState.getPlayerById(playerId);
         if (!player || player.champions.length === 0) {
-            return { success: false, summary: 'No champions available', newGameState: gameState };
+            return null;
         }
 
         // Pick a random champion
@@ -111,16 +188,12 @@ export class RandomPlayer implements Player {
         );
 
         if (reachableTiles.length === 0) {
-            return { success: false, summary: 'No reachable tiles available', newGameState: gameState };
+            return null;
         }
 
         // Pick a random reachable tile
         const randomTileIndex = Math.floor(Math.random() * reachableTiles.length);
         const targetTile = reachableTiles[randomTileIndex];
-
-        // Calculate the Manhattan distance to determine minimum steps needed
-        const minSteps = Math.abs(targetTile.row - champion.position.row) +
-            Math.abs(targetTile.col - champion.position.col);
 
         // Generate all possible paths to the target tile
         const allPaths = generateAllPaths(
@@ -133,7 +206,7 @@ export class RandomPlayer implements Player {
         );
 
         if (allPaths.length === 0) {
-            return { success: false, summary: 'No valid paths to target tile', newGameState: gameState };
+            return null;
         }
 
         // Pick a random path
@@ -146,27 +219,23 @@ export class RandomPlayer implements Player {
             destinationTile.tileType === 'resource' &&
             destinationTile.claimedBy === undefined;
 
-        // Execute the move
-        const moveAction: GameAction = {
+        return {
             type: 'moveChampion',
             playerId: playerId,
             championId: champion.id,
             path: selectedPath,
             claimTile: shouldClaimTile
         };
-
-        return await executeAction(moveAction, [dieValue]);
     }
 
-    private async executeRandomHarvest(
+    private generateRandomHarvestAction(
         gameState: GameState,
         playerId: number,
-        dieValue: number,
-        executeAction: ExecuteActionFunction
-    ) {
+        dieValue: number
+    ): DiceAction | null {
         const player = gameState.getPlayerById(playerId);
         if (!player) {
-            return { success: false, summary: 'Player not found', newGameState: gameState };
+            return null;
         }
 
         // Get detailed information about harvestable resources, taking blockading into account
@@ -178,7 +247,7 @@ export class RandomPlayer implements Player {
             harvestInfo.totalHarvestableResources.ore +
             harvestInfo.totalHarvestableResources.gold;
         if (totalHarvestable === 0) {
-            return { success: false, summary: 'No harvestable resources available', newGameState: gameState };
+            return null;
         }
 
         // Pick a random resource type that has available resources
@@ -186,7 +255,7 @@ export class RandomPlayer implements Player {
         const availableTypes = resourceTypes.filter(type => harvestInfo.totalHarvestableResources[type] > 0);
 
         if (availableTypes.length === 0) {
-            return { success: false, summary: 'No resources available to harvest', newGameState: gameState };
+            return null;
         }
 
         const randomResourceType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
@@ -195,13 +264,39 @@ export class RandomPlayer implements Player {
         const harvestResources: Record<ResourceType, number> = { food: 0, wood: 0, ore: 0, gold: 0 };
         harvestResources[randomResourceType] = harvestAmount;
 
-        const harvestAction: GameAction = {
+        return {
             type: 'harvest',
             playerId: playerId,
             resources: harvestResources
         };
+    }
 
-        return await executeAction(harvestAction, [dieValue]);
+    private async executeRandomChampionMove(
+        gameState: GameState,
+        playerId: number,
+        dieValue: number,
+        executeAction: ExecuteActionFunction
+    ) {
+        const action = this.generateRandomChampionMoveAction(gameState, playerId, dieValue);
+        if (!action) {
+            return { success: false, summary: 'No valid champion move available', newGameState: gameState };
+        }
+
+        return await executeAction(action, [dieValue]);
+    }
+
+    private async executeRandomHarvest(
+        gameState: GameState,
+        playerId: number,
+        dieValue: number,
+        executeAction: ExecuteActionFunction
+    ) {
+        const action = this.generateRandomHarvestAction(gameState, playerId, dieValue);
+        if (!action) {
+            return { success: false, summary: 'No harvestable resources available', newGameState: gameState };
+        }
+
+        return await executeAction(action, [dieValue]);
     }
 
     private async executeRandomChampionMoveWithMultipleDice(

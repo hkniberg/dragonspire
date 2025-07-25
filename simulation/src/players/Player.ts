@@ -6,6 +6,38 @@ import { GameAction } from '../lib/types';
 export type PlayerType = 'random' | 'claude' | 'human';
 
 /**
+ * Turn context provided to players for dice decisions
+ */
+export interface TurnContext {
+    turnNumber: number;
+    diceRolled: number[];
+    remainingDiceValues: number[];
+}
+
+/**
+ * Context for runtime decisions that arise during action resolution
+ */
+export interface DecisionContext {
+    type: string; // e.g., 'fight_or_flee', 'choose_card', 'choose_target'
+    description: string; // Human readable description of the situation
+    options: any[]; // Available choices (type depends on decision type)
+    metadata?: any; // Additional context specific to the decision type
+}
+
+/**
+ * Player's declared intent for dice usage (extends GameAction)
+ */
+export type DiceAction = GameAction;
+
+/**
+ * Generic decision made by a player
+ */
+export interface Decision {
+    choice: any; // The chosen option from DecisionContext.options
+    reasoning?: string; // Optional reasoning for debugging
+}
+
+/**
  * Result of executing an action
  */
 export interface ActionResult {
@@ -20,9 +52,20 @@ export interface ActionResult {
     };
 }
 
+/**
+ * Tagged log entry in the sequential game log
+ */
+export interface GameLogEntry {
+    round: number;
+    playerId: number;
+    playerName: string;
+    type: 'movement' | 'combat' | 'harvest' | 'diary' | 'event' | 'system';
+    content: string; // High-level description of what happened
+    metadata?: any; // Additional structured data if needed
+}
 
 /**
- * Action log entry for a completed turn
+ * Action log entry for a completed turn (for backwards compatibility with existing code)
  */
 export interface ActionLogEntry {
     round: number;
@@ -34,10 +77,9 @@ export interface ActionLogEntry {
 }
 
 /**
- * Function provided to players for executing actions during their turn
+ * Function provided by GameMaster for executing actions during turn resolution
  */
 export type ExecuteActionFunction = (action: GameAction, diceValues?: number[]) => Promise<ActionResult>;
-
 
 /**
  * Interface that all player implementations must follow
@@ -54,14 +96,47 @@ export interface Player {
     getType(): PlayerType;
 
     /**
-     * Execute a complete turn for this player
+     * Decide what to do with a single die value
      * @param gameState Current game state
-     * @param diceRolls Available dice values for this turn
-     * @param executeAction Function to execute actions and get immediate feedback
-     * @param actionLog Read-only history of all previous turns in the game
-     * @returns Optional diary entry describing the player's thoughts/strategy for this turn
+     * @param gameLog Sequential log of all game events so far
+     * @param turnContext Information about the current turn and remaining dice
+     * @returns DiceAction intent declaring what the player wants to do
      */
-    executeTurn(
+    decideDiceAction(
+        gameState: GameState,
+        gameLog: readonly GameLogEntry[],
+        turnContext: TurnContext
+    ): Promise<DiceAction>;
+
+    /**
+     * Make a runtime decision when choices arise during action resolution
+     * @param gameState Current game state
+     * @param gameLog Sequential log of all game events so far
+     * @param decisionContext Description of the choice to be made
+     * @returns Decision object with the chosen option
+     */
+    makeDecision(
+        gameState: GameState,
+        gameLog: readonly GameLogEntry[],
+        decisionContext: DecisionContext
+    ): Promise<Decision>;
+
+    /**
+     * Write a high-level diary entry for strategic reflection at the start of each turn
+     * @param gameState Current game state
+     * @param gameLog Sequential log of all game events so far
+     * @returns String describing the player's thoughts and strategy (or undefined to skip)
+     */
+    writeDiaryEntry(
+        gameState: GameState,
+        gameLog: readonly GameLogEntry[]
+    ): Promise<string | undefined>;
+
+    /**
+     * Legacy method for backwards compatibility - will be removed
+     * @deprecated Use the new decideDiceAction/makeDecision pattern instead
+     */
+    executeTurn?(
         gameState: GameState,
         diceRolls: number[],
         executeAction: ExecuteActionFunction,
@@ -69,13 +144,10 @@ export interface Player {
     ): Promise<string | undefined>;
 
     /**
-     * Handle an event card that requires a player choice
-     * @param gameState Current game state
-     * @param eventCardId The ID of the event card being resolved
-     * @param availableChoices Array of available choices (type depends on the event)
-     * @returns The chosen option
+     * Legacy method for backwards compatibility - will be removed  
+     * @deprecated Use the new makeDecision method instead
      */
-    handleEventCardChoice(
+    handleEventCardChoice?(
         gameState: GameState,
         eventCardId: string,
         availableChoices: any[]
