@@ -8,10 +8,10 @@ export const oceanZones = [
   { id: 3, label: "D", name: "Southeast Sea", position: "southeast" },
 ];
 
-// Function to get boat image path based on player ID
-const getBoatImagePath = (playerId: number): string => {
+// Function to get boat image path based on player index (0-based)
+const getBoatImagePath = (playerIndex: number): string => {
   const boatColors = ["red", "blue", "green", "orange"];
-  const colorIndex = (playerId - 1) % boatColors.length;
+  const colorIndex = playerIndex % boatColors.length;
   return `/boats/boat-${boatColors[colorIndex]}.png`;
 };
 
