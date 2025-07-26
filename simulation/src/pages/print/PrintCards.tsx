@@ -5,17 +5,19 @@ import {
   formatEncounterContent,
   formatEventContent,
   formatMonsterContent,
+  formatTraderContent,
   formatTreasureContent,
   getBorderColor,
 } from "../../components/cards/Card";
 import { ENCOUNTERS } from "../../content/encounterCards";
 import { EVENT_CARDS } from "../../content/eventCards";
 import { MONSTER_CARDS } from "../../content/monsterCards";
+import { TRADER_ITEMS } from "../../content/traderItems";
 import { TREASURE_CARDS } from "../../content/treasureCards";
-import { Card, CARDS } from "../../lib/cards";
+import { Card, CARDS, TRADER_CARDS, TraderCard } from "../../lib/cards";
 
-// Extended card type that includes the original card data for rendering
-type ExtendedCard = Card & {
+// Extended card type that includes the original data for rendering
+type ExtendedCard = (Card | TraderCard) & {
   originalData: any;
   id: string;
 };
@@ -27,7 +29,7 @@ export default function PrintCards() {
   const CARD_HEIGHT = 240; // Grid row height - matches card height
 
   // Create extended card array by looking up original data
-  const allCards: ExtendedCard[] = CARDS.map((card, index) => {
+  const adventureCards: ExtendedCard[] = CARDS.map((card, index) => {
     let originalData;
 
     switch (card.type) {
@@ -54,6 +56,19 @@ export default function PrintCards() {
     };
   });
 
+  // Create trader cards array
+  const traderCards: ExtendedCard[] = TRADER_CARDS.map((card, index) => {
+    const originalData = TRADER_ITEMS.find((t) => t.id === card.id);
+    return {
+      ...card,
+      originalData,
+      id: `${card.type}-${index}`,
+    };
+  });
+
+  // Combine all cards
+  const allCards = [...adventureCards, ...traderCards];
+
   // Filter out cards without original data
   const validCards = allCards.filter((card) => card.originalData);
 
@@ -63,18 +78,22 @@ export default function PrintCards() {
     }
 
     const commonProps = {
-      tier: card.tier,
+      tier: "tier" in card ? card.tier : undefined,
       borderColor: getBorderColor(card.type),
       name: card.originalData.name,
       compactMode: false,
     };
 
     if (isBackside) {
+      // Use "trader" biome for trader cards, otherwise use the card's biome
+      const biome = card.type === "trader" ? "trader" : (card as Card).biome;
+      const backsideLabel = card.type === "trader" ? "Trader" : "ADVENTURE";
       return (
         <CardComponent
           {...commonProps}
           showBackside={true}
-          backsideImageUrl={`/cardBacksides/${card.biome}.png`}
+          backsideImageUrl={`/cardBacksides/${biome}.png`}
+          backsideLabel={backsideLabel}
           printMode={true}
         />
       );
@@ -117,6 +136,16 @@ export default function PrintCards() {
             imageUrl={`/encounters/${card.originalData.id}.png`}
             content={formatEncounterContent(card.originalData)}
             bottomTag={card.originalData.follower ? "Follower" : undefined}
+            printMode={true}
+          />
+        );
+      case "trader":
+        return (
+          <CardComponent
+            {...commonProps}
+            imageUrl={`/traderItems/${card.originalData.id}.png`}
+            content={formatTraderContent(card.originalData)}
+            bottomTag="Item"
             printMode={true}
           />
         );

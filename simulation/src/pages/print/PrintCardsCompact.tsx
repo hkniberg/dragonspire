@@ -3,15 +3,17 @@ import React from "react";
 import {
   CardComponent,
   formatMonsterContent,
+  formatTraderContent,
   formatTreasureContent,
   getBorderColor,
 } from "../../components/cards/Card";
 import { MONSTER_CARDS } from "../../content/monsterCards";
+import { TRADER_ITEMS } from "../../content/traderItems";
 import { TREASURE_CARDS } from "../../content/treasureCards";
-import { Card, CARDS } from "../../lib/cards";
+import { Card, CARDS, TraderCard } from "../../lib/cards";
 
 // Extended card type that includes the original data for rendering
-type ExtendedCard = Card & {
+type ExtendedCard = (Card | TraderCard) & {
   originalData: any;
   id: string;
 };
@@ -45,6 +47,15 @@ export default function PrintCardsCompact() {
     })
     .filter((card) => card.originalData);
 
+  // Create trader cards array - one of each trader item
+  const traderCards: ExtendedCard[] = TRADER_ITEMS.map((traderItem, index) => {
+    return {
+      type: "trader" as const,
+      originalData: traderItem,
+      id: `trader-${index}`,
+    };
+  });
+
   // Add 4 extra wolves and 4 extra bears
   const wolfCard = monsterCards.find((card) => card.originalData.name === "Wolf");
   const bearCard = monsterCards.find((card) => card.originalData.name === "Bear");
@@ -70,7 +81,7 @@ export default function PrintCardsCompact() {
   }
 
   // Combine all cards
-  const allCards = [...monsterCards, ...treasureCards, ...extraCards];
+  const allCards = [...monsterCards, ...treasureCards, ...traderCards, ...extraCards];
 
   const renderCard = (card: ExtendedCard) => {
     if (!card.originalData) {
@@ -78,7 +89,7 @@ export default function PrintCardsCompact() {
     }
 
     const commonProps = {
-      tier: card.tier,
+      tier: "tier" in card ? card.tier : undefined,
       borderColor: getBorderColor(card.type),
       name: card.originalData.name,
       compactMode: true,
@@ -101,6 +112,16 @@ export default function PrintCardsCompact() {
             {...commonProps}
             imageUrl={`/treasures/${card.originalData.id}.png`}
             content={formatTreasureContent(card.originalData)}
+            bottomTag="Item"
+            contentFontSize="8px"
+          />
+        );
+      case "trader":
+        return (
+          <CardComponent
+            {...commonProps}
+            imageUrl={`/traderItems/${card.originalData.id}.png`}
+            content={formatTraderContent(card.originalData)}
             bottomTag="Item"
             contentFontSize="8px"
           />
