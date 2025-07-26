@@ -1,19 +1,24 @@
 // Lords of Doomspire Game Master
 
 import { HarvestAction, MoveBoatAction, MoveChampionAction } from "@/lib/actionTypes";
-import { DecisionContext, GameLogEntry, GameLogEntryType, Monster, NON_COMBAT_TILES, OceanPosition, Player, Tile, TurnContext } from "@/lib/types";
+import { GameLogEntry, GameLogEntryType, Player, Tile, TurnContext } from "@/lib/types";
 import { formatPosition, formatResources } from "@/lib/utils";
-import { getEventCardById } from "../content/eventCards";
-import { getMonsterCardById } from "../content/monsterCards";
 import { GameState } from "../game/GameState";
 import { CARDS, GameDecks } from "../lib/cards";
-import { GameSettings } from "../lib/GameSettings";
 import { PlayerAgent } from "../players/PlayerAgent";
-import { resolveChampionBattle, resolveDragonBattle, resolveMonsterBattle } from "./actions/battleCalculator";
 import { calculateHarvest } from "./actions/harvestCalculator";
 import { calculateBoatMove, calculateChampionMove } from "./actions/moveCalculator";
 import { checkVictory } from "./actions/victoryChecker";
 import { DiceRoller, RandomDiceRoller } from "./DiceRoller";
+import { handleAdventureCard } from "./handlers/adventureCardHandler";
+import {
+  handleChampionCombat,
+  handleDoomspireTile,
+  handleExploration,
+  handleMonsterCombat,
+  handleSpecialTiles,
+  handleTileClaiming
+} from "./handlers/tileArrivalHandler";
 
 export type GameMasterState = "setup" | "playing" | "finished";
 
@@ -162,20 +167,7 @@ export class GameMaster {
     }
   }
 
-  /**
-   * Handle monster victory - award fame and resources, remove monster from tile
-   */
-  private handleMonsterVictory(player: Player, monster: Monster, tile: Tile, combatResult: any): void {
-    const fameAwarded = monster.fame || 0;
-    player.fame += fameAwarded;
-    player.resources.food += monster.resources.food;
-    player.resources.wood += monster.resources.wood;
-    player.resources.ore += monster.resources.ore;
-    player.resources.gold += monster.resources.gold;
 
-    tile.monster = undefined;
-    this.addGameLogEntry("combat", `Defeated ${monster.name} (${combatResult.championTotal} vs ${combatResult.monsterTotal}), gained ${fameAwarded} fame and got ${formatResources(monster.resources)}`);
-  }
 
   private async executeMoveChampion(
     player: Player,
@@ -212,271 +204,83 @@ export class GameMaster {
   }
 
   private async executeChampionArrivalAtTile(player: Player, tile: Tile, championId: number, claimTile: boolean): Promise<void> {
-    // Step 1: Exploration (if tile wasn't explored)
-    if (!tile.explored) {
-      tile.explored = true;
-      if (tile.tileGroup) {
-        this.gameState.board.setTileGroupToExplored(tile.tileGroup);
-      }
-      player.fame += GameSettings.FAME_AWARD_FOR_EXPLORATION;
-      this.addGameLogEntry("exploration", `Explored new territory and got ${GameSettings.FAME_AWARD_FOR_EXPLORATION} fame`);
+    // Create a logging wrapper that matches the handler's expected signature
+    const logFn = (type: string, content: string) => this.addGameLogEntry(type as GameLogEntryType, content);
+
+    // Step 1: Handle exploration
+    const explorationResult = handleExploration(this.gameState, tile, player, logFn);
+
+    // Step 2: Handle champion combat
+    const championCombatResult = handleChampionCombat(this.gameState, tile, player, championId, logFn);
+    if (championCombatResult.combatOccurred && !championCombatResult.attackerWon) {
+      // Attacker lost, send champion home
+      this.handleChampionDefeat(player, championId, championCombatResult.combatDetails!);
+      return;
     }
 
+    // Step 3: Handle monster combat
+    const monsterCombatResult = handleMonsterCombat(tile, player, championId, logFn);
+    if (monsterCombatResult.combatOccurred && !monsterCombatResult.championWon) {
+      // Champion lost to monster, send champion home
+      this.handleChampionDefeat(player, championId, monsterCombatResult.combatDetails!);
+      return;
+    }
 
-    // Step 2: Champion combat (if opposing champion on tile)
-    const opposingChampions = this.gameState.getOpposingChampionsAtPosition(player.name, tile.position);
-
-    if (opposingChampions.length > 0 && tile.tileType && !NON_COMBAT_TILES.includes(tile.tileType)) {
-      const opposingChampion = opposingChampions[0];
-      const opposingPlayer = this.gameState.getPlayer(opposingChampion.playerName);
-      if (!opposingPlayer) {
-        throw new Error(`Opposing player ${opposingChampion.playerName} not found`);
+    // Step 4: Handle Doomspire tile (dragon combat and victory conditions)
+    const doomspireResult = handleDoomspireTile(this.gameState, tile, player, championId, logFn);
+    if (doomspireResult.entered) {
+      if (doomspireResult.alternativeVictory) {
+        this.endGame(doomspireResult.alternativeVictory.playerName, doomspireResult.alternativeVictory.type);
+        return;
       }
-
-      const combatResult = resolveChampionBattle(player.might, opposingPlayer.might);
-
-      if (combatResult.attackerWins) {
-        // Attacker won, award fame and send defending champion home
-        player.fame += 1; // Winner gains 1 fame
-
-        // Send defending champion home and make them pay healing cost
-        opposingChampion.position = opposingPlayer.homePosition;
-        // Defender pays healing cost
-        if (opposingPlayer.resources.gold > 0) {
-          opposingPlayer.resources.gold -= 1;
-          this.addGameLogEntry("combat", `Defeated ${opposingChampion.playerName}'s champion (${combatResult.attackerTotal} vs ${combatResult.defenderTotal}), who went home and paid 1 gold to heal`);
-        } else {
-          opposingPlayer.fame = Math.max(0, opposingPlayer.fame - 1);
-          this.addGameLogEntry("combat", `Defeated ${opposingChampion.playerName}'s champion (${combatResult.attackerTotal} vs ${combatResult.defenderTotal}), who went home and had no gold to heal so lost 1 fame`);
+      if (doomspireResult.dragonCombat) {
+        if (doomspireResult.dragonCombat.combatVictory) {
+          this.endGame(doomspireResult.dragonCombat.combatVictory.playerName, "Combat Victory");
+          return;
+        } else if (doomspireResult.dragonCombat.championDefeated) {
+          this.handleChampionDefeat(player, championId, doomspireResult.dragonCombat.combatDetails);
+          return;
         }
-      } else {
-        // Attacker lost, go home, pay healing cost
-        this.handleChampionDefeat(player, championId, `was defeated by ${opposingChampion.playerName}'s champion (${combatResult.attackerTotal} vs ${combatResult.defenderTotal})`);
-        return;
-      }
-
-    }
-
-    // Step 3: Monster combat (if tile has monster)
-    if (tile.monster) {
-      const monster = tile.monster;
-      const combatResult = resolveMonsterBattle(player.might, monster.might);
-
-      if (combatResult.championWins) {
-        this.handleMonsterVictory(player, monster, tile, combatResult);
-      } else {
-        // Champion lost, update position to home
-        this.handleChampionDefeat(player, championId, `Fought ${monster.name}, but was defeated (${combatResult.championTotal} vs ${combatResult.monsterTotal})`);
-        // Nothing more to do
-        return;
       }
     }
 
-    // Step 4: Doomspire tile (dragon)
-    if (tile.tileType === "doomspire") {
-      // Check alternative victory conditions first
-      if (player.fame >= GameSettings.VICTORY_FAME_THRESHOLD) {
-        this.addGameLogEntry("victory", `Fame Victory! ${player.name} reached ${GameSettings.VICTORY_FAME_THRESHOLD} fame and recruited the dragon with fame!`);
-        this.endGame(player.name, "Fame Victory");
-        return;
-      }
+    // Step 5: Handle tile claiming
+    const claimingResult = handleTileClaiming(this.gameState, tile, player, championId, claimTile, logFn);
 
-      if (player.resources.gold >= GameSettings.VICTORY_GOLD_THRESHOLD) {
-        this.addGameLogEntry("victory", `Gold Victory! ${player.name} reached ${GameSettings.VICTORY_GOLD_THRESHOLD} gold and bribed the dragon with gold!`);
-        this.endGame(player.name, "Gold Victory");
-        return;
-      }
-
-      const starredTileCount = this.gameState.getStarredTileCount(player.name);
-      if (starredTileCount >= GameSettings.VICTORY_STARRED_TILES_THRESHOLD) {
-        this.addGameLogEntry("victory", `Economic Victory! ${player.name} reached ${GameSettings.VICTORY_STARRED_TILES_THRESHOLD} starred tiles and impressed the dragon with their economic prowess!`);
-        this.endGame(player.name, "Economic Victory");
-        return;
-      }
-
-      // Must fight the dragon
-      // TODO may choose to fight the dragon
-      // TODO dragon might should be set when discovered, and then not change.
-      const dragonResult = resolveDragonBattle(player.might);
-
-      if (!dragonResult.championWins) {
-        // Champion was eaten by dragon (removed from game). TODO implement this. For now, send champion home.
-        this.handleChampionDefeat(player, championId, `was eaten by the dragon (${dragonResult.championTotal} vs ${dragonResult.dragonMight})! Actually, that's not implemented yet, so champion is just sent home.`);
-        return;
-      } else {
-        // Champion won - COMBAT VICTORY!
-        this.addGameLogEntry("victory", `Combat Victory! ${player.name} defeated the dragon (${dragonResult.championTotal} vs ${dragonResult.dragonMight})!`);
-        this.endGame(player.name, "Combat Victory");
-        return;
-      }
-    }
-
-    // Step 4: Tile claiming (if requested and valid)
-    if (claimTile && tile.tileType === "resource" && tile.claimedBy === undefined) {
-      const currentClaimedCount = this.gameState.board.findTiles((tile) => tile.claimedBy === player.name).length;
-
-      if (currentClaimedCount < player.maxClaims) {
-        tile.claimedBy = player.name;
-        this.addGameLogEntry("event", `Champion${championId} claimed resource tile (${tile.position.row}, ${tile.position.col}), which gives ${formatResources(tile.resources)}`);
-      } else {
-        this.addGameLogEntry("event", `Champion${championId} could not claim resource tile (${tile.position.row}, ${tile.position.col}) (max claims reached)`);
-      }
-    }
-
-    // Step 6: Adventure/oasis tiles
-    if ((tile.tileType === "adventure" || tile.tileType === "oasis") &&
-      tile.adventureTokens && tile.adventureTokens > 0) {
-      tile.adventureTokens = Math.max(0, tile.adventureTokens - 1);
-      // TODO choose which pile to draw from.
+    // Step 6: Handle special tiles (adventure/oasis)
+    const specialTileResult = handleSpecialTiles(tile, championId, logFn);
+    if (specialTileResult.interactionOccurred && specialTileResult.adventureCardDrawn) {
+      // Draw and handle adventure card
       const adventureCard = this.gameDecks.drawCard(tile.tier!, 1);
 
       if (!adventureCard) {
         console.log(`No adventure card found for tier ${tile.tier}`);
       } else {
-        await this.handleAdventureCard(player, tile, championId, adventureCard);
-      }
-    }
+        const currentPlayerAgent = this.playerAgents[this.gameState.currentPlayerIndex];
+        const adventureResult = await handleAdventureCard(
+          adventureCard,
+          this.gameState,
+          tile,
+          player,
+          currentPlayerAgent,
+          championId,
+          this.gameLog,
+          logFn
+        );
 
-    // TODO chapel, mercenary camp, trader
-  }
-
-  /**
-   * Handle event card effects
-   */
-  private async handleEventCard(eventCard: any, currentPlayer: Player, currentPlayerAgent: PlayerAgent): Promise<void> {
-    if (eventCard.id === "sudden-storm") {
-      this.addGameLogEntry("event", "Sudden Storm! All boats move into an adjacent sea. All oases gain +1 mystery card.");
-
-      // Move all boats to adjacent ocean positions
-      for (const player of this.gameState.players) {
-        for (const boat of player.boats) {
-          const newPosition = this.getAdjacentOceanPosition(boat.position);
-          boat.position = newPosition;
-          this.addGameLogEntry("event", `${player.name}'s boat moved from ocean to ${newPosition}`);
+        // Handle results from adventure card
+        if (adventureResult.cardProcessed && adventureResult.monsterPlaced?.championDefeated) {
+          // Champion was defeated by a monster from the adventure card
+          this.handleChampionDefeat(player, championId, `${adventureResult.monsterPlaced.monsterName} defeated the champion`);
+          return;
         }
       }
-
-      // Add +1 adventure token to all oasis tiles
-      let oasisCount = 0;
-      this.gameState.board.forEachTile((tile) => {
-        if (tile.tileType === "oasis") {
-          tile.adventureTokens = (tile.adventureTokens || 0) + 1;
-          oasisCount++;
-        }
-      });
-
-      if (oasisCount > 0) {
-        this.addGameLogEntry("event", `All ${oasisCount} oasis tiles gained +1 mystery card`);
-      }
-    } else if (eventCard.id === "hungry-pests") {
-      this.addGameLogEntry("event", "Hungry Pests! Choose 1 player who loses 1 food to starved rats.");
-
-      // Create decision context for choosing target player
-      const availablePlayers = this.gameState.players.map(p => ({
-        name: p.name,
-        displayName: `${p.name} (${p.resources.food} food)`
-      }));
-
-      const decisionContext: DecisionContext = {
-        type: "choose_target_player",
-        description: "Choose which player loses 1 food to the hungry pests",
-        options: availablePlayers
-      };
-
-      // Ask current player to make the decision
-      const decision = await currentPlayerAgent.makeDecision(this.gameState, this.gameLog, decisionContext);
-      const targetPlayerName = decision.choice.name;
-
-      // Apply the food loss to the chosen player
-      const targetPlayer = this.gameState.getPlayer(targetPlayerName);
-      if (targetPlayer) {
-        targetPlayer.resources.food = Math.max(0, targetPlayer.resources.food - 1);
-        this.addGameLogEntry("event", `${currentPlayer.name} chose ${targetPlayerName} to lose 1 food to hungry pests`);
-      } else {
-        this.addGameLogEntry("event", `Error: Could not find target player ${targetPlayerName}`);
-      }
-    } else {
-      // Other event cards not yet implemented
-      this.addGameLogEntry("event", `Event card ${eventCard.name} drawn, but not yet implemented`);
     }
+
+    // TODO: Handle other special tile types (chapel, mercenary camp, trader)
   }
 
-  /**
-   * Get an adjacent ocean position for sudden storm event
-   */
-  private getAdjacentOceanPosition(currentPosition: OceanPosition): OceanPosition {
-    const adjacencyMap: Record<OceanPosition, OceanPosition[]> = {
-      "nw": ["ne", "sw"],
-      "ne": ["nw", "se"],
-      "sw": ["nw", "se"],
-      "se": ["ne", "sw"]
-    };
 
-    const adjacentPositions = adjacencyMap[currentPosition];
-    const randomIndex = Math.floor(Math.random() * adjacentPositions.length);
-    return adjacentPositions[randomIndex];
-  }
-
-  /**
-   * Handle drawing and resolving an adventure card
-   */
-  private async handleAdventureCard(player: Player, tile: Tile, championId: number, adventureCard: any): Promise<void> {
-    const cardType = adventureCard.type;
-    const cardId = adventureCard.id;
-
-    if (cardType === "monster") {
-      // Look up the monster details
-      const monsterCard = getMonsterCardById(cardId);
-      if (!monsterCard) {
-        this.addGameLogEntry("event", `Champion${championId} drew unknown monster card ${cardId}`);
-        return;
-      }
-
-      // Create a Monster object and place it on the tile
-      const monster: Monster = {
-        id: monsterCard.id,
-        name: monsterCard.name,
-        tier: monsterCard.tier,
-        icon: monsterCard.icon,
-        might: monsterCard.might,
-        fame: monsterCard.fame,
-        resources: {
-          food: monsterCard.resources.food || 0,
-          wood: monsterCard.resources.wood || 0,
-          ore: monsterCard.resources.ore || 0,
-          gold: monsterCard.resources.gold || 0,
-        },
-      };
-
-      tile.monster = monster;
-      this.addGameLogEntry("event", `Champion${championId} drew monster card: ${monster.name}!`);
-
-      // Now handle monster combat using the existing logic
-      const combatResult = resolveMonsterBattle(player.might, monster.might);
-
-      if (combatResult.championWins) {
-        this.handleMonsterVictory(player, monster, tile, combatResult);
-      } else {
-        // Champion lost, monster stays on tile, champion goes home
-        this.handleChampionDefeat(player, championId, `Fought ${monster.name}, but was defeated (${combatResult.championTotal} vs ${combatResult.monsterTotal}), returned home. ${monster.name} remains on the tile`);
-      }
-    } else if (cardType === "event") {
-      const eventCard = getEventCardById(cardId);
-      if (!eventCard) {
-        this.addGameLogEntry("event", `Champion${championId} drew unknown event card ${cardId}`);
-        return;
-      }
-
-      this.addGameLogEntry("event", `Champion${championId} drew event card: ${eventCard.name}!`);
-
-      // Get the current player agent for decision making
-      const currentPlayerAgent = this.playerAgents[this.gameState.currentPlayerIndex];
-      await this.handleEventCard(eventCard, player, currentPlayerAgent);
-    } else {
-      // Other card types (event, treasure, encounter, follower) - not yet implemented
-      this.addGameLogEntry("event", `Champion${championId} drew ${cardType} card ${cardId}, but ${cardType} cards aren't implemented yet.`);
-    }
-  }
 
   private async executeHarvest(player: Player, action: HarvestAction, diceValueUsed: number): Promise<void> {
     // Use the harvest calculator to determine the results
