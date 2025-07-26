@@ -1,5 +1,5 @@
 import type { Player } from "../lib/types";
-import { formatResources } from "../lib/utils";
+import { ResourceDisplay } from "./ResourceDisplay";
 
 // Function to get boat image path based on player index
 const getBoatImagePath = (playerIndex: number): string => {
@@ -88,7 +88,7 @@ export const PlayerInfoBox = ({
 
       {/* Resources */}
       <div style={{ marginBottom: "8px" }}>
-        <div style={{ fontSize: "14px", color: "#495057" }}>{formatResources(player.resources)}</div>
+        <ResourceDisplay resources={player.resources} />
       </div>
 
       {/* Champions */}

@@ -5,18 +5,10 @@ export function formatResources(
 ): string {
   if (!resources) return "None";
 
-  const resourceSymbols = {
-    food: "🌾",
-    wood: "🪵",
-    ore: "🪨",
-    gold: "💰",
-  };
-
   const formatted = Object.entries(resources)
     .filter(([_, amount]) => amount > 0)
     .map(([type, amount]) => {
-      const symbol = resourceSymbols[type as keyof typeof resourceSymbols];
-      return `${amount}${symbol}`;
+      return `${amount} ${type.charAt(0).toUpperCase() + type.slice(1)}`;
     })
     .join(" ");
 

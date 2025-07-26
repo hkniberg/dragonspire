@@ -4,7 +4,7 @@ import {
   CARD_HEIGHT,
   CARD_WIDTH,
   getTierBackgroundColor,
-  getTierDisplayText,
+  getTierDescription,
   getTierSolidColor,
 } from "../../lib/uiConstants";
 
@@ -161,7 +161,7 @@ export const CardComponent = ({
                 textShadow: "1px 1px 2px rgba(0, 0, 0, 0.5)",
               }}
             >
-              {getTierDisplayText(tier)}
+              {getTierDescription(tier)}
             </span>
           </div>
         )}

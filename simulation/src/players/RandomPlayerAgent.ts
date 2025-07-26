@@ -133,7 +133,7 @@ export class RandomPlayerAgent implements PlayerAgent {
       moveChampion: {
         championId: champion.id,
         pathIncludingStartPosition: selectedPath,
-        claimTile: false,
+        claimTile: true,
       },
     };
   }

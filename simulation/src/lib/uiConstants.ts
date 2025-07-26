@@ -45,7 +45,7 @@ export const getTierSolidColor = (tier: number | undefined): string => {
 /**
  * Get tier display text (Roman numerals)
  */
-export const getTierDisplayText = (tier: number | undefined): string => {
+export const getTierDescription = (tier: number): string => {
   switch (tier) {
     case 1:
       return "I";
@@ -57,8 +57,3 @@ export const getTierDisplayText = (tier: number | undefined): string => {
       return "?";
   }
 };
-
-export const FOOD_EMOJI = "🌾";
-export const WOOD_EMOJI = "🪵";
-export const ORE_EMOJI = "🪨";
-export const GOLD_EMOJI = "💰";

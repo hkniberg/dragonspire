@@ -1,8 +1,9 @@
 import type { Champion, ResourceType, Tile } from "../lib/types";
 import { getTierSolidColor } from "../lib/uiConstants";
+import { CardComponent, formatMonsterContent } from "./cards/Card";
 import { ChampionComponent } from "./Champion";
 import { ClaimFlag } from "./ClaimFlag";
-import { CardComponent, formatMonsterContent } from "./cards/Card";
+import { ResourceIcon } from "./ResourceIcon";
 
 const getTileColor = (tile: Tile): string => {
   if (!tile.explored) {
@@ -152,7 +153,7 @@ const getTileSymbol = (tile: Tile): string => {
       case "adventure":
         return ""; // No symbol needed, uses centered question mark circle
       case "resource":
-        return getResourceSymbol(tile);
+        return ""; // No symbol needed, resource icons are handled elsewhere
       case "temple":
         return "⛪";
       case "trader":
@@ -165,44 +166,6 @@ const getTileSymbol = (tile: Tile): string => {
   }
 
   return "";
-};
-
-const getResourceSymbol = (tile: Tile): string => {
-  if (!tile.resources || !tile.explored) return "";
-
-  // Find the first resource with a positive amount
-  const resourceEntries = Object.entries(tile.resources);
-  const activeResource = resourceEntries.find(([_, amount]) => amount > 0);
-
-  if (!activeResource) return "";
-
-  const [resourceType] = activeResource;
-  const resourceSymbols = {
-    food: "🌾",
-    wood: "🪵",
-    ore: "🪨",
-    gold: "💰",
-  };
-
-  return resourceSymbols[resourceType as ResourceType];
-};
-
-const getResourceSymbols = (tile: Tile): string[] => {
-  if (!tile.resources || !tile.explored) return [];
-
-  const resourceSymbols = {
-    food: "🌾",
-    wood: "🪵",
-    ore: "🪨",
-    gold: "💰",
-  };
-
-  // Get all resources with positive amounts
-  const activeResources = Object.entries(tile.resources)
-    .filter(([_, amount]) => amount > 0)
-    .map(([type, _]) => resourceSymbols[type as ResourceType]);
-
-  return activeResources;
 };
 
 const getSpecialLocationLabel = (tile: Tile): string => {
@@ -245,22 +208,6 @@ export const TileComponent = ({
   const effectiveTile = {
     ...tile,
     explored: tile.explored || debugMode,
-  };
-
-  // Helper function for resource symbol styling - use div with explicit dimensions
-  const getResourceSymbolStyle = () => {
-    return {
-      backgroundColor: "#ffffff",
-      border: "1px solid black",
-      borderRadius: "4px",
-      width: "32px",
-      height: "32px",
-      display: "inline-flex",
-      alignItems: "center",
-      justifyContent: "center",
-      fontSize: "18px",
-      margin: "1px",
-    };
   };
 
   const specialLabel = getSpecialLocationLabel(effectiveTile);
@@ -318,26 +265,36 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}` : ""}
       <div
         style={{
           position: "absolute",
-          bottom: "8px",
+          bottom: "4px",
           left: "50%",
           transform: "translateX(-50%)",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
           textAlign: "center",
+          width: "110px", // Ensure enough width for multiple icons
         }}
       >
-        {effectiveTile.tileType === "home" && effectiveTile.explored ? (
+        {effectiveTile.resources && effectiveTile.explored ? (
           <div
             style={{
               display: "flex",
+              gap: "6px",
               alignItems: "center",
-              gap: "24px",
               fontSize: "16px",
+              justifyContent: "center",
+              flexWrap: "wrap",
+              maxWidth: "100px", // Constrain width to fit within tile
             }}
           >
-            <div style={getResourceSymbolStyle()}>🌾</div>
-            <div style={getResourceSymbolStyle()}>🪵</div>
+            {Object.entries(effectiveTile.resources)
+              .filter(([_, amount]) => amount > 0)
+              .map(([type, amount]) =>
+                Array.from({ length: amount }, (_, index) => (
+                  <ResourceIcon key={`${type}-${index}`} resource={type as ResourceType} size="m" border={true} />
+                )),
+              )
+              .flat()}
           </div>
         ) : specialLabel && !(effectiveTile.tileType === "home" && !tile.explored) ? (
           <>
@@ -362,35 +319,6 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}` : ""}
                 </div>
               )}
           </>
-        ) : effectiveTile.tileType === "resource" && effectiveTile.explored ? (
-          <div
-            style={{
-              display: "flex",
-              gap: "2px",
-              alignItems: "center",
-              fontSize: "16px",
-              justifyContent: "center",
-            }}
-          >
-            {effectiveTile.resources &&
-              Object.entries(effectiveTile.resources)
-                .filter(([_, amount]) => amount > 0)
-                .map(([type, amount]) => {
-                  const resourceSymbols = {
-                    food: "🌾",
-                    wood: "🪵",
-                    ore: "🪨",
-                    gold: "💰",
-                  };
-                  const symbol = resourceSymbols[type as ResourceType];
-                  return Array.from({ length: amount }, (_, index) => (
-                    <div key={`${type}-${index}`} style={getResourceSymbolStyle()}>
-                      {symbol}
-                    </div>
-                  ));
-                })
-                .flat()}
-          </div>
         ) : (
           <div style={{ fontSize: "24px" }}>{getTileSymbol(effectiveTile)}</div>
         )}
