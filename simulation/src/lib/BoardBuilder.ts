@@ -245,18 +245,18 @@ export class BoardBuilder {
       }
     }
 
-    // For tier 2 zone (orange), place Bandit on all resource tiles
+    // For tier 2 zone (orange), place Bears on all resource tiles
     if (backColor === TileColors.tier2Back && tile.tileType === "resource") {
-      const banditMonster = getMonsterCardById("bandit");
-      if (banditMonster) {
+      const bearMonster = getMonsterCardById("bear");
+      if (bearMonster) {
         tile.monster = {
-          id: banditMonster.id,
-          name: banditMonster.name,
-          tier: banditMonster.tier,
-          icon: banditMonster.icon,
-          might: banditMonster.might,
-          fame: banditMonster.fame,
-          resources: banditMonster.resources,
+          id: bearMonster.id,
+          name: bearMonster.name,
+          tier: bearMonster.tier,
+          icon: bearMonster.icon,
+          might: bearMonster.might,
+          fame: bearMonster.fame,
+          resources: bearMonster.resources,
         };
       }
     }
