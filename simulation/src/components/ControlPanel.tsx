@@ -24,6 +24,7 @@ interface ControlPanelProps {
   autoPlaySpeed: number;
   showActionLog: boolean;
   debugMode: boolean;
+  isStartingGame: boolean;
   onStartNewGame: () => void;
   onExecuteNextTurn: () => void;
   onToggleAutoPlay: () => void;
@@ -40,6 +41,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   autoPlaySpeed,
   showActionLog,
   debugMode,
+  isStartingGame,
   onStartNewGame,
   onExecuteNextTurn,
   onToggleAutoPlay,
@@ -69,18 +71,26 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         {simulationState === "setup" && (
           <button
             onClick={onStartNewGame}
+            disabled={isStartingGame}
             style={{
               padding: "10px 20px",
-              backgroundColor: "#28a745",
+              backgroundColor: isStartingGame ? "#ccc" : "#007bff",
               color: "white",
               border: "none",
               borderRadius: "4px",
               fontSize: "16px",
-              cursor: "pointer",
+              cursor: isStartingGame ? "not-allowed" : "pointer",
               fontWeight: "bold",
             }}
           >
-            🎮 Start New Game (4 Random Players)
+            {isStartingGame ? (
+              <>
+                <Spinner />
+                Starting Game...
+              </>
+            ) : (
+              "🎮 Start New Game"
+            )}
           </button>
         )}
 
@@ -91,8 +101,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               disabled={isExecutingTurn || autoPlay}
               style={{
                 padding: "10px 20px",
-                backgroundColor:
-                  isExecutingTurn || autoPlay ? "#ccc" : "#007bff",
+                backgroundColor: isExecutingTurn || autoPlay ? "#ccc" : "#007bff",
                 color: "white",
                 border: "none",
                 borderRadius: "4px",
@@ -200,23 +209,39 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             >
               {debugMode ? "🔍 Hide All Tiles" : "🔍 Reveal All Tiles"}
             </button>
-
-            <a
-              href="/old"
-              style={{
-                display: "inline-block",
-                padding: "10px 20px",
-                backgroundColor: "#6f42c1",
-                color: "white",
-                textDecoration: "none",
-                borderRadius: "4px",
-                fontSize: "16px",
-              }}
-            >
-              🤖 Old AI Interface
-            </a>
           </>
         )}
+
+        {/* Universal buttons - always visible */}
+        <a
+          href="/cards"
+          style={{
+            display: "inline-block",
+            padding: "10px 20px",
+            backgroundColor: "#8B0000",
+            color: "white",
+            textDecoration: "none",
+            borderRadius: "4px",
+            fontSize: "16px",
+          }}
+        >
+          🃏 Card Gallery
+        </a>
+
+        <a
+          href="/print"
+          style={{
+            display: "inline-block",
+            padding: "10px 20px",
+            backgroundColor: "#4CAF50",
+            color: "white",
+            textDecoration: "none",
+            borderRadius: "4px",
+            fontSize: "16px",
+          }}
+        >
+          🖨️ Print
+        </a>
       </div>
     </div>
   );

@@ -537,52 +537,26 @@ export default function GameSimulation() {
                 </div>
               </div>
             </div>
-
-            <div style={{ marginTop: "20px", textAlign: "center" }}>
-              <button
-                onClick={startNewGame}
-                style={{
-                  padding: "12px 24px",
-                  fontSize: "16px",
-                  fontWeight: "bold",
-                  backgroundColor: "#007bff",
-                  color: "white",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  transition: "background-color 0.2s",
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = "#0056b3";
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = "#007bff";
-                }}
-              >
-                Start New Game
-              </button>
-            </div>
           </div>
         )}
 
-        {/* Control Panel */}
-        {simulationState !== "setup" && (
-          <ControlPanel
-            simulationState={simulationState}
-            isExecutingTurn={isExecutingTurn}
-            autoPlay={autoPlay}
-            autoPlaySpeed={autoPlaySpeed}
-            showActionLog={showActionLog}
-            debugMode={debugMode}
-            onStartNewGame={resetGame} // Reset to setup instead of starting directly
-            onExecuteNextTurn={executeNextTurn}
-            onToggleAutoPlay={toggleAutoPlay}
-            onSetAutoPlaySpeed={setAutoPlaySpeed}
-            onResetGame={resetGame}
-            onToggleActionLog={() => setShowActionLog(!showActionLog)}
-            onToggleDebugMode={toggleDebugMode}
-          />
-        )}
+        {/* Control Panel - Always visible */}
+        <ControlPanel
+          simulationState={simulationState}
+          isExecutingTurn={isExecutingTurn}
+          autoPlay={autoPlay}
+          autoPlaySpeed={autoPlaySpeed}
+          showActionLog={showActionLog}
+          debugMode={debugMode}
+          isStartingGame={isStartingGame}
+          onStartNewGame={startNewGame}
+          onExecuteNextTurn={executeNextTurn}
+          onToggleAutoPlay={toggleAutoPlay}
+          onSetAutoPlaySpeed={setAutoPlaySpeed}
+          onResetGame={resetGame}
+          onToggleActionLog={() => setShowActionLog(!showActionLog)}
+          onToggleDebugMode={toggleDebugMode}
+        />
 
         {/* Game Status */}
         {gameState && (
@@ -632,114 +606,6 @@ export default function GameSimulation() {
             </p>
           </div>
         ) : null}
-
-        {/* Legend */}
-        <div
-          style={{
-            marginTop: "20px",
-            padding: "10px",
-            backgroundColor: "rgba(255, 255, 255, 0.8)",
-            borderRadius: "8px",
-            textAlign: "center",
-          }}
-        >
-          <p>
-            <strong>Legend:</strong>
-          </p>
-          <div
-            style={{
-              display: "flex",
-              gap: "15px",
-              justifyContent: "center",
-              flexWrap: "wrap",
-            }}
-          >
-            <span>🌾 Plains</span>
-            <span>⛰️ Mountains</span>
-            <span>🌲 Woodlands</span>
-            <span>🌊 Ocean</span>
-            <span>🐉 Doomspire</span>
-            <span style={{ color: "#8B4513" }}>? Unexplored</span>
-          </div>
-        </div>
-
-        {/* Bestiary Link */}
-        <div
-          style={{
-            marginTop: "20px",
-            padding: "15px",
-            backgroundColor: "rgba(255, 255, 255, 0.9)",
-            borderRadius: "8px",
-            textAlign: "center",
-            border: "1px solid #ddd",
-          }}
-        >
-          <a
-            href="/cards"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "10px 20px",
-              backgroundColor: "#8B0000",
-              color: "white",
-              textDecoration: "none",
-              borderRadius: "6px",
-              fontWeight: "bold",
-              transition: "background-color 0.2s",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = "#A00000";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = "#8B0000";
-            }}
-          >
-            🃏 View Card Gallery
-          </a>
-          <p style={{ margin: "10px 0 0 0", color: "#666", fontSize: "14px" }}>
-            Explore all cards: monsters, events, treasures, and encounters
-          </p>
-        </div>
-
-        {/* Print Components Link */}
-        <div
-          style={{
-            marginTop: "20px",
-            padding: "15px",
-            backgroundColor: "rgba(255, 255, 255, 0.9)",
-            borderRadius: "8px",
-            textAlign: "center",
-            border: "1px solid #ddd",
-          }}
-        >
-          <a
-            href="/print"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "10px 20px",
-              backgroundColor: "#4CAF50",
-              color: "white",
-              textDecoration: "none",
-              borderRadius: "6px",
-              fontWeight: "bold",
-              transition: "background-color 0.2s",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = "#45a049";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = "#4CAF50";
-            }}
-          >
-            🖨️ Print Components
-          </a>
-          <p style={{ margin: "10px 0 0 0", color: "#666", fontSize: "14px" }}>
-            Print tiles and other game components for physical play
-          </p>
-        </div>
 
         {/* API Key Modal */}
         <ApiKeyModal
