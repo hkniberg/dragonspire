@@ -1,19 +1,20 @@
 /* Fantasy Board Game Cheat Sheet Styles */
 
 .container {
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 16px;
   font-family: "Georgia", "Times New Roman", serif;
   background: linear-gradient(135deg, #f4f1e8 0%, #e8dcc0 100%);
   min-height: 100vh;
   color: #2c1810;
+  font-size: 14px;
 }
 
 .header {
   text-align: center;
-  margin-bottom: 30px;
-  padding: 20px;
+  margin-bottom: 24px;
+  padding: 16px;
   background: linear-gradient(135deg, #8b4513 0%, #a0522d 50%, #cd853f 100%);
   border: 3px solid #654321;
   border-radius: 12px;
@@ -36,7 +37,7 @@
 }
 
 .title {
-  font-size: 2.5rem;
+  font-size: 2.2rem;
   font-weight: bold;
   color: #f4e4bc;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
@@ -56,15 +57,15 @@
 .twoColumn {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 30px;
-  margin-top: 20px;
+  gap: 24px;
+  margin-top: 16px;
 }
 
 .side {
   background: rgba(255, 255, 255, 0.9);
   border: 2px solid #8b7355;
   border-radius: 8px;
-  padding: 20px;
+  padding: 16px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   position: relative;
 }
@@ -257,18 +258,22 @@
   .container {
     background: white;
     margin: 0;
-    padding: 15px;
-    font-size: 11px;
-    line-height: 1.3;
+    padding: 10px;
+    font-size: 9px;
+    line-height: 1.2;
     color: black;
     min-height: auto;
+    max-width: none;
   }
 
   .header {
-    background: #f0f0f0;
-    border: 2px solid #333;
+    background: #e8e8e8 !important;
+    border: 2px solid #333 !important;
     box-shadow: none;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
+    padding: 15px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .header::before {
@@ -276,25 +281,27 @@
   }
 
   .title {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     color: #333;
     text-shadow: none;
   }
 
   .subtitle {
     color: #666;
-    font-size: 1rem;
+    font-size: 0.8rem;
   }
 
   .twoColumn {
-    gap: 20px;
+    gap: 15px;
+    grid-template-columns: 1fr 1fr;
   }
 
   .side {
     background: white;
-    border: 1px solid #333;
+    border: 2px solid #333;
     box-shadow: none;
     page-break-inside: avoid;
+    padding: 12px;
   }
 
   .side::before {
@@ -302,39 +309,116 @@
   }
 
   .sideTitle {
-    background: #f0f0f0;
+    background: #e0e0e0 !important;
     border: 1px solid #333;
     color: #333;
     text-shadow: none;
+    font-size: 1.1rem;
+    padding: 8px;
+    margin-bottom: 12px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .sectionTitle {
-    background: #f8f8f8;
+    background: #f0f0f0 !important;
     border: 1px solid #666;
     color: #333;
+    font-size: 0.75rem;
+    padding: 6px 8px;
+    margin-bottom: 6px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
-  .listItem,
+  .section {
+    margin-bottom: 12px;
+  }
+
+  .listItem {
+    background: #f8f8f8 !important;
+    border-left: 2px solid #666;
+    padding: 6px;
+    margin-bottom: 8px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
   .actionGroup,
-  .combatBlock,
-  .building {
-    background: #f9f9f9;
-    border-left-color: #666;
+  .combatBlock {
+    background: #f5f5f5 !important;
+    border-left: 2px solid #666;
+    padding: 6px;
+    margin-bottom: 8px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
-  .victoryList li,
+  .building {
+    background: #f0f8f0 !important;
+    border-left: 2px solid #666;
+    padding: 4px 6px;
+    margin-bottom: 4px;
+    font-size: 0.8rem;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .victoryList li {
+    background: #fff8dc !important;
+    border-left: 2px solid #999;
+    padding: 3px;
+    margin-bottom: 4px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
   .locationList li {
-    background: #f5f5f5;
+    background: #f8f0ff !important;
+    border-left: 2px solid #999;
+    padding: 3px;
+    margin-bottom: 4px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .number {
-    background: #666;
+    background: #666 !important;
+    color: white !important;
     box-shadow: none;
+    width: 18px;
+    height: 18px;
+    font-size: 0.7rem;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .supportNote {
-    background: #f0f0f0;
-    border-color: #999;
+    background: #f8f8f8 !important;
+    border: 1px solid #999;
+    padding: 4px 6px;
+    font-size: 0.75rem;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .bulletList {
+    padding-left: 12px;
+  }
+
+  .bulletList li {
+    margin-bottom: 2px;
+    font-size: 0.85rem;
+  }
+
+  .actionList li,
+  .actionTitle,
+  .combatTitle {
+    font-size: 0.8rem;
+  }
+
+  .note {
+    font-size: 0.7rem;
   }
 
   /* Ensure no page breaks within sections */
