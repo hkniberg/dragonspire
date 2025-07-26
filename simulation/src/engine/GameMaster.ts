@@ -203,35 +203,10 @@ export class GameMaster {
       return;
     }
 
-    // Step 3: Handle monster combat
-    const monsterCombatResult = handleMonsterCombat(this.gameState, tile, player, championId, logFn);
-    if (monsterCombatResult.combatOccurred && !monsterCombatResult.championWon) {
-      // Champion lost to monster, defeat effects already applied by combat handler
-      return;
-    }
+    // Step 3: Handle monster combat (but only if not from an adventure card)
+    let adventureCardCombatOccurred = false;
 
-    // Step 4: Handle Doomspire tile (dragon combat and victory conditions)
-    const doomspireResult = handleDoomspireTile(this.gameState, tile, player, championId, logFn);
-    if (doomspireResult.entered) {
-      if (doomspireResult.alternativeVictory) {
-        this.endGame(doomspireResult.alternativeVictory.playerName, doomspireResult.alternativeVictory.type);
-        return;
-      }
-      if (doomspireResult.dragonCombat) {
-        if (doomspireResult.dragonCombat.combatVictory) {
-          this.endGame(doomspireResult.dragonCombat.combatVictory.playerName, "Combat Victory");
-          return;
-        } else if (doomspireResult.dragonCombat.championDefeated) {
-          // Champion defeated by dragon, defeat effects already applied by combat handler
-          return;
-        }
-      }
-    }
-
-    // Step 5: Handle tile claiming
-    const claimingResult = handleTileClaiming(this.gameState, tile, player, championId, claimTile, logFn);
-
-    // Step 6: Handle special tiles (adventure/oasis)
+    // Step 4: Handle special tiles (adventure/oasis) - moved before monster combat
     const specialTileResult = handleSpecialTiles(tile, championId, logFn);
     if (specialTileResult.interactionOccurred && specialTileResult.adventureCardDrawn) {
       // Draw and handle adventure card
@@ -253,12 +228,46 @@ export class GameMaster {
         );
 
         // Handle results from adventure card
-        if (adventureResult.cardProcessed && adventureResult.monsterPlaced?.championDefeated) {
-          // Champion was defeated by a monster from the adventure card, defeat effects already applied by combat handler
+        if (adventureResult.cardProcessed && adventureResult.monsterPlaced?.combatOccurred) {
+          adventureCardCombatOccurred = true;
+
+          if (adventureResult.monsterPlaced.championDefeated) {
+            // Champion was defeated by a monster from the adventure card, defeat effects already applied by combat handler
+            return;
+          }
+        }
+      }
+    }
+
+    // Only handle existing monster combat if no adventure card combat occurred
+    if (!adventureCardCombatOccurred) {
+      const monsterCombatResult = handleMonsterCombat(this.gameState, tile, player, championId, logFn);
+      if (monsterCombatResult.combatOccurred && !monsterCombatResult.championWon) {
+        // Champion lost to monster, defeat effects already applied by combat handler
+        return;
+      }
+    }
+
+    // Step 5: Handle Doomspire tile (dragon combat and victory conditions)
+    const doomspireResult = handleDoomspireTile(this.gameState, tile, player, championId, logFn);
+    if (doomspireResult.entered) {
+      if (doomspireResult.alternativeVictory) {
+        this.endGame(doomspireResult.alternativeVictory.playerName, doomspireResult.alternativeVictory.type);
+        return;
+      }
+      if (doomspireResult.dragonCombat) {
+        if (doomspireResult.dragonCombat.combatVictory) {
+          this.endGame(doomspireResult.dragonCombat.combatVictory.playerName, "Combat Victory");
+          return;
+        } else if (doomspireResult.dragonCombat.championDefeated) {
+          // Champion defeated by dragon, defeat effects already applied by combat handler
           return;
         }
       }
     }
+
+    // Step 6: Handle tile claiming
+    const claimingResult = handleTileClaiming(this.gameState, tile, player, championId, claimTile, logFn);
 
     // TODO: Handle other special tile types (chapel, mercenary camp, trader)
   }
