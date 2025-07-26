@@ -214,7 +214,7 @@ function createSampleGameState(): GameState {
     position: { row: 3, col: 5 },
     tier: 1,
     explored: true,
-    tileType: "chapel",
+    tileType: "temple",
   });
 
   // Tile (3,6) - Trader

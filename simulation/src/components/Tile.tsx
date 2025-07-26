@@ -28,7 +28,7 @@ const getTileColor = (tile: Tile): string => {
     return "#8B0000"; // Dark red for doomspire
   } else if (tile.tileType === "home") {
     return "#F5F5DC"; // Beige for home tiles
-  } else if (["chapel", "trader", "mercenary"].includes(tile.tileType || "")) {
+  } else if (["temple", "trader", "mercenary"].includes(tile.tileType || "")) {
     return "#F0F8FF"; // Alice blue for special locations
   }
 
@@ -50,7 +50,7 @@ const getBackgroundColor = (tile: Tile): string => {
     return getTileColor(tile);
   }
 
-  const transparentTileTypes = ["chapel", "trader", "mercenary", "doomspire", "adventure", "oasis"];
+  const transparentTileTypes = ["temple", "trader", "mercenary", "doomspire", "adventure", "oasis"];
   if (transparentTileTypes.includes(tile.tileType || "")) {
     return "transparent";
   }
@@ -92,7 +92,7 @@ const getBackgroundImage = (tile: Tile): string => {
   // Simple tile types with direct image mapping
   const simpleTileImages: Record<string, string> = {
     empty: "url(/tiles/empty.png)",
-    chapel: "url(/tiles/chapel.png)",
+    temple: "url(/tiles/temple.png)",
     trader: "url(/tiles/trader.png)",
     mercenary: "url(/tiles/mercenary.png)",
     doomspire: "url(/tiles/dragon.png)",
@@ -151,7 +151,7 @@ const getTileSymbol = (tile: Tile): string => {
         return ""; // No symbol needed, uses centered question mark circle
       case "resource":
         return getResourceSymbol(tile);
-      case "chapel":
+      case "temple":
         return "⛪";
       case "trader":
         return "🏪";
@@ -207,7 +207,7 @@ const getSpecialLocationLabel = (tile: Tile): string => {
   if (!tile.tileType) return "";
 
   switch (tile.tileType) {
-    case "chapel":
+    case "temple":
       return "Chapel";
     case "trader":
       return "Trader";
@@ -339,13 +339,13 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}` : ""}
           </div>
         ) : specialLabel && !(effectiveTile.tileType === "home" && !tile.explored) ? (
           <>
-            {effectiveTile.tileType !== "chapel" &&
+            {effectiveTile.tileType !== "temple" &&
               effectiveTile.tileType !== "trader" &&
               effectiveTile.tileType !== "mercenary" &&
               effectiveTile.tileType !== "doomspire" && (
                 <div style={{ fontSize: "24px" }}>{getTileSymbol(effectiveTile)}</div>
               )}
-            {effectiveTile.tileType !== "chapel" &&
+            {effectiveTile.tileType !== "temple" &&
               effectiveTile.tileType !== "trader" &&
               effectiveTile.tileType !== "mercenary" &&
               effectiveTile.tileType !== "doomspire" && (

@@ -269,7 +269,7 @@ export class GameMaster {
     // Step 6: Handle tile claiming
     const claimingResult = handleTileClaiming(this.gameState, tile, player, championId, claimTile, logFn);
 
-    // TODO: Handle other special tile types (chapel, mercenary camp, trader)
+    // TODO: Handle other special tile types (temple, mercenary camp, trader)
   }
 
 

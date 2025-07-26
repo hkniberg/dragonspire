@@ -7,7 +7,7 @@ export type TileDef =
   | "adventure2"
   | "adventure3"
   | "doomspire"
-  | "chapel"
+  | "temple"
   | "trader"
   | "mercenary"
   | "oasis"
@@ -49,7 +49,7 @@ export const HOME_TILE_TRIOS: TileTrioDef[] = [
 
 export const TIER_1_TRIOS: TileTrioDef[] = [
   {
-    corner: "chapel",
+    corner: "temple",
     right: "wood",
     below: "adventure",
   },

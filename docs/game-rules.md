@@ -78,7 +78,7 @@ The board is organized into 3 tiers. The outer two layers are Tier 1, the inner 
 
 - **Home tiles** (4 tiles): These are corner tiles that representing the home of the player, the landing spot where the player's champions start. They are non-combat zones, and are automatically claimed by the player from the start of the game. This claim is permanent and cannot be removed.
 - **Special locations**:
-  - **Chapel tile**: Pray at the chapel to reset your fame to 0. This is a non-combat zone.
+  - **Chapel tile**: Pray at the temple to reset your fame to 0. This is a non-combat zone.
   - **Trader tile**: Purchase any resource for 2 gold per resource. This is a non-combat zone.
   - **Mercenary Camp tile**: Buy 1 might for 3 gold. This is a non-combat zone.
   - **Doomspire tile**: The ancient mountain where the great dragon rules. Defeat, impress, or bribe the dragon to win the game. This tile is one of the four hidden tiles in the middle of the board.
@@ -171,7 +171,7 @@ Each action die can be used for ONE of the following:
 - Spend an action die to move horizontally or vertically (no diagonal movement), up to the number of steps indicated by the die. You can also move 0 steps if you want to stay in the same tile and interact with it (for example to draw another adventure card).
 - You cannot have multiple champions in the same tile (except when respawning in the home tile).
 - A champion must stop when entering an unexplored tile - you cannot pass through unexplored tiles.
-- If you end your movement in a tile with another champion, battle will ensue, unless it is a non-combat zone (such as the chapel, trader, mercenary camp).
+- If you end your movement in a tile with another champion, battle will ensue, unless it is a non-combat zone (such as the temple, trader, mercenary camp).
 - A champion cannot enter another player's home tile.
 - You can pass through other champions, but when passing another player's champion, they may choose to initiate combat, in which case your champion is forced to stop and fight and cannot pass through.
 - A champion can use multiple dice to move further in a single action, treating that as if it was a single dice roll.

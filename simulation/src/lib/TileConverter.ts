@@ -48,8 +48,8 @@ export function convertTileDefToTile(
         tile.tier = 3;
         break;
 
-      case "chapel":
-        tile.tileType = "chapel";
+      case "temple":
+        tile.tileType = "temple";
         break;
 
       case "trader":

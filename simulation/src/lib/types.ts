@@ -10,13 +10,13 @@ export type TileType =
   | "home"
   | "resource"
   | "adventure"
-  | "chapel"
+  | "temple"
   | "trader"
   | "mercenary"
   | "doomspire"
   | "oasis";
 
-export const NON_COMBAT_TILES: TileType[] = ["home", "chapel", "trader", "mercenary"];
+export const NON_COMBAT_TILES: TileType[] = ["home", "temple", "trader", "mercenary"];
 
 export interface Position {
   row: number;

@@ -182,7 +182,7 @@ export class GameStateStringifier {
             lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
           }
           break;
-        case "chapel":
+        case "temple":
           lines.push("- Chapel");
           break;
         case "trader":

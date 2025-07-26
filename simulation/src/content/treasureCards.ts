@@ -36,7 +36,7 @@ Spend \`2 ore\` to gain \`+1 might\``,
     name: "Mysterious Ring",
     tier: 1,
     description: `Roll \`1d3\`:  
-**(1)** The ring is *stuck* (can remove at **chapel**)  
+**(1)** The ring is *stuck* (can remove at **temple**)  
 **(2)** **Swap** location with any knight  
 **(3)** \`+3 might\` against **dragons** & **drakes**`,
     count: 1,
