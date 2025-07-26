@@ -6,6 +6,7 @@ This repository represents the design and development of **Lords of Doomspire**,
 
 - **Game Overview**: See`docs/game-overview.md`
 - **Rules**: Complete game rules are documented in `docs/game-rules.md`. The code should reflect the rules. The rules are the source of truth. If you see anything that seems incorrect or inconsistent with the rules, please point this out.
+  - A copy of the rules is in `public/prompts/game-rules.md`, for AI use in the simulation. Don't edit this, a git commit hook will update it automatically from the original rules document.
 - **Simulation**: All simulation code is in the `simulation/` directory, which is structured as a single-page Next.js frontend app, but should also be able to run as a headless script to run a simulated match or turn. Tests are in the simulation/test directory.
 - **Documentation**: Additional design documents in the `docs/` folder
 

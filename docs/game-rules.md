@@ -12,12 +12,13 @@
 4. [How to Play](#how-to-play)
 5. [Actions](#actions)
 6. [Combat](#combat)
-7. [Resources & Trading](#resources--trading)
-8. [Buildings](#buildings)
-9. [Special Locations](#special-locations)
-10. [Event Cards](#event-cards)
-11. [Fame](#fame)
-12. [Victory](#victory)
+7. [Champion Inventory & Items](#champion-inventory--items)
+8. [Resources & Trading](#resources--trading)
+9. [Buildings](#buildings)
+10. [Special Locations](#special-locations)
+11. [Event Cards](#event-cards)
+12. [Fame](#fame)
+13. [Victory](#victory)
 
 ---
 
@@ -44,7 +45,7 @@ In Lords of Doomspire, you are a lord commanding champions from your island cast
 - 3 Champion figures per player.
 - 10 Flag tokens per player.
 - 3 boat figures per player, and 1 warship figure per player.
-- 3 Champion cards per player, to track treasures held by each champion.
+- 3 Champion inventory cards per player, to track items carried by each champion.
 - 1 cheat sheet per player, to track the rules.
 
 ### Resource tokens
@@ -53,6 +54,16 @@ In Lords of Doomspire, you are a lord commanding champions from your island cast
 - Wood tokens
 - Ore tokens
 - Gold tokens
+
+### Cards
+
+- Adventure cards (organized by tier and biome)
+- Trader item cards (deck placed next to board for browsing)
+
+### Marker tokens
+
+- Monster marker tokens (with image and name, placed in tiles to mark monster presence)
+- Item marker tokens (with image and name, placed in tiles to mark item presence)
 
 ### Main Board
 
@@ -69,7 +80,7 @@ The board is organized into 3 tiers. The outer two layers are Tier 1, the inner 
 - **Special locations**:
   - **Chapel tile**: Pray at the chapel to reset your fame to 0. This is a non-combat zone.
   - **Trader tile**: Purchase any resource for 2 gold per resource. This is a non-combat zone.
-  - **Mercenary Camp tile**: Buy 1 might for 3 gold. But the mercenaries refuse to talk to you unless you have 2 or more fame. This is a non-combat zone.
+  - **Mercenary Camp tile**: Buy 1 might for 3 gold. This is a non-combat zone.
   - **Doomspire tile**: The ancient mountain where the great dragon rules. Defeat, impress, or bribe the dragon to win the game. This tile is one of the four hidden tiles in the middle of the board.
 - **Resource tiles**: A resource tile provides specific types of resources such as food, wood, ore, or gold. A player must claim it first, and can then start harvesting resources on the next turn. Starred resource tiles are strategically important, a player who owns all starred resource tiles wins the game if they visit the dragon and bribe it.
 - **Adventure tiles**: These tiles contain adventure cards such as monsters, events, and treasures. Any champion landing on an adventure tile must draw a card (if there are any cards left). When all adventure cards are done they tile is considered to be barren.
@@ -101,7 +112,7 @@ When turning a card, there are three types:
   - Fame: The amount of fame you gain if you defeat the monster.
   - Resources: The amount of resources you gain if you defeat the monster.
 - **Events cards**: Each event card is unique, so read and follow the instructions.
-- **Treasures cards**: Gain the treasure, add it to the inventory of your champion. The champion can only carry 2 treasures at a time, so if you find a third treasure, you must leave one treasure in the tile, which can be picked up by another champion.
+- **Treasures cards**: Gain the treasure, add it to the inventory of your champion. The champion can only carry 2 items at a time, so if you find a third item, you must drop one item in the tile, which can be picked up by another champion who lands there.
 
 ---
 
@@ -114,12 +125,14 @@ When turning a card, there are three types:
 3. Randomly place Tier 1 tiles face up in the outer two layers. 44 tiles in total.
 4. Randomly place Tier 2 tiles face down in the inner middle layer. 12 tiles in total.
 5. Randomly place Tier 3 tiles face down in the center. 4 tiles in total.
+6. Place the trader item deck next to the board, open for all players to browse.
 
 ### Player Setup
 
 1. Each player takes:
    - 1 Castle board
    - 1 Champion figure (place on the home tile)
+   - 1 Champion inventory card (place near the player)
    - 1 Boat token (place in adjacent water zone)
    - Flag tokens
    - 2 D3 dice
@@ -213,7 +226,7 @@ Each action die can be used for ONE of the following:
 - When a champion draws a monster card in an adventure tile, they must choose to flee or fight.
 - If they flee, they return to their home tile and lose 1 fame.
 - If they fight, they roll a D3 and add their might to the score.
-  - Champions or warshops in adjacent tiles may choose to support the fight (regardless of player). If so, +2 might is added per supporting champion or warship.
+  - Champions or warships in adjacent tiles may choose to support the fight (regardless of player). If so, +1 might is added per supporting champion or warship.
   - This decision is made after the dice roll. So a player can offer support, and then choose to betray their support after the dice roll.
 - If the attack score is equal to or greater than the monster's might, they defeat the monster and gain the rewards printed on the card.
 - If the attack score is less than the monster's might, they lose and are chased back home. They must pay a gold to heal up, or lose 1 fame if don't have any gold. Note that trade can happen at any point, so a player may beg another player to contribute gold, or offer to trade for it.
@@ -231,6 +244,9 @@ Each action die can be used for ONE of the following:
 - Highest score wins. On even scores, keep rerolling until a winner is found.
 - The winner gains 1 Fame and stays in the tile.
 - The loser returns to their home tile, pays 1 Gold to heal (or loses 1 Fame if don't have any gold).
+- **Champion Loot**: When defeating a champion, the winner may choose to either:
+  - Take one resource from the defeated player, OR
+  - Take one item from the defeated champion's inventory and transfer it to the winning champion's inventory
 - If the tile is a resource tile, the winner has the option to spend another die to claim or conquer it after the battle. This is an exception to the rule that a champion only can carry out one action per turn.
 
 ### Combat Bonuses
@@ -244,12 +260,36 @@ Each action die can be used for ONE of the following:
 
 ---
 
+## Champion Inventory & Items
+
+### Champion Inventory Cards
+
+- Each champion has an inventory card placed on the side of the board closest to the player
+- Items purchased from the trader or obtained via other means are placed on these cards
+- Each champion can carry at most **2 items** (the inventory card has 2 slots)
+- When you recruit additional champions, each gets their own inventory card
+
+### Managing Items
+
+- **Dropping Items**: A champion can drop an item at any time, placing it on the board in their current tile
+- **Picking Up Items**: Champions can pick up dropped items by ending their move in a tile containing items. You can use this to transfer items between your own champions.
+- **Item Markers**: When items are present in a tile, place the corresponding item marker token in that tile
+
+### Acquiring Items
+
+- **Purchase**: Buy items from the trader using the trader item deck
+- **Loot**: Take items from defeated champions in combat
+- **Find**: Discover items through adventure cards and treasures
+
+---
+
 ## Resources & Trading
 
 - The stockpilable resources are food, wood, ore, and gold.
 - Resources are collected by harvesting from resource tiles, or gained from adventure cards.
 - Resources are used to upgrade the castle, trade for gold, buy might, and other things.
 - Resources can be freely traded with other players at any point. Only the current player can initiate trade with other players.
+- Items cannot be directly traded with other players, only indirectly by dropping them in a tile for another player's champion to pick up.
 
 ## Conquering another player's tile
 
@@ -343,10 +383,14 @@ Multiple champions may occupy these tiles.
 ### Trader
 
 - **Action**: Exchange any resource (Food, Wood, or Ore) for Gold at 1:1 rate
+- **Purchase Items**: Buy items from the trader item deck
+  - Each item card shows its price and effect
+  - The trader item deck is placed next to the board and open for all players to browse
+  - When an item runs out, it runs out - no restocking
+  - Items can also be stolen from other champions by defeating them in battle
 
 ### Mercenary Camp
 
-- **Requirement**: Fame ≥2
 - **Action**: Buy 1 Might for 3 Gold
 
 ### Doomspire
