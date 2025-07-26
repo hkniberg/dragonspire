@@ -228,7 +228,7 @@ export const CardComponent = ({
       {name && (
         <div
           style={{
-            fontSize: compactMode ? "12px" : "17px",
+            fontSize: compactMode ? "12px" : "15px",
             fontWeight: "bold",
             color: "#333",
             textAlign: "center",
