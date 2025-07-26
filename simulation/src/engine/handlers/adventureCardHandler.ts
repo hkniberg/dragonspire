@@ -3,7 +3,7 @@ import { getMonsterCardById } from "@/content/monsterCards";
 import { GameState } from "@/game/GameState";
 import { Monster, Player, Tile } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
-import { resolveMonsterBattle } from "../actions/battleCalculator";
+import { resolveMonsterPlacementAndCombat } from "./combatHandler";
 import { EventCardResult, handleEventCard } from "./eventCardHandler";
 
 export interface AdventureCardResult {
@@ -43,7 +43,7 @@ export function handleMonsterCard(
     };
   }
 
-  // Create a Monster object and place it on the tile
+  // Create a Monster object
   const monster: Monster = {
     id: monsterCard.id,
     name: monsterCard.name,
@@ -59,26 +59,10 @@ export function handleMonsterCard(
     },
   };
 
-  tile.monster = monster;
-  logFn("event", `Champion${championId} drew monster card: ${monster.name}!`);
+  // Use the combat handler for placement and combat
+  const combatResult = resolveMonsterPlacementAndCombat(gameState, monster, tile, player, championId, logFn);
 
-  // Now handle monster combat using the existing logic
-  const combatResult = resolveMonsterBattle(player.might, monster.might);
-
-  if (combatResult.championWins) {
-    // Champion won - award fame and resources, remove monster from tile
-    const fameAwarded = monster.fame || 0;
-    player.fame += fameAwarded;
-    player.resources.food += monster.resources.food;
-    player.resources.wood += monster.resources.wood;
-    player.resources.ore += monster.resources.ore;
-    player.resources.gold += monster.resources.gold;
-
-    // Remove monster from tile
-    tile.monster = undefined;
-
-    logFn("combat", `Defeated ${monster.name} (${combatResult.championTotal} vs ${combatResult.monsterTotal}), gained ${fameAwarded} fame and got food:${monster.resources.food} wood:${monster.resources.wood} ore:${monster.resources.ore} gold:${monster.resources.gold}`);
-
+  if (combatResult.victory) {
     return {
       cardProcessed: true,
       cardType: "monster",
@@ -91,10 +75,7 @@ export function handleMonsterCard(
         monsterRemains: false
       }
     };
-  } else {
-    // Champion lost, monster stays on tile, champion will be sent home by caller
-    logFn("combat", `Fought ${monster.name}, but was defeated (${combatResult.championTotal} vs ${combatResult.monsterTotal}), returned home. ${monster.name} remains on the tile`);
-
+  } else if (combatResult.defeat) {
     return {
       cardProcessed: true,
       cardType: "monster",
@@ -106,6 +87,12 @@ export function handleMonsterCard(
         championDefeated: true,
         monsterRemains: true
       }
+    };
+  } else {
+    // This shouldn't happen, but handle gracefully
+    return {
+      cardProcessed: false,
+      errorMessage: "Unexpected combat result"
     };
   }
 }

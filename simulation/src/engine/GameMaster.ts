@@ -151,21 +151,7 @@ export class GameMaster {
     this.gameState = this.gameState.advanceToNextPlayer();
   }
 
-  /**
-   * Handle champion defeat - send home and apply healing costs
-   */
-  private handleChampionDefeat(player: Player, championId: number, defeatContext: string): void {
-    this.gameState.moveChampionToHome(player.name, championId);
 
-    // Pay 1 gold to heal, or lose 1 fame if no gold
-    if (player.resources.gold > 0) {
-      player.resources.gold -= 1;
-      this.addGameLogEntry("combat", `${defeatContext}, went home, paid 1 gold to heal`);
-    } else {
-      player.fame = Math.max(0, player.fame - 1);
-      this.addGameLogEntry("combat", `${defeatContext}, went home, had no gold to heal so lost 1 fame`);
-    }
-  }
 
 
 
@@ -213,16 +199,14 @@ export class GameMaster {
     // Step 2: Handle champion combat
     const championCombatResult = handleChampionCombat(this.gameState, tile, player, championId, logFn);
     if (championCombatResult.combatOccurred && !championCombatResult.attackerWon) {
-      // Attacker lost, send champion home
-      this.handleChampionDefeat(player, championId, championCombatResult.combatDetails!);
+      // Attacker lost, defeat effects already applied by combat handler
       return;
     }
 
     // Step 3: Handle monster combat
-    const monsterCombatResult = handleMonsterCombat(tile, player, championId, logFn);
+    const monsterCombatResult = handleMonsterCombat(this.gameState, tile, player, championId, logFn);
     if (monsterCombatResult.combatOccurred && !monsterCombatResult.championWon) {
-      // Champion lost to monster, send champion home
-      this.handleChampionDefeat(player, championId, monsterCombatResult.combatDetails!);
+      // Champion lost to monster, defeat effects already applied by combat handler
       return;
     }
 
@@ -238,7 +222,7 @@ export class GameMaster {
           this.endGame(doomspireResult.dragonCombat.combatVictory.playerName, "Combat Victory");
           return;
         } else if (doomspireResult.dragonCombat.championDefeated) {
-          this.handleChampionDefeat(player, championId, doomspireResult.dragonCombat.combatDetails);
+          // Champion defeated by dragon, defeat effects already applied by combat handler
           return;
         }
       }
@@ -270,8 +254,7 @@ export class GameMaster {
 
         // Handle results from adventure card
         if (adventureResult.cardProcessed && adventureResult.monsterPlaced?.championDefeated) {
-          // Champion was defeated by a monster from the adventure card
-          this.handleChampionDefeat(player, championId, `${adventureResult.monsterPlaced.monsterName} defeated the champion`);
+          // Champion was defeated by a monster from the adventure card, defeat effects already applied by combat handler
           return;
         }
       }
