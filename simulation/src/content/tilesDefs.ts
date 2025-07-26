@@ -31,6 +31,7 @@ export const HOME_TILE_TRIOS: TileTrioDef[] = [
     right: "bearCave",
     below: "wolfDen",
   },
+
   {
     corner: "home",
     right: "adventure",
@@ -135,25 +136,4 @@ export const TIER_2_TRIOS: TileTrioDef[] = [
   },
 ];
 
-export const TIER_3_TRIOS: TileTrioDef[] = [
-  {
-    corner: "adventure3",
-    right: "adventure3",
-    below: "doomspire",
-  },
-  {
-    corner: "doomspire",
-    right: "adventure3",
-    below: "adventure3",
-  },
-  {
-    corner: "adventure3",
-    right: "doomspire",
-    below: "adventure3",
-  },
-  {
-    corner: "adventure3",
-    right: "adventure3",
-    below: "doomspire",
-  },
-];
+
