@@ -1,4 +1,5 @@
 import type { Player } from "../lib/types";
+import { formatResources } from "../lib/utils";
 
 // Function to get boat image path based on player index
 const getBoatImagePath = (playerIndex: number): string => {
@@ -87,50 +88,31 @@ export const PlayerInfoBox = ({
 
       {/* Resources */}
       <div style={{ marginBottom: "8px" }}>
-        <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px", color: "#495057" }}>Resources:</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", fontSize: "10px" }}>
-          <span style={{ backgroundColor: "#4caf50", color: "white", padding: "1px 4px", borderRadius: "3px" }}>
-            F: {player.resources.food}
-          </span>
-          <span style={{ backgroundColor: "#8d6e63", color: "white", padding: "1px 4px", borderRadius: "3px" }}>
-            W: {player.resources.wood}
-          </span>
-          <span style={{ backgroundColor: "#757575", color: "white", padding: "1px 4px", borderRadius: "3px" }}>
-            O: {player.resources.ore}
-          </span>
-          <span style={{ backgroundColor: "#ffc107", color: "black", padding: "1px 4px", borderRadius: "3px" }}>
-            G: {player.resources.gold}
-          </span>
-        </div>
+        <div style={{ fontSize: "14px", color: "#495057" }}>{formatResources(player.resources)}</div>
       </div>
 
       {/* Champions */}
       <div style={{ marginBottom: "8px" }}>
-        <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px", color: "#495057" }}>
-          Champions: ({player.champions.length})
-        </div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "2px", fontSize: "10px" }}>
-          {player.champions.map((champion) => (
-            <span
-              key={champion.id}
-              style={{
-                backgroundColor: colors.main,
-                color: "white",
-                padding: "1px 4px",
-                borderRadius: "3px",
-              }}
-            >
-              C{champion.id} ({champion.position.row},{champion.position.col})
+        {player.champions.map((champion) => (
+          <div
+            key={champion.id}
+            style={{
+              marginBottom: "2px",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            <span style={{ marginRight: "4px", fontSize: "12px" }}>⚔️</span>
+            <span style={{ color: colors.main, fontWeight: "bold", fontSize: "12px" }}>Champion {champion.id}</span>
+            <span style={{ marginLeft: "4px", color: "#6c757d", fontSize: "12px" }}>
+              ({champion.position.row},{champion.position.col})
             </span>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
 
       {/* Boats */}
       <div style={{ marginBottom: "8px" }}>
-        <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "4px", color: "#495057" }}>
-          Boats: ({player.boats.length})
-        </div>
         {player.boats.map((boat) => (
           <div
             key={boat.id}
@@ -150,8 +132,8 @@ export const PlayerInfoBox = ({
                 marginRight: "4px",
               }}
             />
-            <span style={{ color: colors.main, fontWeight: "bold" }}>B{boat.id}</span>
-            <span style={{ marginLeft: "4px", color: "#6c757d" }}>{boat.position.toUpperCase()}</span>
+            <span style={{ color: colors.main, fontWeight: "bold", fontSize: "12px" }}>Boat {boat.id}</span>
+            <span style={{ marginLeft: "4px", color: "#6c757d", fontSize: "12px" }}>{boat.position.toUpperCase()}</span>
           </div>
         ))}
       </div>

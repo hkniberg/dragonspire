@@ -183,10 +183,27 @@ export class GameDecks {
   }
 }
 
-// Helper function to randomly assign a biome
+// Seeded random number generator for consistent results across server/client
+class SeededRandom {
+  private seed: number;
+
+  constructor(seed: number) {
+    this.seed = seed;
+  }
+
+  next(): number {
+    this.seed = (this.seed * 9301 + 49297) % 233280;
+    return this.seed / 233280;
+  }
+}
+
+// Create a seeded random instance for biome assignment
+const biomeRng = new SeededRandom(12345); // Fixed seed for consistency
+
+// Helper function to deterministically assign a biome
 function getRandomBiome(): BiomeType {
   const biomes: BiomeType[] = ["plains", "mountains", "woodlands"];
-  return biomes[Math.floor(Math.random() * biomes.length)];
+  return biomes[Math.floor(biomeRng.next() * biomes.length)];
 }
 
 // Build the card deck

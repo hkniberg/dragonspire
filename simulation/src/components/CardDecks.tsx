@@ -202,20 +202,29 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
             transformOrigin: "center",
           }}
         >
-          {[1, 2, 3].map((tier) => (
-            <div
-              key={tier}
-              style={{
-                display: "flex",
-                gap: "4px",
-                alignItems: "center",
-              }}
-            >
-              {[1, 2, 3].map((deckNumber) => (
-                <div key={deckNumber}>{renderCard(tier as TileTier, deckNumber as 1 | 2 | 3)}</div>
-              ))}
-            </div>
-          ))}
+          {[1, 2, 3].map((tier) => {
+            const gameDecks = gameSession.getGameDecks();
+            const deckSizes = gameDecks.getDeckSizes(tier as TileTier);
+
+            return (
+              <div
+                key={tier}
+                style={{
+                  display: "flex",
+                  gap: "4px",
+                  alignItems: "center",
+                }}
+              >
+                {[1, 2, 3].map((deckNumber) => {
+                  const deckSize = deckSizes[deckNumber - 1];
+                  // Only render deck if it has cards
+                  if (deckSize === 0) return null;
+
+                  return <div key={deckNumber}>{renderCard(tier as TileTier, deckNumber as 1 | 2 | 3)}</div>;
+                })}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -250,6 +259,7 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
               name={modalCard.originalData?.name || modalCard.cardData.id}
               imageUrl={modalCard.imageUrl}
               content={modalCard.content}
+              contentFontSize={modalCard.cardData.type === "monster" ? "14px" : undefined}
               bottomTag={modalCard.bottomTag}
               title={`${modalCard.cardData.type}: ${modalCard.originalData?.name || modalCard.cardData.id} (Tier ${modalCard.tier})`}
             />

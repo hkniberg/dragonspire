@@ -16,7 +16,7 @@ export function formatResources(
     .filter(([_, amount]) => amount > 0)
     .map(([type, amount]) => {
       const symbol = resourceSymbols[type as keyof typeof resourceSymbols];
-      return amount > 1 ? `${amount}${symbol}` : symbol;
+      return `${amount}${symbol}`;
     })
     .join(" ");
 
