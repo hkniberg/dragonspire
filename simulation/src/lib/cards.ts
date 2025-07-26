@@ -1,6 +1,7 @@
 import { ENCOUNTERS } from "../content/encounterCards";
 import { EVENT_CARDS } from "../content/eventCards";
 import { MONSTER_CARDS } from "../content/monsterCards";
+import { TRADER_ITEMS } from "../content/traderItems";
 import { TREASURE_CARDS } from "../content/treasureCards";
 import { BiomeType, TileTier } from "./types";
 
@@ -22,6 +23,11 @@ export interface Card {
   type: CardType;
   tier: TileTier;
   biome: BiomeType;
+  id: string;
+}
+
+export interface TraderCard {
+  type: "trader";
   id: string;
 }
 
@@ -73,6 +79,58 @@ class CardDeck {
   }
 
   addCards(cards: Card[]): void {
+    this.cards.push(...cards);
+  }
+}
+
+class TraderDeck {
+  private cards: TraderCard[] = [];
+
+  // Deck order: index 0 = bottom, index [length-1] = top
+  // Cards are drawn from the top (end of array)
+
+  addCard(quantity: number, card: TraderCard): void {
+    for (let i = 0; i < quantity; i++) {
+      this.cards.push({ ...card }); // Add to top of deck
+    }
+  }
+
+  addToTop(card: TraderCard): void {
+    this.cards.push({ ...card });
+  }
+
+  addToBottom(card: TraderCard): void {
+    this.cards.unshift({ ...card });
+  }
+
+  drawFromTop(): TraderCard | undefined {
+    return this.cards.pop(); // Remove and return top card
+  }
+
+  peekTop(): TraderCard | undefined {
+    return this.cards[this.cards.length - 1]; // Look at top card without removing
+  }
+
+  shuffle(): void {
+    for (let i = this.cards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
+    }
+  }
+
+  size(): number {
+    return this.cards.length;
+  }
+
+  isEmpty(): boolean {
+    return this.cards.length === 0;
+  }
+
+  getCards(): TraderCard[] {
+    return [...this.cards]; // Return a copy (bottom to top order)
+  }
+
+  addCards(cards: TraderCard[]): void {
     this.cards.push(...cards);
   }
 }
@@ -267,9 +325,25 @@ function buildCardDeck(): Card[] {
   return deck.getCards();
 }
 
+// Build the trader deck
+function buildTraderDeck(): TraderCard[] {
+  const deck = new TraderDeck();
+
+  // Add 2 of each trader item
+  TRADER_ITEMS.forEach((trader) => {
+    deck.addCard(2, {
+      type: "trader",
+      id: trader.id,
+    });
+  });
+
+  return deck.getCards();
+}
+
 // Export the card deck and deck class
 export const CARDS: Card[] = buildCardDeck();
-export { CardDeck };
+export const TRADER_CARDS: TraderCard[] = buildTraderDeck();
+export { CardDeck, TraderDeck };
 
 // Essential helper functions
 export function getCardsByType(type: CardType): Card[] {
@@ -287,4 +361,14 @@ export function getRandomCardFromBiome(biome: BiomeType, type?: CardType): Card 
   }
   const randomIndex = Math.floor(Math.random() * filteredCards.length);
   return filteredCards[randomIndex];
+}
+
+// Trader deck helper functions
+export function getTraderCards(): TraderCard[] {
+  return TRADER_CARDS;
+}
+
+export function getRandomTraderCard(): TraderCard {
+  const randomIndex = Math.floor(Math.random() * TRADER_CARDS.length);
+  return TRADER_CARDS[randomIndex];
 }
