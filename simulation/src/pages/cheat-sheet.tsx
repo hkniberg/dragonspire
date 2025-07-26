@@ -98,7 +98,9 @@ export default function CheatSheet() {
               <ul className={styles.bulletList}>
                 <li>Horizontal/vertical only (no diagonal)</li>
                 <li>Must stop when entering unexplored tile</li>
-                <li>Cannot pass through other knights (they may force combat)</li>
+                <li>Cannot stop in same tile as other knights (except non-combat zones)</li>
+                <li>Cannot pass through monster tiles</li>
+                <li>Can pass through other knights (they may force combat)</li>
                 <li>Cannot enter enemy home tiles</li>
                 <li>One action per knight per turn</li>
               </ul>
@@ -166,7 +168,7 @@ export default function CheatSheet() {
                   <strong>⚔️ 3rd Knight</strong>: 6 Food, 6 Gold, 3 Ore → +1 die
                 </div>
                 <div className={styles.building}>
-                  <strong>🏪 Market</strong>: 3 Food, 3 Wood → Sell 2 resources for 1 Gold
+                  <strong>🏪 Market</strong>: 3 Food, 3 Wood → Sell resources for Gold (2:1 rate)
                 </div>
                 <div className={styles.building}>
                   <strong>⚒️ Blacksmith</strong>: 3 Food, 3 Ore → Buy 1 Might for 1 Gold + 2 Ore
@@ -181,7 +183,8 @@ export default function CheatSheet() {
                   <strong>🏛️ Monastery</strong>: 4 Wood, 5 Gold, 2 Ore → +5 Fame
                 </div>
                 <div className={styles.building}>
-                  <strong>🚢 Warship Upgrade</strong>: 2 Wood, 1 Ore, 1 Gold → All boats become warships
+                  <strong>🚢 Warship Upgrade</strong>: 2 Wood, 1 Ore, 1 Gold → Boats are warhips that give +1 to coastal
+                  battles
                 </div>
               </div>
             </section>
@@ -195,10 +198,7 @@ export default function CheatSheet() {
                   <strong>⛩️ Temple</strong>: Sacrifice 3 Fame → gain 1 Might
                 </li>
                 <li>
-                  <strong>🏪 Marketplace</strong>: Buy any resource for 2 Gold
-                </li>
-                <li>
-                  <strong>💰 Trader</strong>: Trade Food/Wood/Ore for Gold (1:1) + buy items
+                  <strong>💰 Trader</strong>: Trade any resource for any other (2:1 rate) + buy items
                 </li>
                 <li>
                   <strong>🗡️ Mercenary Camp</strong>: Buy 1 Might for 3 Gold

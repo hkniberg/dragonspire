@@ -36,7 +36,9 @@
 
 - Horizontal/vertical only (no diagonal)
 - Must stop when entering unexplored tile
-- Cannot pass through other knights (they may force combat)
+- Cannot stop in same tile as other knights (except non-combat zones)
+- Cannot pass through monster tiles
+- Can pass through other knights (they may force combat)
 - Cannot enter enemy home tiles
 - One action per knight per turn
 
@@ -72,18 +74,17 @@
 
 - **2nd Knight**: 3 Food, 3 Gold, 1 Ore → +1 die
 - **3rd Knight**: 6 Food, 6 Gold, 3 Ore → +1 die
-- **Market**: 3 Food, 3 Wood → Sell 2 resources for 1 Gold
+- **Market**: 3 Food, 3 Wood → Sell resources for Gold (2:1 rate)
 - **Blacksmith**: 3 Food, 3 Ore → Buy 1 Might for 1 Gold + 2 Ore
 - **Dock**: 2 Wood, 2 Gold → +1 boat (max 2)
 - **Chapel**: 3 Wood, 4 Gold → +3 Fame
 - **Monastery**: 4 Wood, 5 Gold, 2 Ore → +5 Fame
-- **Warship Upgrade**: 2 Wood, 1 Ore, 1 Gold → All boats become warships
+- **Warship Upgrade**: 2 Wood, 1 Ore, 1 Gold → All boats become warships. Boats give +1 to coastal battles
 
 ### SPECIAL LOCATIONS (Non-combat zones)
 
 - **Temple**: Sacrifice 3 Fame → gain 1 Might
-- **Marketplace**: Buy any resource for 2 Gold
-- **Trader**: Trade Food/Wood/Ore for Gold (1:1) + buy items
+- **Trader**: Trade any resource for any other (2:1 rate) + buy items
 - **Mercenary Camp**: Buy 1 Might for 3 Gold
 - **Doomspire**: Dragon lair - multiple victory paths!
 

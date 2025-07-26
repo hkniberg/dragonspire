@@ -14,11 +14,11 @@
 6. [Combat](#combat)
 7. [Knight Inventory & Items](#knight-inventory--items)
 8. [Resources & Trading](#resources--trading)
-9. [Buildings](#buildings)
-10. [Special Locations](#special-locations)
-    [Event Cards](#adventure-cards)
-11. [Fame](#fame)
-12. [Victory](#victory)
+   [Buildings](#castle-buildings)
+9. [Special Locations](#special-locations)
+   [Event Cards](#adventure-cards)
+10. [Fame](#fame)
+11. [Victory](#victory)
 
 ---
 
@@ -189,11 +189,12 @@ Each action die can be used for ONE of the following:
 **Movement Rules:**
 
 - Spend an action die to move horizontally or vertically (no diagonal movement), up to the number of steps indicated by the die. You can also move 0 steps if you want to stay in the same tile and interact with it (for example to draw another adventure card).
-- You cannot have multiple knights in the same tile (except when respawning in the home tile).
-- A knight must stop when entering an unexplored tile - you cannot pass through unexplored tiles.
+- A knight cannot stop in the same tile as another knight (except in non-combat zones such as temple, trader, mercenary camp, or when respawning in the home tile).
+- A knight must stop when entering an unexplored tile - they cannot pass through unexplored tiles.
+- A knight cannot pass through a tile with a monster in it.
 - If you end your movement in a tile with another knight, battle will ensue, unless it is a non-combat zone (such as the temple, trader, mercenary camp).
 - A knight cannot enter another player's home tile.
-- You can pass through other knights, but when passing another player's knight, they may choose to initiate combat, in which case your knight is forced to stop and fight and cannot pass through.
+- A knight can pass through other knights, but when passing another player's knight, they may choose to initiate combat, in which case your knight is forced to stop and fight and cannot continue moving.
 - Once a knight performs any tile interaction (drawing cards, claiming tiles, using special locations, fighting monsters, etc), that knight cannot carry out any more actions or use any more dice that turn.
 - If a knight lands on a tile and doesn't interact with it, they can move again using a different die. If the card has an adventure token or a monster or another player, then the encounter is unavoidable.
 - The restrictions above also apply when a knight is transported by boat.
@@ -227,7 +228,7 @@ Each action die can be used for ONE of the following:
 - Spend an action die to construct a building or upgrade your castle, or buy more knights or boats.
 - A castle is limited to 4 buildings. If you upgrade it, you can add 4 more buildings.
 - The die value doesn't matter for building.
-- See [Buildings](#buildings) section for costs and benefits.
+  [Buildings](#castle-buildings)
 
 ### Action: Boat Travel
 
@@ -347,33 +348,29 @@ Knights protect all 4 adjacent tiles from blockade or conquering.
 
 ---
 
-## Buildings
+## Castle buildings
 
-All castle buildings and projects require spending a die to construct (die value doesn't matter). Buildings are represented as cards that you place in your castle slots. Building actions are performed during the harvest phase.
-
-### Boat Upgrades
-
-**Warship Upgrade**
-
-- **Cost**: 2 Wood, 1 Ore, 1 Gold
-- **Benefit**: Upgrades all your boats (current and future) to warships, which provide +1 Might to any battle in tiles adjacent to their current ocean zone.
-
-### Standard Buildings
-
-### Market
-
-- **Cost**: 3 Food, 3 Wood
-- **Benefit**: During the harvest phase, sell 2 resources for 1 Gold (can be used for any amount of resources)
-
-### Blacksmith
-
-- **Cost**: 3 Food, 3 Ore
-- **Benefit**: During the harvest phase, buy 1 Might for 1 Gold + 2 Ore (once per harvest phase)
+You och purchase a castle building or boat/champion by spending a die during the harvest phase. The die value doesn't matter.
 
 ### Dock
 
 - **Cost**: 2 Wood, 2 Gold
 - **Benefit**: Gain additional boat (max 2 boats total)
+
+### Warnship upgrade
+
+- **Cost**: 2 Wood, 1 Ore, 1 Gold
+- **Benefit**: Upgrades all your boats (current and future) to warships, which provide +1 Might to any battle in tiles adjacent to their current ocean zone.
+
+### Market
+
+- **Cost**: 3 Food, 3 Wood
+- **Benefit**: During the harvest phase, sell any resources for Gold at 2:1 rate (2 resources = 1 Gold). Can do this any number of times.
+
+### Blacksmith
+
+- **Cost**: 3 Food, 3 Ore
+- **Benefit**: During the harvest phase, buy 1 Might for 1 Gold + 2 Ore (once per harvest phase)
 
 ### Chapel
 
@@ -394,23 +391,15 @@ All castle buildings and projects require spending a die to construct (die value
 
 ## Special Locations
 
-Multiple knights may occupy these tiles.
+Special locations can be occupied by multiple knights, and no combat can happen there.
 
 ### Temple
 
-- **Action**: Sacrifice 3 Fame to gain 1 Might
-
-### Marketplace
-
-- **Action**: Purchase any resource for 2 Gold
-- **Market Day Event**: When Market Day event card is drawn, the drawing player chooses whether to activate Market Day
-  - If activated: All players must go to Marketplace (can pay 1 Gold to opt out)
-  - During Market Day: Resources cost 1 Gold instead of 2
-  - Players can freely trade with each other at the Marketplace
+- **Action**: You can sacrifice 3 Fame to gain 1 Might, once per turn.
 
 ### Trader
 
-- **Action**: Exchange any resource (Food, Wood, or Ore) for Gold at 1:1 rate
+- **Action**: Exchange any resource for any other resource at 2:1 rate (pay 2 of one resource, get 1 of any other resource: Food, Wood, Ore, or Gold). Can execute multiple trades.
 - **Purchase Items**: Buy items from the trader item deck
   - Each item card shows its price and effect
   - The trader item deck is placed next to the board and open for all players to browse
@@ -419,13 +408,13 @@ Multiple knights may occupy these tiles.
 
 ### Mercenary Camp
 
-- **Action**: Buy 1 Might for 3 Gold
+- **Action**: Buy 1 Might for 3 Gold. Max once per turn.
 
 ### Doomspire
 
-- **The Ancient Mountain**: Home of the great dragon
+- **The Ancient Mountain**: Home of the great dragon. When first discovered, roll D3 and add 8 to determine the might of the dragon.
 - **Multiple Victory Paths**:
-  - **Combat Victory**: Dragon with 8 + D3 Might (8 base + D3 roll). Victory wins the game! Defeat = knight is eaten (removed from game)
+  - **Combat Victory**: If you defeat the dragon, you win the game! If your knight loses, it is eaten and removed from the game.
   - **Diplomatic Victory**: If you have 12+ Fame and visit the dragon, the dragon takes human shape and becomes your advisor. You win immediately!
   - **Economic Victory**: If you control 4+ starred resource tiles and visit the dragon, the dragon agrees to let you rule the island in exchange for tributes. You win immediately!
   - **Gold Victory**: If you have 20+ Gold and visit the dragon, the dragon is impressed by your wealth and agrees to share the island's treasures. You win immediately!
