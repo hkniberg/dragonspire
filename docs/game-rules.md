@@ -40,7 +40,7 @@ In Lords of Doomspire, you are a lord commanding knights from your island castle
 
 ### Player Components (per player)
 
-- 1 Castle board (individual player board with 4 building slots on one side and 8 on the other)
+- 1 Castle board (individual player board with 4 building slots)
 - 1 Plastic castle model, place in the center of your castle board.
 - 3 Knight figures per player.
 - 10 Flag tokens per player.
@@ -350,13 +350,6 @@ Knights protect all 4 adjacent tiles from blockade or conquering.
 ## Buildings
 
 All castle buildings and projects require spending a die to construct (die value doesn't matter). Buildings are represented as cards that you place in your castle slots. Building actions are performed during the harvest phase.
-
-### Castle Upgrades
-
-**Castle Expansion**
-
-- **Cost**: 6 Wood, 4 Gold, 2 Ore
-- **Benefit**: Flip castle board to gain 8 building slots instead of 4
 
 ### Boat Upgrades
 

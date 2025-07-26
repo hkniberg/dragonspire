@@ -63,35 +63,29 @@
 
 ### VICTORY CONDITIONS (First to achieve ANY wins!)
 
-**Combat Victory**: Defeat the Dragon at Doomspire
-
-**Diplomatic Victory**: 12+ Fame → visit Doomspire
-
-**Economic Victory**: Control 4+ starred resource tiles → visit Doomspire
-
-**Gold Victory**: 20+ Gold → visit Doomspire
+- **Combat Victory**: Defeat the Dragon at Doomspire
+- **Diplomatic Victory**: 12+ Fame → visit Doomspire
+- **Economic Victory**: Control 4+ starred resource tiles → visit Doomspire
+- **Gold Victory**: 20+ Gold → visit Doomspire
 
 ### BUILDING COSTS & EFFECTS
 
-**Castle Expansion**: 6 Wood, 4 Gold, 2 Ore → +4 building slots
-
-**2nd Knight**: 3 Food, 3 Gold, 1 Ore → +1 die
-**3rd Knight**: 6 Food, 6 Gold, 3 Ore → +1 die
-
-**Market**: 3 Food, 3 Wood → Sell 2 resources for 1 Gold
-**Blacksmith**: 3 Food, 3 Ore → Buy 1 Might for 1 Gold + 2 Ore
-**Dock**: 2 Wood, 2 Gold → +1 boat (max 2)
-**Chapel**: 3 Wood, 4 Gold → +3 Fame
-**Monastery**: 4 Wood, 5 Gold, 2 Ore → +5 Fame
-**Warship Upgrade**: 2 Wood, 1 Ore, 1 Gold → All boats become warships
+- **2nd Knight**: 3 Food, 3 Gold, 1 Ore → +1 die
+- **3rd Knight**: 6 Food, 6 Gold, 3 Ore → +1 die
+- **Market**: 3 Food, 3 Wood → Sell 2 resources for 1 Gold
+- **Blacksmith**: 3 Food, 3 Ore → Buy 1 Might for 1 Gold + 2 Ore
+- **Dock**: 2 Wood, 2 Gold → +1 boat (max 2)
+- **Chapel**: 3 Wood, 4 Gold → +3 Fame
+- **Monastery**: 4 Wood, 5 Gold, 2 Ore → +5 Fame
+- **Warship Upgrade**: 2 Wood, 1 Ore, 1 Gold → All boats become warships
 
 ### SPECIAL LOCATIONS (Non-combat zones)
 
-**Temple**: Sacrifice 3 Fame → gain 1 Might
-**Marketplace**: Buy any resource for 2 Gold
-**Trader**: Trade Food/Wood/Ore for Gold (1:1) + buy items
-**Mercenary Camp**: Buy 1 Might for 3 Gold
-**Doomspire**: Dragon lair - multiple victory paths!
+- **Temple**: Sacrifice 3 Fame → gain 1 Might
+- **Marketplace**: Buy any resource for 2 Gold
+- **Trader**: Trade Food/Wood/Ore for Gold (1:1) + buy items
+- **Mercenary Camp**: Buy 1 Might for 3 Gold
+- **Doomspire**: Dragon lair - multiple victory paths!
 
 ### KNIGHT INVENTORY
 
