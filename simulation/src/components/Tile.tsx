@@ -97,6 +97,8 @@ const getBackgroundImage = (tile: Tile): string => {
     mercenary: "url(/tiles/mercenary.png)",
     doomspire: "url(/tiles/dragon.png)",
     home: "url(/tiles/home.png)",
+    wolfDen: "url(/tiles/wolfDen.png)",
+    bearCave: "url(/tiles/bearCave.png)",
   };
 
   if (tile.tileType && simpleTileImages[tile.tileType]) {

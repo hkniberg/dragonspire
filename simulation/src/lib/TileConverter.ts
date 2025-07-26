@@ -96,6 +96,14 @@ export function convertTileDefToTile(
         tile.tileType = "empty";
         break;
 
+      case "wolfDen":
+        tile.tileType = "wolfDen";
+        break;
+
+      case "bearCave":
+        tile.tileType = "bearCave";
+        break;
+
       default:
         throw new Error(`Unknown tile definition: ${tileDef}`);
     }

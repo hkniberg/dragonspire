@@ -14,7 +14,9 @@ export type TileType =
   | "trader"
   | "mercenary"
   | "doomspire"
-  | "oasis";
+  | "oasis"
+  | "wolfDen"
+  | "bearCave";
 
 export const NON_COMBAT_TILES: TileType[] = ["home", "temple", "trader", "mercenary"];
 

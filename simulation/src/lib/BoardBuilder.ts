@@ -256,6 +256,38 @@ export class BoardBuilder {
         };
       }
     }
+
+    // Place Wolf on wolfDen tiles
+    if (tile.tileType === "wolfDen") {
+      const wolfMonster = getMonsterCardById("wolf");
+      if (wolfMonster) {
+        tile.monster = {
+          id: wolfMonster.id,
+          name: wolfMonster.name,
+          tier: wolfMonster.tier,
+          icon: wolfMonster.icon,
+          might: wolfMonster.might,
+          fame: wolfMonster.fame,
+          resources: wolfMonster.resources,
+        };
+      }
+    }
+
+    // Place Bear on bearCave tiles
+    if (tile.tileType === "bearCave") {
+      const bearMonster = getMonsterCardById("bear");
+      if (bearMonster) {
+        tile.monster = {
+          id: bearMonster.id,
+          name: bearMonster.name,
+          tier: bearMonster.tier,
+          icon: bearMonster.icon,
+          might: bearMonster.might,
+          fame: bearMonster.fame,
+          resources: bearMonster.resources,
+        };
+      }
+    }
   }
 
   /**

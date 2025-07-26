@@ -12,6 +12,8 @@ export type TileDef =
   | "mercenary"
   | "oasis"
   | "oasis2"
+  | "wolfDen"
+  | "bearCave"
   | ResourceList
   | Resource;
 
