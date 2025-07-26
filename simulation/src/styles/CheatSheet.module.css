@@ -1,0 +1,369 @@
+/* Fantasy Board Game Cheat Sheet Styles */
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: "Georgia", "Times New Roman", serif;
+  background: linear-gradient(135deg, #f4f1e8 0%, #e8dcc0 100%);
+  min-height: 100vh;
+  color: #2c1810;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 50%, #cd853f 100%);
+  border: 3px solid #654321;
+  border-radius: 12px;
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, 0.3),
+    0 4px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.header::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, #daa520, #b8860b, #daa520);
+  border-radius: 14px;
+  z-index: -1;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #f4e4bc;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  margin: 0;
+  letter-spacing: 2px;
+  font-family: "Georgia", serif;
+}
+
+.subtitle {
+  font-size: 1.2rem;
+  color: #e6d3b7;
+  margin: 5px 0 0 0;
+  font-weight: normal;
+  letter-spacing: 1px;
+}
+
+.twoColumn {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-top: 20px;
+}
+
+.side {
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #8b7355;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.side::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  border: 1px solid #d4af8c;
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.sideTitle {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #654321;
+  text-align: center;
+  margin: 0 0 20px 0;
+  padding: 10px;
+  background: linear-gradient(135deg, #deb887 0%, #d2b48c 100%);
+  border: 1px solid #8b7355;
+  border-radius: 6px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.section {
+  margin-bottom: 20px;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: bold;
+  color: #654321;
+  margin: 0 0 8px 0;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #f5deb3 0%, #e6d3b7 100%);
+  border: 1px solid #d4af8c;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.note {
+  font-size: 0.8rem;
+  font-weight: normal;
+  color: #8b6914;
+  text-transform: none;
+  font-style: italic;
+}
+
+.orderedList {
+  margin: 0;
+  padding: 0;
+}
+
+.listItem {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  padding: 8px;
+  background: rgba(245, 222, 179, 0.3);
+  border-radius: 4px;
+  border-left: 3px solid #d4af8c;
+}
+
+.number {
+  background: #8b4513;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.9rem;
+  margin-right: 12px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.bulletList {
+  margin: 8px 0 0 0;
+  padding-left: 16px;
+}
+
+.bulletList li {
+  margin-bottom: 4px;
+  color: #3a2817;
+}
+
+.actionGroup {
+  margin-bottom: 12px;
+  padding: 8px;
+  background: rgba(240, 248, 255, 0.5);
+  border-radius: 4px;
+  border-left: 3px solid #4682b4;
+}
+
+.actionTitle {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #2f4f4f;
+  margin: 0 0 6px 0;
+}
+
+.actionList {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.actionList li {
+  margin-bottom: 4px;
+  color: #2f4f4f;
+}
+
+.combatBlock {
+  margin-bottom: 12px;
+  padding: 8px;
+  background: rgba(255, 228, 225, 0.7);
+  border-radius: 4px;
+  border-left: 3px solid #cd5c5c;
+}
+
+.combatTitle {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: #8b0000;
+  margin: 0 0 6px 0;
+}
+
+.supportNote {
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: rgba(255, 255, 224, 0.8);
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.victoryList {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.victoryList li {
+  margin-bottom: 6px;
+  padding: 4px;
+  background: rgba(255, 215, 0, 0.1);
+  border-radius: 3px;
+  color: #b8860b;
+  font-weight: 500;
+}
+
+.buildingList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.building {
+  padding: 6px 8px;
+  background: rgba(152, 251, 152, 0.2);
+  border-radius: 4px;
+  border-left: 3px solid #228b22;
+  font-size: 0.85rem;
+  color: #2d5016;
+}
+
+.locationList {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.locationList li {
+  margin-bottom: 6px;
+  padding: 4px;
+  background: rgba(221, 160, 221, 0.2);
+  border-radius: 3px;
+  color: #663399;
+}
+
+/* Print Styles */
+@media print {
+  .container {
+    background: white;
+    margin: 0;
+    padding: 15px;
+    font-size: 11px;
+    line-height: 1.3;
+    color: black;
+    min-height: auto;
+  }
+
+  .header {
+    background: #f0f0f0;
+    border: 2px solid #333;
+    box-shadow: none;
+    margin-bottom: 20px;
+  }
+
+  .header::before {
+    display: none;
+  }
+
+  .title {
+    font-size: 1.8rem;
+    color: #333;
+    text-shadow: none;
+  }
+
+  .subtitle {
+    color: #666;
+    font-size: 1rem;
+  }
+
+  .twoColumn {
+    gap: 20px;
+  }
+
+  .side {
+    background: white;
+    border: 1px solid #333;
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+
+  .side::before {
+    display: none;
+  }
+
+  .sideTitle {
+    background: #f0f0f0;
+    border: 1px solid #333;
+    color: #333;
+    text-shadow: none;
+  }
+
+  .sectionTitle {
+    background: #f8f8f8;
+    border: 1px solid #666;
+    color: #333;
+  }
+
+  .listItem,
+  .actionGroup,
+  .combatBlock,
+  .building {
+    background: #f9f9f9;
+    border-left-color: #666;
+  }
+
+  .victoryList li,
+  .locationList li {
+    background: #f5f5f5;
+  }
+
+  .number {
+    background: #666;
+    box-shadow: none;
+  }
+
+  .supportNote {
+    background: #f0f0f0;
+    border-color: #999;
+  }
+
+  /* Ensure no page breaks within sections */
+  .section {
+    page-break-inside: avoid;
+  }
+
+  /* Force page break between sides if needed */
+  .side:first-child {
+    page-break-after: auto;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 15px;
+  }
+
+  .twoColumn {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+}
