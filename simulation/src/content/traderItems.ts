@@ -20,7 +20,13 @@ export const TRADER_ITEMS: TraderItem[] = [
   {
     id: "backpack",
     name: "Backpack",
-    description: "When you lose a battle, you don't lose any resources.",
-    cost: 1,
+    description: "When you lose a battle against another player, you get to choose what resource they steal.",
+    cost: 2,
   },
+  {
+    id: "helmet1",
+    name: "Padded Helmet",
+    description: "When you lose a battle, you no longer get completely knocked out and may start at a claimed tile 1-3 steps away from your home tile.",
+    cost: 2,
+    },
 ]; 
