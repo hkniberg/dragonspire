@@ -86,9 +86,9 @@ export const EVENT_CARDS: EventCard[] = [
   // Tier 3 Event Cards
   {
     id: "curse-of-the-earth",
-    name: "Cursed Earth",
+    name: "Curse of the Earth",
     tier: 3,
-    description: "All players lose `−2 might`, as their **weapons** *rust and crumble*.",
+    description: "You may pay the Bogwitch `2x gold` to curse the lands. All players lose `−2 might`, as their **weapons** *rust and crumble*.",
     count: 1,
   },
   {
