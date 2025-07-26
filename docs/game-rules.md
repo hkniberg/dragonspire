@@ -16,9 +16,9 @@
 8. [Resources & Trading](#resources--trading)
 9. [Buildings](#buildings)
 10. [Special Locations](#special-locations)
-11. [Event Cards](#event-cards)
-12. [Fame](#fame)
-13. [Victory](#victory)
+    [Event Cards](#adventure-cards)
+11. [Fame](#fame)
+12. [Victory](#victory)
 
 ---
 
@@ -44,7 +44,7 @@ In Lords of Doomspire, you are a lord commanding knights from your island castle
 - 1 Plastic castle model, place in the center of your castle board.
 - 3 Knight figures per player.
 - 10 Flag tokens per player.
-- 2 boat figures per player, and 1 warship upgrade available per player.
+- 2 boat figures per player
 - 3 Knight inventory cards per player, to track items carried by each knight.
 - 1 cheat sheet per player, to track the rules.
 
@@ -88,9 +88,9 @@ The board is organized into 3 tiers. The outer two layers are Tier 1, the inner 
   - **Doomspire tile**: The ancient mountain where the great dragon rules. Defeat, impress, or bribe the dragon to win the game. This tile is one of the four hidden tiles in the middle of the board.
   - **Wolf Den tile**: These tiles start with a wolf monster already placed on them.
   - **Bear Cave tile**: Located in Tier 2 areas. When a bear cave tile is revealed through exploration, immediately place a bear monster on it.
-- **Resource tiles**: A resource tile provides specific types of resources such as food, wood, ore, or gold. A player must claim it first, and can then start harvesting resources in the same turn during the harvest phase. Starred resource tiles are strategically important, a player who owns all starred resource tiles wins the game if they visit the dragon and bribe it.
-- **Adventure tiles**: These tiles contain adventure cards such as monsters, events, and treasures. Any knight landing on an adventure tile must draw a card (if there are any cards left). When all adventure cards are done they tile is considered to be barren.
-- **Oasis tiles**: Similar to adventure tiles, these start with 2 adventure tokens. The key difference is that while regular adventure tiles never get restocked once depleted, oasis tiles can be restocked through certain event cards.
+- **Resource tiles**: A resource tile provides specific types of resources such as food, wood, ore, or gold. A player must claim it first, and can then start harvesting resources in the same turn during the harvest phase. Starred resource tiles are strategically important, a player who owns 4+ starred resource tiles can achieve economic victory by visiting the dragon.
+- **Adventure tiles**: These tiles contain adventure cards such as monsters, events, and treasures. Adventure tiles start with 2 adventure tokens, representing how many adventures are left on the tile. Any knight landing on an adventure tile must draw a card (if there are any cards left) and remove an adventure token. When all adventure tokens are gone the tile is considered to be barren.
+- **Oasis tiles**: A variant of adventure card. Works the same, the only difference is that while regular adventure tiles never get restocked once depleted, oasis tiles can be restocked through certain event cards.
 
 ### Ocean tiles
 
@@ -108,7 +108,7 @@ Each card has a biome printed on the back, giving a hint as to what type of enco
 
 Cards are organized by tier - so each of the three tiers has its own set of cards. Each tier is in turn randomly split into 3 decks.
 
-> Example: A player lands on a Tier 2 adventure tile. Is has 2 adventure counters left on it, so the player can carry out an adventure. He looks at the three piles of Tier 2 adventure cards, and sees the top card of pile 1 is a Plains card, the top card on pile 2 is also a Plains card, while the top card on pile 3 is a Mountain card. The player is hoping to find some ore, so he draws from pile 3.
+> Example: A player lands on a Tier 2 adventure tile. It has 2 adventure counters left on it, so the player can carry out an adventure. They look at the three piles of Tier 2 adventure cards, and see the top card of pile 1 is a Plains card, the top card on pile 2 is also a Plains card, while the top card on pile 3 is a Mountain card. The player is hoping to find some ore, so they draw from pile 3.
 
 If an adventure tile counter is reduced to 0 on a tile, then no more adventures are found there, so the tile is considered to be barren. Note that oasis tiles can be restocked through certain event cards, unlike regular adventure tiles.
 
@@ -194,8 +194,8 @@ Each action die can be used for ONE of the following:
 - If you end your movement in a tile with another knight, battle will ensue, unless it is a non-combat zone (such as the temple, trader, mercenary camp).
 - A knight cannot enter another player's home tile.
 - You can pass through other knights, but when passing another player's knight, they may choose to initiate combat, in which case your knight is forced to stop and fight and cannot pass through.
-- A knight can use multiple dice to move further in a single action, treating that as if it was a single dice roll.
-- Once a knight performs any tile action, they cannot move or do anything else that turn.
+- Once a knight performs any tile interaction (drawing cards, claiming tiles, using special locations, fighting monsters, etc), that knight cannot carry out any more actions or use any more dice that turn.
+- If a knight lands on a tile and doesn't interact with it, they can move again using a different die. If the card has an adventure token or a monster or another player, then the encounter is unavoidable.
 - The restrictions above also apply when a knight is transported by boat.
 
 **Tile Actions:**
@@ -248,7 +248,7 @@ Each action die can be used for ONE of the following:
 - If they flee, they return to their home tile and lose 1 fame (minimum 0).
 - If they fight, they roll a D3 and add their might to the score.
   - Knights or warships in adjacent tiles may choose to support the fight (regardless of player). If so, +1 might is added per supporting knight or warship.
-  - This decision is made after the dice roll. So a player can offer support, and then choose to betray their support after the dice roll.
+  - Support decisions must be announced before the dice roll.
   - A knight or warship can support any number of fights in one turn.
 - If the attack score is equal to or greater than the monster's might, they defeat the monster and gain the rewards printed on the card.
 - If the attack score is less than the monster's might, they lose and are chased back home. They must pay one resource of any type to heal up, or lose 1 fame (minimum 0) if they don't have any resources. Note that trade can happen at any point, so a player may beg another player to contribute resources, or offer to trade for them.
@@ -275,22 +275,26 @@ Each action die can be used for ONE of the following:
 
 ### Combat Bonuses
 
-- **Warships**: Upgraded boats (warships) provide +1 Might to any battle in a coastal area adjacent to their ocean zone
-- **Support**: Knights in adjacent tiles can support for +1 to roll (negotiate terms)
+The base attack value for a knight is D3 + Might, or 2 D3 when fighting another champion.
+Additional bonuses can be gained from:
+
+- **Adjacent Warships**: +1 to roll
+- **Adjacent Knights**: +1 to roll
+- **Items and followers**: Depends on the item or follower
 
 ### Special Combat Rules
 
-- **Dragon**: Has 8 + D3 Might (8 base + D3 roll, determined when revealed). Losing = knight is eaten (removed from game)
+- **Dragon**: Has 8 + D3 Might (8 base + D3 roll, determined when revealed). Losing = knight is eaten (removed from game). The player can choose whether to fight the dragon or not.
 
 ---
 
-## Knight Inventory & Items
+## Knight Inventory, Items & Followers
 
 ### Knight Inventory Cards
 
 - Each knight has an inventory card placed on the side of the board closest to the player
-- Items purchased from the trader or obtained via other means are placed on these cards
-- Each knight can carry at most **2 items** (the inventory card has 2 slots)
+- Items and followers are tracked on these cards
+- Each knight can carry at most **2 items** and have at most **2 followers**
 - When you recruit additional knights, each gets their own inventory card
 
 ### Managing Items
@@ -298,12 +302,23 @@ Each action die can be used for ONE of the following:
 - **Dropping Items**: A knight can drop an item at any time, placing it on the board in their current tile
 - **Picking Up Items**: Knights can pick up dropped items by ending their move in a tile containing items. You can use this to transfer items between your own knights.
 - **Item Markers**: When items are present in a tile, place the corresponding item marker token in that tile
+- **Losing Items**: When a knight is defeated in combat, the victor may choose to steal one item from the defeated knight's inventory
+
+### Managing Followers
+
+- **Dismissing Followers**: A knight can choose to dismiss a follower at any time (for example, to make space for a new follower). When dismissed, the follower is removed from the game permanently.
+- **Followers Cannot Be Stolen**: Unlike items, followers cannot be taken by other players in combat or any other way
+- **Follower Benefits**: Some followers can carry items for the knight, and many provide combat or other bonuses
 
 ### Acquiring Items
 
 - **Purchase**: Buy items from the trader using the trader item deck
 - **Loot**: Take items from defeated knights in combat
 - **Find**: Discover items through adventure cards and treasures
+
+### Acquiring Followers
+
+- **Adventure Cards**: Followers can only be obtained through adventure cards - they cannot be purchased or traded
 
 ---
 
@@ -330,10 +345,6 @@ Each action die can be used for ONE of the following:
 
 Knights protect all 4 adjacent tiles from blockade or conquering.
 
-### Trading
-
-Players may freely trade resources at any time
-
 ---
 
 ## Buildings
@@ -352,7 +363,7 @@ All castle buildings and projects require spending a die to construct (die value
 **Warship Upgrade**
 
 - **Cost**: 2 Wood, 1 Ore, 1 Gold
-- **Benefit**: Upgrades all your boats (current and future) to warships, which provide +1 Might to any battle in coastal areas adjacent to their ocean zone.
+- **Benefit**: Upgrades all your boats (current and future) to warships, which provide +1 Might to any battle in tiles adjacent to their current ocean zone.
 
 ### Standard Buildings
 
@@ -371,20 +382,20 @@ All castle buildings and projects require spending a die to construct (die value
 - **Cost**: 2 Wood, 2 Gold
 - **Benefit**: Gain additional boat (max 2 boats total)
 
-### Temple
+### Chapel
 
 - **Cost**: 3 Wood, 4 Gold
 - **Benefit**: Gain 3 Fame immediately
 
-### Monastery (Temple upgrade)
+### Monastery (Chapel upgrade)
 
 - **Cost**: 4 Wood, 5 Gold, 2 Ore
 - **Benefit**: Gain 5 Fame immediately
 
 ### Hire Knights
 
-- **2nd Knight**: 3 Food, 3 Gold, 1 Ore (gain 1 D3 die)
-- **3rd Knight**: 6 Food, 6 Gold, 3 Ore (gain 1 D3 die)
+- **2nd Knight**: 3 Food, 3 Gold, 1 Ore (gain 1 additional action die)
+- **3rd Knight**: 6 Food, 6 Gold, 3 Ore (gain 1 additional action die)
 
 ---
 
@@ -428,6 +439,14 @@ Multiple knights may occupy these tiles.
 
 ---
 
+## Adventure Cards
+
+Adventure cards are drawn when landing on adventure tiles or oasis tiles that have adventure tokens left. Each card is unique with specific instructions that must be followed immediately when drawn. Some cards have beneficial effects, while others present challenges or costs. Some can give your knight followers or items (see [Knight Inventory, Items & Followers](#knight-inventory-items--followers) for details on limits and management).
+
+When an event card is drawn, read and follow the instructions immediately before continuing with any other actions.
+
+---
+
 ## Fame
 
 Fame tracks your reputation and progress toward victory. Fame cannot go below 0.
@@ -437,7 +456,7 @@ Fame tracks your reputation and progress toward victory. Fame cannot go below 0.
 - Exploring new tiles: +1
 - Defeating monsters: Varies per monster card
 - Winning knight combat: +1
-- Building Temple: +3
+- Building Chapel: +3
 - Building Monastery: +5
 - Events and treasures: Varies
 
@@ -447,11 +466,6 @@ Fame tracks your reputation and progress toward victory. Fame cannot go below 0.
 - Inciting revolt: -1 (minimum 0)
 - Cannot pay healing cost: -1 (minimum 0)
 - Certain events: Varies (minimum 0)
-
-### Fame Minimum
-
-- Fame cannot go below 0
-- Temple can be used to sacrifice fame for might
 
 ---
 
