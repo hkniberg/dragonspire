@@ -24,9 +24,9 @@ export const TRADER_ITEMS: TraderItem[] = [
     cost: 2,
   },
   {
-    id: "helmet1",
+    id: "padded-helmet",
     name: "Padded Helmet",
     description: "When you lose a battle, you no longer get completely knocked out and may start at a claimed tile 1-3 steps away from your home tile.",
     cost: 2,
-    },
+  },
 ]; 
