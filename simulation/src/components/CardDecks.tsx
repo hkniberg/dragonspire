@@ -2,14 +2,17 @@ import { useEffect, useState } from "react";
 import { ENCOUNTERS } from "../content/encounterCards";
 import { EVENT_CARDS } from "../content/eventCards";
 import { MONSTER_CARDS } from "../content/monsterCards";
+import { TRADER_ITEMS } from "../content/traderItems";
 import { TREASURE_CARDS } from "../content/treasureCards";
 import { GameMaster } from "../engine/GameMaster";
+import { getTraderCards } from "../lib/cards";
 import { TileTier } from "../lib/types";
 import {
   CardComponent,
   formatEncounterContent,
   formatEventContent,
   formatMonsterContent,
+  formatTraderContent,
   formatTreasureContent,
   getBorderColor,
 } from "./cards/Card";
@@ -29,25 +32,31 @@ interface ModalCardData {
   deckSize: number;
 }
 
+interface TraderModalData {
+  isTraderDeck: true;
+  traderCards: any[];
+}
+
 export const CardDecks = ({ gameSession }: CardDecksProps) => {
   const [modalCard, setModalCard] = useState<ModalCardData | null>(null);
+  const [traderModal, setTraderModal] = useState<TraderModalData | null>(null);
 
   // Close modal on ESC key press
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && modalCard) {
+      if (event.key === "Escape" && (modalCard || traderModal)) {
         closeModal();
       }
     };
 
-    if (modalCard) {
+    if (modalCard || traderModal) {
       document.addEventListener("keydown", handleKeyDown);
     }
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [modalCard]);
+  }, [modalCard, traderModal]);
 
   if (!gameSession) {
     return (
@@ -123,8 +132,17 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
     });
   };
 
+  const handleTraderDeckClick = () => {
+    const traderCards = getTraderCards();
+    setTraderModal({
+      isTraderDeck: true,
+      traderCards,
+    });
+  };
+
   const closeModal = () => {
     setModalCard(null);
+    setTraderModal(null);
   };
 
   const renderCard = (tier: TileTier, deckNumber: 1 | 2 | 3) => {
@@ -181,6 +199,53 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
     );
   };
 
+  const renderTraderDeck = () => {
+    const traderCards = getTraderCards();
+
+    return (
+      <div
+        style={{
+          position: "relative",
+          cursor: "pointer",
+          transition: "transform 0.2s ease",
+        }}
+        onClick={handleTraderDeckClick}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "scale(1.05)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "scale(1)";
+        }}
+        title={`Click to view all trader items (${traderCards.length} cards)`}
+      >
+        <CardComponent
+          showBackside={true}
+          backsideImageUrl="/cardBacksides/trader.png"
+          backsideLabel="TRADER"
+          borderColor="#FFD700"
+          name="Trader"
+          title="Trader Items"
+        />
+        {/* Deck counter */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "4px",
+            right: "4px",
+            backgroundColor: "rgba(0, 0, 0, 0.4)",
+            color: "white",
+            fontSize: "20px",
+            padding: "6px 12px",
+            borderRadius: "6px",
+            fontWeight: "bold",
+          }}
+        >
+          {traderCards.length}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <div
@@ -202,6 +267,7 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
             transformOrigin: "center",
           }}
         >
+          {/* Adventure card decks */}
           {[1, 2, 3].map((tier) => {
             const gameDecks = gameSession.getGameDecks();
             const deckSizes = gameDecks.getDeckSizes(tier as TileTier);
@@ -225,10 +291,13 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
               </div>
             );
           })}
+
+          {/* Trader deck */}
+          <div style={{ marginLeft: "20px" }}>{renderTraderDeck()}</div>
         </div>
       </div>
 
-      {/* Modal */}
+      {/* Single card modal */}
       {modalCard && (
         <div
           style={{
@@ -306,6 +375,104 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
               }}
             >
               Tier {modalCard.tier} - Deck {modalCard.deckNumber} - {modalCard.deckSize} cards remaining
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Trader items modal */}
+      {traderModal && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.8)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+            overflow: "auto",
+          }}
+          onClick={closeModal}
+        >
+          <div
+            style={{
+              position: "relative",
+              maxWidth: "95vw",
+              maxHeight: "95vh",
+              overflow: "auto",
+              padding: "20px",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={closeModal}
+              style={{
+                position: "fixed",
+                top: "20px",
+                right: "20px",
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                backgroundColor: "#ff4444",
+                color: "white",
+                border: "none",
+                fontSize: "20px",
+                fontWeight: "bold",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1001,
+              }}
+              title="Close"
+            >
+              ×
+            </button>
+
+            {/* Title */}
+            <div
+              style={{
+                textAlign: "center",
+                color: "white",
+                fontSize: "24px",
+                fontWeight: "bold",
+                marginBottom: "20px",
+              }}
+            >
+              Trader Deck ({traderModal.traderCards.length} cards)
+            </div>
+
+            {/* Cards grid */}
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "15px",
+                justifyContent: "center",
+                alignItems: "flex-start",
+              }}
+            >
+              {traderModal.traderCards.map((traderCard, index) => {
+                const traderItem = TRADER_ITEMS.find((item) => item.id === traderCard.id);
+                if (!traderItem) return null;
+
+                return (
+                  <CardComponent
+                    key={`${traderCard.id}-${index}`}
+                    borderColor="#FFD700"
+                    name={traderItem.name}
+                    imageUrl={`/traderItems/${traderItem.id}.png`}
+                    content={formatTraderContent(traderItem)}
+                    bottomTag="Trader Item"
+                    title={`${traderItem.name} - ${traderItem.cost} gold`}
+                  />
+                );
+              })}
             </div>
           </div>
         </div>

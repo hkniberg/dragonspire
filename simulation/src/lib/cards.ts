@@ -329,9 +329,9 @@ function buildCardDeck(): Card[] {
 function buildTraderDeck(): TraderCard[] {
   const deck = new TraderDeck();
 
-  // Add 2 of each trader item
+  // Add the specified count of each trader item
   TRADER_ITEMS.forEach((trader) => {
-    deck.addCard(2, {
+    deck.addCard(trader.count, {
       type: "trader",
       id: trader.id,
     });
