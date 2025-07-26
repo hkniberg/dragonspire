@@ -4,14 +4,13 @@ A strategic board game design project with digital simulation for playtesting an
 
 ## What is this?
 
-**Lords of Doomspire** is a 4-player strategic board game where players command champions to explore a dangerous island, gather resources, and ultimately defeat a dragon. This repository contains the complete game design and a TypeScript simulation system that supports both web UI and headless CLI execution for AI-powered playtesting.
+**Lords of Doomspire** is a 4-player strategic board game where players command knights to explore a dangerous island, gather resources, and ultimately defeat a dragon. This repository contains the complete game design and a TypeScript simulation system that supports both web UI and headless CLI execution for AI-powered playtesting, as well as asset generation and printing.
 
 ## Key Documentation
 
 - **[Game Overview](docs/game-overview.md)** - Core game concept and mechanics
 - **[Game Rules](docs/game-rules.md)** - Complete rulebook (source of truth)
-- **[Architecture](docs/architecture.md)** - Simulation system design
-- **[Development Plan](docs/plan.md)** - Current progress and roadmap
+- **[Player Cheat Sheet](docs/cheat-sheet.md)** - Quick reference for gameplay
 
 ## Quick Start
 
@@ -58,3 +57,31 @@ The CLI mode supports automated playtesting with AI players for game balance ana
 ## Live Demo
 
 The simulation is deployed at: https://doomspire.vercel.app/
+
+## Asset Generation
+
+The project includes AI-powered tools for generating game assets in the `assetgenerator/` directory. See **[Asset Generator README](assetgenerator/README.md)** for detailed setup and usage instructions.
+
+- **Monster Images**: Generate artwork for creature cards using AI
+- **Event Images**: Create illustrations for event cards
+- **Treasure Images**: Generate artwork for treasure items
+- **Encounter Images**: Create character portraits for encounters
+- **Trader Item Images**: Generate equipment and item artwork
+
+### Using the Asset Generator
+
+```bash
+cd assetgenerator
+npm install
+
+# Generate images for specific card types
+node generate-monster-images.js
+node generate-event-images.js
+node generate-treasure-images.js
+node generate-encounter-images.js
+node generate-traderItem-images.js
+```
+
+The generators use Claude AI to create detailed image prompts based on game content, then generate artwork using DALL-E. All generated assets are saved to the `output/` directory.
+
+See `assetgenerator/README.md` for detailed setup instructions and API key requirements.

@@ -27,7 +27,7 @@
 In Lords of Doomspire, you are a lord commanding knights from your island castle to explore a dangerous neighboring island. Your goal is to accumulate fame and resources while ultimately seeking to reach the dragon at Doomspire, the ancient mountain where the great dragon rules.
 
 **Players:** 4  
-**Playing Time:** 60-90 minutes  
+**Playing Time:** 90-120 minutes  
 **Victory:** Multiple paths to victory - defeat the dragon, achieve diplomatic victory with 12 Fame, claim economic dominance with 4+ starred resource tiles, or demonstrate wealth with 20+ Gold
 
 ---
@@ -36,7 +36,7 @@ In Lords of Doomspire, you are a lord commanding knights from your island castle
 
 ### Dice
 
-- 2 D3 dice per player (six-sided dice showing 1, 1, 2, 2, 3, 3)
+- 4 D3 dice per player (six-sided dice showing 1, 1, 2, 2, 3, 3)
 
 ### Player Components (per player)
 

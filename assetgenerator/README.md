@@ -20,6 +20,14 @@ Advanced script that generates event card images by loading events from `eventCa
 
 Advanced script that generates treasure card images by loading treasures from `treasureCards.ts`, using both the treasure name and description to create detailed prompts with Claude, then generating images with DALL-E.
 
+### 5. Encounter Image Generator (`generate-encounter-images.js`)
+
+Advanced script that generates encounter card images by loading encounters from `encounterCards.ts`, using both the encounter name and description to create detailed prompts with Claude, then generating images with DALL-E.
+
+### 6. Trader Item Image Generator (`generate-traderItem-images.js`)
+
+Advanced script that generates trader item card images by loading trader items from `traderItems.ts`, using both the item name and description to create detailed prompts with Claude, then generating images with DALL-E.
+
 ## Setup
 
 1. Install dependencies:
@@ -117,6 +125,54 @@ node generate-treasure-images.js --all
 4. Uses OpenAI DALL-E to generate square images (1024x1024)
 5. Saves to `simulation/public/treasures/{treasure-name}.png`
 
+### Encounter Image Generator
+
+```bash
+node generate-encounter-images.js "Encounter Name"
+node generate-encounter-images.js --all    # Generate all missing encounters
+```
+
+**Examples:**
+
+```bash
+node generate-encounter-images.js "Angry dog"
+node generate-encounter-images.js "Proud Mercenary"
+node generate-encounter-images.js "Witch"
+node generate-encounter-images.js --all
+```
+
+**Process:**
+
+1. Loads encounter data from `simulation/src/content/encounterCards.ts`
+2. Uses Claude AI to create detailed prompts based on encounter name, description, and tier
+3. Prints the generated prompt to console
+4. Uses OpenAI DALL-E to generate square images (1024x1024)
+5. Saves to `simulation/public/encounters/{encounter-name}.png`
+
+### Trader Item Image Generator
+
+```bash
+node generate-traderItem-images.js "Item Name"
+node generate-traderItem-images.js --all    # Generate all missing trader items
+```
+
+**Examples:**
+
+```bash
+node generate-traderItem-images.js "Spear"
+node generate-traderItem-images.js "Padded Helmet"
+node generate-traderItem-images.js "Backpack"
+node generate-traderItem-images.js --all
+```
+
+**Process:**
+
+1. Loads trader item data from `simulation/src/content/traderItems.ts`
+2. Uses Claude AI to create detailed prompts based on item name, description, and cost
+3. Prints the generated prompt to console
+4. Uses OpenAI DALL-E to generate square images (1024x1024)
+5. Saves to `simulation/public/traderItems/{item-name}.png`
+
 ### Examples for Game Assets
 
 #### Basic Generator
@@ -162,6 +218,26 @@ node generate-treasure-images.js --all
 node generate-treasure-images.js "Broken Shield"
 ```
 
+#### Encounter Generator
+
+```bash
+# Generate all missing encounter cards for the game
+node generate-encounter-images.js --all
+
+# Generate specific encounter
+node generate-encounter-images.js "Angry dog"
+```
+
+#### Trader Item Generator
+
+```bash
+# Generate all missing trader item cards for the game
+node generate-traderItem-images.js --all
+
+# Generate specific trader item
+node generate-traderItem-images.js "Spear"
+```
+
 ## Files
 
 - `image-style.md` - Style template used by the monster generator
@@ -174,11 +250,13 @@ node generate-treasure-images.js "Broken Shield"
 - **Monster generator**: Square images (1024x1024) saved to `simulation/public/monsters/` with kebab-case filenames
 - **Event generator**: Square images (1024x1024) saved to `simulation/public/events/` with kebab-case filenames
 - **Treasure generator**: Square images (1024x1024) saved to `simulation/public/treasures/` with kebab-case filenames
+- **Encounter generator**: Square images (1024x1024) saved to `simulation/public/encounters/` with kebab-case filenames
+- **Trader item generator**: Square images (1024x1024) saved to `simulation/public/traderItems/` with kebab-case filenames
 - All images use "medium" quality for balance between speed and quality
 
 ## Requirements
 
 - Node.js 18+
 - OpenAI API key with access to DALL-E
-- Anthropic API key with access to Claude (for monster generator only)
+- Anthropic API key with access to Claude (for monster, event, treasure, encounter, and trader item generators)
 - Internet connection
