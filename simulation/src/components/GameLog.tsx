@@ -12,7 +12,53 @@ interface GroupedLogEntry {
   entries: GameLogEntry[];
 }
 
-// Helper function to group log entries by round
+interface PlayerGroupedEntry {
+  round: number;
+  playerGroups: {
+    playerName: string;
+    entries: GameLogEntry[];
+  }[];
+}
+
+// Helper function to group log entries by round and then by player
+function groupGameLogEntriesByRoundAndPlayer(entries: GameLogEntry[]): PlayerGroupedEntry[] {
+  const roundGroups = entries.reduce(
+    (acc, entry) => {
+      if (!acc[entry.round]) {
+        acc[entry.round] = [];
+      }
+      acc[entry.round].push(entry);
+      return acc;
+    },
+    {} as Record<number, GameLogEntry[]>,
+  );
+
+  return Object.entries(roundGroups)
+    .map(([round, roundEntries]) => {
+      // Group entries within the round by player
+      const playerGroups = roundEntries.reduce(
+        (acc, entry) => {
+          if (!acc[entry.playerName]) {
+            acc[entry.playerName] = [];
+          }
+          acc[entry.playerName].push(entry);
+          return acc;
+        },
+        {} as Record<string, GameLogEntry[]>,
+      );
+
+      return {
+        round: parseInt(round),
+        playerGroups: Object.entries(playerGroups).map(([playerName, entries]) => ({
+          playerName,
+          entries,
+        })),
+      };
+    })
+    .sort((a, b) => a.round - b.round);
+}
+
+// Helper function to group log entries by round (for markdown export)
 function groupGameLogEntriesByRound(entries: GameLogEntry[]): GroupedLogEntry[] {
   const grouped = entries.reduce(
     (acc, entry) => {
@@ -30,7 +76,13 @@ function groupGameLogEntriesByRound(entries: GameLogEntry[]): GroupedLogEntry[] 
     .sort((a, b) => a.round - b.round);
 }
 
-// Helper function to format a single log entry
+// Helper function to format a single log entry without player name
+function formatGameLogEntryContent(entry: GameLogEntry): string {
+  const typeEmoji = getEntryEmoji(entry.type);
+  return `${typeEmoji} ${entry.content}`;
+}
+
+// Helper function to format a single log entry with player name (for markdown)
 function formatGameLogEntry(entry: GameLogEntry): string {
   const typeEmoji = getEntryEmoji(entry.type);
   return `${typeEmoji} ${entry.playerName}: ${entry.content}`;
@@ -165,7 +217,7 @@ export const GameLog: React.FC<GameLogProps> = ({ gameLog, isVisible }) => {
     zIndex: isMaximized ? 1000 : "auto",
   };
 
-  const groupedEntries = groupGameLogEntriesByRound(gameLog);
+  const groupedEntries = groupGameLogEntriesByRoundAndPlayer(gameLog);
 
   return (
     <div style={containerStyle}>
@@ -218,7 +270,7 @@ export const GameLog: React.FC<GameLogProps> = ({ gameLog, isVisible }) => {
           lineHeight: "1.4",
         }}
       >
-        {groupedEntries.map(({ round, entries }) => (
+        {groupedEntries.map(({ round, playerGroups }) => (
           <div
             key={round}
             style={{
@@ -239,23 +291,37 @@ export const GameLog: React.FC<GameLogProps> = ({ gameLog, isVisible }) => {
             >
               🎲 Round {round}
             </div>
-            {entries.map((entry, entryIndex) => {
-              const formattedEntry = formatGameLogEntry(entry);
-
-              return (
+            {playerGroups.map(({ playerName, entries }) => (
+              <div key={playerName} style={{ marginBottom: "8px" }}>
                 <div
-                  key={entryIndex}
                   style={{
-                    marginBottom: "2px",
-                    color: getEntryColor(entry.type),
-                    fontStyle: entry.type === "assessment" ? "italic" : "normal",
-                    fontWeight: entry.type === "system" ? "bold" : "normal",
+                    fontWeight: "bold",
+                    color: "#495057",
+                    marginBottom: "4px",
+                    fontSize: "13px",
                   }}
                 >
-                  {formattedEntry}
+                  {playerName}:
                 </div>
-              );
-            })}
+                {entries.map((entry, entryIndex) => {
+                  const formattedEntry = formatGameLogEntryContent(entry);
+                  return (
+                    <div
+                      key={entryIndex}
+                      style={{
+                        marginBottom: "2px",
+                        marginLeft: "16px",
+                        color: getEntryColor(entry.type),
+                        fontStyle: entry.type === "assessment" ? "italic" : "normal",
+                        fontWeight: entry.type === "system" ? "bold" : "normal",
+                      }}
+                    >
+                      {formattedEntry}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         ))}
       </div>
