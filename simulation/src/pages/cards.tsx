@@ -4,19 +4,29 @@ import {
   formatEncounterContent,
   formatEventContent,
   formatMonsterContent,
+  formatTraderContent,
   formatTreasureContent,
   getBorderColor,
 } from "../components/cards/Card";
 import { ENCOUNTERS } from "../content/encounterCards";
 import { EVENT_CARDS } from "../content/eventCards";
 import { MONSTER_CARDS } from "../content/monsterCards";
+import { TRADER_ITEMS } from "../content/traderItems";
 import { TREASURE_CARDS } from "../content/treasureCards";
 import { Card, CARDS, CardType } from "../lib/cards";
 
-// Extended card type that includes the original card data for rendering
-type ExtendedCard = Card & {
+// Extended card type that includes trader cards and the original card data for rendering
+type ExtendedCardType = CardType | "trader";
+type ExtendedCard = (
+  | Card
+  | {
+      type: "trader";
+      tier: number;
+      biome: "trader";
+      id: string;
+    }
+) & {
   originalData: any;
-  id: string;
 };
 
 export default function CardsPage() {
@@ -24,37 +34,48 @@ export default function CardsPage() {
   const [compactMode, setCompactMode] = useState(false);
   const [hideDuplicates, setHideDuplicates] = useState(false);
   const [individualFlips, setIndividualFlips] = useState<Record<string, boolean>>({});
-  const [cardTypeFilter, setCardTypeFilter] = useState<CardType | "all">("all");
+  const [cardTypeFilter, setCardTypeFilter] = useState<ExtendedCardType | "all">("all");
   const [tierFilter, setTierFilter] = useState<number | "all">("all");
   const [biomeFilter, setBiomeFilter] = useState<string | "all">("all");
 
   // Create extended card array by looking up original data
-  const allCards: ExtendedCard[] = CARDS.map((card, index) => {
-    let originalData;
+  const allCards: ExtendedCard[] = [
+    // Regular cards from CARDS array
+    ...CARDS.map((card, index) => {
+      let originalData;
 
-    switch (card.type) {
-      case "monster":
-        originalData = MONSTER_CARDS.find((m) => m.id === card.id);
-        break;
-      case "event":
-        originalData = EVENT_CARDS.find((e) => e.id === card.id);
-        break;
-      case "treasure":
-        originalData = TREASURE_CARDS.find((t) => t.id === card.id);
-        break;
-      case "encounter":
-        originalData = ENCOUNTERS.find((e) => e.id === card.id);
-        break;
-      default:
-        originalData = null;
-    }
+      switch (card.type) {
+        case "monster":
+          originalData = MONSTER_CARDS.find((m) => m.id === card.id);
+          break;
+        case "event":
+          originalData = EVENT_CARDS.find((e) => e.id === card.id);
+          break;
+        case "treasure":
+          originalData = TREASURE_CARDS.find((t) => t.id === card.id);
+          break;
+        case "encounter":
+          originalData = ENCOUNTERS.find((e) => e.id === card.id);
+          break;
+        default:
+          originalData = null;
+      }
 
-    return {
-      ...card,
-      originalData,
-      id: `${card.type}-${index}`,
-    };
-  });
+      return {
+        ...card,
+        originalData,
+        id: `${card.type}-${index}`,
+      };
+    }),
+    // Add trader items as cards
+    ...TRADER_ITEMS.map((trader, index) => ({
+      type: "trader" as const,
+      tier: 1, // Traders are always tier 1
+      biome: "trader" as const, // Special biome for traders
+      id: trader.id,
+      originalData: trader,
+    })),
+  ];
 
   // Apply hide duplicates filter first, then other filters
   let cardsToShow = allCards;
@@ -112,7 +133,13 @@ export default function CardsPage() {
 
     if (isCardFlipped(card.id)) {
       return (
-        <CardComponent {...commonProps} showBackside={true} backsideImageUrl={`/cardBacksides/${card.biome}.png`} />
+        <CardComponent
+          {...commonProps}
+          showBackside={true}
+          backsideImageUrl={`/cardBacksides/${card.type === "trader" ? "trader" : card.biome}.png`}
+          backsideLabel={card.type === "trader" ? "TRADER" : "ADVENTURE"}
+          showTier={card.type !== "trader"}
+        />
       );
     }
 
@@ -150,6 +177,16 @@ export default function CardsPage() {
             imageUrl={`/encounters/${card.originalData.id}.png`}
             content={formatEncounterContent(card.originalData)}
             bottomTag={card.originalData.follower ? "Follower" : undefined}
+          />
+        );
+      case "trader":
+        return (
+          <CardComponent
+            {...commonProps}
+            imageUrl={`/traderItems/${card.originalData.id}.png`}
+            content={formatTraderContent(card.originalData)}
+            contentFontSize="12px"
+            bottomTag="Item"
           />
         );
       default:
@@ -196,7 +233,7 @@ export default function CardsPage() {
           <label style={{ fontWeight: "bold", color: "#333" }}>Card Type:</label>
           <select
             value={cardTypeFilter}
-            onChange={(e) => setCardTypeFilter(e.target.value as CardType | "all")}
+            onChange={(e) => setCardTypeFilter(e.target.value as ExtendedCardType | "all")}
             style={{
               padding: "8px 12px",
               borderRadius: "6px",
@@ -210,6 +247,7 @@ export default function CardsPage() {
             <option value="event">Events</option>
             <option value="treasure">Treasures</option>
             <option value="encounter">Encounters</option>
+            <option value="trader">Traders</option>
           </select>
         </div>
 
@@ -395,6 +433,7 @@ export default function CardsPage() {
               <div>Events: {allCards.filter((c) => c.type === "event").length} cards</div>
               <div>Treasures: {allCards.filter((c) => c.type === "treasure").length} cards</div>
               <div>Encounters: {allCards.filter((c) => c.type === "encounter").length} cards</div>
+              <div>Traders: {allCards.filter((c) => c.type === "trader").length} cards</div>
             </div>
           </div>
           <div>

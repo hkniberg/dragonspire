@@ -27,6 +27,11 @@ export const formatTreasureContent = (treasure: any): string => {
   return treasure.description;
 };
 
+export const formatTraderContent = (trader: any): string => {
+  return `**Cost:** ${trader.cost} Gold  
+${trader.description}`;
+};
+
 // Helper function to get border color for each card type
 export const getBorderColor = (cardType: string): string => {
   switch (cardType) {
@@ -38,6 +43,8 @@ export const getBorderColor = (cardType: string): string => {
       return "#4B0082"; // purple
     case "treasure":
       return "#8B4513"; // brown
+    case "trader":
+      return "#FFD700"; // gold
     default:
       return "#666666"; // gray
   }
@@ -48,6 +55,8 @@ interface CardProps {
   compactMode?: boolean;
   tier?: number;
   backsideImageUrl?: string; // for backside
+  backsideLabel?: string; // custom label for backside (defaults to "ADVENTURE")
+  showTier?: boolean; // whether to show tier circle on backside (defaults to true)
   borderColor: string;
   imageUrl?: string; // for frontside
   name?: string; // for frontside
@@ -63,6 +72,8 @@ export const CardComponent = ({
   compactMode = false,
   tier,
   backsideImageUrl,
+  backsideLabel = "ADVENTURE",
+  showTier = true,
   borderColor,
   imageUrl,
   name,
@@ -124,9 +135,9 @@ export const CardComponent = ({
             textShadow: "1px 1px 2px rgba(255, 255, 255, 0.8)",
           }}
         >
-          ADVENTURE
+          {backsideLabel}
         </div>
-        {tier && (
+        {showTier && tier && (
           <div
             style={{
               width: "40px",
