@@ -24,10 +24,16 @@ export function handleSuddenStorm(
   const movedBoats: string[] = [];
   for (const player of gameState.players) {
     for (const boat of player.boats) {
+      const originalPosition = boat.position; // Store original position
       const newPosition = getAdjacentOceanPosition(boat.position);
       boat.position = newPosition;
-      movedBoats.push(`${player.name}'s boat moved to ${newPosition}`);
-      logFn("event", `${player.name}'s boat moved from ocean to ${newPosition}`);
+
+      // Determine boat identifier for logging
+      const boatIdentifier = player.boats.length > 1 ? ` ${boat.id}` : '';
+      const logMessage = `${player.name}'s boat${boatIdentifier} moved from ${originalPosition} to ${newPosition}`;
+
+      movedBoats.push(logMessage);
+      logFn("event", logMessage);
     }
   }
 
