@@ -80,19 +80,19 @@ export const GameBoard = ({
       <div
         style={{
           position: "relative",
-          width: "1280px",
-          height: "1280px",
+          width: "1200px",
+          height: "1200px",
         }}
       >
         {/* Ocean layer - 2x2 grid */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(2, 640px)",
-            gridTemplateRows: "repeat(2, 640px)",
+            gridTemplateColumns: "repeat(2, 600px)",
+            gridTemplateRows: "repeat(2, 600px)",
             gap: "0px",
-            width: "1280px",
-            height: "1280px",
+            width: "1200px",
+            height: "1200px",
           }}
         >
           {oceanZones.map((zone) => (

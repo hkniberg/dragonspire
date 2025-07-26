@@ -168,6 +168,19 @@ export class GameDecks {
 
     return biomes as [BiomeType | null, BiomeType | null, BiomeType | null];
   }
+
+  peekTopCard(tier: TileTier, deckNumber: 1 | 2 | 3): Card | undefined {
+    const deckIndex = deckNumber - 1; // Convert 1,2,3 to 0,1,2
+    return this.decks[tier][deckIndex].peekTop();
+  }
+
+  getDeckSizes(tier: TileTier): [number, number, number] {
+    return [
+      this.decks[tier][0].size(),
+      this.decks[tier][1].size(),
+      this.decks[tier][2].size()
+    ];
+  }
 }
 
 // Helper function to randomly assign a biome

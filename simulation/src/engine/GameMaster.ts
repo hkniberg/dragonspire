@@ -348,6 +348,13 @@ export class GameMaster {
     this.gameLog.push(entry);
   }
 
+  /**
+ * Get the game decks for UI display
+ */
+  public getGameDecks(): GameDecks {
+    return this.gameDecks;
+  }
+
   private endGame(winnerName?: string, condition?: string): void {
     this.masterState = "finished";
 

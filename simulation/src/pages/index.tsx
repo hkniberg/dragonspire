@@ -3,6 +3,7 @@ import { Claude } from "@/llm/claude";
 import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
 import { ApiKeyModal } from "../components/ApiKeyModal";
+import { CardDecks } from "../components/CardDecks";
 import { ControlPanel } from "../components/ControlPanel";
 import { GameBoard } from "../components/GameBoard";
 import { GameLog } from "../components/GameLog";
@@ -590,6 +591,13 @@ export default function GameSimulation() {
 
         {/* Action Log */}
         <GameLog gameLog={actionLog} isVisible={showActionLog} />
+
+        {/* Card Decks */}
+        {gameState && (
+          <div style={{ marginTop: "20px" }}>
+            <CardDecks gameSession={gameSession} />
+          </div>
+        )}
 
         {/* Game Board */}
         {gameState ? (

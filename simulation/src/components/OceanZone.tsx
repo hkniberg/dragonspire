@@ -22,8 +22,8 @@ const getBoatPosition = (zonePosition: string, boatIndex: number, boatId: number
   const randomX = (((seed * 9301) % 233280) / 233280) * 10 - 5; // ±5px variation
   const randomY = (((seed * 7919) % 233280) / 233280) * 10 - 5; // ±5px variation
 
-  // Base spacing between boats - calculated to fit 5x5 grid in 640px ocean tile
-  const spacing = 135; // 540px usable space ÷ 4 intervals = 135px
+  // Base spacing between boats - calculated to fit 5x5 grid in 600px ocean tile
+  const spacing = 125; // 500px usable space ÷ 4 intervals = 125px
 
   // Calculate grid position based on boat index using 5x5 grid
   const getGridPosition = (index: number, zonePos: string): { gridX: number; gridY: number } => {
@@ -161,8 +161,8 @@ export const OceanZoneComponent = ({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        height: "640px",
-        width: "640px",
+        height: "600px",
+        width: "600px",
         fontSize: "32px",
         fontWeight: "bold",
         border: "2px solid #4682B4",
@@ -356,7 +356,7 @@ export const OceanZoneComponent = ({
         (() => {
           // Determine corner position based on zone
           const getCornerPosition = (zonePosition: string) => {
-            // Ocean tile is 640x640, we want 5x5 grid centered with 135px spacing
+            // Ocean tile is 600x600, we want 5x5 grid centered with 125px spacing
             // Grid starts at 50px from edge, accounting for 96px boat size
             const gridStart = 50;
             const boatSize = 96;
@@ -373,19 +373,19 @@ export const OceanZoneComponent = ({
                 // Grid position (0,4) - start at top-right of grid
                 return {
                   top: `${gridStart - halfBoat}px`,
-                  left: `${gridStart + 4 * 135 - halfBoat}px`,
+                  left: `${gridStart + 4 * 125 - halfBoat}px`,
                 };
               case "southwest":
                 // Grid position (4,0) - start at bottom-left of grid
                 return {
-                  top: `${gridStart + 4 * 135 - halfBoat}px`,
+                  top: `${gridStart + 4 * 125 - halfBoat}px`,
                   left: `${gridStart - halfBoat}px`,
                 };
               case "southeast":
                 // Grid position (4,4) - start at bottom-right of grid
                 return {
-                  top: `${gridStart + 4 * 135 - halfBoat}px`,
-                  left: `${gridStart + 4 * 135 - halfBoat}px`,
+                  top: `${gridStart + 4 * 125 - halfBoat}px`,
+                  left: `${gridStart + 4 * 125 - halfBoat}px`,
                 };
               default:
                 return { top: `${gridStart}px`, left: `${gridStart}px` };
