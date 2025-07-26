@@ -146,6 +146,7 @@ export default function PrintCards() {
             imageUrl={`/traderItems/${card.originalData.id}.png`}
             content={formatTraderContent(card.originalData)}
             bottomTag="Item"
+            contentFontSize="10px"
             printMode={true}
           />
         );

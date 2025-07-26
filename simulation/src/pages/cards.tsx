@@ -185,7 +185,7 @@ export default function CardsPage() {
             {...commonProps}
             imageUrl={`/traderItems/${card.originalData.id}.png`}
             content={formatTraderContent(card.originalData)}
-            contentFontSize="12px"
+            contentFontSize="10px"
             bottomTag="Item"
           />
         );
