@@ -1,18 +1,18 @@
 import Head from "next/head";
 import React from "react";
 import {
-  AdventureCard,
+  CardComponent,
   formatEncounterContent,
   formatEventContent,
   formatMonsterContent,
   formatTreasureContent,
   getBorderColor,
-} from "../../components/cards/AdventureCard";
+} from "../../components/cards/Card";
 import { ENCOUNTERS } from "../../content/encounterCards";
 import { EVENT_CARDS } from "../../content/eventCards";
 import { MONSTER_CARDS } from "../../content/monsterCards";
 import { TREASURE_CARDS } from "../../content/treasureCards";
-import { CARDS, Card } from "../../lib/cards";
+import { Card, CARDS } from "../../lib/cards";
 
 // Extended card type that includes the original card data for rendering
 type ExtendedCard = Card & {
@@ -71,10 +71,10 @@ export default function PrintCards() {
 
     if (isBackside) {
       return (
-        <AdventureCard
+        <CardComponent
           {...commonProps}
-          upsideDown={true}
-          biome={card.biome}
+          showBackside={true}
+          backsideImageUrl={`/cardBacksides/${card.biome}.png`}
           printMode={true}
         />
       );
@@ -83,7 +83,7 @@ export default function PrintCards() {
     switch (card.type) {
       case "monster":
         return (
-          <AdventureCard
+          <CardComponent
             {...commonProps}
             imageUrl={`/monsters/${card.originalData.id}.png`}
             content={formatMonsterContent(card.originalData)}
@@ -93,7 +93,7 @@ export default function PrintCards() {
         );
       case "event":
         return (
-          <AdventureCard
+          <CardComponent
             {...commonProps}
             imageUrl={`/events/${card.originalData.id}.png`}
             content={formatEventContent(card.originalData)}
@@ -102,7 +102,7 @@ export default function PrintCards() {
         );
       case "treasure":
         return (
-          <AdventureCard
+          <CardComponent
             {...commonProps}
             imageUrl={`/treasures/${card.originalData.id}.png`}
             content={formatTreasureContent(card.originalData)}
@@ -112,7 +112,7 @@ export default function PrintCards() {
         );
       case "encounter":
         return (
-          <AdventureCard
+          <CardComponent
             {...commonProps}
             imageUrl={`/encounters/${card.originalData.id}.png`}
             content={formatEncounterContent(card.originalData)}
@@ -212,10 +212,7 @@ export default function PrintCards() {
         }
       `}</style>
 
-      <div
-        className="outer-container"
-        style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}
-      >
+      <div className="outer-container" style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
         <button className="print-button" onClick={() => window.print()}>
           📄 Print / Save as PDF
         </button>
@@ -259,10 +256,7 @@ export default function PrintCards() {
                     const mirroredCards = [];
                     for (let row = 0; row < 3; row++) {
                       const rowStart = row * 3;
-                      const rowCards = backPageCards.slice(
-                        rowStart,
-                        rowStart + 3
-                      );
+                      const rowCards = backPageCards.slice(rowStart, rowStart + 3);
                       // Reverse the order within each row
                       mirroredCards.push(...rowCards.reverse());
                     }

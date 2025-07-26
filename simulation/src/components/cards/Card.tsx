@@ -3,7 +3,6 @@ import ReactMarkdown from "react-markdown";
 import {
   CARD_HEIGHT,
   CARD_WIDTH,
-  getBiomeDisplayName,
   getTierBackgroundColor,
   getTierDisplayText,
   getTierSolidColor,
@@ -44,11 +43,11 @@ export const getBorderColor = (cardType: string): string => {
   }
 };
 
-interface AdventureCardProps {
-  upsideDown?: boolean;
+interface CardProps {
+  showBackside?: boolean;
   compactMode?: boolean;
   tier?: number;
-  biome?: string; // for backside
+  backsideImageUrl?: string; // for backside
   borderColor: string;
   imageUrl?: string; // for frontside
   name?: string; // for frontside
@@ -59,11 +58,11 @@ interface AdventureCardProps {
   printMode?: boolean; // disable shadows for print
 }
 
-export const AdventureCard = ({
-  upsideDown = false,
+export const CardComponent = ({
+  showBackside = false,
   compactMode = false,
   tier,
-  biome,
+  backsideImageUrl,
   borderColor,
   imageUrl,
   name,
@@ -72,21 +71,21 @@ export const AdventureCard = ({
   title,
   contentFontSize = "9px",
   printMode = false,
-}: AdventureCardProps) => {
+}: CardProps) => {
   const backgroundColor = getTierBackgroundColor(tier);
 
   // Backside view (like AdventureCardBackside)
-  if (upsideDown) {
+  if (showBackside) {
     return (
       <div
         style={{
           width: CARD_WIDTH,
           height: CARD_HEIGHT,
-          backgroundImage: biome ? `url(/biomes/${biome}.png)` : undefined,
+          backgroundImage: `url(${backsideImageUrl})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-          backgroundColor: biome ? "transparent" : backgroundColor,
+          backgroundColor: "transparent",
           borderRadius: "6px",
           border: `2px solid ${borderColor}`,
           boxShadow: printMode ? "none" : "0 4px 8px rgba(0,0,0,0.4)",
@@ -97,7 +96,7 @@ export const AdventureCard = ({
           padding: "4px",
           position: "relative",
         }}
-        title={title || `Monster Card Back - ${biome ? getBiomeDisplayName(biome) : "Unknown"} (Tier ${tier || "?"})`}
+        title={title}
       >
         {/* Semi-transparent overlay for better text readability */}
         <div

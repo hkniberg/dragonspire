@@ -58,22 +58,6 @@ export const getTierDisplayText = (tier: number | undefined): string => {
   }
 };
 
-/**
- * Biome display names
- */
-export const BIOME_DISPLAY_NAMES = {
-  plains: "Plains",
-  mountains: "Mountains",
-  woodlands: "Woodlands",
-} as const;
-
-/**
- * Get display name for a biome
- */
-export const getBiomeDisplayName = (biome: string): string => {
-  return BIOME_DISPLAY_NAMES[biome as keyof typeof BIOME_DISPLAY_NAMES] || biome;
-};
-
 export const FOOD_EMOJI = "🌾";
 export const WOOD_EMOJI = "🪵";
 export const ORE_EMOJI = "🪨";

@@ -1,14 +1,14 @@
 import Head from "next/head";
 import React from "react";
 import {
-  AdventureCard,
+  CardComponent,
   formatMonsterContent,
   formatTreasureContent,
   getBorderColor,
-} from "../../components/cards/AdventureCard";
+} from "../../components/cards/Card";
 import { MONSTER_CARDS } from "../../content/monsterCards";
 import { TREASURE_CARDS } from "../../content/treasureCards";
-import { CARDS, Card } from "../../lib/cards";
+import { Card, CARDS } from "../../lib/cards";
 
 // Extended card type that includes the original data for rendering
 type ExtendedCard = Card & {
@@ -23,9 +23,7 @@ export default function PrintCardsCompact() {
   const CARD_HEIGHT = 125; // Compact card height
 
   // Create extended card array for monsters and treasures only
-  const monsterCards: ExtendedCard[] = CARDS.filter(
-    (card) => card.type === "monster"
-  )
+  const monsterCards: ExtendedCard[] = CARDS.filter((card) => card.type === "monster")
     .map((card, index) => {
       const originalData = MONSTER_CARDS.find((m) => m.id === card.id);
       return {
@@ -36,9 +34,7 @@ export default function PrintCardsCompact() {
     })
     .filter((card) => card.originalData);
 
-  const treasureCards: ExtendedCard[] = CARDS.filter(
-    (card) => card.type === "treasure"
-  )
+  const treasureCards: ExtendedCard[] = CARDS.filter((card) => card.type === "treasure")
     .map((card, index) => {
       const originalData = TREASURE_CARDS.find((t) => t.id === card.id);
       return {
@@ -50,12 +46,8 @@ export default function PrintCardsCompact() {
     .filter((card) => card.originalData);
 
   // Add 4 extra wolves and 4 extra bears
-  const wolfCard = monsterCards.find(
-    (card) => card.originalData.name === "Wolf"
-  );
-  const bearCard = monsterCards.find(
-    (card) => card.originalData.name === "Bear"
-  );
+  const wolfCard = monsterCards.find((card) => card.originalData.name === "Wolf");
+  const bearCard = monsterCards.find((card) => card.originalData.name === "Bear");
 
   const extraCards: ExtendedCard[] = [];
 
@@ -96,7 +88,7 @@ export default function PrintCardsCompact() {
     switch (card.type) {
       case "monster":
         return (
-          <AdventureCard
+          <CardComponent
             {...commonProps}
             imageUrl={`/monsters/${card.originalData.id}.png`}
             content={formatMonsterContent(card.originalData)}
@@ -105,7 +97,7 @@ export default function PrintCardsCompact() {
         );
       case "treasure":
         return (
-          <AdventureCard
+          <CardComponent
             {...commonProps}
             imageUrl={`/treasures/${card.originalData.id}.png`}
             content={formatTreasureContent(card.originalData)}
@@ -225,10 +217,7 @@ export default function PrintCardsCompact() {
         }
       `}</style>
 
-      <div
-        className="outer-container"
-        style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}
-      >
+      <div className="outer-container" style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
         <button className="print-button" onClick={() => window.print()}>
           📄 Print / Save as PDF
         </button>

@@ -6,13 +6,13 @@ import { TREASURE_CARDS } from "../content/treasureCards";
 import { GameMaster } from "../engine/GameMaster";
 import { TileTier } from "../lib/types";
 import {
-  AdventureCard,
+  CardComponent,
   formatEncounterContent,
   formatEventContent,
   formatMonsterContent,
   formatTreasureContent,
   getBorderColor,
-} from "./cards/AdventureCard";
+} from "./cards/Card";
 
 interface CardDecksProps {
   gameSession: GameMaster | null;
@@ -154,10 +154,10 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
         }}
         title={topCard ? `Click to view the top card (${deckSize} cards remaining)` : "Empty deck"}
       >
-        <AdventureCard
-          upsideDown={true}
+        <CardComponent
+          showBackside={true}
           tier={tier}
-          biome={biome || "plains"}
+          backsideImageUrl={`/cardBacksides/${biome}.png`}
           borderColor="#666666"
           title={`Deck ${deckNumber} - ${deckSize} cards remaining`}
         />
@@ -253,7 +253,7 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <AdventureCard
+            <CardComponent
               tier={modalCard.tier}
               borderColor={getBorderColor(modalCard.cardData.type)}
               name={modalCard.originalData?.name || modalCard.cardData.id}

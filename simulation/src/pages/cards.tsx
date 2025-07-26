@@ -1,17 +1,17 @@
 import { useState } from "react";
 import {
-  AdventureCard,
+  CardComponent,
   formatEncounterContent,
   formatEventContent,
   formatMonsterContent,
   formatTreasureContent,
   getBorderColor,
-} from "../components/cards/AdventureCard";
+} from "../components/cards/Card";
 import { ENCOUNTERS } from "../content/encounterCards";
 import { EVENT_CARDS } from "../content/eventCards";
 import { MONSTER_CARDS } from "../content/monsterCards";
 import { TREASURE_CARDS } from "../content/treasureCards";
-import { CARDS, Card, CardType } from "../lib/cards";
+import { Card, CARDS, CardType } from "../lib/cards";
 
 // Extended card type that includes the original card data for rendering
 type ExtendedCard = Card & {
@@ -23,9 +23,7 @@ export default function CardsPage() {
   const [allFlipped, setAllFlipped] = useState(false);
   const [compactMode, setCompactMode] = useState(false);
   const [hideDuplicates, setHideDuplicates] = useState(false);
-  const [individualFlips, setIndividualFlips] = useState<
-    Record<string, boolean>
-  >({});
+  const [individualFlips, setIndividualFlips] = useState<Record<string, boolean>>({});
   const [cardTypeFilter, setCardTypeFilter] = useState<CardType | "all">("all");
   const [tierFilter, setTierFilter] = useState<number | "all">("all");
   const [biomeFilter, setBiomeFilter] = useState<string | "all">("all");
@@ -74,8 +72,7 @@ export default function CardsPage() {
 
   // Filter cards based on selected filters
   const filteredCards = cardsToShow.filter((card) => {
-    const matchesType =
-      cardTypeFilter === "all" || card.type === cardTypeFilter;
+    const matchesType = cardTypeFilter === "all" || card.type === cardTypeFilter;
     const matchesTier = tierFilter === "all" || card.tier === tierFilter;
     const matchesBiome = biomeFilter === "all" || card.biome === biomeFilter;
     return matchesType && matchesTier && matchesBiome;
@@ -95,9 +92,7 @@ export default function CardsPage() {
 
   const isCardFlipped = (cardId: string) => {
     // If there's an individual flip state, use that, otherwise use global state
-    return individualFlips[cardId] !== undefined
-      ? individualFlips[cardId]
-      : allFlipped;
+    return individualFlips[cardId] !== undefined ? individualFlips[cardId] : allFlipped;
   };
 
   const renderCard = (card: ExtendedCard) => {
@@ -117,14 +112,14 @@ export default function CardsPage() {
 
     if (isCardFlipped(card.id)) {
       return (
-        <AdventureCard {...commonProps} upsideDown={true} biome={card.biome} />
+        <CardComponent {...commonProps} showBackside={true} backsideImageUrl={`/cardBacksides/${card.biome}.png`} />
       );
     }
 
     switch (card.type) {
       case "monster":
         return (
-          <AdventureCard
+          <CardComponent
             {...commonProps}
             imageUrl={`/monsters/${card.originalData.id}.png`}
             content={formatMonsterContent(card.originalData)}
@@ -133,7 +128,7 @@ export default function CardsPage() {
         );
       case "event":
         return (
-          <AdventureCard
+          <CardComponent
             {...commonProps}
             imageUrl={`/events/${card.originalData.id}.png`}
             content={formatEventContent(card.originalData)}
@@ -141,7 +136,7 @@ export default function CardsPage() {
         );
       case "treasure":
         return (
-          <AdventureCard
+          <CardComponent
             {...commonProps}
             imageUrl={`/treasures/${card.originalData.id}.png`}
             content={formatTreasureContent(card.originalData)}
@@ -150,7 +145,7 @@ export default function CardsPage() {
         );
       case "encounter":
         return (
-          <AdventureCard
+          <CardComponent
             {...commonProps}
             imageUrl={`/encounters/${card.originalData.id}.png`}
             content={formatEncounterContent(card.originalData)}
@@ -163,9 +158,7 @@ export default function CardsPage() {
   };
 
   // Get unique biomes from the deck
-  const uniqueBiomes = Array.from(
-    new Set(allCards.map((card) => card.biome))
-  ).sort();
+  const uniqueBiomes = Array.from(new Set(allCards.map((card) => card.biome))).sort();
 
   return (
     <div
@@ -200,14 +193,10 @@ export default function CardsPage() {
       >
         {/* Card Type Filter */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <label style={{ fontWeight: "bold", color: "#333" }}>
-            Card Type:
-          </label>
+          <label style={{ fontWeight: "bold", color: "#333" }}>Card Type:</label>
           <select
             value={cardTypeFilter}
-            onChange={(e) =>
-              setCardTypeFilter(e.target.value as CardType | "all")
-            }
+            onChange={(e) => setCardTypeFilter(e.target.value as CardType | "all")}
             style={{
               padding: "8px 12px",
               borderRadius: "6px",
@@ -229,11 +218,7 @@ export default function CardsPage() {
           <label style={{ fontWeight: "bold", color: "#333" }}>Tier:</label>
           <select
             value={tierFilter}
-            onChange={(e) =>
-              setTierFilter(
-                e.target.value === "all" ? "all" : parseInt(e.target.value)
-              )
-            }
+            onChange={(e) => setTierFilter(e.target.value === "all" ? "all" : parseInt(e.target.value))}
             style={{
               padding: "8px 12px",
               borderRadius: "6px",
@@ -285,10 +270,7 @@ export default function CardsPage() {
               accentColor: "#007bff",
             }}
           />
-          <label
-            htmlFor="hideDuplicates"
-            style={{ fontSize: "14px", color: "#333", cursor: "pointer" }}
-          >
+          <label htmlFor="hideDuplicates" style={{ fontSize: "14px", color: "#333", cursor: "pointer" }}>
             Hide Duplicates
           </label>
         </div>
@@ -309,14 +291,10 @@ export default function CardsPage() {
             boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = allFlipped
-              ? "#c82333"
-              : "#0056b3";
+            e.currentTarget.style.backgroundColor = allFlipped ? "#c82333" : "#0056b3";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = allFlipped
-              ? "#dc3545"
-              : "#007bff";
+            e.currentTarget.style.backgroundColor = allFlipped ? "#dc3545" : "#007bff";
           }}
         >
           {allFlipped ? "Show Fronts" : "Show Backs"}
@@ -338,14 +316,10 @@ export default function CardsPage() {
             boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = compactMode
-              ? "#218838"
-              : "#5a6268";
+            e.currentTarget.style.backgroundColor = compactMode ? "#218838" : "#5a6268";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = compactMode
-              ? "#28a745"
-              : "#6c757d";
+            e.currentTarget.style.backgroundColor = compactMode ? "#28a745" : "#6c757d";
           }}
         >
           {compactMode ? "Full Cards" : "Compact Mode"}
@@ -356,9 +330,7 @@ export default function CardsPage() {
       <div style={{ textAlign: "center", marginBottom: "20px", color: "#666" }}>
         Showing {filteredCards.length} of {cardsToShow.length} cards
         {hideDuplicates && (
-          <span
-            style={{ fontSize: "12px", display: "block", marginTop: "4px" }}
-          >
+          <span style={{ fontSize: "12px", display: "block", marginTop: "4px" }}>
             ({allCards.length - cardsToShow.length} duplicates hidden)
           </span>
         )}
@@ -408,9 +380,7 @@ export default function CardsPage() {
           boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
         }}
       >
-        <h2 style={{ marginBottom: "20px", color: "#333" }}>
-          Complete Deck Statistics
-        </h2>
+        <h2 style={{ marginBottom: "20px", color: "#333" }}>Complete Deck Statistics</h2>
         <div
           style={{
             display: "grid",
@@ -421,36 +391,18 @@ export default function CardsPage() {
           <div>
             <h3 style={{ color: "#555", fontSize: "16px" }}>By Type</h3>
             <div style={{ fontSize: "14px", color: "#666" }}>
-              <div>
-                Monsters: {allCards.filter((c) => c.type === "monster").length}{" "}
-                cards
-              </div>
-              <div>
-                Events: {allCards.filter((c) => c.type === "event").length}{" "}
-                cards
-              </div>
-              <div>
-                Treasures:{" "}
-                {allCards.filter((c) => c.type === "treasure").length} cards
-              </div>
-              <div>
-                Encounters:{" "}
-                {allCards.filter((c) => c.type === "encounter").length} cards
-              </div>
+              <div>Monsters: {allCards.filter((c) => c.type === "monster").length} cards</div>
+              <div>Events: {allCards.filter((c) => c.type === "event").length} cards</div>
+              <div>Treasures: {allCards.filter((c) => c.type === "treasure").length} cards</div>
+              <div>Encounters: {allCards.filter((c) => c.type === "encounter").length} cards</div>
             </div>
           </div>
           <div>
             <h3 style={{ color: "#555", fontSize: "16px" }}>By Tier</h3>
             <div style={{ fontSize: "14px", color: "#666" }}>
-              <div>
-                Tier 1: {allCards.filter((c) => c.tier === 1).length} cards
-              </div>
-              <div>
-                Tier 2: {allCards.filter((c) => c.tier === 2).length} cards
-              </div>
-              <div>
-                Tier 3: {allCards.filter((c) => c.tier === 3).length} cards
-              </div>
+              <div>Tier 1: {allCards.filter((c) => c.tier === 1).length} cards</div>
+              <div>Tier 2: {allCards.filter((c) => c.tier === 2).length} cards</div>
+              <div>Tier 3: {allCards.filter((c) => c.tier === 3).length} cards</div>
             </div>
           </div>
           <div>
@@ -458,8 +410,8 @@ export default function CardsPage() {
             <div style={{ fontSize: "14px", color: "#666" }}>
               {uniqueBiomes.map((biome) => (
                 <div key={biome}>
-                  {biome.charAt(0).toUpperCase() + biome.slice(1)}:{" "}
-                  {allCards.filter((c) => c.biome === biome).length} cards
+                  {biome.charAt(0).toUpperCase() + biome.slice(1)}: {allCards.filter((c) => c.biome === biome).length}{" "}
+                  cards
                 </div>
               ))}
             </div>

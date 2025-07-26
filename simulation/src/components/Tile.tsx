@@ -2,7 +2,7 @@ import type { Champion, ResourceType, Tile } from "../lib/types";
 import { getTierSolidColor } from "../lib/uiConstants";
 import { ChampionComponent } from "./Champion";
 import { ClaimFlag } from "./ClaimFlag";
-import { AdventureCard, formatMonsterContent } from "./cards/AdventureCard";
+import { CardComponent, formatMonsterContent } from "./cards/Card";
 
 const getTileColor = (tile: Tile): string => {
   if (!tile.explored) {
@@ -477,7 +477,7 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}` : ""}
             zIndex: 8,
           }}
         >
-          <AdventureCard
+          <CardComponent
             tier={effectiveTile.monster.tier || effectiveTile.tier}
             borderColor={getTierSolidColor(effectiveTile.tier)}
             name={effectiveTile.monster.name}
