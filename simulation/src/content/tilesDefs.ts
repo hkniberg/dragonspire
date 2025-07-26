@@ -28,25 +28,23 @@ export interface TileTrioDef {
 export const HOME_TILE_TRIOS: TileTrioDef[] = [
   {
     corner: "home",
-    right: "bearCave",
-    below: "wolfDen",
-  },
-
-  {
-    corner: "home",
-    right: "adventure",
-    below: "food",
-  },
-  {
-    corner: "home",
-    right: "ore",
+    right: "food",
     below: "adventure",
   },
-
+  {
+    corner: "home",
+    right: "wood",
+    below: "adventure",
+  },
   {
     corner: "home",
     right: "adventure",
     below: "food",
+  },
+  {
+    corner: "home",
+    right: "adventure",
+    below: "ore",
   },
 ];
 
@@ -57,49 +55,9 @@ export const TIER_1_TRIOS: TileTrioDef[] = [
     below: "adventure",
   },
   {
-    corner: "food",
-    right: "ore",
-    below: "adventure",
-  },
-  {
-    corner: "adventure",
-    right: ["food", "wood"],
-    below: "adventure2",
-  },
-  {
     corner: "adventure",
     right: "mercenary",
     below: "food",
-  },
-  {
-    corner: "adventure2",
-    right: "ore",
-    below: "wood",
-  },
-  {
-    corner: ["food", "food"],
-    right: "wood",
-    below: "adventure",
-  },
-  {
-    corner: "adventure",
-    right: "food",
-    below: "wood",
-  },
-  {
-    corner: "food",
-    right: "adventure2",
-    below: "oasis",
-  },
-  {
-    corner: "oasis",
-    right: "gold",
-    below: ["ore", "ore"],
-  },
-  {
-    corner: "gold",
-    right: "wood",
-    below: "oasis",
   },
   {
     corner: "ore",
@@ -107,32 +65,72 @@ export const TIER_1_TRIOS: TileTrioDef[] = [
     below: "trader",
   },
   {
+    corner: "gold",
+    right: "wolfDen",
+    below: "oasis",
+  },
+  {
+    corner: "adventure2",
+    right: "ore",
+    below: "wolfDen",
+  },
+  {
     corner: "wood",
     right: "adventure",
     below: "adventure2",
+  },
+  {
+    corner: "food",
+    right: "adventure2",
+    below: "oasis",
+  },
+  {
+    corner: "adventure",
+    right: ["food", "ore"],
+    below: "wolfDen",
+  },
+  {
+    corner: "wood",
+    right: "ore",
+    below: "adventure",
+  },
+  {
+    corner: "food",
+    right: "ore",
+    below: "adventure",
+  },
+  {
+    corner: "oasis",
+    right: "gold",
+    below: ["ore", "ore"],
+  },
+  {
+    corner: ["food", "food"],
+    right: "wood",
+    below: "adventure",
   },
 ];
 
 export const TIER_2_TRIOS: TileTrioDef[] = [
   {
     corner: "adventure2",
-    right: ["food", "wood"],
-    below: ["food", "food"],
-  },
-  {
-    corner: "adventure2",
-    right: ["ore", "ore"],
+    right: "bearCave",
     below: ["gold", "gold"],
   },
   {
-    corner: ["wood", "wood"],
-    right: "oasis2",
-    below: ["food", "wood"],
+    corner: ["ore", "ore"],
+    right: "adventure2",
+    below: "bearCave",
   },
   {
-    corner: ["food", "ore"],
-    right: "oasis2",
-    below: "adventure",
+    corner: ["wood", "wood"],
+    right: "oasis",
+    below: "adventure2",
+  },
+  {
+    corner: "adventure2",
+    right: ["wood", "ore"],
+    below: ["food", "food"],
   },
 ];
 

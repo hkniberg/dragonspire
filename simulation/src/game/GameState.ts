@@ -35,12 +35,13 @@ export class GameState {
   public static createWithPlayerNames(
     playerNames: string[],
     startingValues?: { fame?: number; might?: number },
+    seed?: number,
   ): GameState {
     if (playerNames.length !== 4) {
       throw new Error(`Expected 4 player names, got ${playerNames.length}`);
     }
 
-    const board = BoardBuilder.buildBoard();
+    const board = BoardBuilder.buildBoard(seed || 0);
     const players = GameState.initializePlayersWithNames(playerNames, startingValues);
 
     return new GameState(board, players);

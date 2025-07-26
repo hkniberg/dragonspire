@@ -46,7 +46,7 @@ const args = process.argv.slice(2);
 // Find player arguments (p1=random, p2=claude, etc.)
 const playerArgs = args.filter((arg) => arg.match(/^p[1-4]=(random|claude)$/));
 
-// Find other arguments (like --max-rounds)
+// Find other arguments (like --max-rounds, --seed)
 const otherArgs = args.filter((arg, index) => {
   // Skip command flags and their values
   if (
@@ -60,6 +60,10 @@ const otherArgs = args.filter((arg, index) => {
     return false;
   // Skip turn number value
   if (args[index - 1] === "--turns" || args[index - 1] === "-t") return false;
+  // Skip seed value
+  if (args[index - 1] === "--seed") return false;
+  // Skip max-rounds value
+  if (args[index - 1] === "--max-rounds") return false;
   // Skip player arguments (already extracted)
   if (arg.match(/^p[1-4]=(random|claude)$/)) return false;
   return true;
@@ -92,6 +96,7 @@ if (args.includes("--single-turn") || args.includes("-s")) {
   console.log("  npm run simulate                 # Run complete game");
   console.log("\nAdditional Options:");
   console.log("  --max-rounds N                   # Set maximum rounds for complete games");
+  console.log("  --seed N                         # Set random seed for board generation");
   console.log("\nPlayer Configuration:");
   console.log("  p1=random p2=claude p3=random p4=claude  # Specify player types");
   console.log("  Available types: random, claude");
@@ -104,5 +109,6 @@ if (args.includes("--single-turn") || args.includes("-s")) {
   console.log("  node run-test.js --single-turn p1=claude            # 1 turn, Player 1 is Claude AI");
   console.log("  node run-test.js --complete p1=random p2=claude     # Complete game, mixed players");
   console.log("  node run-test.js --complete --max-rounds 25         # Complete game with 25 max rounds");
+  console.log("  node run-test.js --complete --seed 12345            # Complete game with specific board layout");
   console.log("  node run-test.js -t 5 p1=claude p2=claude p3=claude # 5 turns, first 3 players are Claude AI");
 }

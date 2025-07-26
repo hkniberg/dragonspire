@@ -48,6 +48,7 @@ interface PlayerConfig {
 interface GameConfig {
   startFame: number;
   startMight: number;
+  seed: number;
 }
 
 export default function GameSimulation() {
@@ -70,6 +71,7 @@ export default function GameSimulation() {
   const [gameConfig, setGameConfig] = useState<GameConfig>({
     startFame: 0,
     startMight: 0,
+    seed: 0,
   });
   const [apiKey, setApiKey] = useState("");
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
@@ -214,6 +216,7 @@ export default function GameSimulation() {
           fame: gameConfig.startFame,
           might: gameConfig.startMight,
         },
+        seed: gameConfig.seed,
       };
 
       const session = new GameMaster(sessionConfig);
@@ -534,6 +537,62 @@ export default function GameSimulation() {
                       borderRadius: "4px",
                     }}
                   />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "5px",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Random Seed:
+                  </label>
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <input
+                      type="number"
+                      value={gameConfig.seed}
+                      onChange={(e) =>
+                        setGameConfig({
+                          ...gameConfig,
+                          seed: parseInt(e.target.value) || 0,
+                        })
+                      }
+                      style={{
+                        flex: 1,
+                        padding: "6px",
+                        border: "1px solid #ddd",
+                        borderRadius: "4px",
+                      }}
+                      placeholder="0 for default"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setGameConfig({
+                          ...gameConfig,
+                          seed: Math.floor(Math.random() * 1000000),
+                        })
+                      }
+                      style={{
+                        padding: "6px 12px",
+                        backgroundColor: "#6c757d",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "4px",
+                        cursor: "pointer",
+                        fontSize: "14px",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      🎲 Random
+                    </button>
+                  </div>
+                  <small style={{ fontSize: "12px", color: "#666", marginTop: "2px", display: "block" }}>
+                    Controls board layout generation. Same seed = same board.
+                  </small>
                 </div>
               </div>
             </div>

@@ -20,6 +20,7 @@ export interface CLIConfig {
   singleTurnTest?: boolean;
   specificTurns?: number;
   playerConfigs?: PlayerConfig[];
+  seed?: number;
 }
 
 export class CLIRunner {
@@ -103,6 +104,7 @@ export class CLIRunner {
     const masterConfig: GameMasterConfig = {
       players: players,
       maxRounds: 1,
+      seed: config.seed,
     };
 
     const gameMaster = new GameMaster(masterConfig);
@@ -159,6 +161,7 @@ export class CLIRunner {
     const masterConfig: GameMasterConfig = {
       players: players,
       maxRounds: maxRounds,
+      seed: config.seed,
     };
 
     const gameMaster = new GameMaster(masterConfig);
@@ -215,6 +218,7 @@ export class CLIRunner {
     const masterConfig: GameMasterConfig = {
       players: players,
       maxRounds: config.maxRounds || 10, // Limit for testing
+      seed: config.seed,
     };
 
     const gameMaster = new GameMaster(masterConfig);
@@ -249,6 +253,10 @@ export class CLIRunner {
           break;
         case "--max-rounds":
           config.maxRounds = parseInt(args[i + 1]);
+          i++; // Skip next argument
+          break;
+        case "--seed":
+          config.seed = parseInt(args[i + 1]);
           i++; // Skip next argument
           break;
         // Skip player arguments as they're already parsed

@@ -26,6 +26,7 @@ export interface GameMasterConfig {
   players: PlayerAgent[];
   maxRounds?: number; // Optional limit for testing
   startingValues?: { fame?: number; might?: number }; // Optional starting fame and might
+  seed?: number; // Optional seed for board generation
 }
 
 export class GameMaster {
@@ -41,7 +42,7 @@ export class GameMaster {
     // Create GameState with the correct player names from the start
     this.diceRoller = new RandomDiceRoller();
     const playerNames = config.players.map((player) => player.getName());
-    this.gameState = GameState.createWithPlayerNames(playerNames, config.startingValues);
+    this.gameState = GameState.createWithPlayerNames(playerNames, config.startingValues, config.seed);
     this.playerAgents = config.players;
     this.masterState = "setup";
     this.maxRounds = config.maxRounds || 100; // Default limit to prevent infinite games
