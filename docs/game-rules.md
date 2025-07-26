@@ -364,12 +364,12 @@ You och purchase a castle building or boat/champion by spending a die during the
 
 ### Market
 
-- **Cost**: 3 Food, 3 Wood
+- **Cost**: 2 Food, 2 Wood
 - **Benefit**: During the harvest phase, sell any resources for Gold at 2:1 rate (2 resources = 1 Gold). Can do this any number of times.
 
 ### Blacksmith
 
-- **Cost**: 3 Food, 3 Ore
+- **Cost**: 2 Food, 2 Ore
 - **Benefit**: During the harvest phase, buy 1 Might for 1 Gold + 2 Ore (once per harvest phase)
 
 ### Chapel

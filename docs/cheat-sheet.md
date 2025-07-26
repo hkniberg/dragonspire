@@ -74,8 +74,8 @@
 
 - **2nd Knight**: 3 Food, 3 Gold, 1 Ore → +1 die
 - **3rd Knight**: 6 Food, 6 Gold, 3 Ore → +1 die
-- **Market**: 3 Food, 3 Wood → Sell resources for Gold (2:1 rate)
-- **Blacksmith**: 3 Food, 3 Ore → Buy 1 Might for 1 Gold + 2 Ore
+- **Market**: 2 Food, 2 Wood → Sell resources for Gold (2:1 rate)
+- **Blacksmith**: 2 Food, 2 Ore → Buy 1 Might for 1 Gold + 2 Ore
 - **Dock**: 2 Wood, 2 Gold → +1 boat (max 2)
 - **Chapel**: 3 Wood, 4 Gold → +3 Fame
 - **Monastery**: 4 Wood, 5 Gold, 2 Ore → +5 Fame

@@ -168,10 +168,10 @@ export default function CheatSheet() {
                   <strong>⚔️ 3rd Knight</strong>: 6 Food, 6 Gold, 3 Ore → +1 die
                 </div>
                 <div className={styles.building}>
-                  <strong>🏪 Market</strong>: 3 Food, 3 Wood → Sell resources for Gold (2:1 rate)
+                  <strong>🏪 Market</strong>: 2 Food, 2 Wood → Sell resources for Gold (2:1 rate)
                 </div>
                 <div className={styles.building}>
-                  <strong>⚒️ Blacksmith</strong>: 3 Food, 3 Ore → Buy 1 Might for 1 Gold + 2 Ore
+                  <strong>⚒️ Blacksmith</strong>: 2 Food, 2 Ore → Buy 1 Might for 1 Gold + 2 Ore
                 </div>
                 <div className={styles.building}>
                   <strong>⚓ Dock</strong>: 2 Wood, 2 Gold → +1 boat (max 2)

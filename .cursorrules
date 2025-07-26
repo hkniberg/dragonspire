@@ -7,6 +7,7 @@ This repository represents the design and development of **Lords of Doomspire**,
 - **Game Overview**: See`docs/game-overview.md`
 - **Rules**: Complete game rules are documented in `docs/game-rules.md`. The code should reflect the rules. The rules are the source of truth. If you see anything that seems incorrect or inconsistent with the rules, please point this out.
   - A copy of the rules is in `public/prompts/game-rules.md`, for AI use in the simulation. Don't edit this, a git commit hook will update it automatically from the original rules document.
+  - A cheat sheet is available at `docs/cheat-sheet.md`, and a web version at `simulation/pages/cheat-sheet.tsx`. When updating the rules, make sure the cheat sheet is updated if needed.
 - **Simulation**: All simulation code is in the `simulation/` directory, which is structured as a single-page Next.js frontend app, but should also be able to run as a headless script to run a simulated match or turn. Tests are in the simulation/test directory.
 - **Documentation**: Additional design documents in the `docs/` folder
 
@@ -28,7 +29,7 @@ This is a board game design project, not a software application. Code in the sim
 
 - Clear separation between the simulation and the UI. The simulation should be able to run without the UI.
 - Follow next.js default patterns to enable easy deployment to Vercel.
-- The UI should be a single page application, with a single route.
+- The UI should be a single page application, with a single route for the core simulation.
 - The UI code should be well organized into components, to avoid single large files. Components should reflect game elements as much as possible (card, tile, champion, etc).
 - Keep the code as simple and clean as possible.
 - Performance doesn't matter. This is just for internal use, not a commercial product.
