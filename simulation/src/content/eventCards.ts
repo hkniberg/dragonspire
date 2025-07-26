@@ -63,7 +63,7 @@ export const EVENT_CARDS: EventCard[] = [
     id: "hornet-swarm",
     name: "Hornet swarm",
     tier: 2,
-    description: "Roll `3+D3` and move the total amount in steps. Any **champion** you pass by must *repeat this*.",
+    description: "Roll `2D3` to flee the swarm. The player to your right chooses direction, you must then move in that direction. Any **champion** passed by or through must *repeat this*.",
     count: 1,
   },
   {
