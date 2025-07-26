@@ -95,6 +95,10 @@ export class BoardBuilder {
       const backColor = tileDef === "home" ? TileColors.homeBack : TileColors.tier1Back;
       const borderColor = tileDef === "home" ? TileColors.homeBorder : TileColors.tier1Border;
       const tile = convertTileDefToTile(tileDef, positions[index], explored, backColor, borderColor, groupId);
+
+      // Add monsters to appropriate tiles
+      this.addMonsterToTile(tile, backColor);
+
       board.setTile(tile);
     });
   }

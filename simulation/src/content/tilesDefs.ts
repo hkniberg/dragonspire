@@ -28,8 +28,8 @@ export interface TileTrioDef {
 export const HOME_TILE_TRIOS: TileTrioDef[] = [
   {
     corner: "home",
-    right: "wood",
-    below: "adventure",
+    right: "bearCave",
+    below: "wolfDen",
   },
   {
     corner: "home",

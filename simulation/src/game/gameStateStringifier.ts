@@ -194,6 +194,18 @@ export class GameStateStringifier {
         case "doomspire":
           lines.push("- Doomspire Dragon (might 13)");
           break;
+        case "wolfDen":
+          lines.push("- Wolf Den");
+          if (tile.monster) {
+            lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
+          }
+          break;
+        case "bearCave":
+          lines.push("- Bear Cave");
+          if (tile.monster) {
+            lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
+          }
+          break;
         default:
           lines.push(`- Tier ${tile.tier} tile`);
       }
