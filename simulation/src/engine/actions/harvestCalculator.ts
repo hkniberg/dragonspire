@@ -16,8 +16,8 @@ export interface HarvestResult {
 export function calculateHarvest(
   gameState: GameState,
   playerName: string,
-  tilePositions: Position[],
-  diceValueUsed: number,
+  tilePositionsToHarvest: Position[],
+  totalDiceValueUsed: number,
 ): HarvestResult {
   const player = gameState.players.find(p => p.name === playerName);
   if (!player) {
@@ -32,15 +32,15 @@ export function calculateHarvest(
   };
 
   // Limit to dice value and warn if trying to harvest more tiles
-  let tilesToHarvest = tilePositions;
-  if (tilePositions.length > diceValueUsed) {
-    tilesToHarvest = tilePositions.slice(0, diceValueUsed);
-    console.log(`Attempted to harvest ${tilePositions.length} tiles with dice value ${diceValueUsed}, only harvesting first ${diceValueUsed}`);
+  let actualTilePositionsToHarvest = tilePositionsToHarvest;
+  if (tilePositionsToHarvest.length > totalDiceValueUsed) {
+    actualTilePositionsToHarvest = tilePositionsToHarvest.slice(0, totalDiceValueUsed);
+    console.log(`Attempted to harvest ${tilePositionsToHarvest.length} tiles with total dice value ${totalDiceValueUsed}, only harvesting first ${totalDiceValueUsed}`);
   }
 
   let harvestedTileCount = 0;
 
-  for (const position of tilesToHarvest) {
+  for (const position of actualTilePositionsToHarvest) {
     const tile = gameState.getTile(position);
     if (!tile) {
       console.log(`Cannot harvest from ${formatPosition(position)}: tile not found`);

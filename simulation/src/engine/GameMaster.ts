@@ -10,6 +10,7 @@ import { calculateHarvest } from "./actions/harvestCalculator";
 import { calculateBoatMove, calculateChampionMove } from "./actions/moveCalculator";
 import { checkVictory } from "./actions/victoryChecker";
 import { DiceRoller, RandomDiceRoller } from "./DiceRoller";
+import { DiceRolls } from "./DiceRolls";
 import { handleAdventureCard } from "./handlers/adventureCardHandler";
 import {
   handleChampionCombat,
@@ -82,52 +83,45 @@ export class GameMaster {
     const currentPlayer = this.gameState.getCurrentPlayer();
     const championCount = currentPlayer.champions.length;
     const diceCount = 1 + championCount;
-    const diceRolls = this.diceRoller.rollMultipleD3(diceCount);
+    const diceRollValues = this.diceRoller.rollMultipleD3(diceCount);
+    const diceRolls = new DiceRolls(diceRollValues);
 
-    this.addGameLogEntry("dice", `Rolled dice: ${diceRolls.join(", ")}`);
+    this.addGameLogEntry("dice", `Rolled dice: ${diceRollValues.map(die => `[${die}]`).join(", ")}`);
 
     // Step 2: Ask player for strategic assessment (strategic reflection) - now with dice context
-    const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRolls);
+    const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues);
     if (strategicAssessment) {
       this.addGameLogEntry("assessment", strategicAssessment);
     }
 
     // Step 3: Ask the player to execute actions until they run out of dice.
-    let remainingDice = [...diceRolls];
     let currentState = this.gameState;
 
-    while (remainingDice.length > 0) {
+    while (diceRolls.hasRemainingRolls()) {
       // Create turn context for this die
       const turnContext: TurnContext = {
         turnNumber: this.gameState.currentRound,
-        diceRolled: diceRolls,
-        remainingDiceValues: remainingDice,
+        diceRolled: diceRollValues,
+        remainingDiceValues: diceRolls.getRemainingRolls(),
       };
 
       // Ask player decide on a dice action
       const diceAction = await currentPlayerAgent.decideDiceAction(currentState, this.gameLog, turnContext);
-      const diceValueUsed = diceAction.diceValueUsed;
 
-      // Remove the first occurrence of the used dice value from remainingDice. If not present, throw error.
-      const diceIndex = remainingDice.findIndex(v => v === diceValueUsed);
-      if (diceIndex === -1) {
-        throw new Error(
-          `Dice value ${diceValueUsed} not found in remaining dice [${remainingDice.join(", ")}]`
-        );
-      }
-      remainingDice.splice(diceIndex, 1);
-
-      // Execute the action
-      const actionType = diceAction.type;
+      // Execute the action and consume the appropriate dice
+      const actionType = diceAction.actionType;
       if (actionType == "moveChampion") {
         const moveChampionAction = diceAction.moveChampion!;
-        await this.executeMoveChampion(currentPlayer, moveChampionAction, diceValueUsed);
+        diceRolls.consumeDiceRoll(moveChampionAction.diceValueUsed);
+        await this.executeMoveChampion(currentPlayer, moveChampionAction);
       } else if (actionType === "moveBoat") {
         const moveBoatAction = diceAction.moveBoat!;
-        await this.executeMoveBoat(currentPlayer, moveBoatAction, diceValueUsed);
+        diceRolls.consumeDiceRoll(moveBoatAction.diceValueUsed);
+        await this.executeMoveBoat(currentPlayer, moveBoatAction);
       } else if (actionType === "harvest") {
         const harvestAction = diceAction.harvest!;
-        await this.executeHarvest(currentPlayer, harvestAction, diceValueUsed);
+        diceRolls.consumeMultipleDiceRolls(harvestAction.diceValuesUsed);
+        await this.executeHarvest(currentPlayer, harvestAction);
       } else {
         throw new Error(`Unknown action type: ${actionType}`);
       }
@@ -159,32 +153,42 @@ export class GameMaster {
   private async executeMoveChampion(
     player: Player,
     action: MoveChampionAction,
-    diceValueUsed: number,
   ): Promise<void> {
 
+    // Get the champion's current position before moving
+    const champion = this.gameState.getChampion(player.name, action.championId);
+    if (!champion) {
+      throw new Error(`Champion ${action.championId} not found for player ${player.name}`);
+    }
+    const startPosition = champion.position;
+
     // Execute the movement calculation
-    const moveResult = calculateChampionMove(this.gameState, player.name, action.pathIncludingStartPosition, diceValueUsed);
+    const moveResult = calculateChampionMove(this.gameState, player.name, action.pathIncludingStartPosition, action.diceValueUsed);
 
     // Update champion position 
     const tile = this.gameState.updateChampionPosition(player.name, action.championId, moveResult.endPosition);
-    this.addGameLogEntry("movement", `Champion${action.championId} moved to ${formatPosition(moveResult.endPosition)}`);
+    this.addGameLogEntry("movement", `Champion${action.championId} moved from ${formatPosition(startPosition)} to ${formatPosition(moveResult.endPosition)}, using dice value [${action.diceValueUsed}]`);
 
     await this.executeChampionArrivalAtTile(player, tile, action.championId, !!action.claimTile);
   }
 
-  private async executeMoveBoat(player: Player, action: MoveBoatAction, diceValueUsed: number): Promise<void> {
+  private async executeMoveBoat(player: Player, action: MoveBoatAction): Promise<void> {
     const championId = action.championId;
     const champion = championId ? this.gameState.getChampion(player.name, championId) : undefined;
     const championStartPosition = champion ? champion.position : undefined;
-    const boatMoveResult = calculateBoatMove(action.pathIncludingStartPosition, diceValueUsed, championStartPosition, action.championDropPosition);
+    const boatMoveResult = calculateBoatMove(action.pathIncludingStartPosition, action.diceValueUsed, championStartPosition, action.championDropPosition);
+
+    // Get boat start position for logging
+    const boatStartPosition = action.pathIncludingStartPosition[0];
+
     if (boatMoveResult.championMoveResult === "championMoved") {
       const tile = this.gameState.updateChampionPosition(player.name, championId!, action.championDropPosition!);
-      this.addGameLogEntry("boat", `Boat ${action.boatId} moved to ${boatMoveResult.endPosition}, transporting champion ${championId} from ${formatPosition(championStartPosition!)} to ${formatPosition(action.championDropPosition!)}`);
+      this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition}, transporting champion ${championId} from ${formatPosition(championStartPosition!)} to ${formatPosition(action.championDropPosition!)}, using dice value [${action.diceValueUsed}]`);
       await this.executeChampionArrivalAtTile(player, tile, championId!, !!action.claimTile);
     } else if (boatMoveResult.championMoveResult === "championNotReachableByBoat") {
-      this.addGameLogEntry("boat", `Boat ${action.boatId} moved to ${boatMoveResult.endPosition} and tried to move champion ${championId} at ${formatPosition(championStartPosition!)} but the champion was not reachable by this boat`);
+      this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition} and tried to move champion ${championId} at ${formatPosition(championStartPosition!)} but the champion was not reachable by this boat, using dice value [${action.diceValueUsed}]`);
     } else if (boatMoveResult.championMoveResult === "targetPositionNotReachableByBoat") {
-      this.addGameLogEntry("boat", `Boat ${action.boatId} moved to ${boatMoveResult.endPosition} and tried to move champion ${championId} to ${formatPosition(action.championDropPosition!)} but that position was not reachable by this boat`);
+      this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition} and tried to move champion ${championId} to ${formatPosition(action.championDropPosition!)} but that position was not reachable by this boat, using dice value [${action.diceValueUsed}]`);
     } else {
       throw new Error(`Unknown boat move result: ${boatMoveResult.championMoveResult}`);
     }
@@ -275,9 +279,10 @@ export class GameMaster {
 
 
 
-  private async executeHarvest(player: Player, action: HarvestAction, diceValueUsed: number): Promise<void> {
-    // Use the harvest calculator to determine the results
-    const harvestResult = calculateHarvest(this.gameState, player.name, action.tilePositions, diceValueUsed);
+  private async executeHarvest(player: Player, action: HarvestAction): Promise<void> {
+    // Use the harvest calculator to determine the results - sum the dice values to get harvest power
+    const diceSum = action.diceValuesUsed.reduce((sum, diceValue) => sum + diceValue, 0);
+    const harvestResult = calculateHarvest(this.gameState, player.name, action.tilePositions, diceSum);
 
     // Add the harvested resources to the player's pool
     player.resources.food += harvestResult.harvestedResources.food;
@@ -287,7 +292,18 @@ export class GameMaster {
 
     // Log the harvest action
     if (harvestResult.harvestedTileCount > 0) {
-      this.addGameLogEntry("harvest", `Harvested from ${harvestResult.harvestedTileCount} tiles and gained ${formatResources(harvestResult.harvestedResources)}`);
+      if (action.diceValuesUsed.length === 1) {
+        this.addGameLogEntry(
+          "harvest",
+          `Harvested from ${harvestResult.harvestedTileCount} tile${harvestResult.harvestedTileCount > 1 ? "s" : ""} and gained ${formatResources(harvestResult.harvestedResources)}, using die value [${action.diceValuesUsed[0]}]`
+        );
+      } else {
+        const diceString = action.diceValuesUsed.map(die => `[${die}]`).join("+");
+        this.addGameLogEntry(
+          "harvest",
+          `Harvested from ${harvestResult.harvestedTileCount} tiles and gained ${formatResources(harvestResult.harvestedResources)}, using die values ${diceString}`
+        );
+      }
     } else {
       this.addGameLogEntry("harvest", "Attempted to harvest but no tiles were harvestable for some reason.");
     }

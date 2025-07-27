@@ -316,6 +316,8 @@ export default function GameSimulation() {
           backgroundColor: "#f0f8ff",
           fontFamily: "Arial, sans-serif",
           padding: "20px",
+          overflowX: "auto",
+          minWidth: "fit-content",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>

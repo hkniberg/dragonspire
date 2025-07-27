@@ -33,7 +33,7 @@ export class Claude {
     // Only append JSON instruction if schema is provided
     const fullUserMessage = responseSchema
       ? userMessage +
-        `\n\nRespond with a JSON object matching the given schema: ${JSON.stringify(responseSchema, null, 2)}\n\nDo not add any other text before or after.`
+      `\n\nIMPORTANT: You must respond with a JSON object strictly obeying the given schema:\m${JSON.stringify(responseSchema, null, 2)}\n\nDo not add any other text before or after.`
       : userMessage;
 
     log("User Message", userMessage);
@@ -54,10 +54,12 @@ export class Claude {
           content: fullUserMessage,
         },
       ],
-      thinking: {
-        type: "enabled",
-        budget_tokens: thinkingTokens,
-      },
+      ...(thinkingTokens >= 1024 && {
+        thinking: {
+          type: "enabled",
+          budget_tokens: thinkingTokens,
+        },
+      }),
       max_tokens: responseTokens,
     };
 

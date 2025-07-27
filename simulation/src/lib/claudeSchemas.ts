@@ -7,6 +7,10 @@ export const moveChampionSchema = {
   type: "object",
   description: "Parameters for moveChampion action",
   properties: {
+    diceValueUsed: {
+      type: "number",
+      description: "The dice value used for this movement",
+    },
     championId: {
       type: "number",
       description: "Champion ID being moved",
@@ -28,7 +32,7 @@ export const moveChampionSchema = {
       description: "Whether to claim the destination tile",
     },
   },
-  required: ["championId", "pathIncludingStartPosition"],
+  required: ["diceValueUsed", "championId", "pathIncludingStartPosition"],
 };
 
 /**
@@ -38,6 +42,10 @@ export const moveBoatSchema = {
   type: "object",
   description: "Parameters for moveBoat action",
   properties: {
+    diceValueUsed: {
+      type: "number",
+      description: "The dice value used for this movement",
+    },
     boatId: {
       type: "number",
       description: "Boat ID",
@@ -67,7 +75,7 @@ export const moveBoatSchema = {
       description: "Whether to claim the tile at champion drop position (if it is a resource tile)",
     },
   },
-  required: ["boatId", "pathIncludingStartPosition"],
+  required: ["diceValueUsed", "boatId", "pathIncludingStartPosition"],
 };
 
 /**
@@ -77,6 +85,12 @@ export const harvestSchema = {
   type: "object",
   description: "Parameters for harvest action",
   properties: {
+    diceValuesUsed: {
+      type: "array",
+      description: "The dice values used for this harvest action",
+      items: { type: "number" },
+      minItems: 1
+    },
     tilePositions: {
       type: "array",
       description: "Positions of tiles to harvest from",
@@ -87,7 +101,7 @@ export const harvestSchema = {
       },
     },
   },
-  required: ["resources"],
+  required: ["diceValuesUsed", "tilePositions"],
 };
 
 /**
@@ -96,7 +110,7 @@ export const harvestSchema = {
 export const diceActionSchema = {
   type: "object",
   properties: {
-    type: {
+    actionType: {
       type: "string",
       enum: ["moveChampion", "moveBoat", "harvest"],
       description: "The type of action to perform",
@@ -104,16 +118,12 @@ export const diceActionSchema = {
     moveChampion: moveChampionSchema,
     moveBoat: moveBoatSchema,
     harvest: harvestSchema,
-    diceValueUsed: {
-      type: "number",
-      description: "The dice value used for this action",
-    },
     reasoning: {
       type: "string",
       description: "Brief explanation of why this action was chosen",
     },
   },
-  required: ["type", "diceValueUsed", "reasoning"],
+  required: ["actionType", "reasoning"],
 };
 
 /**

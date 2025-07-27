@@ -27,6 +27,25 @@ export class ClaudePlayerAgent implements PlayerAgent {
         return "claude";
     }
 
+
+    async makeStrategicAssessment(
+        gameState: GameState,
+        gameLog: readonly GameLogEntry[],
+        diceValues: number[],
+    ): Promise<string | undefined> {
+        try {
+            const userMessage = await this.prepareAssessmentMessage(gameState, gameLog, diceValues);
+
+            // Get text response for strategic assessment
+            const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 1024, 2000);
+
+            return strategicAssessment.trim() || undefined;
+        } catch (error) {
+            console.error(`${this.name} encountered an error during strategic assessment:`, error);
+            return undefined;
+        }
+    }
+
     async decideDiceAction(
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
@@ -36,7 +55,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         const userMessage = await this.prepareDiceActionMessage(gameState, gameLog, turnContext);
 
         // Get LLM response with structured JSON
-        const response = await this.claude.useClaude(userMessage, diceActionSchema, 2000, 3000);
+        const response = await this.claude.useClaude(userMessage, diceActionSchema, 1024, 1500);
 
         // Convert the nested response to flat GameAction format
         return response as DiceAction;
@@ -52,7 +71,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             const userMessage = await this.prepareDecisionMessage(gameState, gameLog, decisionContext);
 
             // Get structured JSON response for decision
-            const response = await this.claude.useClaude(userMessage, decisionSchema, 2000, 3000);
+            const response = await this.claude.useClaude(userMessage, decisionSchema, 0, 200);
 
             return response as Decision;
         } catch (error) {
@@ -66,22 +85,23 @@ export class ClaudePlayerAgent implements PlayerAgent {
         }
     }
 
-    async makeStrategicAssessment(
+    private async prepareAssessmentMessage(
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
-        diceRolls?: number[],
-    ): Promise<string | undefined> {
-        try {
-            const userMessage = await this.prepareAssessmentMessage(gameState, gameLog, diceRolls);
+        diceRolls: number[],
+    ): Promise<string> {
+        const boardState = GameStateStringifier.stringify(gameState);
+        const gameLogText = this.formatGameLogForPrompt(gameLog);
 
-            // Get text response for strategic assessment
-            const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 4000, 6000);
+        const variables: TemplateVariables = {
+            playerName: this.name,
+            boardState: boardState,
+            gameLog: gameLogText,
+            diceValues: diceRolls.join(", "),
+            extraInstructions: this.getExtraInstructionsSection(gameState),
+        };
 
-            return strategicAssessment.trim() || undefined;
-        } catch (error) {
-            console.error(`${this.name} encountered an error during strategic assessment:`, error);
-            return undefined;
-        }
+        return await templateProcessor.processTemplate("strategicAssessment", variables);
     }
 
     private async prepareDiceActionMessage(
@@ -89,10 +109,6 @@ export class ClaudePlayerAgent implements PlayerAgent {
         gameLog: readonly GameLogEntry[],
         turnContext: TurnContext,
     ): Promise<string> {
-        const player = gameState.getPlayer(this.name);
-        if (!player) {
-            throw new Error(`Player with name ${this.name} not found`);
-        }
 
         // Use the readable stringified game state
         const boardState = GameStateStringifier.stringify(gameState);
@@ -100,25 +116,13 @@ export class ClaudePlayerAgent implements PlayerAgent {
         // Format the game log into readable text
         const gameLogText = this.formatGameLogForPrompt(gameLog);
 
-        // Prepare extra instructions if they exist
-        const extraInstructionsText = player.extraInstructions?.trim()
-            ? `\n<additional-instructions-provided-by-player>\n${player.extraInstructions.trim()}\n</additional-instructions-provided-by-player>\n`
-            : "";
-
-        const dieValue = turnContext.remainingDiceValues[0];
-        const remainingDiceText =
-            turnContext.remainingDiceValues.length > 1
-                ? ` (${turnContext.remainingDiceValues.length - 1} dice remaining after this one)`
-                : " (last die)";
-
         const variables: TemplateVariables = {
-            playerName: player.name,
+            playerName: this.name,
             gameLog: gameLogText,
             boardState: boardState,
-            diceRolled: turnContext.diceRolled.join(", "),
-            dieValue: dieValue,
-            remainingDiceText: remainingDiceText,
-            extraInstructions: extraInstructionsText,
+            turnNumber: turnContext.turnNumber,
+            remainingDice: turnContext.remainingDiceValues.join(", "),
+            extraInstructions: this.getExtraInstructionsSection(gameState)
         };
 
         return await templateProcessor.processTemplate("diceAction", variables);
@@ -146,28 +150,17 @@ export class ClaudePlayerAgent implements PlayerAgent {
         return await templateProcessor.processTemplate("makeDecision", variables);
     }
 
-    private async prepareAssessmentMessage(
-        gameState: GameState,
-        gameLog: readonly GameLogEntry[],
-        diceRolls?: number[],
-    ): Promise<string> {
+    private getExtraInstructionsSection(gameState: GameState): string {
         const player = gameState.getPlayer(this.name);
         if (!player) {
             throw new Error(`Player with name ${this.name} not found`);
         }
 
-        const boardState = GameStateStringifier.stringify(gameState);
-        const gameLogText = this.formatGameLogForPrompt(gameLog);
-
-        const variables: TemplateVariables = {
-            playerName: player.name,
-            boardState: boardState,
-            gameLog: gameLogText,
-            diceRolls: diceRolls ? diceRolls.join(", ") : "Not yet rolled",
-        };
-
-        return await templateProcessor.processTemplate("strategicAssessment", variables);
+        return player.extraInstructions?.trim()
+            ? `\n<additional-instructions-provided-by-human-player>\n${player.extraInstructions.trim()}\n</additional-instructions-provided-by-human-player>\n`
+            : "";
     }
+
 
     private formatGameLogForPrompt(gameLog: readonly GameLogEntry[]): string {
         if (gameLog.length === 0) {

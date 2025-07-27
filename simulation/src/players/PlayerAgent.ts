@@ -22,22 +22,16 @@ export interface PlayerAgent {
 
   /**
    * Provide strategic assessment at the start of each turn
-   * @param gameState Current game state
-   * @param gameLog Sequential log of all game events so far
-   * @param diceRolls Optional dice rolls for this turn to provide strategic context
-   * @returns String describing strategic assessment (situation, strategy, tactical plan) or undefined to skip
+   * @returns String describing strategic assessment or undefined to skip
    */
   makeStrategicAssessment(
     gameState: GameState,
     gameLog: readonly GameLogEntry[],
-    diceRolls?: number[],
+    diceRolls: number[],
   ): Promise<string | undefined>;
 
   /**
-   * Decide what to do with a single die value
-   * @param gameState Current game state
-   * @param gameLog Sequential log of all game events so far
-   * @param turnContext Information about the current turn and remaining dice
+   * Decide on a single action to take.
    * @returns DiceAction intent declaring what the player wants to do
    */
   decideDiceAction(
@@ -47,10 +41,7 @@ export interface PlayerAgent {
   ): Promise<DiceAction>;
 
   /**
-   * Make a runtime decision when choices arise during action resolution
-   * @param gameState Current game state
-   * @param gameLog Sequential log of all game events so far
-   * @param decisionContext Description of the choice to be made
+   * Make a decision when choices arise during action resolution   * @param decisionContext Description of the choice to be made
    * @returns Decision object with the chosen option
    */
   makeDecision(

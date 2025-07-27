@@ -41,11 +41,20 @@ export const GameBoard = ({
   const getPlayerColorWithState = (playerName: string) => getPlayerColor(playerName, gameState);
 
   return (
-    <div style={{ display: "flex", gap: "20px", padding: "20px" }}>
+    <div
+      style={{
+        display: "flex",
+        gap: "20px",
+        padding: "20px",
+        minWidth: "1480px", // 240px left panel + 20px gap + 1200px board + 20px padding
+        width: "fit-content",
+      }}
+    >
       {/* Left Panel - All Players Info */}
       <div
         style={{
           width: "240px",
+          flexShrink: 0, // Prevent the left panel from shrinking
           display: "flex",
           flexDirection: "column",
           gap: "15px",
@@ -82,6 +91,7 @@ export const GameBoard = ({
           position: "relative",
           width: "1200px",
           height: "1200px",
+          flexShrink: 0, // Prevent the game board from shrinking
         }}
       >
         {/* Ocean layer - 2x2 grid */}

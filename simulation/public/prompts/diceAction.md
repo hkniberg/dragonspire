@@ -2,24 +2,32 @@
 You are player {{playerName}}.
 </player-context>
 
-<game-log>
-{{gameLog}}
-</game-log>
-
 <current-board-state>
 {{boardState}}
 </current-board-state>
 
+<game-log>
+{{gameLog}}
+</game-log>
+
+<turn-context>
+It is currently turn {{turnNumber}} and it is your turn as {{playerName}}. Your remaining dice values are: {{remainingDice}}.
+</turn-context>
+
 <dice-action-request>
-It is your turn as {{playerName}}. You have rolled dice: {{diceRolled}}.
+Choose an action, and which dice to use for it. Follow your tactical plan from the game log.
 
-You are now deciding what to do with a die showing {{dieValue}}{{remainingDiceText}}.
+Respond with a JSON object specifying your dice action, and which die value you will use for it.
 
-Respond with a JSON object specifying your dice action. You can choose from:
+The actionType MUST be one of the folllowing:
 
-1. moveChampion: Move a champion along a path, optionally claiming the destination tile
-2. moveBoat: Move a boat, optionally transporting a champion
-3. harvest: Collect resources from your claimed tiles
+1. moveChampion: Move a champion along a path, optionally claiming the destination tile.
+2. moveBoat: Move a boat, optionally transporting a champion.
+3. harvest: Collect resources from your claimed tiles, using your remaining die values.
 
-Make sure your action is legal according to the game rules and the current board state. Include a brief reasoning field explaining why you chose this specific action.
-</dice-action-request>{{extraInstructions}}
+If you harvest, no more movement actions can be carried out after that, so you need to use all your remaining dice values for this action.
+
+Make sure your action is legal according to the game rules and the current board state.
+</dice-action-request>
+
+{{extraInstructions}}
