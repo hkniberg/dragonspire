@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import type { CarriableItem, Player } from "../lib/types";
+import type { GameState } from "../game/GameState";
+import type { CarriableItem, Champion, Player, Tile } from "../lib/types";
 import { ResourceDisplay } from "./ResourceDisplay";
 import { CardComponent, formatTraderContent } from "./cards/Card";
 
@@ -22,6 +23,7 @@ interface PlayerInfoBoxProps {
   claimedTiles: number;
   playerType?: string; // Added to identify if this is a Claude player
   onExtraInstructionsChange?: (playerName: string, instructions: string) => void; // Callback for updating extra instructions
+  gameState: GameState; // Add gameState to access board and champions for blockade detection
   getPlayerColor: (playerName: string) => {
     main: string;
     light: string;
@@ -36,10 +38,35 @@ export const PlayerInfoBox = ({
   claimedTiles,
   playerType,
   onExtraInstructionsChange,
+  gameState,
   getPlayerColor,
 }: PlayerInfoBoxProps) => {
   const colors = getPlayerColor(player.name);
   const [modalItem, setModalItem] = useState<ModalItemData | null>(null);
+
+  // Helper function to get champions on a specific tile
+  const getChampionsOnTile = (position: { row: number; col: number }): Champion[] => {
+    const champions: Champion[] = [];
+    for (const gamePlayer of gameState.players) {
+      for (const champion of gamePlayer.champions) {
+        if (champion.position.row === position.row && champion.position.col === position.col) {
+          champions.push(champion);
+        }
+      }
+    }
+    return champions;
+  };
+
+  // Helper function to check if a tile is blockaded
+  const isBlockaded = (tile: Tile): boolean => {
+    const blockadingChampions = getChampionsOnTile(tile.position).filter(
+      (champ) => champ.playerName !== tile.claimedBy,
+    );
+    return blockadingChampions.length > 0;
+  };
+
+  // Get claimed tiles for this player
+  const playerClaimedTiles = gameState.board.getAllTiles().filter((tile) => tile.claimedBy === player.name);
 
   // Close modal on ESC key press
   useEffect(() => {
@@ -259,6 +286,62 @@ export const PlayerInfoBox = ({
               </span>
             </div>
           ))}
+        </div>
+
+        {/* Claims */}
+        <div style={{ marginBottom: "8px" }}>
+          <div style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "4px", color: "#495057" }}>
+            Claims ({playerClaimedTiles.length})
+          </div>
+          {playerClaimedTiles.length > 0 ? (
+            <div style={{ fontSize: "11px" }}>
+              {playerClaimedTiles.map((tile: Tile, index: number) => {
+                const isBlockadedTile = isBlockaded(tile);
+                const resourceEntries = tile.resources
+                  ? Object.entries(tile.resources).filter(([_, amount]) => (amount as number) > 0)
+                  : [];
+
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      marginBottom: "2px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center" }}>
+                      <span style={{ color: colors.main, fontWeight: "bold", marginRight: "4px" }}>
+                        ({tile.position.row},{tile.position.col})
+                      </span>
+                      {resourceEntries.length > 0 && (
+                        <span style={{ color: "#6c757d" }}>
+                          {resourceEntries.map(([resource, amount]) => `${amount as number} ${resource}`).join(", ")}
+                        </span>
+                      )}
+                    </div>
+                    {isBlockadedTile && (
+                      <span
+                        style={{
+                          fontSize: "9px",
+                          backgroundColor: "#dc3545",
+                          color: "white",
+                          padding: "1px 4px",
+                          borderRadius: "2px",
+                          marginLeft: "4px",
+                        }}
+                      >
+                        BLOCKADED
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ fontSize: "11px", color: "#6c757d", fontStyle: "italic" }}>No claimed tiles</div>
+          )}
         </div>
 
         {/* Extra Instructions for Claude Players */}

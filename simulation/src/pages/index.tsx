@@ -48,6 +48,10 @@ interface PlayerConfig {
 interface GameConfig {
   startFame: number;
   startMight: number;
+  startFood: number;
+  startWood: number;
+  startOre: number;
+  startGold: number;
   seed: number;
 }
 
@@ -71,6 +75,10 @@ export default function GameSimulation() {
   const [gameConfig, setGameConfig] = useState<GameConfig>({
     startFame: 0,
     startMight: 0,
+    startFood: 0,
+    startWood: 0,
+    startOre: 0,
+    startGold: 0,
     seed: 0,
   });
   const [apiKey, setApiKey] = useState("");
@@ -215,6 +223,10 @@ export default function GameSimulation() {
         startingValues: {
           fame: gameConfig.startFame,
           might: gameConfig.startMight,
+          food: gameConfig.startFood,
+          wood: gameConfig.startWood,
+          ore: gameConfig.startOre,
+          gold: gameConfig.startGold,
         },
         seed: gameConfig.seed,
       };
@@ -504,8 +516,8 @@ export default function GameSimulation() {
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                  gap: "15px",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+                  gap: "12px",
                   padding: "15px",
                   border: "1px solid #ddd",
                   borderRadius: "6px",
@@ -535,10 +547,11 @@ export default function GameSimulation() {
                       })
                     }
                     style={{
-                      width: "100%",
-                      padding: "6px",
+                      width: "80px",
+                      padding: "4px",
                       border: "1px solid #ddd",
                       borderRadius: "4px",
+                      fontSize: "14px",
                     }}
                   />
                 </div>
@@ -566,10 +579,139 @@ export default function GameSimulation() {
                       })
                     }
                     style={{
-                      width: "100%",
-                      padding: "6px",
+                      width: "80px",
+                      padding: "4px",
                       border: "1px solid #ddd",
                       borderRadius: "4px",
+                      fontSize: "14px",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "5px",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Start Food:
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    value={gameConfig.startFood}
+                    onChange={(e) =>
+                      setGameConfig({
+                        ...gameConfig,
+                        startFood: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    style={{
+                      width: "80px",
+                      padding: "4px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      fontSize: "14px",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "5px",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Start Wood:
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    value={gameConfig.startWood}
+                    onChange={(e) =>
+                      setGameConfig({
+                        ...gameConfig,
+                        startWood: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    style={{
+                      width: "80px",
+                      padding: "4px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      fontSize: "14px",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "5px",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Start Ore:
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    value={gameConfig.startOre}
+                    onChange={(e) =>
+                      setGameConfig({
+                        ...gameConfig,
+                        startOre: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    style={{
+                      width: "80px",
+                      padding: "4px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      fontSize: "14px",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "5px",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Start Gold:
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="20"
+                    value={gameConfig.startGold}
+                    onChange={(e) =>
+                      setGameConfig({
+                        ...gameConfig,
+                        startGold: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    style={{
+                      width: "80px",
+                      padding: "4px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      fontSize: "14px",
                     }}
                   />
                 </div>
@@ -596,10 +738,11 @@ export default function GameSimulation() {
                         })
                       }
                       style={{
-                        flex: 1,
-                        padding: "6px",
+                        width: "100px",
+                        padding: "4px",
                         border: "1px solid #ddd",
                         borderRadius: "4px",
+                        fontSize: "14px",
                       }}
                       placeholder="0 for default"
                     />

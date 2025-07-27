@@ -28,7 +28,7 @@ export type GameMasterState = "setup" | "playing" | "finished";
 export interface GameMasterConfig {
   players: PlayerAgent[];
   maxRounds?: number; // Optional limit for testing
-  startingValues?: { fame?: number; might?: number }; // Optional starting fame and might
+  startingValues?: { fame?: number; might?: number; food?: number; wood?: number; ore?: number; gold?: number }; // Optional starting values
   seed?: number; // Optional seed for board generation
 }
 

@@ -79,6 +79,7 @@ export const GameBoard = ({
               claimedTiles={claimedTiles}
               playerType={playerType}
               onExtraInstructionsChange={onExtraInstructionsChange}
+              gameState={gameState}
               getPlayerColor={getPlayerColorWithState}
             />
           );

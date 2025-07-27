@@ -34,7 +34,7 @@ export class GameState {
    */
   public static createWithPlayerNames(
     playerNames: string[],
-    startingValues?: { fame?: number; might?: number },
+    startingValues?: { fame?: number; might?: number; food?: number; wood?: number; ore?: number; gold?: number },
     seed?: number,
   ): GameState {
     if (playerNames.length !== 4) {
@@ -55,7 +55,7 @@ export class GameState {
 
   private static initializePlayersWithNames(
     playerNames: string[],
-    startingValues?: { fame?: number; might?: number },
+    startingValues?: { fame?: number; might?: number; food?: number; wood?: number; ore?: number; gold?: number },
   ): Player[] {
     const players: Player[] = [];
     const startingPositions: Position[] = [
@@ -76,6 +76,10 @@ export class GameState {
 
     const startingFame = startingValues?.fame ?? 0;
     const startingMight = startingValues?.might ?? 0;
+    const startingFood = startingValues?.food ?? 0;
+    const startingWood = startingValues?.wood ?? 0;
+    const startingOre = startingValues?.ore ?? 0;
+    const startingGold = startingValues?.gold ?? 0;
 
     for (let i = 0; i < 4; i++) {
       const playerName = playerNames[i];
@@ -97,7 +101,12 @@ export class GameState {
         color: playerColors[i],
         fame: startingFame,
         might: startingMight,
-        resources: { food: 0, wood: 0, ore: 0, gold: 0 },
+        resources: {
+          food: startingFood,
+          wood: startingWood,
+          ore: startingOre,
+          gold: startingGold
+        },
         maxClaims: 10,
         champions: [champion],
         boats: [boat],
