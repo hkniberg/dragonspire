@@ -75,13 +75,13 @@ export const PlayerInfoBox = ({
     setModalItem(null);
   };
 
-  const renderItemCard = (itemId: string, championId: number) => {
+  const renderItemCard = (itemId: string, championId: number, index: number) => {
     const itemData = TRADER_ITEMS.find((item) => item.id === itemId);
     if (!itemData) return null;
 
     return (
       <div
-        key={`${championId}-${itemId}`}
+        key={`${championId}-${itemId}-${index}`}
         style={{
           height: "140px", // Scaled down height (280px * 0.5)
           width: "100px", // Scaled down width (200px * 0.5)
@@ -211,7 +211,7 @@ export const PlayerInfoBox = ({
                     overflow: "visible",
                   }}
                 >
-                  {champion.items.map((itemId) => renderItemCard(itemId, champion.id))}
+                  {champion.items.map((itemId, index) => renderItemCard(itemId, champion.id, index))}
                 </div>
               )}
             </div>

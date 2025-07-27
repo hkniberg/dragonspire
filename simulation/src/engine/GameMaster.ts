@@ -300,13 +300,37 @@ export class GameMaster {
       }
     }
 
-    // Step 6: Handle trader interactions
-    if (tile.tileType === "trader" && tileAction?.purchaseAtTrader) {
+    // Step 6: Handle item pickup and drop
+    if (tileAction?.pickUpItems || tileAction?.dropItems) {
+      const { handleItemManagement } = await import("@/engine/handlers/tileArrivalHandler");
+      const itemResult = handleItemManagement(
+        this.gameState,
+        tile,
+        player,
+        championId,
+        tileAction.pickUpItems || [],
+        tileAction.dropItems || [],
+        logFn
+      );
+
+      // Log any failed actions
+      for (const failure of itemResult.failedPickups) {
+        logFn("event", `Failed to pick up ${failure.itemId}: ${failure.reason}`);
+      }
+      for (const failure of itemResult.failedDrops) {
+        logFn("event", `Failed to drop ${failure.itemId}: ${failure.reason}`);
+      }
+    }
+
+
+    // Step 7: Handle trader interactions
+    if (tile.tileType === "trader" && tileAction?.useTrader) {
       await this.handleTraderVisit(player, championId, logFn);
     }
 
-    // Step 7: Handle tile claiming
+    // Step 8: Handle tile claiming
     handleTileClaiming(this.gameState, tile, player, championId, !!tileAction?.claimTile, logFn);
+
 
     // TODO: Handle other special tile types (temple, mercenary camp)
   }

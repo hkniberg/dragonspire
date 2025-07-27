@@ -1,9 +1,12 @@
+import React, { useState } from "react";
+import { getTraderItemById } from "../content/traderItems";
 import type { Champion, ResourceType, Tile } from "../lib/types";
 import { getTierSolidColor } from "../lib/uiConstants";
 import { CardComponent, formatMonsterContent } from "./cards/Card";
 import { ChampionComponent } from "./Champion";
 import { ClaimFlag } from "./ClaimFlag";
 import { ResourceIcon } from "./ResourceIcon";
+import { TileCardModal } from "./TileCardModal";
 
 const getTileColor = (tile: Tile): string => {
   if (!tile.explored) {
@@ -200,6 +203,8 @@ export const TileComponent = ({
     dark: string;
   };
 }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const championsOnTile = champions.filter(
     (champion) => champion.position.row === tile.position.row && champion.position.col === tile.position.col,
   );
@@ -214,6 +219,16 @@ export const TileComponent = ({
 
   // Determine border color - use tile's borderColor only (no fallback)
   const borderColor = effectiveTile.borderColor;
+
+  // Check if there are cards (monster or items) to show in modal
+  const hasCards = effectiveTile.monster || (effectiveTile.items && effectiveTile.items.length > 0);
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (hasCards) {
+      setIsModalOpen(true);
+    }
+  };
 
   return (
     <div
@@ -405,7 +420,9 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}` : ""}
               ((effectiveTile.position.row * 7 + effectiveTile.position.col * 11) % 21) - 10
             }deg)`,
             zIndex: 8,
+            cursor: hasCards ? "pointer" : "default",
           }}
+          onClick={handleCardClick}
         >
           <CardComponent
             tier={effectiveTile.monster.tier || effectiveTile.tier}
@@ -417,6 +434,49 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}` : ""}
             content={formatMonsterContent(effectiveTile.monster)}
             contentFontSize="14px"
           />
+        </div>
+      )}
+
+      {/* Items on tile */}
+      {effectiveTile.items && effectiveTile.items.length > 0 && effectiveTile.explored && (
+        <div
+          style={{
+            position: "absolute",
+            top: "15%",
+            right: "8px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+            zIndex: 9,
+            cursor: "pointer",
+          }}
+          onClick={handleCardClick}
+        >
+          {effectiveTile.items.map((itemId, index) => {
+            const traderItem = getTraderItemById(itemId);
+            if (!traderItem) return null;
+
+            return (
+              <div
+                key={`${itemId}-${index}`}
+                style={{
+                  transform: `scale(0.7) rotate(${((index * 13 + effectiveTile.position.row * 7) % 21) - 10}deg)`,
+                  transformOrigin: "center",
+                }}
+              >
+                <CardComponent
+                  tier={1}
+                  borderColor={getTierSolidColor(1)}
+                  name={traderItem.name}
+                  imageUrl={`/traderItems/${traderItem.id}.png`}
+                  compactMode={true}
+                  title={`Item: ${traderItem.name} (Cost: ${traderItem.cost} gold)`}
+                  content={traderItem.description}
+                  contentFontSize="12px"
+                />
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -440,6 +500,16 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}` : ""}
           ))}
         </div>
       )}
+
+      {/* Modal for showing cards */}
+      <TileCardModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        monster={effectiveTile.monster}
+        items={effectiveTile.items}
+        tileTier={effectiveTile.tier}
+        tilePosition={effectiveTile.position}
+      />
     </div>
   );
 };

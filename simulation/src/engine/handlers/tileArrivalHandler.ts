@@ -306,4 +306,96 @@ export function handleSpecialTiles(
     adventureCardDrawn: true,
     tokensRemaining: tile.adventureTokens
   };
+}
+
+export interface ItemManagementResult {
+  itemsPickedUp: string[];
+  itemsDropped: string[];
+  failedPickups: Array<{
+    itemId: string;
+    reason: string;
+  }>;
+  failedDrops: Array<{
+    itemId: string;
+    reason: string;
+  }>;
+}
+
+/**
+ * Handle item pickup and drop actions
+ */
+export function handleItemManagement(
+  gameState: GameState,
+  tile: Tile,
+  player: Player,
+  championId: number,
+  pickUpItems: string[] = [],
+  dropItems: string[] = [],
+  logFn: (type: string, content: string) => void
+): ItemManagementResult {
+  const result: ItemManagementResult = {
+    itemsPickedUp: [],
+    itemsDropped: [],
+    failedPickups: [],
+    failedDrops: []
+  };
+
+  const champion = gameState.getChampion(player.name, championId);
+  if (!champion) {
+    return result;
+  }
+
+  // Initialize tile items array if it doesn't exist
+  if (!tile.items) {
+    tile.items = [];
+  }
+
+  // Handle item drops first (to potentially make space for pickups)
+  for (const itemId of dropItems) {
+    if (!champion.items.includes(itemId)) {
+      result.failedDrops.push({
+        itemId,
+        reason: "Champion doesn't have this item"
+      });
+      continue;
+    }
+
+    // Remove from champion inventory and add to tile
+    const itemIndex = champion.items.indexOf(itemId);
+    champion.items.splice(itemIndex, 1);
+    tile.items.push(itemId);
+    result.itemsDropped.push(itemId);
+
+    logFn("event", `Champion ${championId} dropped ${itemId} on tile (${tile.position.row}, ${tile.position.col})`);
+  }
+
+  // Handle item pickups
+  for (const itemId of pickUpItems) {
+    if (!tile.items.includes(itemId)) {
+      result.failedPickups.push({
+        itemId,
+        reason: "Item not available on this tile"
+      });
+      continue;
+    }
+
+    // Check inventory space (max 2 items)
+    if (champion.items.length >= 2) {
+      result.failedPickups.push({
+        itemId,
+        reason: "Champion inventory is full (max 2 items)"
+      });
+      continue;
+    }
+
+    // Remove from tile and add to champion inventory
+    const itemIndex = tile.items.indexOf(itemId);
+    tile.items.splice(itemIndex, 1);
+    champion.items.push(itemId);
+    result.itemsPickedUp.push(itemId);
+
+    logFn("event", `Champion ${championId} picked up ${itemId} from tile (${tile.position.row}, ${tile.position.col})`);
+  }
+
+  return result;
 } 

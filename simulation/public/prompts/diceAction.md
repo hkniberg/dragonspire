@@ -21,7 +21,7 @@ Respond with a JSON object specifying your dice action, and which die value you 
 
 The actionType MUST be one of the folllowing:
 
-1. championAction: Do something with a champion (move and/or act on a tile)
+1. championAction: Do something with a champion (move and/or act on a tile). Actions can include claiming a tile, trading with a trader, picking up or dropping items, or a combination of these (if applicable). Note that a champion can only carry 2 items.
 2. boatAction: Do something with a boat (move and/or transport a champion to a tile, who then can act on that tile)
 3. harvestAction: Collect resources from your claimed tiles, using your remaining die values.
 

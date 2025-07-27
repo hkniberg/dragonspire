@@ -218,6 +218,13 @@ export class GameStateStringifier {
       lines.push(`- ${player?.name || "unknown"} champion${champion.id} is here`);
     }
 
+    // Add items on this tile
+    if (tile.items && tile.items.length > 0) {
+      for (const itemId of tile.items) {
+        lines.push(`- Item: ${itemId} (dropped on ground)`);
+      }
+    }
+
     return lines.join("\n");
   }
 

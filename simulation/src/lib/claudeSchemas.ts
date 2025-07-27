@@ -11,9 +11,23 @@ export const tileActionSchema = {
       type: "boolean",
       description: "Whether to claim the tile (only for resource tiles)",
     },
-    purchaseAtTrader: {
+    useTrader: {
       type: "boolean",
-      description: "Whether to purchase at the trader (only for trader tile)",
+      description: "Whether to buy/sell at the trader (only for trader tile)",
+    },
+    pickUpItems: {
+      type: "array",
+      description: "Optional array of item IDs to pick up from the tile. Must be items present on the tile.",
+      items: {
+        type: "string"
+      }
+    },
+    dropItems: {
+      type: "array",
+      description: "Optional array of item IDs to drop on the tile. Must be items held by the champion.",
+      items: {
+        type: "string"
+      }
     },
   },
 };
@@ -178,7 +192,7 @@ export const traderActionSchema = {
     },
     resourcesSold: {
       type: "object",
-      description: "Resources to sell (required for sellResources actions)",
+      description: "Resources to sell. You must already own these resources.",
       properties: {
         gold: { type: "number" },
         wood: { type: "number" },

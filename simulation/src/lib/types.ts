@@ -48,6 +48,7 @@ export interface Tile {
   backColor?: string; // Background color set by BoardBuilder
   borderColor?: string; // Border color set by BoardBuilder
   tileGroup?: number; // Optional group identifier - when one tile in group is explored, all tiles in group are explored
+  items?: string[]; // Items present on this tile
 }
 
 export interface Champion {

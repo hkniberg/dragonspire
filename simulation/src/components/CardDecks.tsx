@@ -5,7 +5,6 @@ import { MONSTER_CARDS } from "../content/monsterCards";
 import { TRADER_ITEMS } from "../content/traderItems";
 import { TREASURE_CARDS } from "../content/treasureCards";
 import { GameMaster } from "../engine/GameMaster";
-import { getTraderCards } from "../lib/cards";
 import { TileTier } from "../lib/types";
 import {
   CardComponent,
@@ -133,7 +132,8 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
   };
 
   const handleTraderDeckClick = () => {
-    const traderCards = getTraderCards();
+    const gameDecks = gameSession.getGameDecks();
+    const traderCards = gameDecks.getAvailableTraderCards();
     setTraderModal({
       isTraderDeck: true,
       traderCards,
@@ -200,7 +200,8 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
   };
 
   const renderTraderDeck = () => {
-    const traderCards = getTraderCards();
+    const gameDecks = gameSession.getGameDecks();
+    const traderDeckSize = gameDecks.getTraderDeckSize();
 
     return (
       <div
@@ -216,7 +217,7 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = "scale(1)";
         }}
-        title={`Click to view all trader items (${traderCards.length} cards)`}
+        title={`Click to view all trader items (${traderDeckSize} cards)`}
       >
         <CardComponent
           showBackside={true}
@@ -240,7 +241,7 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
             fontWeight: "bold",
           }}
         >
-          {traderCards.length}
+          {traderDeckSize}
         </div>
       </div>
     );

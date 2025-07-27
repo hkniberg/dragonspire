@@ -87,7 +87,6 @@ export class Claude {
       .join("");
     try {
 
-
       // If no schema provided, return raw text response
       if (!responseSchema) {
         return textContent;

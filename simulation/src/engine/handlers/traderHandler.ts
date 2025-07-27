@@ -160,20 +160,32 @@ function processBuyItemAction(
     return { success: false, reason: `Champion ${championId} not found` };
   }
 
-  // Check if champion has inventory space (max 2 items per game rules)
-  if (champion.items.length >= 2) {
-    return {
-      success: false,
-      reason: `Champion ${championId} inventory is full (max 2 items)`
-    };
-  }
-
   // Check if player has enough gold
   if (player.resources.gold < traderItem.cost) {
     return {
       success: false,
       reason: `Not enough gold. Need ${traderItem.cost}, have ${player.resources.gold}`
     };
+  }
+
+  // Handle inventory space (max 2 items per game rules)
+  // If champion is at capacity, auto-drop oldest item to make space
+  if (champion.items.length >= 2) {
+    const currentTile = gameState.board.getTileAt(champion.position);
+    if (!currentTile) {
+      return { success: false, reason: `Champion ${championId} position is invalid` };
+    }
+
+    // Drop the first item (oldest) to make space
+    const droppedItem = champion.items.shift()!;
+
+    // Initialize tile items array if it doesn't exist
+    if (!currentTile.items) {
+      currentTile.items = [];
+    }
+    currentTile.items.push(droppedItem);
+
+    logFn("event", `Champion ${championId} dropped ${droppedItem} to make space for new purchase`);
   }
 
   // Remove item from trader deck

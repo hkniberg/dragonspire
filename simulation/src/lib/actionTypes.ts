@@ -1,5 +1,4 @@
-import { TraderCard } from './cards';
-import { OceanPosition, Position, ResourceType } from './types';
+import { OceanPosition, Position } from './types';
 
 export interface ChampionAction {
   diceValueUsed: number;
@@ -10,7 +9,9 @@ export interface ChampionAction {
 
 export interface TileAction {
   claimTile?: boolean;
-  purchaseAtTrader?: boolean;
+  useTrader?: boolean;
+  pickUpItems?: string[]; // Array of item IDs to pick up from the tile
+  dropItems?: string[]; // Array of item IDs to drop on the tile
 }
 
 export interface BoatAction {
