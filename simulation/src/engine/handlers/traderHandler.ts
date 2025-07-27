@@ -168,8 +168,7 @@ function processBuyItemAction(
     };
   }
 
-  // Handle inventory space (max 2 items per game rules)
-  // If champion is at capacity, auto-drop oldest item to make space
+  // If champion's inventory is full, drop the first item to the ground
   if (champion.items.length >= 2) {
     const currentTile = gameState.board.getTileAt(champion.position);
     if (!currentTile) {
@@ -185,7 +184,9 @@ function processBuyItemAction(
     }
     currentTile.items.push(droppedItem);
 
-    logFn("event", `Champion ${championId} dropped ${droppedItem} to make space for new purchase`);
+    // Get item name for logging
+    const droppedItemName = droppedItem.treasureCard?.name || droppedItem.traderItem?.name || 'Unknown Item';
+    logFn("event", `Champion ${championId} dropped ${droppedItemName} to make space for new purchase`);
   }
 
   // Remove item from trader deck
@@ -194,9 +195,9 @@ function processBuyItemAction(
     return { success: false, reason: `Failed to remove ${traderItem.name} from trader deck` };
   }
 
-  // Deduct gold and add item to champion's inventory
+  // Deduct gold and add item to champion's inventory as CarriableItem
   player.resources.gold -= traderItem.cost;
-  champion.items.push(action.itemId);
+  champion.items.push({ traderItem });
 
   logFn("event", `Champion ${championId} purchased ${traderItem.name} for ${traderItem.cost} gold`);
 

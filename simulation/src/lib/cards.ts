@@ -15,7 +15,7 @@ import { BiomeType, TileTier } from "./types";
  *
  * This is useful for testing specific cards or gameplay situations.
  */
-let ONLY_INCLUDE_CARDS: string[] | undefined = undefined; //["sudden-storm"];
+let ONLY_INCLUDE_CARDS: string[] | undefined = undefined; // ["rusty-sword"];
 
 export type CardType = "monster" | "event" | "treasure" | "encounter" | "follower";
 

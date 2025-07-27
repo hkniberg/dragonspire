@@ -1,5 +1,7 @@
 // Lords of Doomspire Game Types
 
+import type { TraderItem } from "../content/traderItems";
+import type { TreasureCard } from "../content/treasureCards";
 
 export type ResourceType = "food" | "wood" | "ore" | "gold";
 export type TileTier = 1 | 2 | 3;
@@ -25,6 +27,11 @@ export interface Position {
   col: number;
 }
 
+export interface CarriableItem {
+  treasureCard?: TreasureCard;
+  traderItem?: TraderItem;
+}
+
 export interface Monster {
   id: string;
   name: string;
@@ -48,14 +55,14 @@ export interface Tile {
   backColor?: string; // Background color set by BoardBuilder
   borderColor?: string; // Border color set by BoardBuilder
   tileGroup?: number; // Optional group identifier - when one tile in group is explored, all tiles in group are explored
-  items?: string[]; // Items present on this tile
+  items?: CarriableItem[]; // Items present on this tile
 }
 
 export interface Champion {
   id: number;
   position: Position;
   playerName: string;
-  items: string[];
+  items: CarriableItem[]; // Items held by the champion
 }
 
 export interface Boat {

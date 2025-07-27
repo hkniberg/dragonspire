@@ -1,6 +1,6 @@
 import { GameState } from "@/game/GameState";
 import { GameSettings } from "@/lib/GameSettings";
-import { Player, Tile } from "@/lib/types";
+import { CarriableItem, Player, Tile } from "@/lib/types";
 import { formatResources } from "@/lib/utils";
 import {
   resolveChampionVsChampionCombat,
@@ -368,7 +368,8 @@ export function handleItemManagement(
 
   // Handle item drops first (to potentially make space for pickups)
   for (const itemId of dropItems) {
-    if (!champion.items.includes(itemId)) {
+    const itemToDropObj = findCarriableItemById(champion.items, itemId);
+    if (!itemToDropObj) {
       result.failedDrops.push({
         itemId,
         reason: "Champion doesn't have this item"
@@ -377,17 +378,19 @@ export function handleItemManagement(
     }
 
     // Remove from champion inventory and add to tile
-    const itemIndex = champion.items.indexOf(itemId);
+    const itemIndex = champion.items.indexOf(itemToDropObj);
     champion.items.splice(itemIndex, 1);
-    tile.items.push(itemId);
+    tile.items.push(itemToDropObj);
     result.itemsDropped.push(itemId);
 
-    logFn("event", `Champion ${championId} dropped ${itemId} on tile (${tile.position.row}, ${tile.position.col})`);
+    const itemName = getCarriableItemName(itemToDropObj);
+    logFn("event", `Champion ${championId} dropped ${itemName} on tile (${tile.position.row}, ${tile.position.col})`);
   }
 
   // Handle item pickups
   for (const itemId of pickUpItems) {
-    if (!tile.items.includes(itemId)) {
+    const itemToPickUpObj = findCarriableItemById(tile.items, itemId);
+    if (!itemToPickUpObj) {
       result.failedPickups.push({
         itemId,
         reason: "Item not available on this tile"
@@ -405,12 +408,13 @@ export function handleItemManagement(
     }
 
     // Remove from tile and add to champion inventory
-    const itemIndex = tile.items.indexOf(itemId);
+    const itemIndex = tile.items.indexOf(itemToPickUpObj);
     tile.items.splice(itemIndex, 1);
-    champion.items.push(itemId);
+    champion.items.push(itemToPickUpObj);
     result.itemsPickedUp.push(itemId);
 
-    logFn("event", `Champion ${championId} picked up ${itemId} from tile (${tile.position.row}, ${tile.position.col})`);
+    const itemName = getCarriableItemName(itemToPickUpObj);
+    logFn("event", `Champion ${championId} picked up ${itemName} from tile (${tile.position.row}, ${tile.position.col})`);
   }
 
   return result;
@@ -504,4 +508,21 @@ export function handleTempleAction(
     mightGained: 1,
     fameSacrificed: 3
   };
+}
+
+// Helper function to find a CarriableItem by ID (either treasure or trader item)
+function findCarriableItemById(items: CarriableItem[], itemId: string): CarriableItem | undefined {
+  return items.find(item =>
+    item.treasureCard?.id === itemId || item.traderItem?.id === itemId
+  );
+}
+
+// Helper function to get the ID of a CarriableItem
+function getCarriableItemId(item: CarriableItem): string {
+  return item.treasureCard?.id || item.traderItem?.id || 'unknown';
+}
+
+// Helper function to get the name of a CarriableItem
+function getCarriableItemName(item: CarriableItem): string {
+  return item.treasureCard?.name || item.traderItem?.name || 'Unknown Item';
 } 

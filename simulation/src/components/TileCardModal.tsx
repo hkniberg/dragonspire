@@ -1,15 +1,14 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { getTraderItemById } from "../content/traderItems";
-import { Monster } from "../lib/types";
+import { CarriableItem, Monster } from "../lib/types";
 import { getTierSolidColor } from "../lib/uiConstants";
-import { CardComponent, formatMonsterContent } from "./cards/Card";
+import { CardComponent, formatMonsterContent, formatTraderContent } from "./cards/Card";
 
 interface TileCardModalProps {
   isOpen: boolean;
   onClose: () => void;
   monster?: Monster;
-  items?: string[];
+  items?: CarriableItem[];
   tileTier?: number;
   tilePosition?: { row: number; col: number };
 }
@@ -102,22 +101,45 @@ export const TileCardModal: React.FC<TileCardModalProps> = ({
           )}
 
           {/* Show item cards */}
-          {items.map((itemId) => {
-            const traderItem = getTraderItemById(itemId);
-            if (!traderItem) return null;
+          {items.map((item, index) => {
+            // Handle both treasure and trader items
+            let name: string;
+            let imageUrl: string;
+            let content: string;
+            let borderColor: string;
+            let title: string;
+            let itemId: string;
+
+            if (item.treasureCard) {
+              name = item.treasureCard.name;
+              imageUrl = `/treasures/${item.treasureCard.id}.png`;
+              content = item.treasureCard.description;
+              borderColor = "#8B4513"; // Brown for treasures
+              title = `Treasure: ${item.treasureCard.name} (Tier ${item.treasureCard.tier})`;
+              itemId = item.treasureCard.id;
+            } else if (item.traderItem) {
+              name = item.traderItem.name;
+              imageUrl = `/traderItems/${item.traderItem.id}.png`;
+              content = formatTraderContent(item.traderItem);
+              borderColor = "#FFD700"; // Gold for trader items
+              title = `Item: ${item.traderItem.name} (Cost: ${item.traderItem.cost} gold)`;
+              itemId = item.traderItem.id;
+            } else {
+              return null; // Invalid item
+            }
 
             return (
               <div key={itemId}>
-                <h3 style={{ textAlign: "center", marginBottom: "8px", color: "#555" }}>Item</h3>
+                <h3 style={{ textAlign: "center", marginBottom: "8px", color: "#555" }}>
+                  {item.treasureCard ? "Treasure" : "Item"}
+                </h3>
                 <CardComponent
-                  tier={1} // Items are generally tier 1
-                  borderColor={getTierSolidColor(1)}
-                  name={traderItem.name}
-                  imageUrl={`/traderItems/${traderItem.id}.png`}
-                  compactMode={false}
-                  title={`Item: ${traderItem.name} (Cost: ${traderItem.cost} gold)`}
-                  content={traderItem.description}
-                  contentFontSize="14px"
+                  tier={item.treasureCard?.tier || 1}
+                  borderColor={borderColor}
+                  name={name}
+                  imageUrl={imageUrl}
+                  content={content}
+                  title={title}
                 />
               </div>
             );

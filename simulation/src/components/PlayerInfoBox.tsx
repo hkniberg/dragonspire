@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { TRADER_ITEMS } from "../content/traderItems";
-import type { Player } from "../lib/types";
+import type { CarriableItem, Player } from "../lib/types";
 import { ResourceDisplay } from "./ResourceDisplay";
 import { CardComponent, formatTraderContent } from "./cards/Card";
 
@@ -12,9 +11,8 @@ const getBoatImagePath = (playerIndex: number): string => {
 };
 
 interface ModalItemData {
-  itemId: string;
+  item: CarriableItem;
   championId: number;
-  itemData: any;
 }
 
 interface PlayerInfoBoxProps {
@@ -60,14 +58,10 @@ export const PlayerInfoBox = ({
     };
   }, [modalItem]);
 
-  const handleItemClick = (itemId: string, championId: number) => {
-    const itemData = TRADER_ITEMS.find((item) => item.id === itemId);
-    if (!itemData) return;
-
+  const handleItemClick = (item: CarriableItem, championId: number) => {
     setModalItem({
-      itemId,
+      item,
       championId,
-      itemData,
     });
   };
 
@@ -75,13 +69,33 @@ export const PlayerInfoBox = ({
     setModalItem(null);
   };
 
-  const renderItemCard = (itemId: string, championId: number, index: number) => {
-    const itemData = TRADER_ITEMS.find((item) => item.id === itemId);
-    if (!itemData) return null;
+  const renderItemCard = (item: CarriableItem, championId: number, index: number) => {
+    // Determine item properties based on whether it's a treasure or trader item
+    let name: string;
+    let imageUrl: string;
+    let content: string;
+    let borderColor: string;
+    let bottomTag: string;
+
+    if (item.treasureCard) {
+      name = item.treasureCard.name;
+      imageUrl = `/treasures/${item.treasureCard.id}.png`;
+      content = item.treasureCard.description;
+      borderColor = "#8B4513"; // Brown for treasures
+      bottomTag = "Treasure";
+    } else if (item.traderItem) {
+      name = item.traderItem.name;
+      imageUrl = `/traderItems/${item.traderItem.id}.png`;
+      content = formatTraderContent(item.traderItem);
+      borderColor = "#FFD700"; // Gold for trader items
+      bottomTag = "Item";
+    } else {
+      return null; // Invalid item
+    }
 
     return (
       <div
-        key={`${championId}-${itemId}-${index}`}
+        key={`${championId}-${name}-${index}`}
         style={{
           height: "140px", // Scaled down height (280px * 0.5)
           width: "100px", // Scaled down width (200px * 0.5)
@@ -98,21 +112,21 @@ export const PlayerInfoBox = ({
             transform: "scale(0.5)",
             transformOrigin: "center",
           }}
-          onClick={() => handleItemClick(itemId, championId)}
+          onClick={() => handleItemClick(item, championId)}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "scale(0.55)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "scale(0.5)";
           }}
-          title={`${itemData.name} - Click to view details`}
+          title={`${name} - Click to view details`}
         >
           <CardComponent
-            borderColor="#FFD700"
-            name={itemData.name}
-            imageUrl={`/traderItems/${itemData.id}.png`}
-            content={formatTraderContent(itemData)}
-            bottomTag="Item"
+            borderColor={borderColor}
+            name={name}
+            imageUrl={imageUrl}
+            content={content}
+            bottomTag={bottomTag}
           />
         </div>
       </div>
@@ -211,7 +225,7 @@ export const PlayerInfoBox = ({
                     overflow: "visible",
                   }}
                 >
-                  {champion.items.map((itemId, index) => renderItemCard(itemId, champion.id, index))}
+                  {champion.items.map((item, index) => renderItemCard(item, champion.id, index))}
                 </div>
               )}
             </div>
@@ -304,14 +318,44 @@ export const PlayerInfoBox = ({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <CardComponent
-              borderColor="#FFD700"
-              name={modalItem.itemData.name}
-              imageUrl={`/traderItems/${modalItem.itemData.id}.png`}
-              content={formatTraderContent(modalItem.itemData)}
-              bottomTag="Item"
-              title={`${modalItem.itemData.name} - ${modalItem.itemData.cost} gold`}
-            />
+            {(() => {
+              const item = modalItem.item;
+              let name: string;
+              let imageUrl: string;
+              let content: string;
+              let borderColor: string;
+              let bottomTag: string;
+              let title: string;
+
+              if (item.treasureCard) {
+                name = item.treasureCard.name;
+                imageUrl = `/treasures/${item.treasureCard.id}.png`;
+                content = item.treasureCard.description;
+                borderColor = "#8B4513";
+                bottomTag = "Treasure";
+                title = `${item.treasureCard.name} - Tier ${item.treasureCard.tier}`;
+              } else if (item.traderItem) {
+                name = item.traderItem.name;
+                imageUrl = `/traderItems/${item.traderItem.id}.png`;
+                content = formatTraderContent(item.traderItem);
+                borderColor = "#FFD700";
+                bottomTag = "Item";
+                title = `${item.traderItem.name} - ${item.traderItem.cost} gold`;
+              } else {
+                return null;
+              }
+
+              return (
+                <CardComponent
+                  borderColor={borderColor}
+                  name={name}
+                  imageUrl={imageUrl}
+                  content={content}
+                  bottomTag={bottomTag}
+                  title={title}
+                />
+              );
+            })()}
 
             {/* Close button */}
             <button
@@ -354,7 +398,7 @@ export const PlayerInfoBox = ({
                 whiteSpace: "nowrap",
               }}
             >
-              Champion {modalItem.championId} - {modalItem.itemData.name}
+              Champion {modalItem.championId} - {modalItem.item.treasureCard?.name || modalItem.item.traderItem?.name}
             </div>
           </div>
         </div>

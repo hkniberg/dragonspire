@@ -6,6 +6,7 @@ export interface TreasureCard {
   tier: TileTier;
   description: string;
   count: number; // How many cards of this treasure to include in deck
+  carriable: boolean; // Whether this treasure can be carried as an item
 }
 
 export function getTreasureCardById(id: string): TreasureCard | undefined {
@@ -19,10 +20,11 @@ export const TREASURE_CARDS: TreasureCard[] = [
     id: "broken-shield",
     name: "Broken Shield",
     tier: 1,
-    description: `Choose one:  
-Gain \`+1 ore\`, **OR**  
+    description: `Choose one:
+Gain \`+1 ore\`, **OR**
 Spend \`2 ore\` to gain \`+1 might\``,
     count: 2,
+    carriable: true,
   },
   {
     id: "rusty-sword",
@@ -30,16 +32,18 @@ Spend \`2 ore\` to gain \`+1 might\``,
     tier: 1,
     description: "Gain `+2 might`. This **item breaks** after *one fight*.",
     count: 2,
+    carriable: true,
   },
   {
     id: "mysterious-ring",
     name: "Mysterious Ring",
     tier: 1,
-    description: `Roll \`1d3\`:  
-**(1)** The ring is *stuck* (can remove at **temple**)  
-**(2)** **Swap** location with any knight  
+    description: `Roll \`1d3\`:
+**(1)** The ring is *stuck* (can remove at **temple**)
+**(2)** **Swap** location with any knight
 **(3)** \`+3 might\` against **dragons** & **drakes**`,
     count: 1,
+    carriable: true,
   },
 
   // Tier 2 Treasure Cards
@@ -49,6 +53,7 @@ Spend \`2 ore\` to gain \`+1 might\``,
     tier: 2,
     description: "It's a **löng swörd**. Gain `+2 might`.",
     count: 1,
+    carriable: true,
   },
   {
     id: "porcupine",
@@ -56,14 +61,16 @@ Spend \`2 ore\` to gain \`+1 might\``,
     tier: 2,
     description: "If the opponent has **more might**, this *shield* grants `+2 might`.",
     count: 1,
+    carriable: true,
   },
   {
     id: "sword-in-stone",
     name: "Sword in a stone",
     tier: 2,
-    description: `Card stays here until someone **pulls it out**. Roll \`3+D3\`:  
-**(3)** You break off half and gain \`+2 might\`  
+    description: `Card stays here until someone **pulls it out**. Roll \`3+D3\`:
+**(3)** You break off half and gain \`+2 might\`
 **(9)** You gain **Cloudslicer** and gain \`+4 might\``,
     count: 1,
+    carriable: false, // This stays on the tile until someone pulls it out
   },
 ];

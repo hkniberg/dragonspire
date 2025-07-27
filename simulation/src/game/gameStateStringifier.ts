@@ -1,5 +1,5 @@
 import { GameState } from "../game/GameState";
-import type { Champion, Player, ResourceType, Tile } from "../lib/types";
+import type { CarriableItem, Champion, Player, ResourceType, Tile } from "../lib/types";
 
 /**
  * Converts a GameState to a readable markdown string
@@ -109,8 +109,9 @@ export function stringifyTile(tile: Tile, gameState: GameState, ignorePlayerName
 
   // Add items on this tile as separate sentences
   if (tile.items && tile.items.length > 0) {
-    for (const itemId of tile.items) {
-      sentences.push(`There is a ${itemId} here`);
+    for (const item of tile.items) {
+      const itemDetails = getCarriableItemDetails(item);
+      sentences.push(`There is a ${itemDetails} here`);
     }
   }
 
@@ -173,9 +174,10 @@ function formatPlayer(player: Player, gameState: GameState): string {
 function formatChampion(champion: Champion, playerName: string): string {
   let line = `- champion${champion.id} at ${formatPosition(champion.position)}`;
 
-  // Add items
+  // Add items with full details
   for (const item of champion.items) {
-    line += `\n  - Has ${item}`;
+    const itemDetails = getCarriableItemDetails(item);
+    line += `\n  - Has ${itemDetails}`;
   }
 
   return line;
@@ -306,10 +308,11 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
     lines.push(`- ${player?.name || "unknown"} champion${champion.id} is here`);
   }
 
-  // Add items on this tile
+  // Add items on this tile with full details
   if (tile.items && tile.items.length > 0) {
-    for (const itemId of tile.items) {
-      lines.push(`- Item: ${itemId} (dropped on ground)`);
+    for (const item of tile.items) {
+      const itemDetails = getCarriableItemDetails(item);
+      lines.push(`- Item: ${itemDetails} (dropped on ground)`);
     }
   }
 
@@ -376,4 +379,26 @@ export class GameStateStringifier {
   public static stringify(gameState: GameState): string {
     return stringifyGameState(gameState);
   }
+}
+
+// Helper function to get detailed information about a CarriableItem
+function getCarriableItemDetails(item: CarriableItem): string {
+  if (item.treasureCard) {
+    return `${item.treasureCard.name} (${item.treasureCard.id}) - ${item.treasureCard.description}`;
+  }
+  if (item.traderItem) {
+    return `${item.traderItem.name} (${item.traderItem.id}) - ${item.traderItem.description}`;
+  }
+  return 'Unknown Item';
+}
+
+// Helper function to get the name of a CarriableItem (kept for backward compatibility)
+function getCarriableItemName(item: CarriableItem): string {
+  if (item.treasureCard) {
+    return item.treasureCard.name;
+  }
+  if (item.traderItem) {
+    return item.traderItem.name;
+  }
+  return 'Unknown Item';
 }

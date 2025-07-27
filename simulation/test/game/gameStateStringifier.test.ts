@@ -1,3 +1,5 @@
+import { getTraderItemById } from "@/content/traderItems";
+import { getTreasureCardById } from "@/content/treasureCards";
 import { GameState } from "../../src/game/GameState";
 import { stringifyGameState } from "../../src/game/gameStateStringifier";
 import { Board } from "../../src/lib/Board";
@@ -20,8 +22,8 @@ describe("GameStateStringifier", () => {
 - Home: (0,7)
 - Resource stockpile: 1 food, 2 wood
 - champion1 at (3,3)
-  - Has broken-shield
-  - Has rusty-sword
+  - Has Broken Shield (broken-shield) - Choose one: Gain \`+1 ore\`, **OR** Spend \`2 ore\` to gain \`+1 might\`
+  - Has Rusty sword (rusty-sword) - Gain \`+2 might\`. This **item breaks** after *one fight*.
 - champion2 at (3,5)
 - champion1 at (2,5)
 - boat1 at (sw)
@@ -97,6 +99,7 @@ Tile (3,5)
 
 Tile (3,6)
 - Trader
+- Item: Spear (spear) - Gain \`+1 might\` when fighting **beasts**. (dropped on ground)
 
 Tile (3,7)
 - Mercenary camp
@@ -119,6 +122,11 @@ Tile (7,7)
 function createSampleGameState(): GameState {
   // Create the board
   const board = new Board(8, 8);
+
+  // Get item data for creating CarriableItem objects
+  const brokenShield = getTreasureCardById("broken-shield")!;
+  const rustySword = getTreasureCardById("rusty-sword")!;
+  const spear = getTraderItemById("spear")!;
 
   // Initialize all tiles
   for (let row = 0; row < 8; row++) {
@@ -223,6 +231,11 @@ function createSampleGameState(): GameState {
     tier: 1,
     explored: true,
     tileType: "trader",
+    items: [
+      {
+        traderItem: spear,
+      },
+    ],
   });
 
   // Tile (3,7) - Mercenary
@@ -248,7 +261,14 @@ function createSampleGameState(): GameState {
           id: 1,
           position: { row: 3, col: 3 },
           playerName: "Jim",
-          items: ["broken-shield", "rusty-sword"],
+          items: [
+            {
+              treasureCard: brokenShield,
+            },
+            {
+              treasureCard: rustySword,
+            },
+          ],
         },
         {
           id: 2,

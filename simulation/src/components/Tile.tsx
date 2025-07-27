@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { getTraderItemById } from "../content/traderItems";
 import type { Champion, ResourceType, Tile } from "../lib/types";
 import { getTierSolidColor } from "../lib/uiConstants";
-import { CardComponent, formatMonsterContent } from "./cards/Card";
+import { CardComponent, formatMonsterContent, formatTraderContent } from "./cards/Card";
 import { ChampionComponent } from "./Champion";
 import { ClaimFlag } from "./ClaimFlag";
 import { ResourceIcon } from "./ResourceIcon";
@@ -452,9 +451,32 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}` : ""}
           }}
           onClick={handleCardClick}
         >
-          {effectiveTile.items.map((itemId, index) => {
-            const traderItem = getTraderItemById(itemId);
-            if (!traderItem) return null;
+          {effectiveTile.items.map((item, index) => {
+            // Handle both treasure and trader items
+            let name: string;
+            let imageUrl: string;
+            let content: string;
+            let borderColor: string;
+            let title: string;
+            let itemId: string;
+
+            if (item.treasureCard) {
+              name = item.treasureCard.name;
+              imageUrl = `/treasures/${item.treasureCard.id}.png`;
+              content = item.treasureCard.description;
+              borderColor = "#8B4513"; // Brown for treasures
+              title = `Treasure: ${item.treasureCard.name} (Tier ${item.treasureCard.tier})`;
+              itemId = item.treasureCard.id;
+            } else if (item.traderItem) {
+              name = item.traderItem.name;
+              imageUrl = `/traderItems/${item.traderItem.id}.png`;
+              content = formatTraderContent(item.traderItem);
+              borderColor = "#FFD700"; // Gold for trader items
+              title = `Item: ${item.traderItem.name} (Cost: ${item.traderItem.cost} gold)`;
+              itemId = item.traderItem.id;
+            } else {
+              return null; // Invalid item
+            }
 
             return (
               <div
@@ -465,13 +487,13 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}` : ""}
                 }}
               >
                 <CardComponent
-                  tier={1}
-                  borderColor={getTierSolidColor(1)}
-                  name={traderItem.name}
-                  imageUrl={`/traderItems/${traderItem.id}.png`}
+                  tier={item.treasureCard?.tier || 1}
+                  borderColor={borderColor}
+                  name={name}
+                  imageUrl={imageUrl}
                   compactMode={true}
-                  title={`Item: ${traderItem.name} (Cost: ${traderItem.cost} gold)`}
-                  content={traderItem.description}
+                  title={title}
+                  content={content}
                   contentFontSize="12px"
                 />
               </div>
