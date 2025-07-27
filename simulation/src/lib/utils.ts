@@ -1,7 +1,8 @@
 import { Position } from "./types";
 
 export function formatResources(
-  resources: Record<string, number> | undefined
+  resources: Record<string, number> | undefined,
+  separator: string = " "
 ): string {
   if (!resources) return "None";
 
@@ -10,7 +11,7 @@ export function formatResources(
     .map(([type, amount]) => {
       return `${amount} ${type.charAt(0).toUpperCase() + type.slice(1)}`;
     })
-    .join(" ");
+    .join(separator);
 
   return formatted || "None";
 };

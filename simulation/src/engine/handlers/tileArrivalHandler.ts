@@ -277,7 +277,7 @@ export function handleTileClaiming(
 
   // Successful claim
   tile.claimedBy = player.name;
-  logFn("event", `Champion${championId} claimed resource tile (${tile.position.row}, ${tile.position.col}), which gives ${formatResources(tile.resources)}`);
+  logFn("event", `Champion${championId} claimed resource tile (${tile.position.row}, ${tile.position.col}), which can provide ${formatResources(tile.resources)}`);
 
   return {
     claimRequested: true,

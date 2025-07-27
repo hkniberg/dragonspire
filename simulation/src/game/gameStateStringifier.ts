@@ -1,274 +1,379 @@
 import { GameState } from "../game/GameState";
 import type { Champion, Player, ResourceType, Tile } from "../lib/types";
 
-export class GameStateStringifier {
-  /**
-   * Converts a GameState to a readable markdown string
-   */
-  public static stringify(gameState: GameState): string {
-    const sections: string[] = [];
+/**
+ * Converts a GameState to a readable markdown string
+ */
+export function stringifyGameState(gameState: GameState): string {
+  const sections: string[] = [];
 
-    // Game session section
-    sections.push(this.formatGameSession(gameState));
+  // Game session section
+  sections.push(formatGameSession(gameState));
 
-    // Players section
-    sections.push(this.formatPlayers(gameState));
+  // Players section
+  sections.push(formatPlayers(gameState));
 
-    // Board section
-    sections.push(this.formatBoard(gameState));
+  // Board section
+  sections.push(formatBoard(gameState));
 
-    return sections.join("\n\n");
+  return sections.join("\n\n");
+}
+
+/**
+ * Converts a single tile to a readable string with full details
+ */
+export function stringifyTile(tile: Tile, gameState: GameState, ignorePlayerName?: string): string {
+  const sentences: string[] = [];
+
+  if (!tile.explored) {
+    sentences.push(`This is an unexplored tier ${tile.tier} tile`);
+  } else {
+    // Format based on tile type
+    switch (tile.tileType) {
+      case "home":
+        const homeOwner = getPlayerByHomePosition(tile.position, gameState);
+        sentences.push(`This is a home tile for ${homeOwner?.name || "unknown"}`);
+        break;
+      case "resource":
+        let resourceDescription = "This is a resource tile";
+        if (tile.resources) {
+          const resourceStr = formatResources(tile.resources);
+          if (resourceStr) {
+            resourceDescription += ` (${resourceStr})`;
+          }
+        }
+        if (tile.isStarred) {
+          resourceDescription += " (starred)";
+        }
+        if (tile.claimedBy) {
+          const player = gameState.getPlayer(tile.claimedBy);
+          resourceDescription += ` owned by ${player?.name || "unknown"}`;
+        }
+        sentences.push(resourceDescription);
+        break;
+      case "adventure":
+        let adventureDescription = "This is an adventure tile";
+        if (tile.adventureTokens !== undefined) {
+          const tokenText = tile.adventureTokens === 1 ? "token" : "tokens";
+          adventureDescription += ` (${tile.adventureTokens} remaining ${tokenText})`;
+        }
+        sentences.push(adventureDescription);
+        break;
+      case "temple":
+        sentences.push("This is a chapel");
+        break;
+      case "trader":
+        sentences.push("This is a trader");
+        break;
+      case "mercenary":
+        sentences.push("This is a mercenary camp");
+        break;
+      case "doomspire":
+        sentences.push("This is the Doomspire");
+        // Add dragon information for doomspire
+        sentences.push("There is a Dragon here (might 13)");
+        break;
+      case "oasis":
+        sentences.push("This is an oasis");
+        break;
+      case "wolfDen":
+        sentences.push("This is a wolf den");
+        break;
+      case "bearCave":
+        sentences.push("This is a bear cave");
+        break;
+      case "empty":
+        sentences.push("This is an empty tile");
+        break;
+      default:
+        sentences.push(`This is a tier ${tile.tier} tile`);
+    }
   }
 
-  private static formatGameSession(gameState: GameState): string {
-    const currentPlayer = gameState.getCurrentPlayer();
-    return `# Game session
+  // Add monster information as a separate sentence
+  if (tile.monster) {
+    const monsterName = tile.monster.name;
+    const article = ['a', 'e', 'i', 'o', 'u'].includes(monsterName.toLowerCase().charAt(0)) ? 'an' : 'a';
+    sentences.push(`There is ${article} ${monsterName} here (might ${tile.monster.might})`);
+  }
+
+  // Add champions on this tile, but exclude the specified player if ignorePlayerName is provided
+  const championsOnTile = getChampionsOnTile(tile.position, gameState);
+  for (const champion of championsOnTile) {
+    if (ignorePlayerName && champion.playerName === ignorePlayerName) {
+      continue; // Skip this player's champions
+    }
+    const player = gameState.getPlayer(champion.playerName);
+    sentences.push(`${player?.name || "unknown"} champion${champion.id} is here`);
+  }
+
+  // Add items on this tile as separate sentences
+  if (tile.items && tile.items.length > 0) {
+    for (const itemId of tile.items) {
+      sentences.push(`There is a ${itemId} here`);
+    }
+  }
+
+  return sentences.join(". ") + ".";
+}
+
+function formatGameSession(gameState: GameState): string {
+  const currentPlayer = gameState.getCurrentPlayer();
+  return `# Game session
 - Current round: ${gameState.currentRound}
 - Current player: ${currentPlayer.name}`;
+}
+
+function formatPlayers(gameState: GameState): string {
+  const sections: string[] = ["# Players"];
+
+  for (const player of gameState.players) {
+    sections.push(formatPlayer(player, gameState));
   }
 
-  private static formatPlayers(gameState: GameState): string {
-    const sections: string[] = ["# Players"];
+  return sections.join("\n\n");
+}
 
-    for (const player of gameState.players) {
-      sections.push(this.formatPlayer(player, gameState));
+function formatPlayer(player: Player, gameState: GameState): string {
+  const lines: string[] = [`## ${player.name}`];
+
+  // Basic stats
+  lines.push(`- Might: ${player.might}`);
+  lines.push(`- Fame: ${player.fame}`);
+  lines.push(`- Home: ${formatPosition(player.homePosition)}`);
+
+  // Resources
+  const resourceStr = formatResources(player.resources);
+  lines.push(`- Resource stockpile: ${resourceStr || "none"}`);
+
+  // Champions
+  for (const champion of player.champions) {
+    lines.push(formatChampion(champion, player.name));
+  }
+
+  // Boats
+  for (const boat of player.boats) {
+    lines.push(`- boat${boat.id} at (${boat.position})`);
+  }
+
+  // Claims
+  const claimedTiles = gameState.getClaimedTiles(player.name);
+  if (claimedTiles.length > 0) {
+    lines.push(`- claims (${claimedTiles.length} tiles of max ${player.maxClaims}):`);
+    for (const tile of claimedTiles) {
+      lines.push(formatClaimedTile(tile, gameState));
     }
-
-    return sections.join("\n\n");
+  } else {
+    lines.push("- no claims");
   }
 
-  private static formatPlayer(player: Player, gameState: GameState): string {
-    const lines: string[] = [`## ${player.name}`];
+  return lines.join("\n");
+}
 
-    // Basic stats
-    lines.push(`- Might: ${player.might}`);
-    lines.push(`- Fame: ${player.fame}`);
-    lines.push(`- Home: ${this.formatPosition(player.homePosition)}`);
+function formatChampion(champion: Champion, playerName: string): string {
+  let line = `- champion${champion.id} at ${formatPosition(champion.position)}`;
 
-    // Resources
-    const resourceStr = this.formatResources(player.resources);
-    lines.push(`- Resource stockpile: ${resourceStr || "none"}`);
+  // Add items
+  for (const item of champion.items) {
+    line += `\n  - Has ${item}`;
+  }
 
-    // Champions
+  return line;
+}
+
+function formatClaimedTile(tile: Tile, gameState: GameState): string {
+  let line = `  - Tile ${formatPosition(tile.position)}`;
+
+  if (tile.resources) {
+    const resourceStr = formatResources(tile.resources);
+    if (resourceStr) {
+      line += ` providing ${resourceStr}`;
+    }
+  }
+
+  // Check if blockaded
+  const blockadingChampions = getChampionsOnTile(tile.position, gameState).filter(
+    (champ) => champ.playerName != tile.claimedBy,
+  );
+
+  if (blockadingChampions.length > 0) {
+    const blockader = blockadingChampions[0];
+    const player = gameState.getPlayer(blockader.playerName);
+    line += ` (blockaded by ${player?.name} champion${blockader.id})`;
+  }
+
+  return line;
+}
+
+function formatBoard(gameState: GameState): string {
+  const sections: string[] = ["# Board"];
+
+  // Only show interesting tiles (explored tiles or tiles with champions)
+  const interestingTiles: Tile[] = [];
+
+  for (const row of gameState.board.getTilesGrid()) {
+    for (const tile of row) {
+      if (isTileInteresting(tile, gameState)) {
+        interestingTiles.push(tile);
+      }
+    }
+  }
+
+  for (const tile of interestingTiles) {
+    sections.push(formatTileForBoard(tile, gameState));
+  }
+
+  return sections.join("\n\n");
+}
+
+function formatTileForBoard(tile: Tile, gameState: GameState): string {
+  const lines: string[] = [`Tile ${formatPosition(tile.position)}`];
+
+  if (!tile.explored) {
+    lines.push(`- Unexplored tier ${tile.tier} tile`);
+  } else {
+    // Format based on tile type
+    switch (tile.tileType) {
+      case "home":
+        const homeOwner = getPlayerByHomePosition(tile.position, gameState);
+        lines.push(`- Home tile for ${homeOwner?.name || "unknown"}`);
+        break;
+      case "resource":
+        if (tile.resources) {
+          const resourceStr = formatResources(tile.resources);
+          if (resourceStr) {
+            lines.push(`- Resource tile providing ${resourceStr}`);
+          }
+        }
+        if (tile.isStarred) {
+          lines.push("- Starred");
+        }
+        if (tile.claimedBy) {
+          const player = gameState.getPlayer(tile.claimedBy);
+          lines.push(`- Claimed by ${player?.name || "unknown"}`);
+        } else {
+          lines.push("- Unclaimed");
+        }
+        if (tile.monster) {
+          lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
+        }
+        break;
+      case "adventure":
+        lines.push(`- Tier ${tile.tier} adventure tile`);
+        if (tile.adventureTokens !== undefined) {
+          lines.push(`- Remaining adventure tokens: ${tile.adventureTokens}`);
+        }
+        if (tile.monster) {
+          lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
+        }
+        break;
+      case "temple":
+        lines.push("- Chapel");
+        break;
+      case "trader":
+        lines.push("- Trader");
+        break;
+      case "mercenary":
+        lines.push("- Mercenary camp");
+        break;
+      case "doomspire":
+        lines.push("- Doomspire Dragon (might 13)");
+        break;
+      case "oasis":
+        lines.push(`- Tier ${tile.tier} oasis`);
+        break;
+      case "wolfDen":
+        lines.push("- Wolf Den");
+        if (tile.monster) {
+          lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
+        }
+        break;
+      case "bearCave":
+        lines.push("- Bear Cave");
+        if (tile.monster) {
+          lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
+        }
+        break;
+      default:
+        lines.push(`- Tier ${tile.tier} tile`);
+    }
+  }
+
+  // Add champions on this tile
+  const championsOnTile = getChampionsOnTile(tile.position, gameState);
+  for (const champion of championsOnTile) {
+    const player = gameState.getPlayer(champion.playerName);
+    lines.push(`- ${player?.name || "unknown"} champion${champion.id} is here`);
+  }
+
+  // Add items on this tile
+  if (tile.items && tile.items.length > 0) {
+    for (const itemId of tile.items) {
+      lines.push(`- Item: ${itemId} (dropped on ground)`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+function isTileInteresting(tile: Tile, gameState: GameState): boolean {
+  // Show explored tiles, tiles with champions, or home tiles
+  if (tile.explored || tile.tileType === "home") {
+    return true;
+  }
+
+  // Show tiles with champions
+  const championsOnTile = getChampionsOnTile(tile.position, gameState);
+  return championsOnTile.length > 0;
+}
+
+function getChampionsOnTile(position: { row: number; col: number }, gameState: GameState): Champion[] {
+  const champions: Champion[] = [];
+  for (const player of gameState.players) {
     for (const champion of player.champions) {
-      lines.push(this.formatChampion(champion, player.name));
-    }
-
-    // Boats
-    for (const boat of player.boats) {
-      lines.push(`- boat${boat.id} at (${boat.position})`);
-    }
-
-    // Claims
-    const claimedTiles = gameState.getClaimedTiles(player.name);
-    if (claimedTiles.length > 0) {
-      lines.push(`- claims (${claimedTiles.length} tiles of max ${player.maxClaims}):`);
-      for (const tile of claimedTiles) {
-        lines.push(this.formatClaimedTile(tile, gameState));
-      }
-    } else {
-      lines.push("- no claims");
-    }
-
-    return lines.join("\n");
-  }
-
-  private static formatChampion(champion: Champion, playerName: string): string {
-    let line = `- champion${champion.id} at ${this.formatPosition(champion.position)}`;
-
-    // Add items
-    for (const item of champion.items) {
-      line += `\n  - Has ${item}`;
-    }
-
-    return line;
-  }
-
-
-  private static formatClaimedTile(tile: Tile, gameState: GameState): string {
-    let line = `  - Tile ${this.formatPosition(tile.position)}`;
-
-    if (tile.resources) {
-      const resourceStr = this.formatResources(tile.resources);
-      if (resourceStr) {
-        line += ` providing ${resourceStr}`;
+      if (champion.position.row === position.row && champion.position.col === position.col) {
+        champions.push(champion);
       }
     }
+  }
+  return champions;
+}
 
-    // Check if blockaded
-    const blockadingChampions = this.getChampionsOnTile(tile.position, gameState).filter(
-      (champ) => champ.playerName != tile.claimedBy,
-    );
+function getPlayerByHomePosition(
+  position: { row: number; col: number },
+  gameState: GameState,
+): Player | undefined {
+  return gameState.players.find(
+    (player) => player.homePosition.row === position.row && player.homePosition.col === position.col,
+  );
+}
 
-    if (blockadingChampions.length > 0) {
-      const blockader = blockadingChampions[0];
-      const player = gameState.getPlayer(blockader.playerName);
-      line += ` (blockaded by ${player?.name} champion${blockader.id})`;
-    }
+function formatPosition(position: { row: number; col: number }): string {
+  return `(${position.row},${position.col})`;
+}
 
-    return line;
+function formatResources(resources: Record<ResourceType, number>): string {
+  const parts: string[] = [];
+
+  if (resources.food > 0) {
+    parts.push(`${resources.food} food`);
+  }
+  if (resources.wood > 0) {
+    parts.push(`${resources.wood} wood`);
+  }
+  if (resources.ore > 0) {
+    parts.push(`${resources.ore} ore`);
+  }
+  if (resources.gold > 0) {
+    parts.push(`${resources.gold} gold`);
   }
 
-  private static formatBoard(gameState: GameState): string {
-    const sections: string[] = ["# Board"];
+  return parts.join(", ");
+}
 
-    // Only show interesting tiles (explored tiles or tiles with champions)
-    const interestingTiles: Tile[] = [];
-
-    for (const row of gameState.board.getTilesGrid()) {
-      for (const tile of row) {
-        if (this.isTileInteresting(tile, gameState)) {
-          interestingTiles.push(tile);
-        }
-      }
-    }
-
-    for (const tile of interestingTiles) {
-      sections.push(this.formatTile(tile, gameState));
-    }
-
-    return sections.join("\n\n");
-  }
-
-  private static isTileInteresting(tile: Tile, gameState: GameState): boolean {
-    // Show explored tiles, tiles with champions, or home tiles
-    if (tile.explored || tile.tileType === "home") {
-      return true;
-    }
-
-    // Show tiles with champions
-    const championsOnTile = this.getChampionsOnTile(tile.position, gameState);
-    return championsOnTile.length > 0;
-  }
-
-  private static formatTile(tile: Tile, gameState: GameState): string {
-    const lines: string[] = [`Tile ${this.formatPosition(tile.position)}`];
-
-    if (!tile.explored) {
-      lines.push(`- Unexplored tier ${tile.tier} tile`);
-    } else {
-      // Format based on tile type
-      switch (tile.tileType) {
-        case "home":
-          const homeOwner = this.getPlayerByHomePosition(tile.position, gameState);
-          lines.push(`- Home tile for ${homeOwner?.name || "unknown"}`);
-          break;
-        case "resource":
-          if (tile.resources) {
-            const resourceStr = this.formatResources(tile.resources);
-            if (resourceStr) {
-              lines.push(`- Resource tile providing ${resourceStr}`);
-            }
-          }
-          if (tile.isStarred) {
-            lines.push("- Starred");
-          }
-          if (tile.claimedBy) {
-            const player = gameState.getPlayer(tile.claimedBy);
-            lines.push(`- Claimed by ${player?.name || "unknown"}`);
-          } else {
-            lines.push("- Unclaimed");
-          }
-          if (tile.monster) {
-            lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
-          }
-          break;
-        case "adventure":
-          lines.push(`- Tier ${tile.tier} adventure tile`);
-          if (tile.adventureTokens !== undefined) {
-            lines.push(`- Remaining adventure tokens: ${tile.adventureTokens}`);
-          }
-          if (tile.monster) {
-            lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
-          }
-          break;
-        case "temple":
-          lines.push("- Chapel");
-          break;
-        case "trader":
-          lines.push("- Trader");
-          break;
-        case "mercenary":
-          lines.push("- Mercenary camp");
-          break;
-        case "doomspire":
-          lines.push("- Doomspire Dragon (might 13)");
-          break;
-        case "wolfDen":
-          lines.push("- Wolf Den");
-          if (tile.monster) {
-            lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
-          }
-          break;
-        case "bearCave":
-          lines.push("- Bear Cave");
-          if (tile.monster) {
-            lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
-          }
-          break;
-        default:
-          lines.push(`- Tier ${tile.tier} tile`);
-      }
-    }
-
-    // Add champions on this tile
-    const championsOnTile = this.getChampionsOnTile(tile.position, gameState);
-    for (const champion of championsOnTile) {
-      const player = gameState.getPlayer(champion.playerName);
-      lines.push(`- ${player?.name || "unknown"} champion${champion.id} is here`);
-    }
-
-    // Add items on this tile
-    if (tile.items && tile.items.length > 0) {
-      for (const itemId of tile.items) {
-        lines.push(`- Item: ${itemId} (dropped on ground)`);
-      }
-    }
-
-    return lines.join("\n");
-  }
-
-  private static getChampionsOnTile(position: { row: number; col: number }, gameState: GameState): Champion[] {
-    const champions: Champion[] = [];
-    for (const player of gameState.players) {
-      for (const champion of player.champions) {
-        if (champion.position.row === position.row && champion.position.col === position.col) {
-          champions.push(champion);
-        }
-      }
-    }
-    return champions;
-  }
-
-  private static getPlayerByHomePosition(
-    position: { row: number; col: number },
-    gameState: GameState,
-  ): Player | undefined {
-    return gameState.players.find(
-      (player) => player.homePosition.row === position.row && player.homePosition.col === position.col,
-    );
-  }
-
-  private static formatPosition(position: { row: number; col: number }): string {
-    return `(${position.row},${position.col})`;
-  }
-
-  private static formatResources(resources: Record<ResourceType, number>): string {
-    const parts: string[] = [];
-
-    if (resources.food > 0) {
-      parts.push(`${resources.food} food`);
-    }
-    if (resources.wood > 0) {
-      parts.push(`${resources.wood} wood`);
-    }
-    if (resources.ore > 0) {
-      parts.push(`${resources.ore} ore`);
-    }
-    if (resources.gold > 0) {
-      parts.push(`${resources.gold} gold`);
-    }
-
-    return parts.join(", ");
+// Backward compatibility - keep the class for existing code
+export class GameStateStringifier {
+  public static stringify(gameState: GameState): string {
+    return stringifyGameState(gameState);
   }
 }

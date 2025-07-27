@@ -1,7 +1,7 @@
 // Lords of Doomspire Claude AI Player
 
 import { getTraderItemById } from "@/content/traderItems";
-import { GameStateStringifier } from "@/game/gameStateStringifier";
+import { stringifyGameState } from "@/game/gameStateStringifier";
 import { DiceAction } from "@/lib/actionTypes";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
@@ -115,7 +115,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         gameLog: readonly GameLogEntry[],
         diceRolls: number[],
     ): Promise<string> {
-        const boardState = GameStateStringifier.stringify(gameState);
+        const boardState = stringifyGameState(gameState);
         const gameLogText = this.formatGameLogForPrompt(gameLog);
 
         const variables: TemplateVariables = {
@@ -136,7 +136,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
     ): Promise<string> {
 
         // Use the readable stringified game state
-        const boardState = GameStateStringifier.stringify(gameState);
+        const boardState = stringifyGameState(gameState);
 
         // Format the game log into readable text
         const gameLogText = this.formatGameLogForPrompt(gameLog);
@@ -160,7 +160,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
     ): Promise<string> {
         const player = gameState.getCurrentPlayer();
         const gameLogText = this.formatGameLogForPrompt(gameLog);
-        const boardState = GameStateStringifier.stringify(gameState);
+        const boardState = stringifyGameState(gameState);
 
         const optionsText = decisionContext.options.map((option, i) => `${i + 1}. ${JSON.stringify(option)}`).join("\n");
 
@@ -182,7 +182,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
     ): Promise<string> {
         const player = gameState.getCurrentPlayer();
         const gameLogText = this.formatGameLogForPrompt(gameLog);
-        const boardState = GameStateStringifier.stringify(gameState);
+        const boardState = stringifyGameState(gameState);
 
         // Format player resources
         const resourcesText = Object.entries(traderContext.playerResources)
@@ -236,8 +236,25 @@ export class ClaudePlayerAgent implements PlayerAgent {
             return "No game events yet.";
         }
 
+        // Determine current round
+        const currentRound = Math.max(...gameLog.map(entry => entry.round));
+        const previousRound = currentRound - 1;
+
+        // Filter entries based on the rules:
+        // - For previous round and current round: include all entries except other players' assessments
+        // - For earlier rounds: only include this player's entries
+        const filteredEntries = gameLog.filter(entry => {
+            if (entry.round >= previousRound) {
+                // Recent rounds: exclude other players' assessments (keep own assessments and all other types)
+                return entry.playerName === this.name || entry.type !== "assessment";
+            } else {
+                // Earlier rounds: only include this player's entries
+                return entry.playerName === this.name;
+            }
+        });
+
         // Group by round and format readably
-        const logByRound = gameLog.reduce(
+        const logByRound = filteredEntries.reduce(
             (acc, entry) => {
                 if (!acc[entry.round]) {
                     acc[entry.round] = [];

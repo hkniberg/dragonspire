@@ -331,7 +331,7 @@ export function resolveMonsterPlacementAndCombat(
 ): CombatResult {
   // Place monster on tile
   tile.monster = monster;
-  logFn("event", `Champion${championId} drew monster card: ${monster.name}!`);
+  logFn("event", `Champion${championId} drew monster card: ${monster.name} (might ${monster.might})!`);
 
   // Immediately resolve combat using the regular monster combat function
   return resolveChampionVsMonsterCombat(gameState, tile, player, championId, logFn);

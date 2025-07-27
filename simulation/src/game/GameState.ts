@@ -97,7 +97,7 @@ export class GameState {
         color: playerColors[i],
         fame: startingFame,
         might: startingMight,
-        resources: { food: 1, wood: 1, ore: 0, gold: 0 },
+        resources: { food: 0, wood: 0, ore: 0, gold: 0 },
         maxClaims: 10,
         champions: [champion],
         boats: [boat],

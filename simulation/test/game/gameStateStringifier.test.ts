@@ -1,12 +1,12 @@
 import { GameState } from "../../src/game/GameState";
-import { GameStateStringifier } from "../../src/game/gameStateStringifier";
+import { stringifyGameState } from "../../src/game/gameStateStringifier";
 import { Board } from "../../src/lib/Board";
 import type { Player, Position, Tile } from "../../src/lib/types";
 
 describe("GameStateStringifier", () => {
   test("should stringify game state to match expected markdown format", () => {
     const sampleGameState = createSampleGameState();
-    const result = GameStateStringifier.stringify(sampleGameState);
+    const result = stringifyGameState(sampleGameState);
 
     const expected = `# Game session
 - Current round: 2

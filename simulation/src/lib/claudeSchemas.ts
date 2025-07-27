@@ -49,7 +49,7 @@ export const championActionSchema = {
     },
     movementPathIncludingStartPosition: {
       type: "array",
-      description: "Optional path for movement, including the starting position. If not provided, champion stays in place.",
+      description: "Optional path for movement, including the starting position. If not provided, champion stays in place. No diagonal movement allowed.",
       items: {
         type: "object",
         properties: {
