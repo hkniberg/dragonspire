@@ -1,8 +1,8 @@
 // Lords of Doomspire Player Interface
 
 import { DiceAction } from "@/lib/actionTypes";
-import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
+import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
 
 
@@ -29,6 +29,7 @@ export interface PlayerAgent {
     gameState: GameState,
     gameLog: readonly GameLogEntry[],
     diceRolls: number[],
+    thinkingLogger?: (content: string) => void,
   ): Promise<string | undefined>;
 
   /**
@@ -39,16 +40,19 @@ export interface PlayerAgent {
     gameState: GameState,
     gameLog: readonly GameLogEntry[],
     turnContext: TurnContext,
+    thinkingLogger?: (content: string) => void,
   ): Promise<DiceAction>;
 
   /**
-   * Make a decision when choices arise during action resolution   * @param decisionContext Description of the choice to be made
+   * Make a decision when choices arise during action resolution
+   * @param decisionContext Description of the choice to be made
    * @returns Decision object with the chosen option
    */
   makeDecision(
     gameState: GameState,
     gameLog: readonly GameLogEntry[],
     decisionContext: DecisionContext,
+    thinkingLogger?: (content: string) => void,
   ): Promise<Decision>;
 
   /**
@@ -62,5 +66,6 @@ export interface PlayerAgent {
     gameState: GameState,
     gameLog: readonly GameLogEntry[],
     traderContext: TraderContext,
+    thinkingLogger?: (content: string) => void,
   ): Promise<TraderDecision>;
 }

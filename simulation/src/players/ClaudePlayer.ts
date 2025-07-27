@@ -33,12 +33,13 @@ export class ClaudePlayerAgent implements PlayerAgent {
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
         diceValues: number[],
+        thinkingLogger?: (content: string) => void,
     ): Promise<string | undefined> {
         try {
             const userMessage = await this.prepareAssessmentMessage(gameState, gameLog, diceValues);
 
             // Get text response for strategic assessment
-            const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 1024, 2000);
+            const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 1024, 2000, thinkingLogger);
 
             return strategicAssessment.trim() || undefined;
         } catch (error) {
@@ -51,12 +52,13 @@ export class ClaudePlayerAgent implements PlayerAgent {
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
         turnContext: TurnContext,
+        thinkingLogger?: (content: string) => void,
     ): Promise<DiceAction> {
         // Prepare the user message with current context
         const userMessage = await this.prepareDiceActionMessage(gameState, gameLog, turnContext);
 
         // Get LLM response with structured JSON
-        const response = await this.claude.useClaude(userMessage, diceActionSchema, 1024, 1500);
+        const response = await this.claude.useClaude(userMessage, diceActionSchema, 1024, 2000, thinkingLogger);
 
         // Convert the nested response to flat GameAction format
         return response as DiceAction;
@@ -66,13 +68,14 @@ export class ClaudePlayerAgent implements PlayerAgent {
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
         decisionContext: DecisionContext,
+        thinkingLogger?: (content: string) => void,
     ): Promise<Decision> {
         try {
             // Prepare decision context message
             const userMessage = await this.prepareDecisionMessage(gameState, gameLog, decisionContext);
 
             // Get structured JSON response for decision
-            const response = await this.claude.useClaude(userMessage, decisionSchema, 0, 200);
+            const response = await this.claude.useClaude(userMessage, decisionSchema, 0, 200, thinkingLogger);
 
             return response as Decision;
         } catch (error) {
@@ -90,13 +93,14 @@ export class ClaudePlayerAgent implements PlayerAgent {
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
         traderContext: TraderContext,
+        thinkingLogger?: (content: string) => void,
     ): Promise<TraderDecision> {
         try {
             // Prepare trader decision context message
             const userMessage = await this.prepareTraderDecisionMessage(gameState, gameLog, traderContext);
 
             // Get structured JSON response for trader decision
-            const response = await this.claude.useClaude(userMessage, traderDecisionSchema, 0, 500);
+            const response = await this.claude.useClaude(userMessage, traderDecisionSchema, 0, 500, thinkingLogger);
 
             return response as TraderDecision;
         } catch (error) {
@@ -241,9 +245,15 @@ export class ClaudePlayerAgent implements PlayerAgent {
         const previousRound = currentRound - 1;
 
         // Filter entries based on the rules:
-        // - For previous round and current round: include all entries except other players' assessments
+        // - For previous round and current round: include all entries except other players' assessments and thinking entries
         // - For earlier rounds: only include this player's entries
+        // - Always exclude thinking entries as they are too detailed for the LLM to process
         const filteredEntries = gameLog.filter(entry => {
+            // Always exclude thinking entries
+            if (entry.type === "thinking") {
+                return false;
+            }
+
             if (entry.round >= previousRound) {
                 // Recent rounds: exclude other players' assessments (keep own assessments and all other types)
                 return entry.playerName === this.name || entry.type !== "assessment";

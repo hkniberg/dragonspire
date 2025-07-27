@@ -106,7 +106,7 @@ export interface Decision {
   reasoning?: string; // Optional reasoning for debugging
 }
 
-export type GameLogEntryType = "dice" | "movement" | "boat" | "exploration" | "combat" | "harvest" | "assessment" | "event" | "system" | "victory";
+export type GameLogEntryType = "dice" | "movement" | "boat" | "exploration" | "combat" | "harvest" | "assessment" | "event" | "system" | "victory" | "thinking";
 
 /**
  * Tagged log entry in the sequential game log

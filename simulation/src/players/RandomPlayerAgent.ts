@@ -26,6 +26,7 @@ export class RandomPlayerAgent implements PlayerAgent {
     gameState: GameState,
     gameLog: readonly GameLogEntry[],
     diceRolls?: number[],
+    thinkingLogger?: (content: string) => void,
   ): Promise<string | undefined> {
     // RandomPlayer doesn't provide strategic assessments
     return undefined;
@@ -35,6 +36,7 @@ export class RandomPlayerAgent implements PlayerAgent {
     gameState: GameState,
     gameLog: readonly GameLogEntry[],
     turnContext: TurnContext,
+    thinkingLogger?: (content: string) => void,
   ): Promise<DiceAction> {
     const playerName = gameState.getCurrentPlayer().name;
 
@@ -77,6 +79,7 @@ export class RandomPlayerAgent implements PlayerAgent {
     gameState: GameState,
     gameLog: readonly GameLogEntry[],
     decisionContext: DecisionContext,
+    thinkingLogger?: (content: string) => void,
   ): Promise<Decision> {
     if (decisionContext.options.length === 0) {
       return { choice: null, reasoning: "No options available" };
@@ -96,6 +99,7 @@ export class RandomPlayerAgent implements PlayerAgent {
     gameState: GameState,
     gameLog: readonly GameLogEntry[],
     traderContext: TraderContext,
+    thinkingLogger?: (content: string) => void,
   ): Promise<TraderDecision> {
     // RandomPlayer doesn't interact with traders for now
     return {

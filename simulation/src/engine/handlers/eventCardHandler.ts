@@ -64,7 +64,8 @@ export async function handleHungryPests(
   gameState: GameState,
   currentPlayer: Player,
   currentPlayerAgent: PlayerAgent,
-  logFn: (type: string, content: string) => void
+  logFn: (type: string, content: string) => void,
+  thinkingLogger?: (content: string) => void
 ): Promise<EventCardResult> {
   logFn("event", "Hungry Pests! Choose 1 player who loses 1 food to starved rats.");
 
@@ -82,7 +83,7 @@ export async function handleHungryPests(
 
   try {
     // Ask current player to make the decision
-    const decision = await currentPlayerAgent.makeDecision(gameState, [], decisionContext);
+    const decision = await currentPlayerAgent.makeDecision(gameState, [], decisionContext, thinkingLogger);
     const targetPlayerName = decision.choice.name;
 
     // Apply the food loss to the chosen player
@@ -126,12 +127,13 @@ export async function handleEventCard(
   currentPlayer: Player,
   currentPlayerAgent: PlayerAgent,
   gameLog: any[],
-  logFn: (type: string, content: string) => void
+  logFn: (type: string, content: string) => void,
+  thinkingLogger?: (content: string) => void
 ): Promise<EventCardResult> {
   if (eventCard.id === "sudden-storm") {
     return handleSuddenStorm(gameState, logFn);
   } else if (eventCard.id === "hungry-pests") {
-    return await handleHungryPests(gameState, currentPlayer, currentPlayerAgent, logFn);
+    return await handleHungryPests(gameState, currentPlayer, currentPlayerAgent, logFn, thinkingLogger);
   } else {
     // Other event cards not yet implemented
     const message = `Event card ${eventCard.name} drawn, but not yet implemented`;

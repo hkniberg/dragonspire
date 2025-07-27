@@ -82,6 +82,15 @@ function formatGameLogEntryContent(entry: GameLogEntry): string {
   return `${typeEmoji} ${entry.content}`;
 }
 
+// Helper function to get preview text for thinking entries
+function getThinkingPreview(content: string, maxWords: number = 8): string {
+  const words = content.split(" ");
+  if (words.length <= maxWords) {
+    return content;
+  }
+  return words.slice(0, maxWords).join(" ") + "...";
+}
+
 // Helper function to format a single log entry with player name (for markdown)
 function formatGameLogEntry(entry: GameLogEntry): string {
   const typeEmoji = getEntryEmoji(entry.type);
@@ -111,6 +120,8 @@ function getEntryEmoji(type: GameLogEntryType): string {
       return "⚙️";
     case "victory":
       return "👑";
+    case "thinking":
+      return "💭";
     default:
       return "📝";
   }
@@ -138,6 +149,8 @@ function getEntryColor(type: GameLogEntryType): string {
       return "#ffc107";
     case "victory":
       return "#e83e8c";
+    case "thinking":
+      return "#6c757d";
     default:
       return "#495057";
   }
@@ -145,6 +158,7 @@ function getEntryColor(type: GameLogEntryType): string {
 
 export const GameLog: React.FC<GameLogProps> = ({ gameLog, isVisible }) => {
   const [isMaximized, setIsMaximized] = useState(false);
+  const [expandedThinking, setExpandedThinking] = useState<Set<number>>(new Set());
 
   if (!isVisible || gameLog.length === 0) {
     return null;
@@ -152,7 +166,9 @@ export const GameLog: React.FC<GameLogProps> = ({ gameLog, isVisible }) => {
 
   const convertToMarkdown = (): string => {
     let markdown = "# Game Log\n\n";
-    const groupedEntries = groupGameLogEntriesByRound(gameLog);
+    // Filter out thinking entries from markdown export
+    const filteredGameLog = gameLog.filter((entry) => entry.type !== "thinking");
+    const groupedEntries = groupGameLogEntriesByRound(filteredGameLog);
 
     groupedEntries.forEach(({ round, entries }) => {
       markdown += `## Round ${round}\n\n`;
@@ -305,21 +321,73 @@ export const GameLog: React.FC<GameLogProps> = ({ gameLog, isVisible }) => {
                   {playerName}:
                 </div>
                 {entries.map((entry, entryIndex) => {
-                  const formattedEntry = formatGameLogEntryContent(entry);
-                  return (
-                    <div
-                      key={entryIndex}
-                      style={{
-                        marginBottom: "2px",
-                        marginLeft: "16px",
-                        color: getEntryColor(entry.type),
-                        fontStyle: entry.type === "assessment" ? "italic" : "normal",
-                        fontWeight: entry.type === "system" ? "bold" : "normal",
-                      }}
-                    >
-                      {formattedEntry}
-                    </div>
-                  );
+                  const entryKey = round * 10000 + entryIndex; // Create unique key for each entry
+                  const isThinking = entry.type === "thinking";
+                  const isExpanded = expandedThinking.has(entryKey);
+
+                  const toggleExpanded = () => {
+                    const newExpanded = new Set(expandedThinking);
+                    if (isExpanded) {
+                      newExpanded.delete(entryKey);
+                    } else {
+                      newExpanded.add(entryKey);
+                    }
+                    setExpandedThinking(newExpanded);
+                  };
+
+                  if (isThinking) {
+                    const preview = getThinkingPreview(entry.content);
+                    const typeEmoji = getEntryEmoji(entry.type);
+                    return (
+                      <div
+                        key={entryIndex}
+                        style={{
+                          marginBottom: "2px",
+                          marginLeft: "16px",
+                          color: getEntryColor(entry.type),
+                          fontStyle: "italic",
+                          whiteSpace: isExpanded ? "pre-wrap" : "normal",
+                        }}
+                      >
+                        <span>
+                          {typeEmoji} {isExpanded ? entry.content : preview}
+                        </span>
+                        {entry.content.split(" ").length > 8 && (
+                          <button
+                            onClick={toggleExpanded}
+                            style={{
+                              marginLeft: "8px",
+                              padding: "2px 6px",
+                              fontSize: "10px",
+                              backgroundColor: "transparent",
+                              color: "#6c757d",
+                              border: "1px solid #6c757d",
+                              borderRadius: "3px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            {isExpanded ? "less" : "more"}
+                          </button>
+                        )}
+                      </div>
+                    );
+                  } else {
+                    const formattedEntry = formatGameLogEntryContent(entry);
+                    return (
+                      <div
+                        key={entryIndex}
+                        style={{
+                          marginBottom: "2px",
+                          marginLeft: "16px",
+                          color: getEntryColor(entry.type),
+                          fontStyle: entry.type === "assessment" ? "italic" : "normal",
+                          fontWeight: entry.type === "system" ? "bold" : "normal",
+                        }}
+                      >
+                        {formattedEntry}
+                      </div>
+                    );
+                  }
                 })}
               </div>
             ))}

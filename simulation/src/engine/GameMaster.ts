@@ -91,7 +91,8 @@ export class GameMaster {
     this.addGameLogEntry("dice", `Rolled dice: ${diceRollValues.map(die => `[${die}]`).join(", ")}`);
 
     // Step 2: Ask player for strategic assessment (strategic reflection) - now with dice context
-    const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues);
+    const thinkingLogger = (content: string) => this.addGameLogEntry("thinking", content);
+    const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues, thinkingLogger);
     if (strategicAssessment) {
       this.addGameLogEntry("assessment", strategicAssessment);
     }
@@ -108,7 +109,7 @@ export class GameMaster {
       };
 
       // Ask player decide on a dice action
-      const diceAction = await currentPlayerAgent.decideDiceAction(currentState, this.gameLog, turnContext);
+      const diceAction = await currentPlayerAgent.decideDiceAction(currentState, this.gameLog, turnContext, thinkingLogger);
 
       // Execute the action and consume the appropriate dice
       const actionType = diceAction.actionType;
@@ -182,9 +183,9 @@ export class GameMaster {
       const reasoningText = reasoning ? ` Reason: ${reasoning}.` : "";
 
       if (actuallyMoved) {
-        this.addGameLogEntry("movement", `Champion${action.championId} moved from ${formatPosition(startPosition)} to ${formatPosition(moveResult.endPosition)}, using dice value [${action.diceValueUsed}].${reasoningText} ${tileDescription}`);
+        this.addGameLogEntry("movement", `Champion${action.championId} moved from ${formatPosition(startPosition)} to ${formatPosition(moveResult.endPosition)}, using dice value [${action.diceValueUsed}]. ${tileDescription}${reasoningText}`);
       } else {
-        this.addGameLogEntry("movement", `Champion${action.championId} stayed in ${formatPosition(startPosition)}, using dice value [${action.diceValueUsed}].${reasoningText} ${tileDescription}`);
+        this.addGameLogEntry("movement", `Champion${action.championId} stayed in ${formatPosition(startPosition)}, using dice value [${action.diceValueUsed}]. ${tileDescription}${reasoningText}`);
       }
       endPosition = moveResult.endPosition;
     } else {
@@ -244,8 +245,9 @@ export class GameMaster {
   }
 
   private async executeChampionArrivalAtTile(player: Player, tile: Tile, championId: number, tileAction: TileAction | undefined): Promise<void> {
-    // Create a logging wrapper that matches the handler's expected signature
+    // Create logging wrappers that match the handler's expected signature
     const logFn = (type: string, content: string) => this.addGameLogEntry(type as GameLogEntryType, content);
+    const thinkingLogger = (content: string) => this.addGameLogEntry("thinking", content);
 
     // Step 1: Handle exploration
     const explorationResult = handleExploration(this.gameState, tile, player, logFn);
@@ -278,7 +280,8 @@ export class GameMaster {
           currentPlayerAgent,
           championId,
           this.gameLog,
-          logFn
+          logFn,
+          thinkingLogger
         );
 
         // Handle results from adventure card
@@ -405,7 +408,8 @@ export class GameMaster {
 
     // Ask player to make trader decisions
     console.log("traderContext", traderContext);
-    const traderDecision = await currentPlayerAgent.makeTraderDecision(this.gameState, this.gameLog, traderContext);
+    const thinkingLogger = (content: string) => this.addGameLogEntry("thinking", content);
+    const traderDecision = await currentPlayerAgent.makeTraderDecision(this.gameState, this.gameLog, traderContext, thinkingLogger);
     console.log("traderDecision", traderDecision);
 
     // Handle the trader interaction

@@ -29,6 +29,7 @@ export class Claude {
     responseSchema?: any,
     thinkingTokens: number = DEFAULT_THINKING_TOKENS,
     responseTokens: number = DEFAULT_RESPONSE_TOKENS,
+    thinkingLogger?: (content: string) => void,
   ): Promise<any> {
     // Only append JSON instruction if schema is provided
     const fullUserMessage = responseSchema
@@ -78,6 +79,11 @@ export class Claude {
               ? { id: block.id, name: block.name, input: block.input }
               : block,
       );
+
+      // Log thinking blocks using the thinkingLogger if provided
+      if (block.type === "thinking" && thinkingLogger && "thinking" in block) {
+        thinkingLogger(block.thinking);
+      }
     }
 
     // Extract text content
