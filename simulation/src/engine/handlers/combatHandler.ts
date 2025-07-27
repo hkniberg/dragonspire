@@ -3,6 +3,7 @@ import { GameSettings } from "@/lib/GameSettings";
 import { ChampionLootOption, Decision, DecisionContext, GameLogEntry, Monster, NON_COMBAT_TILES, Player, ResourceType, Tile } from "@/lib/types";
 import { formatResources } from "@/lib/utils";
 import { PlayerAgent } from "@/players/PlayerAgent";
+import { handleBackpackEffect } from "./backpackHandler";
 import { handlePaddedHelmetRespawn } from "./paddedHelmetHandler";
 
 /**
@@ -122,56 +123,6 @@ function applyChampionLootDecision(
 }
 
 /**
- * Generate resource options for defeated player with backpack to choose from
- */
-function generateBackpackResourceOptions(defeatedPlayer: Player): ChampionLootOption[] {
-  const options: ChampionLootOption[] = [];
-
-  // Add resource options (only for resources the defeated player actually has)
-  const resourceTypes: Array<{ type: "food" | "wood" | "ore" | "gold"; name: string }> = [
-    { type: "food", name: "Food" },
-    { type: "wood", name: "Wood" },
-    { type: "ore", name: "Ore" },
-    { type: "gold", name: "Gold" }
-  ];
-
-  for (const { type, name } of resourceTypes) {
-    if (defeatedPlayer.resources[type] > 0) {
-      options.push({
-        type: "resource",
-        resourceType: type,
-        displayName: `Give 1 ${name} (you have ${defeatedPlayer.resources[type]})`
-      });
-    }
-  }
-
-  return options;
-}
-
-/**
- * Apply backpack resource choice by transferring the chosen resource
- */
-function applyBackpackResourceChoice(
-  winningPlayer: Player,
-  defeatedPlayer: Player,
-  resourceDecision: Decision,
-  logFn: (type: string, content: string) => void
-): void {
-  const selectedOption = resourceDecision.choice;
-
-  if (selectedOption.type === "resource") {
-    const resourceType: ResourceType = selectedOption.resourceType;
-    if (defeatedPlayer.resources[resourceType] > 0) {
-      defeatedPlayer.resources[resourceType] -= 1;
-      winningPlayer.resources[resourceType] += 1;
-      logFn("combat", `Defeated player chose to give 1 ${resourceType} (backpack effect).`);
-    } else {
-      logFn("combat", `Failed to give ${resourceType}: defeated player has none.`);
-    }
-  }
-}
-
-/**
  * Check if a player has a specific trader item
  */
 function hasTraderItem(player: Player, itemId: string): boolean {
@@ -238,22 +189,17 @@ export async function resolveChampionVsChampionCombat(
 
     if (defendingPlayerHasBackpack && defendingPlayerHasResources) {
       // Backpack effect: defeated player (defender) chooses what resource to give
-      // Since we don't have the defending player's agent, we'll need to implement this differently
-      // For now, we'll use a simple implementation where we randomly select a resource they have
-      const backpackOptions = generateBackpackResourceOptions(defendingPlayer);
-
-      if (backpackOptions.length > 0) {
-        // TODO: Get defending player's agent to make this decision
-        // For now, randomly select what resource to give
-        const randomIndex = Math.floor(Math.random() * backpackOptions.length);
-        const randomResourceDecision: Decision = {
-          choice: backpackOptions[randomIndex],
-          reasoning: "Backpack effect - defending player choice (simulated randomly)"
-        };
-
-        // Apply the resource transfer
-        applyBackpackResourceChoice(attackingPlayer, defendingPlayer, randomResourceDecision, logFn);
-      }
+      // Since we don't have the defending player's agent, we'll use the random choice option
+      await handleBackpackEffect(
+        gameState,
+        attackingPlayer,
+        defendingPlayer,
+        undefined, // No defending player agent available
+        undefined, // No game log for defending player
+        logFn,
+        thinkingLogger,
+        false // Use random choice since we don't have defending player's agent
+      );
     } else if (defendingPlayerHasResources || opposingChampion.items.length > 0) {
       // Normal combat victory: winner chooses what to loot
       const lootOptions = generateChampionLootOptions(defendingPlayer, opposingChampion, attackingChampion);
@@ -303,21 +249,16 @@ export async function resolveChampionVsChampionCombat(
 
     if (attackingPlayerHasBackpack && attackingPlayerHasResources) {
       // Backpack effect: defeated player chooses what resource to give
-      const backpackOptions = generateBackpackResourceOptions(attackingPlayer);
-
-      if (backpackOptions.length > 0) {
-        const decisionContext: DecisionContext = {
-          type: "backpack_resource_choice",
-          description: `You lost the battle but have a backpack. Choose what resource to give to ${defendingPlayer.name}:`,
-          options: backpackOptions
-        };
-
-        // Ask the defeated player to choose what resource to give
-        const resourceDecision = await playerAgent.makeDecision(gameState, gameLog, decisionContext, thinkingLogger);
-
-        // Apply the resource transfer
-        applyBackpackResourceChoice(defendingPlayer, attackingPlayer, resourceDecision, logFn);
-      }
+      await handleBackpackEffect(
+        gameState,
+        defendingPlayer,
+        attackingPlayer,
+        playerAgent,
+        gameLog,
+        logFn,
+        thinkingLogger,
+        true // Defeated player (attacker) makes the choice
+      );
     } else if (attackingPlayerHasResources) {
       // Normal combat loss: defending player gets to choose what to steal (simulated by random choice for now)
       // TODO: Implement proper decision system for defending player
