@@ -87,9 +87,8 @@ function applyChampionLootDecision(
   winningChampion: Champion,
   defeatedPlayer: Player,
   defeatedChampion: Champion,
-  lootDecision: Decision,
-  logFn: (type: string, content: string) => void
-): void {
+  lootDecision: Decision
+): string {
   const selectedOption = lootDecision.choice;
 
   if (selectedOption.type === "resource") {
@@ -98,9 +97,9 @@ function applyChampionLootDecision(
     if (defeatedPlayer.resources[resourceType] > 0) {
       defeatedPlayer.resources[resourceType] -= 1;
       winningPlayer.resources[resourceType] += 1;
-      logFn("combat", `Looted 1 ${resourceType} from defeated champion.`);
+      return `looted 1 ${resourceType}`;
     } else {
-      logFn("combat", `Failed to loot ${resourceType}: defeated player has none.`);
+      return `failed to loot ${resourceType} (defeated player has none)`;
     }
   } else if (selectedOption.type === "item") {
     // Transfer item from defeated champion to winning champion
@@ -115,11 +114,13 @@ function applyChampionLootDecision(
       winningChampion.items.push(lootedItem);
 
       const itemName = lootedItem.treasureCard?.name || lootedItem.traderItem?.name || "Unknown Item";
-      logFn("combat", `Looted ${itemName} from defeated champion.`);
+      return `looted ${itemName}`;
     } else {
-      logFn("combat", "Failed to loot item: item not found.");
+      return `failed to loot item (item not found)`;
     }
   }
+
+  return "no loot applied";
 }
 
 /**
@@ -184,16 +185,20 @@ export async function resolveChampionVsChampionCombat(
       throw new Error(`Attacking champion ${attackingChampionId} not found`);
     }
 
+    // Track loot information for the final message
+    let lootInfo = "";
+
     // Check if the defending player has a backpack and any resources to steal
     const defendingPlayerHasBackpack = hasTraderItem(defendingPlayer, "backpack");
     const defendingPlayerHasResources = Object.values(defendingPlayer.resources).some(amount => amount > 0);
+    const defendingPlayerHasItems = opposingChampion.items.length > 0;
 
     if (defendingPlayerHasBackpack && defendingPlayerHasResources) {
       // Backpack effect: defeated player (defender) chooses what resource to give
       // Get the defending player's agent if available
       const defendingPlayerAgent = getPlayerAgent ? getPlayerAgent(defendingPlayer.name) : undefined;
 
-      await handleBackpackEffect(
+      const backpackResult = await handleBackpackEffect(
         gameState,
         attackingPlayer,
         attackingChampion,
@@ -205,20 +210,27 @@ export async function resolveChampionVsChampionCombat(
         thinkingLogger,
         defendingPlayerAgent !== undefined // Use player choice if we have their agent, otherwise random
       );
-    } else if (defendingPlayerHasResources || opposingChampion.items.length > 0) {
+
+      if (backpackResult.lootApplied && backpackResult.lootDescription) {
+        lootInfo = `, ${backpackResult.lootDescription} (backpack effect)`;
+      } else {
+        lootInfo = ", nothing to loot";
+      }
+    } else if (defendingPlayerHasResources || defendingPlayerHasItems) {
       // Normal combat victory: winner chooses what to loot
       const lootOptions = generateChampionLootOptions(defendingPlayer, opposingChampion, attackingChampion);
 
       // Handle loot decision if there are options available
       if (lootOptions.length === 0) {
-        logFn("combat", "No loot available from the defeated champion.");
+        lootInfo = ", nothing to loot";
       } else if (lootOptions.length === 1) {
         // Only one option available, apply it automatically
         const automaticDecision: Decision = {
           choice: lootOptions[0],
           reasoning: "Only one loot option available, applied automatically"
         };
-        applyChampionLootDecision(attackingPlayer, attackingChampion, defendingPlayer, opposingChampion, automaticDecision, logFn);
+        const lootResult = applyChampionLootDecision(attackingPlayer, attackingChampion, defendingPlayer, opposingChampion, automaticDecision);
+        lootInfo = `, ${lootResult}`;
       } else {
         // Multiple options available, ask the attacking player to decide
         const decisionContext: DecisionContext = {
@@ -231,11 +243,14 @@ export async function resolveChampionVsChampionCombat(
         const lootDecision = await playerAgent.makeDecision(gameState, gameLog, decisionContext, thinkingLogger);
 
         // Apply the loot decision
-        applyChampionLootDecision(attackingPlayer, attackingChampion, defendingPlayer, opposingChampion, lootDecision, logFn);
+        const lootResult = applyChampionLootDecision(attackingPlayer, attackingChampion, defendingPlayer, opposingChampion, lootDecision);
+        lootInfo = `, ${lootResult}`;
       }
+    } else {
+      lootInfo = ", nothing to loot";
     }
 
-    const fullCombatDetails = `Defeated ${defendingPlayer.name}'s champion (${attackerTotal} vs ${defenderTotal}), who went home`;
+    const fullCombatDetails = `Defeated ${defendingPlayer.name}'s champion (${attackerTotal} vs ${defenderTotal}), who went home${lootInfo}`;
 
     logFn("combat", fullCombatDetails);
 
@@ -246,11 +261,12 @@ export async function resolveChampionVsChampionCombat(
     };
   } else {
     // Attacker lost - apply defeat effects immediately
-    const fullCombatDetails = `was defeated by ${defendingPlayer.name}'s champion (${attackerTotal} vs ${defenderTotal})`;
+    let lootInfo = "";
 
     // Check if the attacking player has a backpack and any resources to steal
     const attackingPlayerHasBackpack = hasTraderItem(attackingPlayer, "backpack");
     const attackingPlayerHasResources = Object.values(attackingPlayer.resources).some(amount => amount > 0);
+    const attackingPlayerHasItems = (gameState.getChampion(attackingPlayer.name, attackingChampionId)?.items.length ?? 0) > 0;
 
     if (attackingPlayerHasBackpack && attackingPlayerHasResources) {
       // Backpack effect: defeated player chooses what resource to give
@@ -259,7 +275,7 @@ export async function resolveChampionVsChampionCombat(
         throw new Error(`Attacking champion ${attackingChampionId} not found`);
       }
 
-      await handleBackpackEffect(
+      const backpackResult = await handleBackpackEffect(
         gameState,
         defendingPlayer,
         opposingChampion,
@@ -271,7 +287,11 @@ export async function resolveChampionVsChampionCombat(
         thinkingLogger,
         true // Defeated player (attacker) makes the choice
       );
-    } else if (attackingPlayerHasResources) {
+
+      if (backpackResult.lootApplied && backpackResult.lootDescription) {
+        lootInfo = `, ${backpackResult.lootDescription} (backpack effect)`;
+      }
+    } else if (attackingPlayerHasResources || attackingPlayerHasItems) {
       // Normal combat loss: defending player gets to choose what to steal (simulated by random choice for now)
       // TODO: Implement proper decision system for defending player
       const attackingChampion = gameState.getChampion(attackingPlayer.name, attackingChampionId);
@@ -284,7 +304,8 @@ export async function resolveChampionVsChampionCombat(
             choice: lootOptions[0],
             reasoning: "Only one loot option available, applied automatically"
           };
-          applyChampionLootDecision(defendingPlayer, opposingChampion, attackingPlayer, attackingChampion, automaticDecision, logFn);
+          const lootResult = applyChampionLootDecision(defendingPlayer, opposingChampion, attackingPlayer, attackingChampion, automaticDecision);
+          lootInfo = `, ${lootResult}`;
         } else if (lootOptions.length > 1) {
           // Multiple options: for now, randomly choose (TODO: implement proper decision system)
           const randomIndex = Math.floor(Math.random() * lootOptions.length);
@@ -292,10 +313,13 @@ export async function resolveChampionVsChampionCombat(
             choice: lootOptions[randomIndex],
             reasoning: "Random choice by defending player (automatic)"
           };
-          applyChampionLootDecision(defendingPlayer, opposingChampion, attackingPlayer, attackingChampion, randomDecision, logFn);
+          const lootResult = applyChampionLootDecision(defendingPlayer, opposingChampion, attackingPlayer, attackingChampion, randomDecision);
+          lootInfo = `, ${lootResult}`;
         }
       }
     }
+
+    const fullCombatDetails = `was defeated by ${defendingPlayer.name}'s champion (${attackerTotal} vs ${defenderTotal})${lootInfo}`;
 
     // Apply defeat effects (send home and healing cost) 
     await applyChampionDefeat(gameState, attackingPlayer, attackingChampionId, fullCombatDetails, logFn, playerAgent, gameLog, thinkingLogger);

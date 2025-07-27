@@ -149,13 +149,18 @@ export default function GameSimulation() {
     setIsExecutingTurn(true);
 
     try {
-      await gameSession.executeTurn();
+      // Execute turn with real-time UI updates
+      await gameSession.executeTurn((newGameState, newGameLog) => {
+        setGameState(newGameState);
+        setActionLog(Array.from(newGameLog));
+      });
 
+      // Final update after turn completion
       const updatedGameState = gameSession.getGameState();
       const updatedGameLog = gameSession.getGameLog();
 
       setGameState(updatedGameState);
-      setActionLog(Array.from(updatedGameLog)); // Now using GameMaster's game log
+      setActionLog(Array.from(updatedGameLog));
 
       // Check if game is finished
       if (gameSession.getMasterState() === "finished") {

@@ -70,9 +70,8 @@ function applyChampionLootDecision(
   winningChampion: Champion,
   defeatedPlayer: Player,
   defeatedChampion: Champion,
-  lootDecision: Decision,
-  logFn: (type: string, content: string) => void
-): void {
+  lootDecision: Decision
+): string {
   const selectedOption = lootDecision.choice;
 
   if (selectedOption.type === "resource") {
@@ -81,9 +80,9 @@ function applyChampionLootDecision(
     if (defeatedPlayer.resources[resourceType] > 0) {
       defeatedPlayer.resources[resourceType] -= 1;
       winningPlayer.resources[resourceType] += 1;
-      logFn("combat", `Defeated player chose to give 1 ${resourceType} (backpack effect).`);
+      return `defeated player chose to give 1 ${resourceType}`;
     } else {
-      logFn("combat", `Failed to give ${resourceType}: defeated player has none.`);
+      return `defeated player failed to give ${resourceType} (has none)`;
     }
   } else if (selectedOption.type === "item") {
     // Transfer item from defeated champion to winning champion
@@ -98,11 +97,18 @@ function applyChampionLootDecision(
       winningChampion.items.push(lootedItem);
 
       const itemName = lootedItem.treasureCard?.name || lootedItem.traderItem?.name || "Unknown Item";
-      logFn("combat", `Defeated player chose to give ${itemName} (backpack effect).`);
+      return `defeated player chose to give ${itemName}`;
     } else {
-      logFn("combat", "Failed to give item: item not found.");
+      return `defeated player failed to give item (not found)`;
     }
   }
+
+  return "no loot applied";
+}
+
+export interface BackpackEffectResult {
+  lootApplied: boolean;
+  lootDescription?: string;
 }
 
 /**
@@ -117,7 +123,7 @@ function applyChampionLootDecision(
  * @param logFn Logging function
  * @param thinkingLogger Optional thinking logger
  * @param isDefeatedPlayerMakingChoice Whether the defeated player makes the choice (true) or random choice (false)
- * @returns True if backpack effect was applied, false if no effect
+ * @returns Object with loot information
  */
 export async function handleBackpackEffect(
   gameState: GameState,
@@ -130,19 +136,19 @@ export async function handleBackpackEffect(
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void,
   isDefeatedPlayerMakingChoice: boolean = true
-): Promise<boolean> {
+): Promise<BackpackEffectResult> {
   // Check if defeated player has a backpack
   const defeatedPlayerHasBackpack = hasTraderItem(defeatedPlayer, "backpack");
 
   if (!defeatedPlayerHasBackpack) {
-    return false; // No backpack, so no special effect
+    return { lootApplied: false }; // No backpack, so no special effect
   }
 
   // Generate the same loot options that would be available in normal combat
   const lootOptions = generateChampionLootOptions(defeatedPlayer, defeatedChampion, winningChampion);
 
   if (lootOptions.length === 0) {
-    return false; // No loot available
+    return { lootApplied: false }; // No loot available
   }
 
   if (lootOptions.length === 1) {
@@ -151,8 +157,8 @@ export async function handleBackpackEffect(
       choice: lootOptions[0],
       reasoning: "Only one loot option available, applied automatically (backpack effect)"
     };
-    applyChampionLootDecision(winningPlayer, winningChampion, defeatedPlayer, defeatedChampion, automaticDecision, logFn);
-    return true;
+    const lootResult = applyChampionLootDecision(winningPlayer, winningChampion, defeatedPlayer, defeatedChampion, automaticDecision);
+    return { lootApplied: true, lootDescription: lootResult };
   }
 
   if (isDefeatedPlayerMakingChoice && playerAgent && gameLog) {
@@ -167,7 +173,8 @@ export async function handleBackpackEffect(
     const lootDecision = await playerAgent.makeDecision(gameState, gameLog, decisionContext, thinkingLogger);
 
     // Apply the loot decision
-    applyChampionLootDecision(winningPlayer, winningChampion, defeatedPlayer, defeatedChampion, lootDecision, logFn);
+    const lootResult = applyChampionLootDecision(winningPlayer, winningChampion, defeatedPlayer, defeatedChampion, lootDecision);
+    return { lootApplied: true, lootDescription: lootResult };
   } else {
     // Fallback: randomly select what to give (when we don't have the defeated player's agent)
     const randomIndex = Math.floor(Math.random() * lootOptions.length);
@@ -177,8 +184,7 @@ export async function handleBackpackEffect(
     };
 
     // Apply the loot decision
-    applyChampionLootDecision(winningPlayer, winningChampion, defeatedPlayer, defeatedChampion, randomLootDecision, logFn);
+    const lootResult = applyChampionLootDecision(winningPlayer, winningChampion, defeatedPlayer, defeatedChampion, randomLootDecision);
+    return { lootApplied: true, lootDescription: lootResult };
   }
-
-  return true; // Backpack effect was applied
 } 

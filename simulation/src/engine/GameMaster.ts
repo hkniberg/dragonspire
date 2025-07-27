@@ -70,8 +70,11 @@ export class GameMaster {
 
   /**
    * Execute a single turn for the current player using the new Game Master pattern
+   * @param onStateUpdate Optional callback to update UI state after each step
    */
-  public async executeTurn(): Promise<void> {
+  public async executeTurn(
+    onStateUpdate?: (gameState: GameState, gameLog: readonly GameLogEntry[]) => void
+  ): Promise<void> {
     if (this.masterState !== "playing") {
       throw new Error(`Cannot execute turn: session is in state ${this.masterState}`);
     }
@@ -90,11 +93,21 @@ export class GameMaster {
 
     this.addGameLogEntry("dice", `Rolled dice: ${diceRollValues.map(die => `[${die}]`).join(", ")}`);
 
+    // Update UI after dice rolling
+    if (onStateUpdate) {
+      onStateUpdate(this.gameState, this.gameLog);
+    }
+
     // Step 2: Ask player for strategic assessment (strategic reflection) - now with dice context
     const thinkingLogger = (content: string) => this.addGameLogEntry("thinking", content);
     const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues, thinkingLogger);
     if (strategicAssessment) {
       this.addGameLogEntry("assessment", strategicAssessment);
+    }
+
+    // Update UI after strategic assessment
+    if (onStateUpdate) {
+      onStateUpdate(this.gameState, this.gameLog);
     }
 
     // Step 3: Ask the player to execute actions until they run out of dice.
@@ -134,6 +147,11 @@ export class GameMaster {
       if (victoryCheck.won) {
         this.endGame(victoryCheck.playerName, victoryCheck.condition);
         return;
+      }
+
+      // Update UI after each action execution
+      if (onStateUpdate) {
+        onStateUpdate(this.gameState, this.gameLog);
       }
 
     }
