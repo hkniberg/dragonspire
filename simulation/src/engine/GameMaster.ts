@@ -221,18 +221,18 @@ export class GameMaster {
       if (boatMoveResult.championMoveResult === "championMoved") {
         const tile = this.gameState.updateChampionPosition(player.name, championId!, action.championDropPosition!);
         const tileDescription = stringifyTile(tile, this.gameState, player.name);
-        this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition}, transporting champion ${championId} from ${formatPosition(championStartPosition!)} to ${formatPosition(action.championDropPosition!)}, using dice value [${action.diceValueUsed}].${reasoningText} Champion arrived: ${tileDescription}`);
+        this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition}, transporting champion ${championId} from ${formatPosition(championStartPosition!)} to ${formatPosition(action.championDropPosition!)}, using dice value [${action.diceValueUsed}]. Champion arrived: ${tileDescription}.${reasoningText}`);
         await this.executeChampionArrivalAtTile(player, tile, championId!, action.championTileAction);
       } else if (boatMoveResult.championMoveResult === "championNotReachableByBoat") {
-        this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition} and tried to move champion ${championId} at ${formatPosition(championStartPosition!)} but the champion was not reachable by this boat, using dice value [${action.diceValueUsed}]${reasoningText}.`);
+        this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition} and tried to move champion ${championId} at ${formatPosition(championStartPosition!)} but the champion was not reachable by this boat, using dice value [${action.diceValueUsed}].${reasoningText}`);
       } else if (boatMoveResult.championMoveResult === "targetPositionNotReachableByBoat") {
-        this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition} and tried to move champion ${championId} to ${formatPosition(action.championDropPosition!)} but that position was not reachable by this boat, using dice value [${action.diceValueUsed}]${reasoningText}.`);
+        this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition} and tried to move champion ${championId} to ${formatPosition(action.championDropPosition!)} but that position was not reachable by this boat, using dice value [${action.diceValueUsed}].${reasoningText}`);
       } else {
         throw new Error(`Unknown boat move result: ${boatMoveResult.championMoveResult}`);
       }
     } else {
       // Boat is staying in place but still using a die
-      this.addGameLogEntry("boat", `Boat ${action.boatId} stayed in position, using dice value [${action.diceValueUsed}]${reasoningText}.`);
+      this.addGameLogEntry("boat", `Boat ${action.boatId} stayed in position, using dice value [${action.diceValueUsed}].${reasoningText}`);
 
       // If there's a champion to pick up and drop off without moving the boat
       if (championId && action.championDropPosition) {
@@ -548,7 +548,7 @@ export class GameMaster {
     // Print final player states
     console.log("\nFinal Player States:");
     for (const player of this.gameState.players) {
-      console.log(`${player.name}: Fame=${player.fame}, Resources=${JSON.stringify(player.resources)}`);
+      console.log(`${player.name}: Fame=${player.fame}, Might=${player.might}, Resources=${formatResources(player.resources)}`);
     }
 
     // Print log entry statistics

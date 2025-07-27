@@ -21,6 +21,8 @@ export interface CLIConfig {
   specificTurns?: number;
   playerConfigs?: PlayerConfig[];
   seed?: number;
+  startingGold?: number;
+  startingFame?: number;
 }
 
 export class CLIRunner {
@@ -79,6 +81,36 @@ export class CLIRunner {
   }
 
   /**
+ * Apply starting resources to all players in the game state
+ */
+  private static applyStartingResources(gameMaster: GameMaster, config: CLIConfig): void {
+    if (!config.startingGold && !config.startingFame) {
+      return;
+    }
+
+    console.log("Applying starting resources:");
+    if (config.startingGold) {
+      console.log(`  Starting Gold: ${config.startingGold}`);
+    }
+    if (config.startingFame) {
+      console.log(`  Starting Fame: ${config.startingFame}`);
+    }
+    console.log();
+
+    const gameState = gameMaster.getGameState();
+    const players = gameState.players;
+
+    for (const player of players) {
+      if (config.startingGold) {
+        player.resources.gold += config.startingGold;
+      }
+      if (config.startingFame) {
+        player.fame += config.startingFame;
+      }
+    }
+  }
+
+  /**
    * Run a single turn test with specified players
    */
   public static async runSingleTurnTest(config: CLIConfig = {}): Promise<void> {
@@ -112,6 +144,10 @@ export class CLIRunner {
     try {
       // Execute just one turn
       gameMaster.start();
+
+      // Apply starting resources if specified
+      this.applyStartingResources(gameMaster, config);
+
       await gameMaster.executeTurn();
 
       console.log("\n=== Single Turn Test Complete ===");
@@ -169,6 +205,9 @@ export class CLIRunner {
     try {
       gameMaster.start();
 
+      // Apply starting resources if specified
+      this.applyStartingResources(gameMaster, config);
+
       // Execute the specified number of turns
       for (let i = 0; i < numTurns; i++) {
         await gameMaster.executeTurn();
@@ -224,7 +263,29 @@ export class CLIRunner {
     const gameMaster = new GameMaster(masterConfig);
 
     try {
-      await gameMaster.runToCompletion();
+      // Start the game and apply starting resources
+      gameMaster.start();
+      this.applyStartingResources(gameMaster, config);
+
+      // Continue with the game loop (similar to runToCompletion but without calling start again)
+      while (gameMaster.getMasterState() === "playing") {
+        await gameMaster.executeTurn();
+      }
+
+      // Print game summary
+      const gameState = gameMaster.getGameState();
+      const gameLog = gameMaster.getGameLog();
+
+      console.log(`\nGame completed after ${gameState.currentRound} rounds`);
+      console.log(`Total log entries: ${gameLog.length}`);
+
+      // Print final player states with might and formatted resources
+      console.log("\nFinal Player States:");
+      for (const player of gameState.players) {
+        const { formatResources } = await import("../lib/utils");
+        console.log(`${player.name}: Fame=${player.fame}, Might=${player.might}, Resources=${formatResources(player.resources)}`);
+      }
+
       console.log("✅ Complete game simulation successful!");
     } catch (error) {
       console.error("❌ Complete game simulation failed:", error);
@@ -257,6 +318,14 @@ export class CLIRunner {
           break;
         case "--seed":
           config.seed = parseInt(args[i + 1]);
+          i++; // Skip next argument
+          break;
+        case "--gold":
+          config.startingGold = parseInt(args[i + 1]);
+          i++; // Skip next argument
+          break;
+        case "--fame":
+          config.startingFame = parseInt(args[i + 1]);
           i++; // Skip next argument
           break;
         // Skip player arguments as they're already parsed

@@ -144,15 +144,32 @@ export class RandomPlayerAgent implements PlayerAgent {
     const randomPathIndex = Math.floor(Math.random() * allPaths.length);
     const selectedPath = allPaths[randomPathIndex];
 
+    // Get the target tile to check for special actions
+    const targetPosition = selectedPath[selectedPath.length - 1];
+    const destinationTile = gameState.board.getTileAt(targetPosition);
+
+    // Prepare tile action
+    const tileAction: any = {
+      claimTile: true,
+    };
+
+    // Check if we should use mercenary camp (if we have 3+ gold)
+    if (destinationTile?.tileType === "mercenary" && player.resources.gold >= 3) {
+      tileAction.useMercenary = true;
+    }
+
+    // Check if we should use temple (if we have 3+ fame)
+    if (destinationTile?.tileType === "temple" && player.fame >= 3) {
+      tileAction.useTemple = true;
+    }
+
     return {
       actionType: "championAction",
       championAction: {
         diceValueUsed: dieValue,
         championId: champion.id,
         movementPathIncludingStartPosition: selectedPath,
-        tileAction: {
-          claimTile: true,
-        },
+        tileAction: tileAction,
       },
     };
   }

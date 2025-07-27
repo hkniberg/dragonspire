@@ -1,4 +1,5 @@
 import { Anthropic } from "@anthropic-ai/sdk";
+import { jsonrepair } from "jsonrepair";
 
 const DEFAULT_MODEL = "claude-sonnet-4-0";
 const DEFAULT_RESPONSE_TOKENS = 10000;
@@ -92,7 +93,6 @@ export class Claude {
       .map((block) => block.text)
       .join("");
     try {
-
       // If no schema provided, return raw text response
       if (!responseSchema) {
         return textContent;
@@ -106,9 +106,27 @@ export class Claude {
       return parsedResponse;
     } catch (error) {
       console.log("Claude response text content couldn't be parsed", JSON.stringify(textContent, null, 2))
+
       if (error instanceof SyntaxError && responseSchema) {
-        throw new Error(`Failed to parse JSON response: ${error.message}`);
+        // If direct parsing fails, try to extract just the JSON part
+        const jsonStartIndex = textContent.indexOf("{");
+        const jsonEndIndex = textContent.lastIndexOf("}") + 1;
+
+        if (jsonStartIndex === -1 || jsonEndIndex === 0 || jsonEndIndex <= jsonStartIndex) {
+          throw new Error("Unable to find valid JSON markers in Claude's response");
+        }
+
+        try {
+          const jsonContent = textContent.substring(jsonStartIndex, jsonEndIndex);
+          const parsedResponse = JSON.parse(jsonrepair(jsonContent));
+          console.warn("Warning: Had to trim Claude's response to extract valid JSON");
+          log("Trimmed and Parsed Response", parsedResponse);
+          return parsedResponse;
+        } catch (innerError) {
+          throw new Error(`Failed to parse JSON response even after trimming and repair: ${innerError instanceof Error ? innerError.message : 'Unknown error'}`);
+        }
       }
+
       throw error;
     }
   }

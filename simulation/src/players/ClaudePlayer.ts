@@ -58,7 +58,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         const userMessage = await this.prepareDiceActionMessage(gameState, gameLog, turnContext);
 
         // Get LLM response with structured JSON
-        const response = await this.claude.useClaude(userMessage, diceActionSchema, 1024, 2000, thinkingLogger);
+        const response = await this.claude.useClaude(userMessage, diceActionSchema, 1024, 3000, thinkingLogger);
 
         // Convert the nested response to flat GameAction format
         return response as DiceAction;
@@ -278,8 +278,16 @@ export class ClaudePlayerAgent implements PlayerAgent {
         const formattedRounds = Object.entries(logByRound)
             .sort(([a], [b]) => parseInt(a) - parseInt(b))
             .map(([round, entries]) => {
+                const roundNumber = parseInt(round);
                 const roundEntries = entries.map((entry) => `  ${entry.playerName}: ${entry.content}`).join("\n");
-                return `Round ${round}:\n${roundEntries}`;
+
+                // Add clarification when we're only showing this player's entries (earlier rounds)
+                const isFilteredRound = roundNumber < previousRound;
+                const roundHeader = isFilteredRound
+                    ? `Round ${round} (only showing ${this.name}):`
+                    : `Round ${round}:`;
+
+                return `${roundHeader}\n${roundEntries}`;
             });
 
         return formattedRounds.join("\n\n");
