@@ -212,7 +212,7 @@ export async function resolveChampionVsChampionCombat(
       );
 
       if (backpackResult.lootApplied && backpackResult.lootDescription) {
-        lootInfo = `, ${backpackResult.lootDescription} (backpack effect)`;
+        lootInfo = `, ${attackingPlayer.name} ${backpackResult.lootDescription} (backpack effect)`;
       } else {
         lootInfo = ", nothing to loot";
       }
@@ -230,7 +230,7 @@ export async function resolveChampionVsChampionCombat(
           reasoning: "Only one loot option available, applied automatically"
         };
         const lootResult = applyChampionLootDecision(attackingPlayer, attackingChampion, defendingPlayer, opposingChampion, automaticDecision);
-        lootInfo = `, ${lootResult}`;
+        lootInfo = `, ${attackingPlayer.name} ${lootResult}`;
       } else {
         // Multiple options available, ask the attacking player to decide
         const decisionContext: DecisionContext = {
@@ -244,7 +244,7 @@ export async function resolveChampionVsChampionCombat(
 
         // Apply the loot decision
         const lootResult = applyChampionLootDecision(attackingPlayer, attackingChampion, defendingPlayer, opposingChampion, lootDecision);
-        lootInfo = `, ${lootResult}`;
+        lootInfo = `, ${attackingPlayer.name} ${lootResult}`;
       }
     } else {
       lootInfo = ", nothing to loot";
@@ -289,7 +289,7 @@ export async function resolveChampionVsChampionCombat(
       );
 
       if (backpackResult.lootApplied && backpackResult.lootDescription) {
-        lootInfo = `, ${backpackResult.lootDescription} (backpack effect)`;
+        lootInfo = `, ${defendingPlayer.name} ${backpackResult.lootDescription} (backpack effect)`;
       }
     } else if (attackingPlayerHasResources || attackingPlayerHasItems) {
       // Normal combat loss: defending player gets to choose what to steal (simulated by random choice for now)
@@ -305,7 +305,7 @@ export async function resolveChampionVsChampionCombat(
             reasoning: "Only one loot option available, applied automatically"
           };
           const lootResult = applyChampionLootDecision(defendingPlayer, opposingChampion, attackingPlayer, attackingChampion, automaticDecision);
-          lootInfo = `, ${lootResult}`;
+          lootInfo = `, ${defendingPlayer.name} ${lootResult}`;
         } else if (lootOptions.length > 1) {
           // Multiple options: for now, randomly choose (TODO: implement proper decision system)
           const randomIndex = Math.floor(Math.random() * lootOptions.length);
@@ -314,15 +314,15 @@ export async function resolveChampionVsChampionCombat(
             reasoning: "Random choice by defending player (automatic)"
           };
           const lootResult = applyChampionLootDecision(defendingPlayer, opposingChampion, attackingPlayer, attackingChampion, randomDecision);
-          lootInfo = `, ${lootResult}`;
+          lootInfo = `, ${defendingPlayer.name} ${lootResult}`;
         }
       }
     }
 
     const fullCombatDetails = `was defeated by ${defendingPlayer.name}'s champion (${attackerTotal} vs ${defenderTotal})${lootInfo}`;
 
-    // Apply defeat effects (send home and healing cost) 
-    await applyChampionDefeat(gameState, attackingPlayer, attackingChampionId, fullCombatDetails, logFn, playerAgent, gameLog, thinkingLogger);
+    // Apply defeat effects for champion vs champion combat (no healing cost)
+    await applyChampionDefeatInChampionCombat(gameState, attackingPlayer, attackingChampionId, fullCombatDetails, logFn, playerAgent, gameLog, thinkingLogger);
 
     return {
       combatOccurred: true,
@@ -539,6 +539,46 @@ export async function applyChampionDefeat(
     player.fame = Math.max(0, player.fame - 1);
     logFn("combat", `${defeatContext}, went home, had no gold to heal so lost 1 fame`);
   }
+}
+
+/**
+ * Handle champion defeat in champion vs champion combat (no healing cost)
+ */
+async function applyChampionDefeatInChampionCombat(
+  gameState: GameState,
+  player: Player,
+  championId: number,
+  defeatContext: string,
+  logFn: (type: string, content: string) => void,
+  playerAgent?: PlayerAgent,
+  gameLog?: readonly GameLogEntry[],
+  thinkingLogger?: (content: string) => void
+): Promise<void> {
+  // Check for padded helmet respawn
+  const respawnPosition = await handlePaddedHelmetRespawn(
+    gameState,
+    player,
+    championId,
+    playerAgent,
+    gameLog,
+    logFn,
+    thinkingLogger
+  );
+
+  if (respawnPosition) {
+    // Padded helmet respawn - move champion to chosen tile
+    const champion = gameState.getChampion(player.name, championId);
+    if (champion) {
+      champion.position = respawnPosition;
+    }
+    // No healing cost for champion vs champion combat
+    logFn("combat", `${defeatContext}, used padded helmet to respawn`);
+    return;
+  }
+
+  // Default behavior: send champion home (no healing cost for champion vs champion combat)
+  gameState.moveChampionToHome(player.name, championId);
+  logFn("combat", `${defeatContext}, went home`);
 }
 
 /**

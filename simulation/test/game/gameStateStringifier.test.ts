@@ -22,7 +22,9 @@ describe("GameStateStringifier", () => {
 - Home: (0,7)
 - Resource stockpile: 1 food, 2 wood
 - champion1 at (3,3)
-  - Has Broken Shield (broken-shield) - Choose one: Gain \`+1 ore\`, **OR** Spend \`2 ore\` to gain \`+1 might\`
+  - Has Broken Shield (broken-shield) - Choose one:
+Gain \`+1 ore\`, **OR**
+Spend \`2 ore\` to gain \`+1 might\`
   - Has Rusty sword (rusty-sword) - Gain \`+2 might\`. This **item breaks** after *one fight*.
 - champion2 at (3,5)
 - champion1 at (2,5)
@@ -62,7 +64,7 @@ describe("GameStateStringifier", () => {
 # Board
 
 Tile (0,0)
-- Home tile for Bob
+- Home tile for Bob (can ONLY be entered by Bob's champions)
 
 Tile (0,5)
 - Resource tile providing 2 food, 1 gold
@@ -108,11 +110,11 @@ Tile (4,4)
 - Doomspire Dragon (might 13)
 
 Tile (7,0)
-- Home tile for Alice
+- Home tile for Alice (can ONLY be entered by Alice's champions)
 - Alice champion1 is here
 
 Tile (7,7)
-- Home tile for David
+- Home tile for David (can ONLY be entered by David's champions)
 - David champion1 is here`;
 
     expect(result).toBe(expected);

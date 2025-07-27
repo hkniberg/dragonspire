@@ -80,9 +80,9 @@ function applyChampionLootDecision(
     if (defeatedPlayer.resources[resourceType] > 0) {
       defeatedPlayer.resources[resourceType] -= 1;
       winningPlayer.resources[resourceType] += 1;
-      return `defeated player chose to give 1 ${resourceType}`;
+      return `looted 1 ${resourceType}`;
     } else {
-      return `defeated player failed to give ${resourceType} (has none)`;
+      return `failed to loot ${resourceType} (defeated player has none)`;
     }
   } else if (selectedOption.type === "item") {
     // Transfer item from defeated champion to winning champion
@@ -97,9 +97,9 @@ function applyChampionLootDecision(
       winningChampion.items.push(lootedItem);
 
       const itemName = lootedItem.treasureCard?.name || lootedItem.traderItem?.name || "Unknown Item";
-      return `defeated player chose to give ${itemName}`;
+      return `looted ${itemName}`;
     } else {
-      return `defeated player failed to give item (not found)`;
+      return `failed to loot item (not found)`;
     }
   }
 

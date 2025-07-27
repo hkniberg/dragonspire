@@ -34,6 +34,10 @@ This is a board game design project, not a software application. Code in the sim
 - Keep the code as simple and clean as possible.
 - Performance doesn't matter. This is just for internal use, not a commercial product.
 
+## Terminology
+
+- "knight" and "champion" mean the same thing. Knight is used in the game rules, while champion is the internal name in the code and UI. Keep it that way for now.
+
 ## Testing and running
 
 - Don't run or build the next.js app automatically when making changes. When working on the web app, I will already have `npm run dev` running in the background.

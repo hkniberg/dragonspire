@@ -32,7 +32,7 @@ export function stringifyTile(tile: Tile, gameState: GameState, ignorePlayerName
     switch (tile.tileType) {
       case "home":
         const homeOwner = getPlayerByHomePosition(tile.position, gameState);
-        sentences.push(`This is a home tile for ${homeOwner?.name || "unknown"}`);
+        sentences.push(`This is a home tile for ${homeOwner?.name || "unknown"} (can ONLY be entered by ${homeOwner?.name || "unknown"}'s champions)`);
         break;
       case "resource":
         let resourceDescription = "This is a resource tile";
@@ -238,7 +238,7 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
     switch (tile.tileType) {
       case "home":
         const homeOwner = getPlayerByHomePosition(tile.position, gameState);
-        lines.push(`- Home tile for ${homeOwner?.name || "unknown"}`);
+        lines.push(`- Home tile for ${homeOwner?.name || "unknown"} (can ONLY be entered by ${homeOwner?.name || "unknown"}'s champions)`);
         break;
       case "resource":
         if (tile.resources) {

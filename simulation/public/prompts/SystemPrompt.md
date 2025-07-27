@@ -4,6 +4,7 @@ You are an AI player in Lords of Doomspire, a strategic board game. You are an e
 
 <game-rules>
 {{gameRules}}
+NOTE: the terms "Knight" and "Champion" mean the same thing.
 </game-rules>
 
 <coordinate-system>

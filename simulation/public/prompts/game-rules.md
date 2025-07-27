@@ -260,7 +260,7 @@ Each action die can be used for ONE of the following:
 - Some tiles have monsters that must be defeated before the tile can be used:
   - **Wolf Den tiles**: These tiles start the game with a wolf monster already placed on them.
   - **Bear Cave tiles**: Located in Tier 2 areas. When revealed through exploration, immediately place a bear monster on the tile.
-  - **Resource Tile Guards**: Some resource tiles are guarded by monsters, marked with sword icons. Place the appropriate monster card when the tile is revealed.
+  - **Resource Tile Guards**: Some resource tiles are guarded by monsters, marked with sword icons. Place the appropriate monster card when the tile is revealed. A champion who defeats the monster may claim the tile.
 
 ### Fighting Other Knights
 
@@ -268,11 +268,11 @@ Each action die can be used for ONE of the following:
 - Both players roll 2 D3 dice and add their might to the total score. Knights and warships from adjacent tiles can provide support, similar to when fighting monsters.
 - Highest score wins. On even scores, keep rerolling until a winner is found.
 - The winner gains 1 Fame and stays in the tile.
-- The loser returns to their home tile and must pay one resource of any type to heal. If they have no resources, they lose 1 Fame (minimum 0).
-- **Knight Loot**: When defeating a knight, the winner may choose to either:
+- The loser returns to their home tile. In contrast to monster battles, they do not need to pay a resource to heal.
+- **Knight Loot**: When defeating a knight, the winner player may loot the losing player or knight. They may either:
   - Take one resource of their choice from the defeated player, OR
   - Take one item from the defeated knight's inventory and transfer it to the winning knight's inventory. The winning knight may drop an item to make space for a looted item.
-- If the tile is a resource tile, the winner has the option to spend another die to claim or conquer it after the battle. This is an exception to the rule that a knight only can carry out one action per turn.
+- If the tile is a resource tile, the winner may claim or conquer it after the battle.
 
 ### Combat Bonuses
 
