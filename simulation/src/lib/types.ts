@@ -54,7 +54,7 @@ export interface Champion {
   id: number;
   position: Position;
   playerName: string;
-  treasures: string[];
+  items: string[];
 }
 
 export interface Boat {

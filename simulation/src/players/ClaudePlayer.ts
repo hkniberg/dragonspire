@@ -1,22 +1,23 @@
 // Lords of Doomspire Claude AI Player
 
+import { getTraderItemById } from "@/content/traderItems";
 import { GameStateStringifier } from "@/game/gameStateStringifier";
+import { DiceAction } from "@/lib/actionTypes";
+import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
-import { DiceAction } from "../lib/actionTypes";
-import { decisionSchema, diceActionSchema } from "../lib/claudeSchemas";
+import { decisionSchema, diceActionSchema, traderDecisionSchema } from "../lib/claudeSchemas";
 import { templateProcessor, TemplateVariables } from "../lib/templateProcessor";
 import { Claude } from "../llm/claude";
 import { PlayerAgent } from "./PlayerAgent";
+
 export class ClaudePlayerAgent implements PlayerAgent {
     private name: string;
     private claude: Claude;
-    private extraInstructions: string;
 
     constructor(name: string, claude: Claude) {
         this.name = name;
         this.claude = claude;
-        this.extraInstructions = "";
     }
 
     getName(): string {
@@ -85,6 +86,30 @@ export class ClaudePlayerAgent implements PlayerAgent {
         }
     }
 
+    async makeTraderDecision(
+        gameState: GameState,
+        gameLog: readonly GameLogEntry[],
+        traderContext: TraderContext,
+    ): Promise<TraderDecision> {
+        try {
+            // Prepare trader decision context message
+            const userMessage = await this.prepareTraderDecisionMessage(gameState, gameLog, traderContext);
+
+            // Get structured JSON response for trader decision
+            const response = await this.claude.useClaude(userMessage, traderDecisionSchema, 0, 500);
+
+            return response as TraderDecision;
+        } catch (error) {
+            console.error(`${this.name} encountered an error during trader decision:`, error);
+
+            // Fallback to no actions
+            return {
+                actions: [],
+                reasoning: "Error occurred, chose to perform no trader actions",
+            };
+        }
+    }
+
     private async prepareAssessmentMessage(
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
@@ -148,6 +173,44 @@ export class ClaudePlayerAgent implements PlayerAgent {
         };
 
         return await templateProcessor.processTemplate("makeDecision", variables);
+    }
+
+    private async prepareTraderDecisionMessage(
+        gameState: GameState,
+        gameLog: readonly GameLogEntry[],
+        traderContext: TraderContext,
+    ): Promise<string> {
+        const player = gameState.getCurrentPlayer();
+        const gameLogText = this.formatGameLogForPrompt(gameLog);
+        const boardState = GameStateStringifier.stringify(gameState);
+
+        // Format player resources
+        const resourcesText = Object.entries(traderContext.playerResources)
+            .map(([resource, amount]) => `${resource}: ${amount}`)
+            .join(", ");
+
+        // Format available items
+        const itemsText = traderContext.availableItems
+            .map((traderCard, i) => {
+                const item = getTraderItemById(traderCard.id);
+                if (!item) {
+                    return `${i + 1}. Unknown item (ID: ${traderCard.id})`;
+                }
+                return `${i + 1}. ${item.name} (ID: ${item.id}) - Cost: ${item.cost} gold - ${item.description}`;
+            })
+            .join("\n");
+
+        const variables: TemplateVariables = {
+            playerName: player.name,
+            description: traderContext.description,
+            playerResources: resourcesText,
+            availableItems: itemsText,
+            boardState: boardState,
+            gameLog: gameLogText,
+            extraInstructions: this.getExtraInstructionsSection(gameState),
+        };
+
+        return await templateProcessor.processTemplate("traderDecision", variables);
     }
 
     private getExtraInstructionsSection(gameState: GameState): string {

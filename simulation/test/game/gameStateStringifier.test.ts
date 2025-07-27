@@ -248,13 +248,13 @@ function createSampleGameState(): GameState {
           id: 1,
           position: { row: 3, col: 3 },
           playerName: "Jim",
-          treasures: ["broken-shield", "rusty-sword"],
+          items: ["broken-shield", "rusty-sword"],
         },
         {
           id: 2,
           position: { row: 3, col: 5 },
           playerName: "Jim",
-          treasures: [],
+          items: [],
         },
       ],
       boats: [
@@ -278,7 +278,7 @@ function createSampleGameState(): GameState {
           id: 1,
           position: { row: 0, col: 5 },
           playerName: "Bob",
-          treasures: [],
+          items: [],
         },
       ],
       boats: [
@@ -307,7 +307,7 @@ function createSampleGameState(): GameState {
           id: 1,
           position: { row: 7, col: 0 },
           playerName: "Alice",
-          treasures: [],
+          items: [],
         },
       ],
       boats: [
@@ -331,7 +331,7 @@ function createSampleGameState(): GameState {
           id: 1,
           position: { row: 7, col: 7 },
           playerName: "David",
-          treasures: [],
+          items: [],
         },
       ],
       boats: [
@@ -349,7 +349,7 @@ function createSampleGameState(): GameState {
     id: 1, // This will be confusing with multiple champion1s, but it matches the example
     position: { row: 2, col: 5 },
     playerName: "Jim",
-    treasures: [],
+    items: [],
   });
 
   return new GameState(

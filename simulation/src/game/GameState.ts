@@ -77,7 +77,7 @@ export class GameState {
         id: 1,
         position: startingPositions[i],
         playerName: playerName,
-        treasures: [],
+        items: [],
       };
 
       const boat: Boat = {

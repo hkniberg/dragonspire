@@ -2,6 +2,7 @@
 
 import { DiceAction } from "@/lib/actionTypes";
 import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
+import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { GameState } from "../game/GameState";
 
 
@@ -49,4 +50,17 @@ export interface PlayerAgent {
     gameLog: readonly GameLogEntry[],
     decisionContext: DecisionContext,
   ): Promise<Decision>;
+
+  /**
+   * Make trader decisions when visiting a trader tile
+   * @param gameState Current game state
+   * @param gameLog Game log entries
+   * @param traderContext Available trader options and player resources
+   * @returns TraderDecision with actions to perform
+   */
+  makeTraderDecision(
+    gameState: GameState,
+    gameLog: readonly GameLogEntry[],
+    traderContext: TraderContext,
+  ): Promise<TraderDecision>;
 }

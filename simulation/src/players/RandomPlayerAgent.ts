@@ -1,6 +1,7 @@
 // Lords of Doomspire Random Player
 
 import { DiceAction } from "@/lib/actionTypes";
+import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
 import { PlayerAgent } from "./PlayerAgent";
@@ -88,6 +89,18 @@ export class RandomPlayerAgent implements PlayerAgent {
     return {
       choice: choice,
       reasoning: `RandomPlayer chose option ${randomIndex + 1} of ${decisionContext.options.length}`,
+    };
+  }
+
+  async makeTraderDecision(
+    gameState: GameState,
+    gameLog: readonly GameLogEntry[],
+    traderContext: TraderContext,
+  ): Promise<TraderDecision> {
+    // RandomPlayer doesn't interact with traders for now
+    return {
+      actions: [],
+      reasoning: "RandomPlayer doesn't make trader decisions yet",
     };
   }
 

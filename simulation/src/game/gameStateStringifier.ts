@@ -76,9 +76,9 @@ export class GameStateStringifier {
   private static formatChampion(champion: Champion, playerName: string): string {
     let line = `- champion${champion.id} at ${this.formatPosition(champion.position)}`;
 
-    // Add treasures
-    for (const treasure of champion.treasures) {
-      line += `\n  - Has ${treasure}`;
+    // Add items
+    for (const item of champion.items) {
+      line += `\n  - Has ${item}`;
     }
 
     return line;

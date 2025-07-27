@@ -20,6 +20,7 @@ import {
   handleSpecialTiles,
   handleTileClaiming
 } from "./handlers/tileArrivalHandler";
+import { createTraderContext, handleTraderInteraction } from "./handlers/traderHandler";
 
 export type GameMasterState = "setup" | "playing" | "finished";
 
@@ -299,10 +300,15 @@ export class GameMaster {
       }
     }
 
-    // Step 6: Handle tile claiming
+    // Step 6: Handle trader interactions
+    if (tile.tileType === "trader" && tileAction?.purchaseAtTrader) {
+      await this.handleTraderVisit(player, championId, logFn);
+    }
+
+    // Step 7: Handle tile claiming
     handleTileClaiming(this.gameState, tile, player, championId, !!tileAction?.claimTile, logFn);
 
-    // TODO: Handle other special tile types (temple, mercenary camp, trader)
+    // TODO: Handle other special tile types (temple, mercenary camp)
   }
 
 
@@ -334,6 +340,37 @@ export class GameMaster {
       }
     } else {
       this.addGameLogEntry("harvest", "Attempted to harvest but no tiles were harvestable for some reason.");
+    }
+  }
+
+  /**
+   * Handle trader visit when a champion arrives at a trader tile with purchaseAtTrader=true
+   */
+  private async handleTraderVisit(
+    player: Player,
+    championId: number,
+    logFn: (type: string, content: string) => void
+  ): Promise<void> {
+    // Create trader context
+    const traderContext = createTraderContext(player);
+
+    // Get the current player agent
+    const currentPlayerAgent = this.playerAgents[this.gameState.currentPlayerIndex];
+
+    // Ask player to make trader decisions
+    console.log("traderContext", traderContext);
+    const traderDecision = await currentPlayerAgent.makeTraderDecision(this.gameState, this.gameLog, traderContext);
+    console.log("traderDecision", traderDecision);
+
+    // Handle the trader interaction
+    const traderResult = handleTraderInteraction(this.gameState, player, championId, traderDecision, logFn);
+    console.log("traderResult", traderResult);
+
+    // Log any failed actions
+    if (traderResult.failedActions.length > 0) {
+      for (const failure of traderResult.failedActions) {
+        logFn("event", `Failed trader action: ${failure.reason}`);
+      }
     }
   }
 

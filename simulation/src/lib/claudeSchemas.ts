@@ -1,6 +1,24 @@
 // Claude AI JSON Schemas for Lords of Doomspire
 
 /**
+ * Schema for tile action parameters
+ */
+export const tileActionSchema = {
+  type: "object",
+  description: "Tile action to perform",
+  properties: {
+    claimTile: {
+      type: "boolean",
+      description: "Whether to claim the tile (only for resource tiles)",
+    },
+    purchaseAtTrader: {
+      type: "boolean",
+      description: "Whether to purchase at the trader (only for trader tile)",
+    },
+  },
+};
+
+/**
  * Schema for championAction action parameters
  */
 export const championActionSchema = {
@@ -28,14 +46,8 @@ export const championActionSchema = {
       },
     },
     tileAction: {
-      type: "object",
+      ...tileActionSchema,
       description: "Optional tile action to perform at the destination tile (or current tile if no movement)",
-      properties: {
-        claimTile: {
-          type: "boolean",
-          description: "Whether to claim the tile",
-        },
-      },
     },
   },
   required: ["diceValueUsed", "championId"],
@@ -77,14 +89,8 @@ export const boatActionSchema = {
       required: ["row", "col"],
     },
     championTileAction: {
-      type: "object",
+      ...tileActionSchema,
       description: "Optional tile action for the champion at drop position",
-      properties: {
-        claimTile: {
-          type: "boolean",
-          description: "Whether to claim the tile at champion drop position (if it is a resource tile)",
-        },
-      },
     },
   },
   required: ["diceValueUsed", "boatId"],
@@ -153,4 +159,57 @@ export const decisionSchema = {
     },
   },
   required: ["choice", "reasoning"],
+};
+
+/**
+ * Schema for trader action
+ */
+export const traderActionSchema = {
+  type: "object",
+  properties: {
+    type: {
+      type: "string",
+      enum: ["buyItem", "sellResources"],
+      description: "Type of trader action",
+    },
+    itemId: {
+      type: "string",
+      description: "ID of the item to purchase (required for buyItem actions)",
+    },
+    resourcesSold: {
+      type: "object",
+      description: "Resources to sell (required for sellResources actions)",
+      properties: {
+        gold: { type: "number" },
+        wood: { type: "number" },
+        wheat: { type: "number" },
+        ore: { type: "number" },
+      },
+    },
+    resourceRequested: {
+      type: "string",
+      enum: ["gold", "wood", "wheat", "ore"],
+      description: "Resource type to receive in exchange (required for sellResources actions)",
+    },
+  },
+  required: ["type"],
+};
+
+/**
+ * Schema for trader decision responses from Claude
+ */
+export const traderDecisionSchema = {
+  type: "object",
+  properties: {
+    actions: {
+      type: "array",
+      description: "Array of trader actions to perform",
+      items: traderActionSchema,
+    },
+    reasoning: {
+      type: "string",
+      description: "Brief explanation of the trading strategy and decisions",
+    },
+  },
+  required: ["actions", "reasoning"],
 };

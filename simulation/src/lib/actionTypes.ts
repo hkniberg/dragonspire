@@ -1,4 +1,5 @@
-import { OceanPosition, Position } from './types';
+import { TraderCard } from './cards';
+import { OceanPosition, Position, ResourceType } from './types';
 
 export interface ChampionAction {
   diceValueUsed: number;
@@ -9,6 +10,7 @@ export interface ChampionAction {
 
 export interface TileAction {
   claimTile?: boolean;
+  purchaseAtTrader?: boolean;
 }
 
 export interface BoatAction {
@@ -24,6 +26,7 @@ export interface HarvestAction {
   diceValuesUsed: number[];
   tilePositions: Position[]; // Tiles to harvest from
 }
+
 // Nested DiceAction structure for Claude communication (matches schema)
 export interface DiceAction {
   actionType: "championAction" | "boatAction" | "harvestAction";
