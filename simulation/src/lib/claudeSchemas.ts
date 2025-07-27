@@ -1,23 +1,23 @@
 // Claude AI JSON Schemas for Lords of Doomspire
 
 /**
- * Schema for moveChampion action parameters
+ * Schema for championAction action parameters
  */
-export const moveChampionSchema = {
+export const championActionSchema = {
   type: "object",
-  description: "Parameters for moveChampion action",
+  description: "Parameters for championAction",
   properties: {
     diceValueUsed: {
       type: "number",
-      description: "The dice value used for this movement",
+      description: "The dice value used for this action",
     },
     championId: {
       type: "number",
-      description: "Champion ID being moved",
+      description: "Champion ID being moved or performing action",
     },
-    pathIncludingStartPosition: {
+    movementPathIncludingStartPosition: {
       type: "array",
-      description: "Path for movement, including the starting position",
+      description: "Optional path for movement, including the starting position. If not provided, champion stays in place.",
       items: {
         type: "object",
         properties: {
@@ -27,63 +27,75 @@ export const moveChampionSchema = {
         required: ["row", "col"],
       },
     },
-    claimTile: {
-      type: "boolean",
-      description: "Whether to claim the destination tile",
+    tileAction: {
+      type: "object",
+      description: "Optional tile action to perform at the destination tile (or current tile if no movement)",
+      properties: {
+        claimTile: {
+          type: "boolean",
+          description: "Whether to claim the tile",
+        },
+      },
     },
   },
-  required: ["diceValueUsed", "championId", "pathIncludingStartPosition"],
+  required: ["diceValueUsed", "championId"],
 };
 
 /**
- * Schema for moveBoat action parameters
+ * Schema for boatAction action parameters
  */
-export const moveBoatSchema = {
+export const boatActionSchema = {
   type: "object",
-  description: "Parameters for moveBoat action",
+  description: "Parameters for boatAction",
   properties: {
     diceValueUsed: {
       type: "number",
-      description: "The dice value used for this movement",
+      description: "The dice value used for this action",
     },
     boatId: {
       type: "number",
       description: "Boat ID",
     },
-    pathIncludingStartPosition: {
+    movementPathIncludingStartPosition: {
       type: "array",
-      description: "Ocean path as array of strings representing ocean positions, including start position. Valid values for each string is 'nw', 'ne', 'sw', 'se'",
+      description: "Optional ocean path as array of strings representing ocean positions, including start position. Valid values for each string is 'nw', 'ne', 'sw', 'se'. If not provided, boat stays in place.",
       items: {
         type: "string",
       },
     },
-    championId: {
+    championIdToPickUp: {
       type: "number",
-      description: "Optional champion being picked up",
+      description: "Optional champion being picked up or transported",
     },
     championDropPosition: {
       type: "object",
-      description: "Where to drop off champion",
+      description: "Where to drop off champion. Required if championIdToPickUp is provided",
       properties: {
         row: { type: "number" },
         col: { type: "number" },
       },
       required: ["row", "col"],
     },
-    claimTile: {
-      type: "boolean",
-      description: "Whether to claim the tile at champion drop position (if it is a resource tile)",
+    championTileAction: {
+      type: "object",
+      description: "Optional tile action for the champion at drop position",
+      properties: {
+        claimTile: {
+          type: "boolean",
+          description: "Whether to claim the tile at champion drop position (if it is a resource tile)",
+        },
+      },
     },
   },
-  required: ["diceValueUsed", "boatId", "pathIncludingStartPosition"],
+  required: ["diceValueUsed", "boatId"],
 };
 
 /**
- * Schema for harvest action parameters
+ * Schema for harvestAction action parameters
  */
-export const harvestSchema = {
+export const harvestActionSchema = {
   type: "object",
-  description: "Parameters for harvest action",
+  description: "Parameters for harvestAction",
   properties: {
     diceValuesUsed: {
       type: "array",
@@ -112,12 +124,12 @@ export const diceActionSchema = {
   properties: {
     actionType: {
       type: "string",
-      enum: ["moveChampion", "moveBoat", "harvest"],
+      enum: ["championAction", "boatAction", "harvestAction"],
       description: "The type of action to perform",
     },
-    moveChampion: moveChampionSchema,
-    moveBoat: moveBoatSchema,
-    harvest: harvestSchema,
+    championAction: championActionSchema,
+    boatAction: boatActionSchema,
+    harvestAction: harvestActionSchema,
     reasoning: {
       type: "string",
       description: "Brief explanation of why this action was chosen",

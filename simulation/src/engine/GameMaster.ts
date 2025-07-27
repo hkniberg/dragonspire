@@ -1,6 +1,6 @@
 // Lords of Doomspire Game Master
 
-import { HarvestAction, MoveBoatAction, MoveChampionAction } from "@/lib/actionTypes";
+import { BoatAction, ChampionAction, HarvestAction, TileAction } from "@/lib/actionTypes";
 import { GameLogEntry, GameLogEntryType, Player, Tile, TurnContext } from "@/lib/types";
 import { formatPosition, formatResources } from "@/lib/utils";
 import { GameState } from "../game/GameState";
@@ -110,18 +110,18 @@ export class GameMaster {
 
       // Execute the action and consume the appropriate dice
       const actionType = diceAction.actionType;
-      if (actionType == "moveChampion") {
-        const moveChampionAction = diceAction.moveChampion!;
-        diceRolls.consumeDiceRoll(moveChampionAction.diceValueUsed);
-        await this.executeMoveChampion(currentPlayer, moveChampionAction);
-      } else if (actionType === "moveBoat") {
-        const moveBoatAction = diceAction.moveBoat!;
-        diceRolls.consumeDiceRoll(moveBoatAction.diceValueUsed);
-        await this.executeMoveBoat(currentPlayer, moveBoatAction);
-      } else if (actionType === "harvest") {
-        const harvestAction = diceAction.harvest!;
+      if (actionType == "championAction") {
+        const championAction = diceAction.championAction!;
+        diceRolls.consumeDiceRoll(championAction.diceValueUsed);
+        await this.executeChampionAction(currentPlayer, championAction);
+      } else if (actionType === "boatAction") {
+        const boatAction = diceAction.boatAction!;
+        diceRolls.consumeDiceRoll(boatAction.diceValueUsed);
+        await this.executeBoatAction(currentPlayer, boatAction);
+      } else if (actionType === "harvestAction") {
+        const harvestAction = diceAction.harvestAction!;
         diceRolls.consumeMultipleDiceRolls(harvestAction.diceValuesUsed);
-        await this.executeHarvest(currentPlayer, harvestAction);
+        await this.executeHarvestAction(currentPlayer, harvestAction);
       } else {
         throw new Error(`Unknown action type: ${actionType}`);
       }
@@ -150,9 +150,9 @@ export class GameMaster {
 
 
 
-  private async executeMoveChampion(
+  private async executeChampionAction(
     player: Player,
-    action: MoveChampionAction,
+    action: ChampionAction,
   ): Promise<void> {
 
     // Get the champion's current position before moving
@@ -162,39 +162,67 @@ export class GameMaster {
     }
     const startPosition = champion.position;
 
-    // Execute the movement calculation
-    const moveResult = calculateChampionMove(this.gameState, player.name, action.pathIncludingStartPosition, action.diceValueUsed);
+    // Handle movement if a path is provided
+    let endPosition = startPosition;
+    if (action.movementPathIncludingStartPosition && action.movementPathIncludingStartPosition.length > 1) {
+      // Execute the movement calculation
+      const moveResult = calculateChampionMove(this.gameState, player.name, action.movementPathIncludingStartPosition, action.diceValueUsed);
 
-    // Update champion position 
-    const tile = this.gameState.updateChampionPosition(player.name, action.championId, moveResult.endPosition);
-    this.addGameLogEntry("movement", `Champion${action.championId} moved from ${formatPosition(startPosition)} to ${formatPosition(moveResult.endPosition)}, using dice value [${action.diceValueUsed}]`);
+      // Update champion position 
+      const tile = this.gameState.updateChampionPosition(player.name, action.championId, moveResult.endPosition);
+      this.addGameLogEntry("movement", `Champion${action.championId} moved from ${formatPosition(startPosition)} to ${formatPosition(moveResult.endPosition)}, using dice value [${action.diceValueUsed}]`);
+      endPosition = moveResult.endPosition;
+    } else {
+      // Champion is staying in place, just log the action
+      this.addGameLogEntry("movement", `Champion${action.championId} stayed at ${formatPosition(startPosition)}, using dice value [${action.diceValueUsed}]`);
+    }
 
-    await this.executeChampionArrivalAtTile(player, tile, action.championId, !!action.claimTile);
+    // Get the tile at the final position for arrival handling
+    const tile = this.gameState.getTile(endPosition);
+    if (!tile) {
+      throw new Error(`No tile found at position ${formatPosition(endPosition)}`);
+    }
+
+    await this.executeChampionArrivalAtTile(player, tile, action.championId, action.tileAction);
   }
 
-  private async executeMoveBoat(player: Player, action: MoveBoatAction): Promise<void> {
-    const championId = action.championId;
+  private async executeBoatAction(player: Player, action: BoatAction): Promise<void> {
+    const championId = action.championIdToPickUp;
     const champion = championId ? this.gameState.getChampion(player.name, championId) : undefined;
     const championStartPosition = champion ? champion.position : undefined;
-    const boatMoveResult = calculateBoatMove(action.pathIncludingStartPosition, action.diceValueUsed, championStartPosition, action.championDropPosition);
 
-    // Get boat start position for logging
-    const boatStartPosition = action.pathIncludingStartPosition[0];
+    // Handle boat movement if a path is provided
+    if (action.movementPathIncludingStartPosition && action.movementPathIncludingStartPosition.length > 0) {
+      const boatMoveResult = calculateBoatMove(action.movementPathIncludingStartPosition, action.diceValueUsed, championStartPosition, action.championDropPosition);
 
-    if (boatMoveResult.championMoveResult === "championMoved") {
-      const tile = this.gameState.updateChampionPosition(player.name, championId!, action.championDropPosition!);
-      this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition}, transporting champion ${championId} from ${formatPosition(championStartPosition!)} to ${formatPosition(action.championDropPosition!)}, using dice value [${action.diceValueUsed}]`);
-      await this.executeChampionArrivalAtTile(player, tile, championId!, !!action.claimTile);
-    } else if (boatMoveResult.championMoveResult === "championNotReachableByBoat") {
-      this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition} and tried to move champion ${championId} at ${formatPosition(championStartPosition!)} but the champion was not reachable by this boat, using dice value [${action.diceValueUsed}]`);
-    } else if (boatMoveResult.championMoveResult === "targetPositionNotReachableByBoat") {
-      this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition} and tried to move champion ${championId} to ${formatPosition(action.championDropPosition!)} but that position was not reachable by this boat, using dice value [${action.diceValueUsed}]`);
+      // Get boat start position for logging
+      const boatStartPosition = action.movementPathIncludingStartPosition[0];
+
+      if (boatMoveResult.championMoveResult === "championMoved") {
+        const tile = this.gameState.updateChampionPosition(player.name, championId!, action.championDropPosition!);
+        this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition}, transporting champion ${championId} from ${formatPosition(championStartPosition!)} to ${formatPosition(action.championDropPosition!)}, using dice value [${action.diceValueUsed}]`);
+        await this.executeChampionArrivalAtTile(player, tile, championId!, action.championTileAction);
+      } else if (boatMoveResult.championMoveResult === "championNotReachableByBoat") {
+        this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition} and tried to move champion ${championId} at ${formatPosition(championStartPosition!)} but the champion was not reachable by this boat, using dice value [${action.diceValueUsed}]`);
+      } else if (boatMoveResult.championMoveResult === "targetPositionNotReachableByBoat") {
+        this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition} and tried to move champion ${championId} to ${formatPosition(action.championDropPosition!)} but that position was not reachable by this boat, using dice value [${action.diceValueUsed}]`);
+      } else {
+        throw new Error(`Unknown boat move result: ${boatMoveResult.championMoveResult}`);
+      }
     } else {
-      throw new Error(`Unknown boat move result: ${boatMoveResult.championMoveResult}`);
+      // Boat is staying in place but still using a die
+      this.addGameLogEntry("boat", `Boat ${action.boatId} stayed in position, using dice value [${action.diceValueUsed}]`);
+
+      // If there's a champion to pick up and drop off without moving the boat
+      if (championId && action.championDropPosition) {
+        const tile = this.gameState.updateChampionPosition(player.name, championId, action.championDropPosition);
+        this.addGameLogEntry("boat", `Champion ${championId} transported from ${formatPosition(championStartPosition!)} to ${formatPosition(action.championDropPosition)} without moving boat`);
+        await this.executeChampionArrivalAtTile(player, tile, championId, action.championTileAction);
+      }
     }
   }
 
-  private async executeChampionArrivalAtTile(player: Player, tile: Tile, championId: number, claimTile: boolean): Promise<void> {
+  private async executeChampionArrivalAtTile(player: Player, tile: Tile, championId: number, tileAction: TileAction | undefined): Promise<void> {
     // Create a logging wrapper that matches the handler's expected signature
     const logFn = (type: string, content: string) => this.addGameLogEntry(type as GameLogEntryType, content);
 
@@ -272,14 +300,14 @@ export class GameMaster {
     }
 
     // Step 6: Handle tile claiming
-    const claimingResult = handleTileClaiming(this.gameState, tile, player, championId, claimTile, logFn);
+    handleTileClaiming(this.gameState, tile, player, championId, !!tileAction?.claimTile, logFn);
 
     // TODO: Handle other special tile types (temple, mercenary camp, trader)
   }
 
 
 
-  private async executeHarvest(player: Player, action: HarvestAction): Promise<void> {
+  private async executeHarvestAction(player: Player, action: HarvestAction): Promise<void> {
     // Use the harvest calculator to determine the results - sum the dice values to get harvest power
     const diceSum = action.diceValuesUsed.reduce((sum, diceValue) => sum + diceValue, 0);
     const harvestResult = calculateHarvest(this.gameState, player.name, action.tilePositions, diceSum);

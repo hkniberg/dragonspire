@@ -21,9 +21,9 @@ Respond with a JSON object specifying your dice action, and which die value you 
 
 The actionType MUST be one of the folllowing:
 
-1. moveChampion: Move a champion along a path, optionally claiming the destination tile.
-2. moveBoat: Move a boat, optionally transporting a champion.
-3. harvest: Collect resources from your claimed tiles, using your remaining die values.
+1. championAction: Do something with a champion (move and/or act on a tile)
+2. boatAction: Do something with a boat (move and/or transport a champion to a tile, who then can act on that tile)
+3. harvestAction: Collect resources from your claimed tiles, using your remaining die values.
 
 If you harvest, no more movement actions can be carried out after that, so you need to use all your remaining dice values for this action.
 

@@ -1,19 +1,23 @@
 import { OceanPosition, Position } from './types';
 
-export interface MoveChampionAction {
+export interface ChampionAction {
   diceValueUsed: number;
   championId: number;
-  pathIncludingStartPosition: Position[];
-  claimTile?: boolean; // If true, claims the destination tile (last position in path)
+  movementPathIncludingStartPosition?: Position[];
+  tileAction?: TileAction;
 }
 
-export interface MoveBoatAction {
+export interface TileAction {
+  claimTile?: boolean;
+}
+
+export interface BoatAction {
   diceValueUsed: number;
   boatId: number;
-  pathIncludingStartPosition: OceanPosition[]; // Ocean tiles as strings
-  championId?: number; // Optional champion being picked up
+  movementPathIncludingStartPosition?: OceanPosition[]; // Ocean tiles as strings
+  championIdToPickUp?: number; // Optional champion being picked up
   championDropPosition?: Position; // Where to drop off the champion
-  claimTile?: boolean; // If true, claims the destination tile at champion drop position
+  championTileAction?: TileAction;
 }
 
 export interface HarvestAction {
@@ -22,9 +26,9 @@ export interface HarvestAction {
 }
 // Nested DiceAction structure for Claude communication (matches schema)
 export interface DiceAction {
-  actionType: "moveChampion" | "moveBoat" | "harvest";
-  moveChampion?: MoveChampionAction;
-  moveBoat?: MoveBoatAction;
-  harvest?: HarvestAction;
+  actionType: "championAction" | "boatAction" | "harvestAction";
+  championAction?: ChampionAction;
+  boatAction?: BoatAction;
+  harvestAction?: HarvestAction;
   reasoning?: string;
 }

@@ -64,8 +64,8 @@ export class RandomPlayerAgent implements PlayerAgent {
 
     // Last resort: minimal harvest action
     return {
-      actionType: "harvest",
-      harvest: {
+      actionType: "harvestAction",
+      harvestAction: {
         diceValuesUsed: [dieValue],
         tilePositions: [], // Empty harvest
       },
@@ -128,12 +128,14 @@ export class RandomPlayerAgent implements PlayerAgent {
     const selectedPath = allPaths[randomPathIndex];
 
     return {
-      actionType: "moveChampion",
-      moveChampion: {
+      actionType: "championAction",
+      championAction: {
         diceValueUsed: dieValue,
         championId: champion.id,
-        pathIncludingStartPosition: selectedPath,
-        claimTile: true,
+        movementPathIncludingStartPosition: selectedPath,
+        tileAction: {
+          claimTile: true,
+        },
       },
     };
   }
@@ -169,8 +171,8 @@ export class RandomPlayerAgent implements PlayerAgent {
 
     // Harvest from all available tiles
     return {
-      actionType: "harvest",
-      harvest: {
+      actionType: "harvestAction",
+      harvestAction: {
         diceValuesUsed: [dieValue],
         tilePositions: harvestableTiles.map((tile) => tile.position),
       },
