@@ -113,6 +113,25 @@ export interface Decision {
   reasoning?: string; // Optional reasoning for debugging
 }
 
+/**
+ * Champion loot decision types
+ */
+export interface ChampionLootOption {
+  type: "resource" | "item";
+  resourceType?: ResourceType; // Only set if type is "resource"
+  itemIndex?: number; // Index in the defeated champion's items array, only set if type is "item"
+  displayName: string; // Human readable name for the option
+}
+
+export interface ChampionLootContext {
+  type: "champion_loot";
+  description: string;
+  defeatedPlayerName: string;
+  defeatedChampionId: number;
+  winningChampionId: number;
+  options: ChampionLootOption[];
+}
+
 export type GameLogEntryType = "dice" | "movement" | "boat" | "exploration" | "combat" | "harvest" | "assessment" | "event" | "system" | "victory" | "thinking";
 
 /**

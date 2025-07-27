@@ -1,7 +1,8 @@
 import { GameState } from "@/game/GameState";
 import { GameSettings } from "@/lib/GameSettings";
-import { Monster, NON_COMBAT_TILES, Player, Tile } from "@/lib/types";
+import { ChampionLootOption, Decision, DecisionContext, GameLogEntry, Monster, NON_COMBAT_TILES, Player, ResourceType, Tile } from "@/lib/types";
 import { formatResources } from "@/lib/utils";
+import { PlayerAgent } from "@/players/PlayerAgent";
 
 /**
  * Roll a D3 (returns 1, 2, or 3 with equal probability like the game rules)
@@ -30,13 +31,15 @@ export interface CombatVictory {
   opponentEffects?: {
     playerName: string;
     championSentHome: boolean;
-    healingCost: "gold" | "fame";
+    healingCost: "gold" | "fame" | "none";
   };
+  // Removed lootOptions since we'll handle loot internally
+  defeatedChampionId?: number;
 }
 
 export interface CombatDefeat {
   championId: number;
-  healingCost: "gold" | "fame";
+  healingCost: "gold" | "fame" | "none";
   championSentHome: boolean;
 }
 
@@ -50,15 +53,110 @@ export interface DragonEncounterResult {
 }
 
 /**
+ * Generate loot options for champion vs champion combat victory
+ */
+function generateChampionLootOptions(
+  defeatedPlayer: Player,
+  defeatedChampion: any,
+  winningChampion: any
+): ChampionLootOption[] {
+  const options: ChampionLootOption[] = [];
+
+  // Add resource options (only for resources the defeated player actually has)
+  const resourceTypes: Array<{ type: "food" | "wood" | "ore" | "gold"; name: string }> = [
+    { type: "food", name: "Food" },
+    { type: "wood", name: "Wood" },
+    { type: "ore", name: "Ore" },
+    { type: "gold", name: "Gold" }
+  ];
+
+  for (const { type, name } of resourceTypes) {
+    if (defeatedPlayer.resources[type] > 0) {
+      options.push({
+        type: "resource",
+        resourceType: type,
+        displayName: `1 ${name} (player has ${defeatedPlayer.resources[type]})`
+      });
+    }
+  }
+
+  // Add item options (only if the winning champion has room for more items)
+  if (winningChampion.items.length < 2) {
+    defeatedChampion.items.forEach((item: any, index: number) => {
+      let itemName = "Unknown Item";
+      if (item.treasureCard) {
+        itemName = item.treasureCard.name;
+      } else if (item.traderItem) {
+        itemName = item.traderItem.name;
+      }
+
+      options.push({
+        type: "item",
+        itemIndex: index,
+        displayName: `${itemName} (item)`
+      });
+    });
+  }
+
+  return options;
+}
+
+/**
+ * Apply champion loot decision by transferring resources or items
+ */
+function applyChampionLootDecision(
+  winningPlayer: Player,
+  winningChampion: any,
+  defeatedPlayer: Player,
+  defeatedChampion: any,
+  lootDecision: Decision,
+  logFn: (type: string, content: string) => void
+): void {
+  const selectedOption = lootDecision.choice;
+
+  if (selectedOption.type === "resource") {
+    // Transfer resource from defeated player to winning player
+    const resourceType: ResourceType = selectedOption.resourceType;
+    if (defeatedPlayer.resources[resourceType] > 0) {
+      defeatedPlayer.resources[resourceType] -= 1;
+      winningPlayer.resources[resourceType] += 1;
+      logFn("combat", `Looted 1 ${resourceType} from defeated champion.`);
+    } else {
+      logFn("combat", `Failed to loot ${resourceType}: defeated player has none.`);
+    }
+  } else if (selectedOption.type === "item") {
+    // Transfer item from defeated champion to winning champion
+    const itemIndex = selectedOption.itemIndex;
+    if (itemIndex >= 0 && itemIndex < defeatedChampion.items.length) {
+      const lootedItem = defeatedChampion.items[itemIndex];
+
+      // Remove item from defeated champion
+      defeatedChampion.items.splice(itemIndex, 1);
+
+      // Add item to winning champion
+      winningChampion.items.push(lootedItem);
+
+      const itemName = lootedItem.treasureCard?.name || lootedItem.traderItem?.name || "Unknown Item";
+      logFn("combat", `Looted ${itemName} from defeated champion.`);
+    } else {
+      logFn("combat", "Failed to loot item: item not found.");
+    }
+  }
+}
+
+/**
  * Handle champion vs champion combat
  */
-export function resolveChampionVsChampionCombat(
+export async function resolveChampionVsChampionCombat(
   gameState: GameState,
   tile: Tile,
   attackingPlayer: Player,
   attackingChampionId: number,
-  logFn: (type: string, content: string) => void
-): CombatResult {
+  playerAgent: PlayerAgent,
+  gameLog: readonly GameLogEntry[],
+  logFn: (type: string, content: string) => void,
+  thinkingLogger?: (content: string) => void
+): Promise<CombatResult> {
   const opposingChampions = gameState.getOpposingChampionsAtPosition(attackingPlayer.name, tile.position);
 
   // No combat if no opposing champions or on non-combat tiles
@@ -88,21 +186,45 @@ export function resolveChampionVsChampionCombat(
   const attackerWins = attackerTotal > defenderTotal;
 
   if (attackerWins) {
-    // Attacker won - award fame and handle defender defeat
-    const healingCost = defendingPlayer.resources.gold > 0 ? "gold" : "fame";
-
-    // Apply effects
+    // Attacker won - award fame and send defender home (no healing cost since they get looted)
     attackingPlayer.fame += 1;
     opposingChampion.position = defendingPlayer.homePosition;
 
-    if (healingCost === "gold") {
-      defendingPlayer.resources.gold -= 1;
-    } else {
-      defendingPlayer.fame = Math.max(0, defendingPlayer.fame - 1);
+    // Get the attacking champion to generate loot options
+    const attackingChampion = gameState.getChampion(attackingPlayer.name, attackingChampionId);
+    if (!attackingChampion) {
+      throw new Error(`Attacking champion ${attackingChampionId} not found`);
     }
 
-    const healingText = healingCost === "gold" ? "paid 1 gold to heal" : "had no gold to heal so lost 1 fame";
-    const fullCombatDetails = `Defeated ${defendingPlayer.name}'s champion (${attackerTotal} vs ${defenderTotal}), who went home and ${healingText}`;
+    // Generate loot options
+    const lootOptions = generateChampionLootOptions(defendingPlayer, opposingChampion, attackingChampion);
+
+    // Handle loot decision if there are options available
+    if (lootOptions.length === 0) {
+      logFn("combat", "No loot available from the defeated champion.");
+    } else if (lootOptions.length === 1) {
+      // Only one option available, apply it automatically
+      const automaticDecision: Decision = {
+        choice: lootOptions[0],
+        reasoning: "Only one loot option available, applied automatically"
+      };
+      applyChampionLootDecision(attackingPlayer, attackingChampion, defendingPlayer, opposingChampion, automaticDecision, logFn);
+    } else {
+      // Multiple options available, ask the player to decide
+      const decisionContext: DecisionContext = {
+        type: "champion_loot",
+        description: `Choose what to take from the defeated champion:`,
+        options: lootOptions
+      };
+
+      // Ask player to make loot decision
+      const lootDecision = await playerAgent.makeDecision(gameState, gameLog, decisionContext, thinkingLogger);
+
+      // Apply the loot decision
+      applyChampionLootDecision(attackingPlayer, attackingChampion, defendingPlayer, opposingChampion, lootDecision, logFn);
+    }
+
+    const fullCombatDetails = `Defeated ${defendingPlayer.name}'s champion (${attackerTotal} vs ${defenderTotal}), who went home`;
 
     logFn("combat", fullCombatDetails);
 
@@ -114,8 +236,9 @@ export function resolveChampionVsChampionCombat(
         opponentEffects: {
           playerName: defendingPlayer.name,
           championSentHome: true,
-          healingCost: healingCost as "gold" | "fame"
-        }
+          healingCost: "none" // No healing cost for champion vs champion defeats
+        },
+        defeatedChampionId: opposingChampion.id
       },
       combatDetails: fullCombatDetails
     };

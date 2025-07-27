@@ -1,7 +1,8 @@
 import { GameState } from "@/game/GameState";
 import { GameSettings } from "@/lib/GameSettings";
-import { CarriableItem, Player, Tile } from "@/lib/types";
+import { CarriableItem, GameLogEntry, Player, Tile } from "@/lib/types";
 import { formatResources } from "@/lib/utils";
+import { PlayerAgent } from "@/players/PlayerAgent";
 import {
   resolveChampionVsChampionCombat,
   resolveChampionVsDragonEncounter,
@@ -19,7 +20,7 @@ export interface ChampionCombatResult {
   defendingChampionDefeated?: {
     playerName: string;
     championId: number;
-    healingCost: "gold" | "fame";
+    healingCost: "gold" | "fame" | "none";
   };
   fameAwarded?: number;
   combatDetails?: string;
@@ -29,7 +30,7 @@ export interface MonsterCombatResult {
   combatOccurred: boolean;
   championWon?: boolean;
   championDefeated?: {
-    healingCost: "gold" | "fame";
+    healingCost: "gold" | "fame" | "none";
   };
   monsterDefeated?: {
     fameAwarded: number;
@@ -43,6 +44,14 @@ export interface MonsterCombatResult {
   combatDetails?: string;
 }
 
+export interface DragonCombatResult {
+  combatOccurred: boolean;
+  championWon?: boolean;
+  championDefeated?: boolean;
+  healingCost?: "gold" | "fame" | "none";
+  combatDetails?: string;
+}
+
 export interface DoomspireResult {
   entered: boolean;
   alternativeVictory?: {
@@ -52,7 +61,7 @@ export interface DoomspireResult {
   dragonCombat?: {
     championWon: boolean;
     championDefeated?: {
-      healingCost: "gold" | "fame";
+      healingCost: "gold" | "fame" | "none";
     };
     combatVictory?: {
       playerName: string;
@@ -104,16 +113,19 @@ export function handleExploration(
 }
 
 /**
- * Handle combat with opposing champions on the tile
+ * Handle champion vs champion combat on tile arrival
  */
-export function handleChampionCombat(
+export async function handleChampionCombat(
   gameState: GameState,
   tile: Tile,
   player: Player,
   championId: number,
-  logFn: (type: string, content: string) => void
-): ChampionCombatResult {
-  const combatResult = resolveChampionVsChampionCombat(gameState, tile, player, championId, logFn);
+  playerAgent: PlayerAgent,
+  gameLog: readonly GameLogEntry[],
+  logFn: (type: string, content: string) => void,
+  thinkingLogger?: (content: string) => void
+): Promise<ChampionCombatResult> {
+  const combatResult = await resolveChampionVsChampionCombat(gameState, tile, player, championId, playerAgent, gameLog, logFn, thinkingLogger);
 
   if (!combatResult.combatOccurred) {
     return { combatOccurred: false };

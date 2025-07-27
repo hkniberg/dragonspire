@@ -253,7 +253,7 @@ export class GameMaster {
     const explorationResult = handleExploration(this.gameState, tile, player, logFn);
 
     // Step 2: Handle champion combat
-    const championCombatResult = handleChampionCombat(this.gameState, tile, player, championId, logFn);
+    const championCombatResult = await handleChampionCombat(this.gameState, tile, player, championId, this.playerAgents[this.gameState.currentPlayerIndex], this.gameLog, logFn, thinkingLogger);
     if (championCombatResult.combatOccurred && !championCombatResult.attackerWon) {
       // Attacker lost, defeat effects already applied by combat handler
       return;
@@ -388,8 +388,6 @@ export class GameMaster {
     // Step 10: Handle tile claiming
     handleTileClaiming(this.gameState, tile, player, championId, !!tileAction?.claimTile, logFn);
   }
-
-
 
   private async executeHarvestAction(player: Player, action: HarvestAction, reasoning?: string): Promise<void> {
     // Use the harvest calculator to determine the results - sum the dice values to get harvest power

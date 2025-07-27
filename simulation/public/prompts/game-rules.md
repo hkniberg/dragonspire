@@ -271,7 +271,7 @@ Each action die can be used for ONE of the following:
 - The loser returns to their home tile and must pay one resource of any type to heal. If they have no resources, they lose 1 Fame (minimum 0).
 - **Knight Loot**: When defeating a knight, the winner may choose to either:
   - Take one resource of their choice from the defeated player, OR
-  - Take one item from the defeated knight's inventory and transfer it to the winning knight's inventory
+  - Take one item from the defeated knight's inventory and transfer it to the winning knight's inventory. The winning knight may drop an item to make space for a looted item.
 - If the tile is a resource tile, the winner has the option to spend another die to claim or conquer it after the battle. This is an exception to the rule that a knight only can carry out one action per turn.
 
 ### Combat Bonuses
