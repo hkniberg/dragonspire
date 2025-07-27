@@ -23,6 +23,9 @@ export interface CLIConfig {
   seed?: number;
   startingGold?: number;
   startingFame?: number;
+  startingFood?: number;
+  startingWood?: number;
+  startingOre?: number;
 }
 
 export class CLIRunner {
@@ -84,7 +87,7 @@ export class CLIRunner {
  * Apply starting resources to all players in the game state
  */
   private static applyStartingResources(gameMaster: GameMaster, config: CLIConfig): void {
-    if (!config.startingGold && !config.startingFame) {
+    if (!config.startingGold && !config.startingFame && !config.startingFood && !config.startingWood && !config.startingOre) {
       return;
     }
 
@@ -94,6 +97,15 @@ export class CLIRunner {
     }
     if (config.startingFame) {
       console.log(`  Starting Fame: ${config.startingFame}`);
+    }
+    if (config.startingFood) {
+      console.log(`  Starting Food: ${config.startingFood}`);
+    }
+    if (config.startingWood) {
+      console.log(`  Starting Wood: ${config.startingWood}`);
+    }
+    if (config.startingOre) {
+      console.log(`  Starting Ore: ${config.startingOre}`);
     }
     console.log();
 
@@ -106,6 +118,15 @@ export class CLIRunner {
       }
       if (config.startingFame) {
         player.fame += config.startingFame;
+      }
+      if (config.startingFood) {
+        player.resources.food += config.startingFood;
+      }
+      if (config.startingWood) {
+        player.resources.wood += config.startingWood;
+      }
+      if (config.startingOre) {
+        player.resources.ore += config.startingOre;
       }
     }
   }
@@ -326,6 +347,18 @@ export class CLIRunner {
           break;
         case "--fame":
           config.startingFame = parseInt(args[i + 1]);
+          i++; // Skip next argument
+          break;
+        case "--food":
+          config.startingFood = parseInt(args[i + 1]);
+          i++; // Skip next argument
+          break;
+        case "--wood":
+          config.startingWood = parseInt(args[i + 1]);
+          i++; // Skip next argument
+          break;
+        case "--ore":
+          config.startingOre = parseInt(args[i + 1]);
           i++; // Skip next argument
           break;
         // Skip player arguments as they're already parsed

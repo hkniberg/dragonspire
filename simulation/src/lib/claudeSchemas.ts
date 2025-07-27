@@ -145,6 +145,26 @@ export const harvestActionSchema = {
 };
 
 /**
+ * Schema for buildAction action parameters
+ */
+export const buildActionSchema = {
+  type: "object",
+  description: "Parameters for buildAction - construct a building in your castle",
+  properties: {
+    diceValueUsed: {
+      type: "number",
+      description: "The die value to use for this action",
+    },
+    buildingType: {
+      type: "string",
+      enum: ["blacksmith"],
+      description: "The type of building to construct",
+    },
+  },
+  required: ["diceValueUsed", "buildingType"],
+};
+
+/**
  * Schema for dice action responses from Claude using nested structure
  */
 export const diceActionSchema = {
@@ -152,12 +172,13 @@ export const diceActionSchema = {
   properties: {
     actionType: {
       type: "string",
-      enum: ["championAction", "boatAction", "harvestAction"],
+      enum: ["championAction", "boatAction", "harvestAction", "buildAction"],
       description: "The type of action to perform",
     },
     championAction: championActionSchema,
     boatAction: boatActionSchema,
     harvestAction: harvestActionSchema,
+    buildAction: buildActionSchema,
     reasoning: {
       type: "string",
       description: "Brief explanation of why this action was chosen",

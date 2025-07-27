@@ -1,6 +1,6 @@
 // Lords of Doomspire Random Player
 
-import { DiceAction } from "@/lib/actionTypes";
+import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
@@ -42,6 +42,16 @@ export class RandomPlayerAgent implements PlayerAgent {
 
     // Use the first remaining die value
     const dieValue = turnContext.remainingDiceValues[0];
+
+    // 10% chance to try building if it's not the first die
+    const shouldBuild = Math.random() < 0.1 && turnContext.remainingDiceValues.length < turnContext.diceRolled.length;
+
+    if (shouldBuild) {
+      const buildAction = this.generateRandomBuildAction(gameState, playerName, dieValue);
+      if (buildAction) {
+        return buildAction;
+      }
+    }
 
     // 20% chance to do harvesting if it's not the first die and there are harvestable resources
     const shouldHarvest = Math.random() < 0.2 && turnContext.remainingDiceValues.length < turnContext.diceRolled.length;
@@ -106,6 +116,27 @@ export class RandomPlayerAgent implements PlayerAgent {
       actions: [],
       reasoning: "RandomPlayer doesn't make trader decisions yet",
     };
+  }
+
+  async useBuilding(
+    gameState: GameState,
+    gameLog: readonly GameLogEntry[],
+    playerName: string,
+    thinkingLogger?: (content: string) => void,
+  ): Promise<BuildingUsageDecision> {
+    const player = gameState.getPlayer(playerName);
+    if (!player) {
+      return { useBlacksmith: false };
+    }
+
+    // Check if player has a blacksmith
+    const hasBlacksmith = player.buildings.some(building => building.type === "blacksmith");
+
+    // Check if player can afford blacksmith (1 Gold + 2 Ore according to rules)
+    const canAffordBlacksmith = player.resources.gold >= 1 && player.resources.ore >= 2;
+
+    // RandomPlayer always uses blacksmith if available and affordable
+    return { useBlacksmith: hasBlacksmith && canAffordBlacksmith };
   }
 
   private generateRandomChampionMoveAction(
@@ -211,5 +242,31 @@ export class RandomPlayerAgent implements PlayerAgent {
         tilePositions: harvestableTiles.map((tile) => tile.position),
       },
     };
+  }
+
+  private generateRandomBuildAction(gameState: GameState, playerName: string, dieValue: number): DiceAction | null {
+    const player = gameState.getPlayer(playerName);
+    if (!player) {
+      return null;
+    }
+
+    // Check if player already has a blacksmith
+    const hasBlacksmith = player.buildings.some(building => building.type === "blacksmith");
+    if (hasBlacksmith) {
+      return null;
+    }
+
+    // Check if player can afford blacksmith (2 Food + 2 Ore)
+    if (player.resources.food >= 2 && player.resources.ore >= 2) {
+      return {
+        actionType: "buildAction",
+        buildAction: {
+          diceValueUsed: dieValue,
+          buildingType: "blacksmith"
+        }
+      };
+    }
+
+    return null;
   }
 }

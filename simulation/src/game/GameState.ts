@@ -110,6 +110,7 @@ export class GameState {
         maxClaims: 10,
         champions: [champion],
         boats: [boat],
+        buildings: [], // Initialize with no buildings
         homePosition: startingPositions[i],
         extraInstructions: "", // Initialize with empty extra instructions
       });

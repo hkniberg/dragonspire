@@ -1,6 +1,6 @@
 // Lords of Doomspire Player Interface
 
-import { DiceAction } from "@/lib/actionTypes";
+import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
@@ -68,4 +68,18 @@ export interface PlayerAgent {
     traderContext: TraderContext,
     thinkingLogger?: (content: string) => void,
   ): Promise<TraderDecision>;
+
+  /**
+   * Decide which buildings to use after all dice have been consumed
+   * @param gameState Current game state
+   * @param gameLog Game log entries
+   * @param playerName Name of the player making the decision
+   * @returns BuildingUsageDecision with which buildings to use
+   */
+  useBuilding(
+    gameState: GameState,
+    gameLog: readonly GameLogEntry[],
+    playerName: string,
+    thinkingLogger?: (content: string) => void,
+  ): Promise<BuildingUsageDecision>;
 }

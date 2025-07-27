@@ -2,7 +2,7 @@
 
 import { getTraderItemById } from "@/content/traderItems";
 import { stringifyGameState } from "@/game/gameStateStringifier";
-import { DiceAction } from "@/lib/actionTypes";
+import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
@@ -114,6 +114,44 @@ export class ClaudePlayerAgent implements PlayerAgent {
         }
     }
 
+    async useBuilding(
+        gameState: GameState,
+        gameLog: readonly GameLogEntry[],
+        playerName: string,
+        thinkingLogger?: (content: string) => void,
+    ): Promise<BuildingUsageDecision> {
+        try {
+            // Prepare building usage decision message
+            const userMessage = await this.prepareBuildingUsageMessage(gameState, gameLog, playerName);
+
+            // Define schema for building usage decision
+            const buildingUsageSchema = {
+                type: "object",
+                properties: {
+                    useBlacksmith: {
+                        type: "boolean",
+                        description: "Whether to use the blacksmith to buy 1 Might for 1 Gold + 2 Ore"
+                    },
+                    reasoning: {
+                        type: "string",
+                        description: "Brief reasoning for the decision"
+                    }
+                },
+                required: ["useBlacksmith"]
+            };
+
+            // Get structured JSON response for building usage decision
+            const response = await this.claude.useClaude(userMessage, buildingUsageSchema, 0, 300, thinkingLogger);
+
+            return response as BuildingUsageDecision;
+        } catch (error) {
+            console.error(`${this.name} encountered an error during building usage decision:`, error);
+
+            // Fallback to not using any buildings
+            return { useBlacksmith: false };
+        }
+    }
+
     private async prepareAssessmentMessage(
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
@@ -221,6 +259,29 @@ export class ClaudePlayerAgent implements PlayerAgent {
         };
 
         return await templateProcessor.processTemplate("traderDecision", variables);
+    }
+
+    private async prepareBuildingUsageMessage(
+        gameState: GameState,
+        gameLog: readonly GameLogEntry[],
+        playerName: string,
+    ): Promise<string> {
+        const player = gameState.getPlayer(playerName);
+        if (!player) {
+            throw new Error(`Player with name ${playerName} not found`);
+        }
+
+        const boardState = stringifyGameState(gameState);
+        const gameLogText = this.formatGameLogForPrompt(gameLog);
+
+        const variables: TemplateVariables = {
+            playerName: player.name,
+            boardState: boardState,
+            gameLog: gameLogText,
+            extraInstructions: this.getExtraInstructionsSection(gameState),
+        };
+
+        return await templateProcessor.processTemplate("useBuilding", variables);
     }
 
     private getExtraInstructionsSection(gameState: GameState): string {

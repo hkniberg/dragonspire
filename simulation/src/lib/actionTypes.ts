@@ -30,11 +30,21 @@ export interface HarvestAction {
   tilePositions: Position[]; // Tiles to harvest from
 }
 
+export interface BuildAction {
+  diceValueUsed: number;
+  buildingType: "blacksmith";
+}
+
+export interface BuildingUsageDecision {
+  useBlacksmith: boolean;
+}
+
 // Nested DiceAction structure for Claude communication (matches schema)
 export interface DiceAction {
-  actionType: "championAction" | "boatAction" | "harvestAction";
+  actionType: "championAction" | "boatAction" | "harvestAction" | "buildAction";
   championAction?: ChampionAction;
   boatAction?: BoatAction;
   harvestAction?: HarvestAction;
+  buildAction?: BuildAction;
   reasoning?: string;
 }

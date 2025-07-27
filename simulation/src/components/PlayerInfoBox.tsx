@@ -288,6 +288,30 @@ export const PlayerInfoBox = ({
           ))}
         </div>
 
+        {/* Buildings */}
+        {player.buildings && player.buildings.length > 0 && (
+          <div style={{ marginBottom: "8px" }}>
+            <div style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "4px", color: "#495057" }}>
+              Buildings ({player.buildings.length})
+            </div>
+            {player.buildings.map((building, index) => (
+              <div
+                key={index}
+                style={{
+                  marginBottom: "2px",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <span style={{ marginRight: "4px", fontSize: "12px" }}>🔨</span>
+                <span style={{ color: colors.main, fontWeight: "bold", fontSize: "12px" }}>
+                  {building.type === "blacksmith" ? "Blacksmith" : building.type}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Claims */}
         <div style={{ marginBottom: "8px" }}>
           <div style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "4px", color: "#495057" }}>

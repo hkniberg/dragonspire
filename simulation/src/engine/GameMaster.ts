@@ -1,6 +1,6 @@
 // Lords of Doomspire Game Master
 
-import { BoatAction, ChampionAction, HarvestAction, TileAction } from "@/lib/actionTypes";
+import { BoatAction, BuildAction, ChampionAction, HarvestAction, TileAction } from "@/lib/actionTypes";
 import { GameLogEntry, GameLogEntryType, Player, Tile, TurnContext } from "@/lib/types";
 import { formatPosition, formatResources } from "@/lib/utils";
 import { GameState } from "../game/GameState";
@@ -70,11 +70,8 @@ export class GameMaster {
 
   /**
    * Execute a single turn for the current player using the new Game Master pattern
-   * @param onStateUpdate Optional callback to update UI state after each step
    */
-  public async executeTurn(
-    onStateUpdate?: (gameState: GameState, gameLog: readonly GameLogEntry[]) => void
-  ): Promise<void> {
+  public async executeTurn(): Promise<void> {
     if (this.masterState !== "playing") {
       throw new Error(`Cannot execute turn: session is in state ${this.masterState}`);
     }
@@ -93,21 +90,11 @@ export class GameMaster {
 
     this.addGameLogEntry("dice", `Rolled dice: ${diceRollValues.map(die => `[${die}]`).join(", ")}`);
 
-    // Update UI after dice rolling
-    if (onStateUpdate) {
-      onStateUpdate(this.gameState, this.gameLog);
-    }
-
     // Step 2: Ask player for strategic assessment (strategic reflection) - now with dice context
     const thinkingLogger = (content: string) => this.addGameLogEntry("thinking", content);
     const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues, thinkingLogger);
     if (strategicAssessment) {
       this.addGameLogEntry("assessment", strategicAssessment);
-    }
-
-    // Update UI after strategic assessment
-    if (onStateUpdate) {
-      onStateUpdate(this.gameState, this.gameLog);
     }
 
     // Step 3: Ask the player to execute actions until they run out of dice.
@@ -138,6 +125,10 @@ export class GameMaster {
         const harvestAction = diceAction.harvestAction!;
         diceRolls.consumeMultipleDiceRolls(harvestAction.diceValuesUsed);
         await this.executeHarvestAction(currentPlayer, harvestAction, diceAction.reasoning);
+      } else if (actionType === "buildAction") {
+        const buildAction = diceAction.buildAction!;
+        diceRolls.consumeDiceRoll(buildAction.diceValueUsed);
+        await this.executeBuildAction(currentPlayer, buildAction, diceAction.reasoning);
       } else {
         throw new Error(`Unknown action type: ${actionType}`);
       }
@@ -149,12 +140,10 @@ export class GameMaster {
         return;
       }
 
-      // Update UI after each action execution
-      if (onStateUpdate) {
-        onStateUpdate(this.gameState, this.gameLog);
-      }
-
     }
+
+    // Step 5: After all dice are consumed, check for building usage
+    await this.handleBuildingUsage(currentPlayer, currentPlayerAgent, thinkingLogger);
 
     // Check for max rounds limit
     if (this.gameState.currentRound >= this.maxRounds) {
@@ -163,7 +152,7 @@ export class GameMaster {
       return;
     }
 
-    // Step 5: Advance to next player
+    // Step 6: Advance to next player
     this.gameState = this.gameState.advanceToNextPlayer();
   }
 
@@ -441,6 +430,80 @@ export class GameMaster {
       }
     } else {
       this.addGameLogEntry("harvest", `Attempted to harvest but no tiles were harvestable for some reason.${reasoningText}`);
+    }
+  }
+
+  private async executeBuildAction(player: Player, action: BuildAction, reasoning?: string): Promise<void> {
+    const reasoningText = reasoning ? ` Reason: ${reasoning}.` : "";
+
+    if (action.buildingType === "blacksmith") {
+      // Check if player can afford blacksmith: 2 Food + 2 Ore (according to rules)
+      if (player.resources.food >= 2 && player.resources.ore >= 2) {
+        // Check if player already has a blacksmith (max 1 per player)
+        const hasBlacksmith = player.buildings.some(building => building.type === "blacksmith");
+
+        if (hasBlacksmith) {
+          this.addGameLogEntry("system", `Cannot build blacksmith - player already has one.${reasoningText}`);
+          return;
+        }
+
+        // Deduct resources
+        player.resources.food -= 2;
+        player.resources.ore -= 2;
+
+        // Add blacksmith to player's buildings
+        player.buildings.push({
+          type: "blacksmith"
+        });
+
+        this.addGameLogEntry(
+          "system",
+          `Built a blacksmith for 2 Food + 2 Ore, using die value [${action.diceValueUsed}].${reasoningText}`
+        );
+      } else {
+        this.addGameLogEntry(
+          "system",
+          `Cannot afford blacksmith - requires 2 Food + 2 Ore.${reasoningText}`
+        );
+      }
+    }
+  }
+
+  private async handleBuildingUsage(
+    player: Player,
+    playerAgent: PlayerAgent,
+    thinkingLogger?: (content: string) => void
+  ): Promise<void> {
+    // Check if player has any usable buildings
+    const hasBlacksmith = player.buildings.some(building => building.type === "blacksmith");
+
+    if (!hasBlacksmith) {
+      return; // No buildings to use
+    }
+
+    // Ask player which buildings to use
+    const buildingUsageDecision = await playerAgent.useBuilding(this.gameState, this.gameLog, player.name, thinkingLogger);
+
+    // Process blacksmith usage
+    if (buildingUsageDecision.useBlacksmith) {
+      const blacksmith = player.buildings.find(building => building.type === "blacksmith");
+
+      if (blacksmith && player.resources.gold >= 1 && player.resources.ore >= 2) {
+        // Deduct resources and gain might
+        player.resources.gold -= 1;
+        player.resources.ore -= 2;
+        player.might += 1;
+
+        this.addGameLogEntry(
+          "system",
+          `Used blacksmith to buy 1 Might for 1 Gold + 2 Ore.`
+        );
+      } else if (player.resources.gold < 1 || player.resources.ore < 2) {
+        this.addGameLogEntry(
+          "system",
+          `Cannot use blacksmith - requires 1 Gold + 2 Ore.`
+        );
+      }
     }
   }
 
