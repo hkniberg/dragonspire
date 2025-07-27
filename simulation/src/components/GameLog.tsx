@@ -209,6 +209,7 @@ export const GameLog: React.FC<GameLogProps> = ({ gameLog, isVisible }) => {
     borderRadius: "8px",
     border: "1px solid #ddd",
     maxHeight: isMaximized ? "80vh" : "400px",
+    maxWidth: isMaximized ? undefined : "1000px",
     overflowY: "auto" as const,
     position: isMaximized ? ("fixed" as const) : ("relative" as const),
     top: isMaximized ? "10vh" : "auto",
