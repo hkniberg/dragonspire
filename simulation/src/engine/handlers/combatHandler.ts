@@ -121,6 +121,65 @@ function applyChampionLootDecision(
 }
 
 /**
+ * Generate resource options for defeated player with backpack to choose from
+ */
+function generateBackpackResourceOptions(defeatedPlayer: Player): ChampionLootOption[] {
+  const options: ChampionLootOption[] = [];
+
+  // Add resource options (only for resources the defeated player actually has)
+  const resourceTypes: Array<{ type: "food" | "wood" | "ore" | "gold"; name: string }> = [
+    { type: "food", name: "Food" },
+    { type: "wood", name: "Wood" },
+    { type: "ore", name: "Ore" },
+    { type: "gold", name: "Gold" }
+  ];
+
+  for (const { type, name } of resourceTypes) {
+    if (defeatedPlayer.resources[type] > 0) {
+      options.push({
+        type: "resource",
+        resourceType: type,
+        displayName: `Give 1 ${name} (you have ${defeatedPlayer.resources[type]})`
+      });
+    }
+  }
+
+  return options;
+}
+
+/**
+ * Apply backpack resource choice by transferring the chosen resource
+ */
+function applyBackpackResourceChoice(
+  winningPlayer: Player,
+  defeatedPlayer: Player,
+  resourceDecision: Decision,
+  logFn: (type: string, content: string) => void
+): void {
+  const selectedOption = resourceDecision.choice;
+
+  if (selectedOption.type === "resource") {
+    const resourceType: ResourceType = selectedOption.resourceType;
+    if (defeatedPlayer.resources[resourceType] > 0) {
+      defeatedPlayer.resources[resourceType] -= 1;
+      winningPlayer.resources[resourceType] += 1;
+      logFn("combat", `Defeated player chose to give 1 ${resourceType} (backpack effect).`);
+    } else {
+      logFn("combat", `Failed to give ${resourceType}: defeated player has none.`);
+    }
+  }
+}
+
+/**
+ * Check if a player has a specific trader item
+ */
+function hasTraderItem(player: Player, itemId: string): boolean {
+  return player.champions.some(champion =>
+    champion.items.some(item => item.traderItem?.id === itemId)
+  );
+}
+
+/**
  * Handle champion vs champion combat
  */
 export async function resolveChampionVsChampionCombat(
@@ -172,32 +231,56 @@ export async function resolveChampionVsChampionCombat(
       throw new Error(`Attacking champion ${attackingChampionId} not found`);
     }
 
-    // Generate loot options
-    const lootOptions = generateChampionLootOptions(defendingPlayer, opposingChampion, attackingChampion);
+    // Check if the defending player has a backpack and any resources to steal
+    const defendingPlayerHasBackpack = hasTraderItem(defendingPlayer, "backpack");
+    const defendingPlayerHasResources = Object.values(defendingPlayer.resources).some(amount => amount > 0);
 
-    // Handle loot decision if there are options available
-    if (lootOptions.length === 0) {
-      logFn("combat", "No loot available from the defeated champion.");
-    } else if (lootOptions.length === 1) {
-      // Only one option available, apply it automatically
-      const automaticDecision: Decision = {
-        choice: lootOptions[0],
-        reasoning: "Only one loot option available, applied automatically"
-      };
-      applyChampionLootDecision(attackingPlayer, attackingChampion, defendingPlayer, opposingChampion, automaticDecision, logFn);
-    } else {
-      // Multiple options available, ask the player to decide
-      const decisionContext: DecisionContext = {
-        type: "champion_loot",
-        description: `Choose what to take from the defeated champion:`,
-        options: lootOptions
-      };
+    if (defendingPlayerHasBackpack && defendingPlayerHasResources) {
+      // Backpack effect: defeated player (defender) chooses what resource to give
+      // Since we don't have the defending player's agent, we'll need to implement this differently
+      // For now, we'll use a simple implementation where we randomly select a resource they have
+      const backpackOptions = generateBackpackResourceOptions(defendingPlayer);
 
-      // Ask player to make loot decision
-      const lootDecision = await playerAgent.makeDecision(gameState, gameLog, decisionContext, thinkingLogger);
+      if (backpackOptions.length > 0) {
+        // TODO: Get defending player's agent to make this decision
+        // For now, randomly select what resource to give
+        const randomIndex = Math.floor(Math.random() * backpackOptions.length);
+        const randomResourceDecision: Decision = {
+          choice: backpackOptions[randomIndex],
+          reasoning: "Backpack effect - defending player choice (simulated randomly)"
+        };
 
-      // Apply the loot decision
-      applyChampionLootDecision(attackingPlayer, attackingChampion, defendingPlayer, opposingChampion, lootDecision, logFn);
+        // Apply the resource transfer
+        applyBackpackResourceChoice(attackingPlayer, defendingPlayer, randomResourceDecision, logFn);
+      }
+    } else if (defendingPlayerHasResources || opposingChampion.items.length > 0) {
+      // Normal combat victory: winner chooses what to loot
+      const lootOptions = generateChampionLootOptions(defendingPlayer, opposingChampion, attackingChampion);
+
+      // Handle loot decision if there are options available
+      if (lootOptions.length === 0) {
+        logFn("combat", "No loot available from the defeated champion.");
+      } else if (lootOptions.length === 1) {
+        // Only one option available, apply it automatically
+        const automaticDecision: Decision = {
+          choice: lootOptions[0],
+          reasoning: "Only one loot option available, applied automatically"
+        };
+        applyChampionLootDecision(attackingPlayer, attackingChampion, defendingPlayer, opposingChampion, automaticDecision, logFn);
+      } else {
+        // Multiple options available, ask the attacking player to decide
+        const decisionContext: DecisionContext = {
+          type: "champion_loot",
+          description: `Choose what to take from the defeated champion:`,
+          options: lootOptions
+        };
+
+        // Ask attacking player to make loot decision
+        const lootDecision = await playerAgent.makeDecision(gameState, gameLog, decisionContext, thinkingLogger);
+
+        // Apply the loot decision
+        applyChampionLootDecision(attackingPlayer, attackingChampion, defendingPlayer, opposingChampion, lootDecision, logFn);
+      }
     }
 
     const fullCombatDetails = `Defeated ${defendingPlayer.name}'s champion (${attackerTotal} vs ${defenderTotal}), who went home`;
@@ -213,7 +296,54 @@ export async function resolveChampionVsChampionCombat(
     // Attacker lost - apply defeat effects immediately
     const fullCombatDetails = `was defeated by ${defendingPlayer.name}'s champion (${attackerTotal} vs ${defenderTotal})`;
 
-    // Apply defeat effects internally
+    // Check if the attacking player has a backpack and any resources to steal
+    const attackingPlayerHasBackpack = hasTraderItem(attackingPlayer, "backpack");
+    const attackingPlayerHasResources = Object.values(attackingPlayer.resources).some(amount => amount > 0);
+
+    if (attackingPlayerHasBackpack && attackingPlayerHasResources) {
+      // Backpack effect: defeated player chooses what resource to give
+      const backpackOptions = generateBackpackResourceOptions(attackingPlayer);
+
+      if (backpackOptions.length > 0) {
+        const decisionContext: DecisionContext = {
+          type: "backpack_resource_choice",
+          description: `You lost the battle but have a backpack. Choose what resource to give to ${defendingPlayer.name}:`,
+          options: backpackOptions
+        };
+
+        // Ask the defeated player to choose what resource to give
+        const resourceDecision = await playerAgent.makeDecision(gameState, gameLog, decisionContext, thinkingLogger);
+
+        // Apply the resource transfer
+        applyBackpackResourceChoice(defendingPlayer, attackingPlayer, resourceDecision, logFn);
+      }
+    } else if (attackingPlayerHasResources) {
+      // Normal combat loss: defending player gets to choose what to steal (simulated by random choice for now)
+      // TODO: Implement proper decision system for defending player
+      const attackingChampion = gameState.getChampion(attackingPlayer.name, attackingChampionId);
+      if (attackingChampion) {
+        const lootOptions = generateChampionLootOptions(attackingPlayer, attackingChampion, opposingChampion);
+
+        if (lootOptions.length === 1) {
+          // Only one option, apply it automatically
+          const automaticDecision: Decision = {
+            choice: lootOptions[0],
+            reasoning: "Only one loot option available, applied automatically"
+          };
+          applyChampionLootDecision(defendingPlayer, opposingChampion, attackingPlayer, attackingChampion, automaticDecision, logFn);
+        } else if (lootOptions.length > 1) {
+          // Multiple options: for now, randomly choose (TODO: implement proper decision system)
+          const randomIndex = Math.floor(Math.random() * lootOptions.length);
+          const randomDecision: Decision = {
+            choice: lootOptions[randomIndex],
+            reasoning: "Random choice by defending player (automatic)"
+          };
+          applyChampionLootDecision(defendingPlayer, opposingChampion, attackingPlayer, attackingChampion, randomDecision, logFn);
+        }
+      }
+    }
+
+    // Apply defeat effects (send home and healing cost) 
     applyChampionDefeat(gameState, attackingPlayer, attackingChampionId, fullCombatDetails, logFn);
 
     return {
