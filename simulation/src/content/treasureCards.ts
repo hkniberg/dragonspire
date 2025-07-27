@@ -24,7 +24,7 @@ export const TREASURE_CARDS: TreasureCard[] = [
 Gain \`+1 ore\`, **OR**
 Spend \`2 ore\` to gain \`+1 might\``,
     count: 2,
-    carriable: true,
+    carriable: false,
   },
   {
     id: "rusty-sword",
