@@ -89,9 +89,10 @@ export async function handleChampionCombat(
   playerAgent: PlayerAgent,
   gameLog: readonly GameLogEntry[],
   logFn: (type: string, content: string) => void,
-  thinkingLogger?: (content: string) => void
+  thinkingLogger?: (content: string) => void,
+  getPlayerAgent?: (playerName: string) => PlayerAgent | undefined
 ): Promise<ChampionCombatResult> {
-  const combatResult = await resolveChampionVsChampionCombat(gameState, tile, player, championId, playerAgent, gameLog, logFn, thinkingLogger);
+  const combatResult = await resolveChampionVsChampionCombat(gameState, tile, player, championId, playerAgent, gameLog, logFn, thinkingLogger, getPlayerAgent);
 
   if (!combatResult.combatOccurred) {
     return { combatOccurred: false };

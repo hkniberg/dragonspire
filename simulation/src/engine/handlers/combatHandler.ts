@@ -1,6 +1,6 @@
 import { GameState } from "@/game/GameState";
 import { GameSettings } from "@/lib/GameSettings";
-import { ChampionLootOption, Decision, DecisionContext, GameLogEntry, Monster, NON_COMBAT_TILES, Player, ResourceType, Tile } from "@/lib/types";
+import { Champion, ChampionLootOption, Decision, DecisionContext, GameLogEntry, Monster, NON_COMBAT_TILES, Player, ResourceType, Tile } from "@/lib/types";
 import { formatResources } from "@/lib/utils";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { handleBackpackEffect } from "./backpackHandler";
@@ -35,8 +35,8 @@ export interface DragonEncounterResult {
  */
 function generateChampionLootOptions(
   defeatedPlayer: Player,
-  defeatedChampion: any,
-  winningChampion: any
+  defeatedChampion: Champion,
+  winningChampion: Champion
 ): ChampionLootOption[] {
   const options: ChampionLootOption[] = [];
 
@@ -84,9 +84,9 @@ function generateChampionLootOptions(
  */
 function applyChampionLootDecision(
   winningPlayer: Player,
-  winningChampion: any,
+  winningChampion: Champion,
   defeatedPlayer: Player,
-  defeatedChampion: any,
+  defeatedChampion: Champion,
   lootDecision: Decision,
   logFn: (type: string, content: string) => void
 ): void {
@@ -142,7 +142,8 @@ export async function resolveChampionVsChampionCombat(
   playerAgent: PlayerAgent,
   gameLog: readonly GameLogEntry[],
   logFn: (type: string, content: string) => void,
-  thinkingLogger?: (content: string) => void
+  thinkingLogger?: (content: string) => void,
+  getPlayerAgent?: (playerName: string) => PlayerAgent | undefined
 ): Promise<CombatResult> {
   const opposingChampions = gameState.getOpposingChampionsAtPosition(attackingPlayer.name, tile.position);
 
@@ -189,16 +190,20 @@ export async function resolveChampionVsChampionCombat(
 
     if (defendingPlayerHasBackpack && defendingPlayerHasResources) {
       // Backpack effect: defeated player (defender) chooses what resource to give
-      // Since we don't have the defending player's agent, we'll use the random choice option
+      // Get the defending player's agent if available
+      const defendingPlayerAgent = getPlayerAgent ? getPlayerAgent(defendingPlayer.name) : undefined;
+
       await handleBackpackEffect(
         gameState,
         attackingPlayer,
+        attackingChampion,
         defendingPlayer,
-        undefined, // No defending player agent available
-        undefined, // No game log for defending player
+        opposingChampion,
+        defendingPlayerAgent,
+        gameLog,
         logFn,
         thinkingLogger,
-        false // Use random choice since we don't have defending player's agent
+        defendingPlayerAgent !== undefined // Use player choice if we have their agent, otherwise random
       );
     } else if (defendingPlayerHasResources || opposingChampion.items.length > 0) {
       // Normal combat victory: winner chooses what to loot
@@ -249,10 +254,17 @@ export async function resolveChampionVsChampionCombat(
 
     if (attackingPlayerHasBackpack && attackingPlayerHasResources) {
       // Backpack effect: defeated player chooses what resource to give
+      const attackingChampion = gameState.getChampion(attackingPlayer.name, attackingChampionId);
+      if (!attackingChampion) {
+        throw new Error(`Attacking champion ${attackingChampionId} not found`);
+      }
+
       await handleBackpackEffect(
         gameState,
         defendingPlayer,
+        opposingChampion,
         attackingPlayer,
+        attackingChampion,
         playerAgent,
         gameLog,
         logFn,

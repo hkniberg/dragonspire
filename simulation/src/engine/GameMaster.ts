@@ -253,7 +253,12 @@ export class GameMaster {
     handleExploration(this.gameState, tile, player, logFn);
 
     // Step 2: Handle champion combat
-    const championCombatResult = await handleChampionCombat(this.gameState, tile, player, championId, this.playerAgents[this.gameState.currentPlayerIndex], this.gameLog, logFn, thinkingLogger);
+    const getPlayerAgent = (playerName: string) => {
+      const playerIndex = this.gameState.players.findIndex(p => p.name === playerName);
+      return playerIndex >= 0 ? this.playerAgents[playerIndex] : undefined;
+    };
+
+    const championCombatResult = await handleChampionCombat(this.gameState, tile, player, championId, this.playerAgents[this.gameState.currentPlayerIndex], this.gameLog, logFn, thinkingLogger, getPlayerAgent);
     if (championCombatResult.combatOccurred && !championCombatResult.attackerWon) {
       // Attacker lost, defeat effects already applied by combat handler
       return;
