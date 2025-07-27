@@ -189,14 +189,20 @@ export class ClaudePlayerAgent implements PlayerAgent {
             .map(([resource, amount]) => `${resource}: ${amount}`)
             .join(", ");
 
-        // Format available items
-        const itemsText = traderContext.availableItems
-            .map((traderCard, i) => {
-                const item = getTraderItemById(traderCard.id);
+        // Format available items (group duplicates and show quantities)
+        const itemCounts = traderContext.availableItems.reduce((acc, traderCard) => {
+            acc[traderCard.id] = (acc[traderCard.id] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+        const itemsText = Object.entries(itemCounts)
+            .map(([itemId, quantity], i) => {
+                const item = getTraderItemById(itemId);
                 if (!item) {
-                    return `${i + 1}. Unknown item (ID: ${traderCard.id})`;
+                    return `${i + 1}. Unknown item (ID: ${itemId}) - Quantity: ${quantity}`;
                 }
-                return `${i + 1}. ${item.name} (ID: ${item.id}) - Cost: ${item.cost} gold - ${item.description}`;
+                const quantityText = quantity > 1 ? ` - Quantity: ${quantity}` : "";
+                return `${i + 1}. ${item.name} (ID: ${item.id}) - Cost: ${item.cost} gold${quantityText} - ${item.description}`;
             })
             .join("\n");
 

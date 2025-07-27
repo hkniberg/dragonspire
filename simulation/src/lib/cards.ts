@@ -133,10 +133,20 @@ class TraderDeck {
   addCards(cards: TraderCard[]): void {
     this.cards.push(...cards);
   }
+
+  removeCard(itemId: string): boolean {
+    const index = this.cards.findIndex((card) => card.id === itemId);
+    if (index !== -1) {
+      this.cards.splice(index, 1); // Remove only the first occurrence
+      return true;
+    }
+    return false;
+  }
 }
 
 export class GameDecks {
   private decks: Record<TileTier, [CardDeck, CardDeck, CardDeck]>;
+  private traderDeck: TraderDeck;
 
   constructor(allCards: Card[]) {
     this.decks = {
@@ -145,7 +155,10 @@ export class GameDecks {
       3: [new CardDeck(), new CardDeck(), new CardDeck()],
     };
 
+    this.traderDeck = new TraderDeck();
+
     this.initializeDecks(allCards);
+    this.initializeTraderDeck();
   }
 
   private initializeDecks(allCards: Card[]): void {
@@ -168,6 +181,12 @@ export class GameDecks {
         cardIndex += cardsForThisDeck;
       }
     }
+  }
+
+  private initializeTraderDeck(): void {
+    // Add all trader cards to the trader deck
+    this.traderDeck.addCards([...TRADER_CARDS]);
+    this.traderDeck.shuffle();
   }
 
   private shuffleArray(array: Card[]): void {
@@ -238,6 +257,19 @@ export class GameDecks {
       this.decks[tier][1].size(),
       this.decks[tier][2].size()
     ];
+  }
+
+  // Trader deck methods
+  getAvailableTraderCards(): TraderCard[] {
+    return this.traderDeck.getCards();
+  }
+
+  removeTraderCard(itemId: string): boolean {
+    return this.traderDeck.removeCard(itemId);
+  }
+
+  getTraderDeckSize(): number {
+    return this.traderDeck.size();
   }
 }
 

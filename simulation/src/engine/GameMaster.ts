@@ -352,7 +352,7 @@ export class GameMaster {
     logFn: (type: string, content: string) => void
   ): Promise<void> {
     // Create trader context
-    const traderContext = createTraderContext(player);
+    const traderContext = createTraderContext(player, this.gameDecks);
 
     // Get the current player agent
     const currentPlayerAgent = this.playerAgents[this.gameState.currentPlayerIndex];
@@ -363,7 +363,7 @@ export class GameMaster {
     console.log("traderDecision", traderDecision);
 
     // Handle the trader interaction
-    const traderResult = handleTraderInteraction(this.gameState, player, championId, traderDecision, logFn);
+    const traderResult = handleTraderInteraction(this.gameState, player, championId, traderDecision, this.gameDecks, logFn);
     console.log("traderResult", traderResult);
 
     // Log any failed actions

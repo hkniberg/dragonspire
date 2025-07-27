@@ -1,6 +1,6 @@
 import { getTraderItemById } from "@/content/traderItems";
 import { GameState } from "@/game/GameState";
-import { TRADER_CARDS } from "@/lib/cards";
+import { GameDecks } from "@/lib/cards";
 import { TraderAction, TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Player, ResourceType } from "@/lib/types";
 import { formatResources } from "@/lib/utils";
@@ -31,9 +31,10 @@ export interface TraderResult {
  * Create trader context with available items and player resources
  */
 export function createTraderContext(
-  player: Player
+  player: Player,
+  gameDecks: GameDecks
 ): TraderContext {
-  const availableItems = [...TRADER_CARDS]; // Copy all trader cards
+  const availableItems = gameDecks.getAvailableTraderCards(); // Get available items from deck
 
   const description = `Trader options available:
 - Purchase items from trader deck (${availableItems.length} items available)
@@ -55,6 +56,7 @@ export function handleTraderInteraction(
   player: Player,
   championId: number,
   traderDecision: TraderDecision,
+  gameDecks: GameDecks,
   logFn: (type: string, content: string) => void
 ): TraderResult {
   const result: TraderResult = {
@@ -74,7 +76,7 @@ export function handleTraderInteraction(
   // Process each trader action
   for (const action of traderDecision.actions) {
     if (action.type === "buyItem") {
-      const buyResult = processBuyItemAction(gameState, player, championId, action, logFn);
+      const buyResult = processBuyItemAction(gameState, player, championId, action, gameDecks, logFn);
       if (buyResult.success) {
         result.itemsPurchased.push({
           itemId: action.itemId!,
@@ -133,6 +135,7 @@ function processBuyItemAction(
   player: Player,
   championId: number,
   action: TraderAction,
+  gameDecks: GameDecks,
   logFn: (type: string, content: string) => void
 ): { success: boolean; goldSpent?: number; reason?: string } {
   if (!action.itemId) {
@@ -143,6 +146,12 @@ function processBuyItemAction(
   const traderItem = getTraderItemById(action.itemId);
   if (!traderItem) {
     return { success: false, reason: `Unknown trader item: ${action.itemId}` };
+  }
+
+  // Check if the item is available in the trader deck
+  const availableItems = gameDecks.getAvailableTraderCards();
+  if (!availableItems.some(item => item.id === action.itemId)) {
+    return { success: false, reason: `Item ${traderItem.name} is no longer available` };
   }
 
   // Find the champion
@@ -165,6 +174,12 @@ function processBuyItemAction(
       success: false,
       reason: `Not enough gold. Need ${traderItem.cost}, have ${player.resources.gold}`
     };
+  }
+
+  // Remove item from trader deck
+  const removed = gameDecks.removeTraderCard(action.itemId);
+  if (!removed) {
+    return { success: false, reason: `Failed to remove ${traderItem.name} from trader deck` };
   }
 
   // Deduct gold and add item to champion's inventory
