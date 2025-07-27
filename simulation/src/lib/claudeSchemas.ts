@@ -141,7 +141,7 @@ export const diceActionSchema = {
       description: "Brief explanation of why this action was chosen",
     },
   },
-  required: ["actionType", "reasoning"],
+  required: ["actionType"],
 };
 
 /**
@@ -182,13 +182,13 @@ export const traderActionSchema = {
       properties: {
         gold: { type: "number" },
         wood: { type: "number" },
-        wheat: { type: "number" },
+        food: { type: "number" },
         ore: { type: "number" },
       },
     },
     resourceRequested: {
       type: "string",
-      enum: ["gold", "wood", "wheat", "ore"],
+      enum: ["gold", "wood", "food", "ore"],
       description: "Resource type to receive in exchange (required for sellResources actions)",
     },
   },
@@ -211,5 +211,5 @@ export const traderDecisionSchema = {
       description: "Brief explanation of the trading strategy and decisions",
     },
   },
-  required: ["actions", "reasoning"],
+  required: ["actions"],
 };

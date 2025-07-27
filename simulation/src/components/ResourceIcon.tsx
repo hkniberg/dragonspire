@@ -9,7 +9,7 @@ interface ResourceIconProps {
 
 export const ResourceIcon: React.FC<ResourceIconProps> = ({ resource, size = "m", border = true }) => {
   const resourceImages = {
-    food: "/resources/wheat.png",
+    food: "/resources/food.png",
     wood: "/resources/wood.png",
     ore: "/resources/ore.png",
     gold: "/resources/gold.png",
@@ -50,7 +50,7 @@ export const ResourceIcon: React.FC<ResourceIconProps> = ({ resource, size = "m"
 // Helper function to get resource image path (for cases where you just need the path)
 export const getResourceImagePath = (resource: ResourceType): string => {
   const resourceImages = {
-    food: "/resources/wheat.png",
+    food: "/resources/food.png",
     wood: "/resources/wood.png",
     ore: "/resources/ore.png",
     gold: "/resources/gold.png",

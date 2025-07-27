@@ -63,29 +63,30 @@ export class Claude {
       max_tokens: responseTokens,
     };
 
+    const response = await this.anthropic.messages.create(params);
+
+    // Log each content block in sequence
+    for (let i = 0; i < response.content.length; i++) {
+      const block = response.content[i];
+      log(
+        `Content Block ${i + 1} (${block.type})`,
+        block.type === "text"
+          ? block.text
+          : block.type === "thinking"
+            ? block.thinking
+            : block.type === "tool_use"
+              ? { id: block.id, name: block.name, input: block.input }
+              : block,
+      );
+    }
+
+    // Extract text content
+    const textContent = response.content
+      .filter((block): block is Anthropic.TextBlock => block.type === "text")
+      .map((block) => block.text)
+      .join("");
     try {
-      const response = await this.anthropic.messages.create(params);
 
-      // Log each content block in sequence
-      for (let i = 0; i < response.content.length; i++) {
-        const block = response.content[i];
-        log(
-          `Content Block ${i + 1} (${block.type})`,
-          block.type === "text"
-            ? block.text
-            : block.type === "thinking"
-              ? block.thinking
-              : block.type === "tool_use"
-                ? { id: block.id, name: block.name, input: block.input }
-                : block,
-        );
-      }
-
-      // Extract text content
-      const textContent = response.content
-        .filter((block): block is Anthropic.TextBlock => block.type === "text")
-        .map((block) => block.text)
-        .join("");
 
       // If no schema provided, return raw text response
       if (!responseSchema) {
@@ -99,6 +100,7 @@ export class Claude {
 
       return parsedResponse;
     } catch (error) {
+      console.log("Claude response text content couldn't be parsed", JSON.stringify(textContent, null, 2))
       if (error instanceof SyntaxError && responseSchema) {
         throw new Error(`Failed to parse JSON response: ${error.message}`);
       }
