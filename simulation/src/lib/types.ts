@@ -39,9 +39,9 @@ export interface Tile {
   position: Position;
   tier?: TileTier;
   explored?: boolean; // starts true for all tier 1 tiles, and false for all other tiles
-  resources?: Record<ResourceType, number>; // only applicable for resource tiles
-  isStarred?: boolean; // For victory condition. Only applicable for resource tiles
-  claimedBy?: string; // Player name who claimed this tile. Only applicable for resource tiles
+  resources?: Record<ResourceType, number>; // Only applicable for resource tiles
+  isStarred?: boolean; // Only applicable for resource tiles
+  claimedBy?: string; // Player name who claimed this tile. Applicable for resource tiles and home tiles
   monster?: Monster; // only applicable for adventure tiles
   adventureTokens?: number; // Number of adventure tokens on the tile. Only applicable for adventure tiles
   tileType?: TileType;

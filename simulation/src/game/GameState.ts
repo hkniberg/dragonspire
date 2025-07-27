@@ -44,7 +44,13 @@ export class GameState {
     const board = BoardBuilder.buildBoard(seed || 0);
     const players = GameState.initializePlayersWithNames(playerNames, startingValues);
 
-    return new GameState(board, players);
+    // Create the initial game state
+    const gameState = new GameState(board, players);
+
+    // Claim home tiles for each player (according to game rules)
+    gameState.claimHomeTilesForPlayers();
+
+    return gameState;
   }
 
   private static initializePlayersWithNames(
@@ -101,6 +107,19 @@ export class GameState {
     }
 
     return players;
+  }
+
+  /**
+   * Claim home tiles for each player according to game rules
+   * Home tiles are automatically claimed by players from the start of the game
+   */
+  private claimHomeTilesForPlayers(): void {
+    for (const player of this.players) {
+      const homeTile = this.getTile(player.homePosition);
+      if (homeTile && homeTile.tileType === "home") {
+        homeTile.claimedBy = player.name;
+      }
+    }
   }
 
   public getCurrentPlayer(): Player {
