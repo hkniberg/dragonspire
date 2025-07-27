@@ -9,39 +9,14 @@ import {
   resolveChampionVsMonsterCombat
 } from "./combatHandler";
 
-export interface ExplorationResult {
-  wasExplored: boolean;
-  fameAwarded: number;
-}
-
 export interface ChampionCombatResult {
   combatOccurred: boolean;
   attackerWon?: boolean;
-  defendingChampionDefeated?: {
-    playerName: string;
-    championId: number;
-    healingCost: "gold" | "fame" | "none";
-  };
-  fameAwarded?: number;
-  combatDetails?: string;
 }
 
 export interface MonsterCombatResult {
   combatOccurred: boolean;
   championWon?: boolean;
-  championDefeated?: {
-    healingCost: "gold" | "fame" | "none";
-  };
-  monsterDefeated?: {
-    fameAwarded: number;
-    resourcesAwarded: {
-      food: number;
-      wood: number;
-      ore: number;
-      gold: number;
-    };
-  };
-  combatDetails?: string;
 }
 
 export interface DragonCombatResult {
@@ -60,9 +35,7 @@ export interface DoomspireResult {
   };
   dragonCombat?: {
     championWon: boolean;
-    championDefeated?: {
-      healingCost: "gold" | "fame" | "none";
-    };
+    championDefeated?: boolean;
     combatVictory?: {
       playerName: string;
     };
@@ -70,16 +43,11 @@ export interface DoomspireResult {
   };
 }
 
-export interface TileClaimingResult {
-  claimRequested: boolean;
-  claimSuccessful?: boolean;
-  reason?: string;
-}
+
 
 export interface SpecialTileResult {
   interactionOccurred: boolean;
   adventureCardDrawn?: boolean;
-  tokensRemaining?: number;
 }
 
 /**
@@ -90,9 +58,9 @@ export function handleExploration(
   tile: Tile,
   player: Player,
   logFn: (type: string, content: string) => void
-): ExplorationResult {
+): void {
   if (tile.explored) {
-    return { wasExplored: true, fameAwarded: 0 };
+    return;
   }
 
   // Mark tile as explored
@@ -108,8 +76,6 @@ export function handleExploration(
   player.fame += fameAwarded;
 
   logFn("exploration", `Explored new territory and got ${fameAwarded} fame`);
-
-  return { wasExplored: false, fameAwarded };
 }
 
 /**
@@ -134,20 +100,12 @@ export async function handleChampionCombat(
   if (combatResult.victory) {
     return {
       combatOccurred: true,
-      attackerWon: true,
-      defendingChampionDefeated: combatResult.victory.opponentEffects ? {
-        playerName: combatResult.victory.opponentEffects.playerName,
-        championId: championId, // Note: This should ideally be the defending champion's ID
-        healingCost: combatResult.victory.opponentEffects.healingCost
-      } : undefined,
-      fameAwarded: combatResult.victory.fameAwarded,
-      combatDetails: combatResult.combatDetails
+      attackerWon: true
     };
   } else {
     return {
       combatOccurred: true,
-      attackerWon: false,
-      combatDetails: combatResult.combatDetails
+      attackerWon: false
     };
   }
 }
@@ -171,21 +129,12 @@ export function handleMonsterCombat(
   if (combatResult.victory) {
     return {
       combatOccurred: true,
-      championWon: true,
-      monsterDefeated: {
-        fameAwarded: combatResult.victory.fameAwarded || 0,
-        resourcesAwarded: combatResult.victory.resourcesAwarded || { food: 0, wood: 0, ore: 0, gold: 0 }
-      },
-      combatDetails: combatResult.combatDetails
+      championWon: true
     };
   } else {
     return {
       combatOccurred: true,
-      championWon: false,
-      championDefeated: {
-        healingCost: combatResult.defeat?.healingCost || "fame"
-      },
-      combatDetails: combatResult.combatDetails
+      championWon: false
     };
   }
 }
@@ -232,9 +181,7 @@ export function handleDoomspireTile(
         entered: true,
         dragonCombat: {
           championWon: false,
-          championDefeated: {
-            healingCost: combatResult.defeat.healingCost
-          },
+          championDefeated: true,
           combatDetails: combatResult.combatDetails!
         }
       };
@@ -255,46 +202,29 @@ export function handleTileClaiming(
   championId: number,
   claimTile: boolean,
   logFn: (type: string, content: string) => void
-): TileClaimingResult {
+): void {
   if (!claimTile) {
-    return { claimRequested: false };
+    return;
   }
 
   if (tile.tileType !== "resource") {
-    return {
-      claimRequested: true,
-      claimSuccessful: false,
-      reason: "Only resource tiles can be claimed"
-    };
+    return;
   }
 
   if (tile.claimedBy !== undefined) {
-    return {
-      claimRequested: true,
-      claimSuccessful: false,
-      reason: "Tile is already claimed"
-    };
+    return;
   }
 
   const currentClaimedCount = gameState.board.findTiles((tile) => tile.claimedBy === player.name).length;
 
   if (currentClaimedCount >= player.maxClaims) {
     logFn("event", `Champion${championId} could not claim resource tile (${tile.position.row}, ${tile.position.col}) (max claims reached)`);
-    return {
-      claimRequested: true,
-      claimSuccessful: false,
-      reason: "Max claims reached"
-    };
+    return;
   }
 
   // Successful claim
   tile.claimedBy = player.name;
   logFn("event", `Champion${championId} claimed resource tile (${tile.position.row}, ${tile.position.col}), which can provide ${formatResources(tile.resources)}`);
-
-  return {
-    claimRequested: true,
-    claimSuccessful: true
-  };
 }
 
 /**
@@ -315,14 +245,11 @@ export function handleSpecialTiles(
 
   return {
     interactionOccurred: true,
-    adventureCardDrawn: true,
-    tokensRemaining: tile.adventureTokens
+    adventureCardDrawn: true
   };
 }
 
 export interface ItemManagementResult {
-  itemsPickedUp: string[];
-  itemsDropped: string[];
   failedPickups: Array<{
     itemId: string;
     reason: string;
@@ -334,19 +261,13 @@ export interface ItemManagementResult {
 }
 
 export interface MercenaryResult {
-  actionRequested: boolean;
   actionSuccessful?: boolean;
   reason?: string;
-  mightGained?: number;
-  goldSpent?: number;
 }
 
 export interface TempleResult {
-  actionRequested: boolean;
   actionSuccessful?: boolean;
   reason?: string;
-  mightGained?: number;
-  fameSacrificed?: number;
 }
 
 /**
@@ -362,8 +283,6 @@ export function handleItemManagement(
   logFn: (type: string, content: string) => void
 ): ItemManagementResult {
   const result: ItemManagementResult = {
-    itemsPickedUp: [],
-    itemsDropped: [],
     failedPickups: [],
     failedDrops: []
   };
@@ -393,7 +312,6 @@ export function handleItemManagement(
     const itemIndex = champion.items.indexOf(itemToDropObj);
     champion.items.splice(itemIndex, 1);
     tile.items.push(itemToDropObj);
-    result.itemsDropped.push(itemId);
 
     const itemName = getCarriableItemName(itemToDropObj);
     logFn("event", `Champion ${championId} dropped ${itemName} on tile (${tile.position.row}, ${tile.position.col})`);
@@ -423,7 +341,6 @@ export function handleItemManagement(
     const itemIndex = tile.items.indexOf(itemToPickUpObj);
     tile.items.splice(itemIndex, 1);
     champion.items.push(itemToPickUpObj);
-    result.itemsPickedUp.push(itemId);
 
     const itemName = getCarriableItemName(itemToPickUpObj);
     logFn("event", `Champion ${championId} picked up ${itemName} from tile (${tile.position.row}, ${tile.position.col})`);
@@ -444,12 +361,11 @@ export function handleMercenaryAction(
   logFn: (type: string, content: string) => void
 ): MercenaryResult {
   if (!useMercenary) {
-    return { actionRequested: false };
+    return {};
   }
 
   if (tile.tileType !== "mercenary") {
     return {
-      actionRequested: true,
       actionSuccessful: false,
       reason: "Can only use mercenary action on mercenary tiles"
     };
@@ -457,7 +373,6 @@ export function handleMercenaryAction(
 
   if (player.resources.gold < 3) {
     return {
-      actionRequested: true,
       actionSuccessful: false,
       reason: "Not enough gold (need 3 gold)"
     };
@@ -470,10 +385,7 @@ export function handleMercenaryAction(
   logFn("event", `Champion ${championId} hired mercenaries for 3 gold, gaining 1 might`);
 
   return {
-    actionRequested: true,
-    actionSuccessful: true,
-    mightGained: 1,
-    goldSpent: 3
+    actionSuccessful: true
   };
 }
 
@@ -489,12 +401,11 @@ export function handleTempleAction(
   logFn: (type: string, content: string) => void
 ): TempleResult {
   if (!useTemple) {
-    return { actionRequested: false };
+    return {};
   }
 
   if (tile.tileType !== "temple") {
     return {
-      actionRequested: true,
       actionSuccessful: false,
       reason: "Can only use temple action on temple tiles"
     };
@@ -502,7 +413,6 @@ export function handleTempleAction(
 
   if (player.fame < 3) {
     return {
-      actionRequested: true,
       actionSuccessful: false,
       reason: "Not enough fame (need 3 fame)"
     };
@@ -515,10 +425,7 @@ export function handleTempleAction(
   logFn("event", `Champion ${championId} sacrificed 3 fame at the temple, gaining 1 might`);
 
   return {
-    actionRequested: true,
-    actionSuccessful: true,
-    mightGained: 1,
-    fameSacrificed: 3
+    actionSuccessful: true
   };
 }
 

@@ -250,7 +250,7 @@ export class GameMaster {
     const thinkingLogger = (content: string) => this.addGameLogEntry("thinking", content);
 
     // Step 1: Handle exploration
-    const explorationResult = handleExploration(this.gameState, tile, player, logFn);
+    handleExploration(this.gameState, tile, player, logFn);
 
     // Step 2: Handle champion combat
     const championCombatResult = await handleChampionCombat(this.gameState, tile, player, championId, this.playerAgents[this.gameState.currentPlayerIndex], this.gameLog, logFn, thinkingLogger);

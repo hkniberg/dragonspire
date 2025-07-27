@@ -14,33 +14,9 @@ function rollD3(): number {
 
 export interface CombatResult {
   combatOccurred: boolean;
-  victory?: CombatVictory;
-  defeat?: CombatDefeat;
+  victory?: boolean;
+  defeat?: boolean;
   combatDetails?: string;
-}
-
-export interface CombatVictory {
-  type: "champion" | "monster" | "dragon";
-  fameAwarded?: number;
-  resourcesAwarded?: {
-    food: number;
-    wood: number;
-    ore: number;
-    gold: number;
-  };
-  opponentEffects?: {
-    playerName: string;
-    championSentHome: boolean;
-    healingCost: "gold" | "fame" | "none";
-  };
-  // Removed lootOptions since we'll handle loot internally
-  defeatedChampionId?: number;
-}
-
-export interface CombatDefeat {
-  championId: number;
-  healingCost: "gold" | "fame" | "none";
-  championSentHome: boolean;
 }
 
 export interface DragonEncounterResult {
@@ -230,16 +206,7 @@ export async function resolveChampionVsChampionCombat(
 
     return {
       combatOccurred: true,
-      victory: {
-        type: "champion",
-        fameAwarded: 1,
-        opponentEffects: {
-          playerName: defendingPlayer.name,
-          championSentHome: true,
-          healingCost: "none" // No healing cost for champion vs champion defeats
-        },
-        defeatedChampionId: opposingChampion.id
-      },
+      victory: true,
       combatDetails: fullCombatDetails
     };
   } else {
@@ -251,11 +218,7 @@ export async function resolveChampionVsChampionCombat(
 
     return {
       combatOccurred: true,
-      defeat: {
-        championId: attackingChampionId,
-        healingCost: attackingPlayer.resources.gold > 0 ? "gold" : "fame",
-        championSentHome: true
-      },
+      defeat: true,
       combatDetails: fullCombatDetails
     };
   }
@@ -299,11 +262,7 @@ export function resolveChampionVsMonsterCombat(
 
     return {
       combatOccurred: true,
-      victory: {
-        type: "monster",
-        fameAwarded,
-        resourcesAwarded: monster.resources
-      },
+      victory: true,
       combatDetails
     };
   } else {
@@ -315,11 +274,7 @@ export function resolveChampionVsMonsterCombat(
 
     return {
       combatOccurred: true,
-      defeat: {
-        championId,
-        healingCost: player.resources.gold > 0 ? "gold" : "fame",
-        championSentHome: true
-      },
+      defeat: true,
       combatDetails
     };
   }
@@ -391,11 +346,7 @@ export function resolveChampionVsDragonEncounter(
       encounterOccurred: true,
       combatResult: {
         combatOccurred: true,
-        defeat: {
-          championId,
-          healingCost: player.resources.gold > 0 ? "gold" : "fame",
-          championSentHome: true
-        },
+        defeat: true,
         combatDetails
       }
     };
@@ -408,10 +359,7 @@ export function resolveChampionVsDragonEncounter(
       encounterOccurred: true,
       combatResult: {
         combatOccurred: true,
-        victory: {
-          type: "dragon",
-          fameAwarded: 0 // Dragon victory doesn't award fame, it wins the game
-        },
+        victory: true,
         combatDetails
       }
     };
