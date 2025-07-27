@@ -13,7 +13,15 @@ export const tileActionSchema = {
     },
     useTrader: {
       type: "boolean",
-      description: "Whether to buy/sell at the trader (only for trader tile)",
+      description: "Whether to buy/sell at the trader (only for trader tile, available items will be shown when you arrive)",
+    },
+    useMercenary: {
+      type: "boolean",
+      description: "Whether to buy 1 might at the mercenary camp (only at mercenary tile, only if you have 3 gold)",
+    },
+    useTemple: {
+      type: "boolean",
+      description: "Whether to sacrifice 3 fame to gain 1 might at the temple (only at temple tile, only if you have 3 fame)",
     },
     pickUpItems: {
       type: "array",

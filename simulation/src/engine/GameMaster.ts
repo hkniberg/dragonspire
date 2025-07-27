@@ -351,11 +351,42 @@ export class GameMaster {
       await this.handleTraderVisit(player, championId, logFn);
     }
 
-    // Step 8: Handle tile claiming
+    // Step 8: Handle mercenary camp interactions
+    if (tile.tileType === "mercenary" && tileAction?.useMercenary) {
+      const { handleMercenaryAction } = await import("@/engine/handlers/tileArrivalHandler");
+      const mercenaryResult = handleMercenaryAction(
+        this.gameState,
+        tile,
+        player,
+        championId,
+        true,
+        logFn
+      );
+
+      if (!mercenaryResult.actionSuccessful && mercenaryResult.reason) {
+        logFn("event", `Failed to use mercenary camp: ${mercenaryResult.reason}`);
+      }
+    }
+
+    // Step 9: Handle temple interactions
+    if (tile.tileType === "temple" && tileAction?.useTemple) {
+      const { handleTempleAction } = await import("@/engine/handlers/tileArrivalHandler");
+      const templeResult = handleTempleAction(
+        this.gameState,
+        tile,
+        player,
+        championId,
+        true,
+        logFn
+      );
+
+      if (!templeResult.actionSuccessful && templeResult.reason) {
+        logFn("event", `Failed to use temple: ${templeResult.reason}`);
+      }
+    }
+
+    // Step 10: Handle tile claiming
     handleTileClaiming(this.gameState, tile, player, championId, !!tileAction?.claimTile, logFn);
-
-
-    // TODO: Handle other special tile types (temple, mercenary camp)
   }
 
 

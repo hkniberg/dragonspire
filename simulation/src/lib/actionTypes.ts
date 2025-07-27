@@ -10,6 +10,8 @@ export interface ChampionAction {
 export interface TileAction {
   claimTile?: boolean;
   useTrader?: boolean;
+  useMercenary?: boolean;
+  useTemple?: boolean;
   pickUpItems?: string[]; // Array of item IDs to pick up from the tile
   dropItems?: string[]; // Array of item IDs to drop on the tile
 }

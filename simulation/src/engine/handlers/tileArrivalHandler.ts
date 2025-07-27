@@ -321,6 +321,22 @@ export interface ItemManagementResult {
   }>;
 }
 
+export interface MercenaryResult {
+  actionRequested: boolean;
+  actionSuccessful?: boolean;
+  reason?: string;
+  mightGained?: number;
+  goldSpent?: number;
+}
+
+export interface TempleResult {
+  actionRequested: boolean;
+  actionSuccessful?: boolean;
+  reason?: string;
+  mightGained?: number;
+  fameSacrificed?: number;
+}
+
 /**
  * Handle item pickup and drop actions
  */
@@ -398,4 +414,94 @@ export function handleItemManagement(
   }
 
   return result;
+}
+
+/**
+ * Handle mercenary camp action (buy might for gold)
+ */
+export function handleMercenaryAction(
+  gameState: GameState,
+  tile: Tile,
+  player: Player,
+  championId: number,
+  useMercenary: boolean,
+  logFn: (type: string, content: string) => void
+): MercenaryResult {
+  if (!useMercenary) {
+    return { actionRequested: false };
+  }
+
+  if (tile.tileType !== "mercenary") {
+    return {
+      actionRequested: true,
+      actionSuccessful: false,
+      reason: "Can only use mercenary action on mercenary tiles"
+    };
+  }
+
+  if (player.resources.gold < 3) {
+    return {
+      actionRequested: true,
+      actionSuccessful: false,
+      reason: "Not enough gold (need 3 gold)"
+    };
+  }
+
+  // Successful mercenary purchase
+  player.resources.gold -= 3;
+  player.might += 1;
+
+  logFn("event", `Champion ${championId} hired mercenaries for 3 gold, gaining 1 might`);
+
+  return {
+    actionRequested: true,
+    actionSuccessful: true,
+    mightGained: 1,
+    goldSpent: 3
+  };
+}
+
+/**
+ * Handle temple action (sacrifice fame for might)
+ */
+export function handleTempleAction(
+  gameState: GameState,
+  tile: Tile,
+  player: Player,
+  championId: number,
+  useTemple: boolean,
+  logFn: (type: string, content: string) => void
+): TempleResult {
+  if (!useTemple) {
+    return { actionRequested: false };
+  }
+
+  if (tile.tileType !== "temple") {
+    return {
+      actionRequested: true,
+      actionSuccessful: false,
+      reason: "Can only use temple action on temple tiles"
+    };
+  }
+
+  if (player.fame < 3) {
+    return {
+      actionRequested: true,
+      actionSuccessful: false,
+      reason: "Not enough fame (need 3 fame)"
+    };
+  }
+
+  // Successful temple sacrifice
+  player.fame -= 3;
+  player.might += 1;
+
+  logFn("event", `Champion ${championId} sacrificed 3 fame at the temple, gaining 1 might`);
+
+  return {
+    actionRequested: true,
+    actionSuccessful: true,
+    mightGained: 1,
+    fameSacrificed: 3
+  };
 } 
