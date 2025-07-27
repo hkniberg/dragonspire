@@ -25,14 +25,14 @@ export interface AdventureCardResult {
 /**
  * Handle monster cards drawn from adventure decks
  */
-export function handleMonsterCard(
+export async function handleMonsterCard(
   cardId: string,
   gameState: GameState,
   tile: Tile,
   player: Player,
   championId: number,
   logFn: (type: string, content: string) => void
-): AdventureCardResult {
+): Promise<AdventureCardResult> {
   // Look up the monster details
   const monsterCard = getMonsterCardById(cardId);
   if (!monsterCard) {
@@ -52,6 +52,7 @@ export function handleMonsterCard(
     icon: monsterCard.icon,
     might: monsterCard.might,
     fame: monsterCard.fame,
+    isBeast: monsterCard.isBeast,
     resources: {
       food: monsterCard.resources.food || 0,
       wood: monsterCard.resources.wood || 0,
@@ -61,7 +62,7 @@ export function handleMonsterCard(
   };
 
   // Use the combat handler for placement and combat
-  const combatResult = resolveMonsterPlacementAndCombat(gameState, monster, tile, player, championId, logFn);
+  const combatResult = await resolveMonsterPlacementAndCombat(gameState, monster, tile, player, championId, logFn);
 
   if (combatResult.victory) {
     return {
@@ -332,7 +333,7 @@ export async function handleAdventureCard(
 
   switch (cardType) {
     case "monster":
-      return handleMonsterCard(cardId, gameState, tile, player, championId, logFn);
+      return await handleMonsterCard(cardId, gameState, tile, player, championId, logFn);
 
     case "event":
       return await handleEventCardFromAdventure(cardId, gameState, player, playerAgent, championId, gameLog, logFn, thinkingLogger);

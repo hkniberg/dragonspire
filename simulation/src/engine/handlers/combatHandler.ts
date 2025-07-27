@@ -3,6 +3,7 @@ import { GameSettings } from "@/lib/GameSettings";
 import { ChampionLootOption, Decision, DecisionContext, GameLogEntry, Monster, NON_COMBAT_TILES, Player, ResourceType, Tile } from "@/lib/types";
 import { formatResources } from "@/lib/utils";
 import { PlayerAgent } from "@/players/PlayerAgent";
+import { handlePaddedHelmetRespawn } from "./paddedHelmetHandler";
 
 /**
  * Roll a D3 (returns 1, 2, or 3 with equal probability like the game rules)
@@ -344,7 +345,7 @@ export async function resolveChampionVsChampionCombat(
     }
 
     // Apply defeat effects (send home and healing cost) 
-    applyChampionDefeat(gameState, attackingPlayer, attackingChampionId, fullCombatDetails, logFn);
+    await applyChampionDefeat(gameState, attackingPlayer, attackingChampionId, fullCombatDetails, logFn, playerAgent, gameLog, thinkingLogger);
 
     return {
       combatOccurred: true,
@@ -357,13 +358,13 @@ export async function resolveChampionVsChampionCombat(
 /**
  * Handle champion vs monster combat
  */
-export function resolveChampionVsMonsterCombat(
+export async function resolveChampionVsMonsterCombat(
   gameState: GameState,
   tile: Tile,
   player: Player,
   championId: number,
   logFn: (type: string, content: string) => void
-): CombatResult {
+): Promise<CombatResult> {
   if (!tile.monster) {
     return { combatOccurred: false };
   }
@@ -411,7 +412,7 @@ export function resolveChampionVsMonsterCombat(
     const combatDetails = `Fought ${monster.name}, but was defeated (${championTotal} vs ${monster.might})`;
 
     // Apply defeat effects internally
-    applyChampionDefeat(gameState, player, championId, combatDetails, logFn);
+    await applyChampionDefeat(gameState, player, championId, combatDetails, logFn);
 
     return {
       combatOccurred: true,
@@ -424,13 +425,13 @@ export function resolveChampionVsMonsterCombat(
 /**
  * Handle champion vs dragon encounter (including alternative victories)
  */
-export function resolveChampionVsDragonEncounter(
+export async function resolveChampionVsDragonEncounter(
   gameState: GameState,
   tile: Tile,
   player: Player,
   championId: number,
   logFn: (type: string, content: string) => void
-): DragonEncounterResult {
+): Promise<DragonEncounterResult> {
   if (tile.tileType !== "doomspire") {
     return { encounterOccurred: false };
   }
@@ -481,7 +482,7 @@ export function resolveChampionVsDragonEncounter(
     const combatDetails = `was eaten by the dragon (${championTotal} vs ${dragonMight})! Actually, that's not implemented yet, so champion is just sent home.`;
 
     // Apply defeat effects internally
-    applyChampionDefeat(gameState, player, championId, combatDetails, logFn);
+    await applyChampionDefeat(gameState, player, championId, combatDetails, logFn);
 
     return {
       encounterOccurred: true,
@@ -510,14 +511,47 @@ export function resolveChampionVsDragonEncounter(
 /**
  * Handle champion defeat effects (send home and pay healing costs)
  */
-export function applyChampionDefeat(
+export async function applyChampionDefeat(
   gameState: GameState,
   player: Player,
   championId: number,
   defeatContext: string,
-  logFn: (type: string, content: string) => void
-): void {
-  // Send champion home
+  logFn: (type: string, content: string) => void,
+  playerAgent?: PlayerAgent,
+  gameLog?: readonly GameLogEntry[],
+  thinkingLogger?: (content: string) => void
+): Promise<void> {
+  // Check for padded helmet respawn
+  const respawnPosition = await handlePaddedHelmetRespawn(
+    gameState,
+    player,
+    championId,
+    playerAgent,
+    gameLog,
+    logFn,
+    thinkingLogger
+  );
+
+  if (respawnPosition) {
+    // Padded helmet respawn - move champion to chosen tile
+    const champion = gameState.getChampion(player.name, championId);
+    if (champion) {
+      champion.position = respawnPosition;
+    }
+
+    // Still pay healing cost
+    if (player.resources.gold > 0) {
+      player.resources.gold -= 1;
+      logFn("combat", `${defeatContext}, paid 1 gold to heal`);
+    } else {
+      player.fame = Math.max(0, player.fame - 1);
+      logFn("combat", `${defeatContext}, had no gold to heal so lost 1 fame`);
+    }
+
+    return;
+  }
+
+  // Default behavior: send champion home
   gameState.moveChampionToHome(player.name, championId);
 
   // Pay healing cost
@@ -533,18 +567,18 @@ export function applyChampionDefeat(
 /**
  * Handle monster placement and immediate combat (used for adventure cards)
  */
-export function resolveMonsterPlacementAndCombat(
+export async function resolveMonsterPlacementAndCombat(
   gameState: GameState,
   monster: Monster,
   tile: Tile,
   player: Player,
   championId: number,
   logFn: (type: string, content: string) => void
-): CombatResult {
+): Promise<CombatResult> {
   // Place monster on tile
   tile.monster = monster;
   logFn("event", `Champion${championId} drew monster card: ${monster.name} (might ${monster.might})!`);
 
   // Immediately resolve combat using the regular monster combat function
-  return resolveChampionVsMonsterCombat(gameState, tile, player, championId, logFn);
+  return await resolveChampionVsMonsterCombat(gameState, tile, player, championId, logFn);
 } 

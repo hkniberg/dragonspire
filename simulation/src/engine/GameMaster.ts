@@ -298,7 +298,7 @@ export class GameMaster {
 
     // Only handle existing monster combat if no adventure card combat occurred
     if (!adventureCardCombatOccurred) {
-      const monsterCombatResult = handleMonsterCombat(this.gameState, tile, player, championId, logFn);
+      const monsterCombatResult = await handleMonsterCombat(this.gameState, tile, player, championId, logFn);
       if (monsterCombatResult.combatOccurred && !monsterCombatResult.championWon) {
         // Champion lost to monster, defeat effects already applied by combat handler
         return;
@@ -306,7 +306,7 @@ export class GameMaster {
     }
 
     // Step 5: Handle Doomspire tile (dragon combat and victory conditions)
-    const doomspireResult = handleDoomspireTile(this.gameState, tile, player, championId, logFn);
+    const doomspireResult = await handleDoomspireTile(this.gameState, tile, player, championId, logFn);
     if (doomspireResult.entered) {
       if (doomspireResult.alternativeVictory) {
         this.endGame(doomspireResult.alternativeVictory.playerName, doomspireResult.alternativeVictory.type);

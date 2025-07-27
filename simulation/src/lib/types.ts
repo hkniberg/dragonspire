@@ -124,6 +124,12 @@ export interface ChampionLootOption {
   displayName: string; // Human readable name for the option
 }
 
+export interface PaddedHelmetTileOption {
+  type: "tile";
+  position: Position;
+  displayName: string; // Human readable description of the tile
+}
+
 export interface ChampionLootContext {
   type: "champion_loot";
   description: string;

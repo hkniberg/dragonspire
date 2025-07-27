@@ -113,14 +113,14 @@ export async function handleChampionCombat(
 /**
  * Handle combat with monsters on the tile
  */
-export function handleMonsterCombat(
+export async function handleMonsterCombat(
   gameState: GameState,
   tile: Tile,
   player: Player,
   championId: number,
   logFn: (type: string, content: string) => void
-): MonsterCombatResult {
-  const combatResult = resolveChampionVsMonsterCombat(gameState, tile, player, championId, logFn);
+): Promise<MonsterCombatResult> {
+  const combatResult = await resolveChampionVsMonsterCombat(gameState, tile, player, championId, logFn);
 
   if (!combatResult.combatOccurred) {
     return { combatOccurred: false };
@@ -142,14 +142,14 @@ export function handleMonsterCombat(
 /**
  * Handle arrival at the Doomspire tile (dragon combat and victory conditions)
  */
-export function handleDoomspireTile(
+export async function handleDoomspireTile(
   gameState: GameState,
   tile: Tile,
   player: Player,
   championId: number,
   logFn: (type: string, content: string) => void
-): DoomspireResult {
-  const dragonEncounter = resolveChampionVsDragonEncounter(gameState, tile, player, championId, logFn);
+): Promise<DoomspireResult> {
+  const dragonEncounter = await resolveChampionVsDragonEncounter(gameState, tile, player, championId, logFn);
 
   if (!dragonEncounter.encounterOccurred) {
     return { entered: false };
