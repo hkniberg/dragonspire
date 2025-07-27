@@ -239,10 +239,21 @@ export function resolveChampionVsMonsterCombat(
   }
 
   const monster = tile.monster;
+  const champion = gameState.getChampion(player.name, championId);
+
+  // Check for spear bonus against beasts
+  let mightBonus = 0;
+  const hasSpear = champion?.items.some(item => item.traderItem?.id === "spear") || false;
+  const isFightingBeast = monster.isBeast || false;
+
+  if (hasSpear && isFightingBeast) {
+    mightBonus = 1;
+    logFn("combat", `Spear provides +1 might against ${monster.name} (beast)`);
+  }
 
   // Roll dice for champion vs monster battle
   const championRoll = rollD3();
-  const championTotal = player.might + championRoll;
+  const championTotal = player.might + championRoll + mightBonus;
   const championWins = championTotal >= monster.might;
 
   if (championWins) {

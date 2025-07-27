@@ -10,6 +10,7 @@ export interface MonsterCard {
   fame: number;
   resources: Record<string, number>;
   count: number; // How many cards of this monster to include in deck
+  isBeast?: boolean; // Whether this monster is classified as a beast (default false)
 }
 
 export function getMonsterCardById(id: string): MonsterCard | undefined {
@@ -29,6 +30,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     fame: 1,
     resources: { food: 2, wood: 0, ore: 0, gold: 0 },
     count: 2,
+    isBeast: true,
   },
   {
     id: "boar",
@@ -40,6 +42,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     fame: 1,
     resources: { food: 2, wood: 0, ore: 0, gold: 0 },
     count: 2,
+    isBeast: true,
   },
   {
     id: "bandit",
@@ -135,6 +138,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     fame: 2,
     resources: { food: 3, wood: 0, ore: 0, gold: 0 },
     count: 2,
+    isBeast: true,
   },
   {
     id: "assassin",
@@ -208,6 +212,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     fame: 3,
     resources: { food: 3, wood: 0, ore: 0, gold: 3 },
     count: 1,
+    isBeast: true,
   },
   {
     id: "fallen-knight",
@@ -256,6 +261,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     fame: 3,
     resources: { food: 3, wood: 3, ore: 0, gold: 0 },
     count: 1,
+    isBeast: true,
   },
   {
     id: "ancient",

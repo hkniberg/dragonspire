@@ -40,6 +40,7 @@ export interface Monster {
   might: number; // Might needed to beat it
   fame: number; // Fame gained for winning
   resources: Record<ResourceType, number>; // Resources gained for beating it
+  isBeast?: boolean; // Whether this monster is classified as a beast (default false)
 }
 
 export interface Tile {
