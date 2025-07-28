@@ -352,20 +352,15 @@ Knights protect all 4 adjacent tiles from blockade or conquering.
 
 You och purchase a castle building or boat/champion by spending a die during the harvest phase. The die value doesn't matter.
 
-### Dock
-
-- **Cost**: 2 Wood, 2 Gold
-- **Benefit**: Gain additional boat (max 2 boats total)
-
-### Warnship upgrade
+### Warship upgrade
 
 - **Cost**: 2 Wood, 1 Ore, 1 Gold
-- **Benefit**: Upgrades all your boats (current and future) to warships, which provide +1 Might to any battle in tiles adjacent to their current ocean zone.
+- **Benefit**: A research upgrade that makes all your boats warships (even if you buy new boats later), which provide +1 Might to any battle in tiles adjacent to their current ocean zone.
 
 ### Market
 
 - **Cost**: 2 Food, 2 Wood
-- **Benefit**: During the harvest phase, sell any resources for Gold at 2:1 rate (2 resources = 1 Gold). Can do this any number of times.
+- **Benefit**: During the harvest phase, sell any number of resources for Gold at 2:1 rate (2 resources = 1 Gold).
 
 ### Blacksmith
 
@@ -386,6 +381,11 @@ You och purchase a castle building or boat/champion by spending a die during the
 
 - **2nd Knight**: 3 Food, 3 Gold, 1 Ore (gain 1 additional action die)
 - **3rd Knight**: 6 Food, 6 Gold, 3 Ore (gain 1 additional action die)
+
+### Build boat
+
+- **Cost**: 2 Wood, 2 Gold
+- **Benefit**: Gain an additional boat (max 2 boats total)
 
 ---
 
