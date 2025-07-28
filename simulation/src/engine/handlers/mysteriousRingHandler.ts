@@ -39,7 +39,8 @@ function createDragonsbaneRing(): CarriableItem {
       description: "+3 might against dragons",
       count: 1,
       carriable: true
-    }
+    },
+    combatBonus: 3 // Note: This bonus only applies against dragons, handled specially in calculateItemEffects
   };
 }
 

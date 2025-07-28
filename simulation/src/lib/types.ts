@@ -32,6 +32,7 @@ export interface CarriableItem {
   treasureCard?: TreasureCard;
   traderItem?: TraderItem;
   stuck?: boolean; // If true, this item cannot be dropped by the champion
+  combatBonus?: number; // Combat might bonus provided by this item
 }
 
 export interface Monster {

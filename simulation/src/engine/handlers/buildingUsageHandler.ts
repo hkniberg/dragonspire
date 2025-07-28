@@ -1,4 +1,4 @@
-import { Player, ResourceType } from "@/lib/types";
+import { GameLogEntry, Player, ResourceType } from "@/lib/types";
 import { PlayerAgent } from "../../players/PlayerAgent";
 
 export interface BuildingUsageResult {
@@ -16,7 +16,7 @@ export async function handleBuildingUsage(
   player: Player,
   playerAgent: PlayerAgent,
   gameState: any,
-  gameLog: any[],
+  gameLog: readonly GameLogEntry[],
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void
 ): Promise<BuildingUsageResult> {

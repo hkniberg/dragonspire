@@ -222,6 +222,11 @@ export class GameDecks {
     return this.decks[tier][deckIndex].drawFromTop();
   }
 
+  returnCardToTop(tier: TileTier, deckNumber: 1 | 2 | 3, card: Card): void {
+    const deckIndex = deckNumber - 1; // Convert 1,2,3 to 0,1,2
+    this.decks[tier][deckIndex].addToTop(card);
+  }
+
   getTopCardBiomes(tier: TileTier): [BiomeType | null, BiomeType | null, BiomeType | null] {
     const biomes: (BiomeType | null)[] = [];
     let allEmpty = true;

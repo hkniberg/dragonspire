@@ -1,12 +1,14 @@
 import { getTreasureCardById } from "@/content/treasureCards";
 import { GameState } from "@/game/GameState";
-import { Decision, DecisionContext, Player, Tile } from "@/lib/types";
+import { Decision, DecisionContext, GameLogEntry, Player, Tile } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { handleMysteriousRing } from "./mysteriousRingHandler";
+import { handleSwordInStone } from "./swordInStoneHandler";
 
 export interface TreasureCardResult {
   cardProcessed: boolean;
   cardId?: string;
+  cardReturnedToDeck?: boolean; // For cards that should be returned to the top of the deck
   errorMessage?: string;
 }
 
@@ -20,7 +22,7 @@ export async function handleTreasureCard(
   player: Player,
   playerAgent: PlayerAgent,
   championId: number,
-  gameLog: any[],
+  gameLog: readonly GameLogEntry[],
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void
 ): Promise<TreasureCardResult> {
@@ -46,6 +48,9 @@ export async function handleTreasureCard(
 
     case "mysterious-ring":
       return await handleMysteriousRing(gameState, tile, player, playerAgent, championId, logFn, thinkingLogger);
+
+    case "sword-in-stone":
+      return await handleSwordInStone(gameState, tile, player, playerAgent, championId, logFn, thinkingLogger);
 
     default:
       // Handle as generic carriable/non-carriable treasure
@@ -145,7 +150,17 @@ async function handleRustySword(
   // Check if champion has space for the item
   if (champion.items.length < 2) {
     // Add the item directly
-    champion.items.push({ treasureCard: { id: "rusty-sword", name: "Rusty sword", tier: 1, description: "Gain `+2 might`. This **item breaks** after *one fight*.", count: 2, carriable: true } });
+    champion.items.push({
+      treasureCard: {
+        id: "rusty-sword",
+        name: "Rusty sword",
+        tier: 1,
+        description: "Gain `+2 might`. This **item breaks** after *one fight*.",
+        count: 2,
+        carriable: true
+      },
+      combatBonus: 2
+    });
     logFn("event", `Champion${championId} picked up a Rusty sword (+2 might, breaks after one fight).`);
     return {
       cardProcessed: true,
@@ -193,7 +208,17 @@ async function handleRustySword(
     if (!tile.items) {
       tile.items = [];
     }
-    tile.items.push({ treasureCard: { id: "rusty-sword", name: "Rusty sword", tier: 1, description: "Gain `+2 might`. This **item breaks** after *one fight*.", count: 2, carriable: true } });
+    tile.items.push({
+      treasureCard: {
+        id: "rusty-sword",
+        name: "Rusty sword",
+        tier: 1,
+        description: "Gain `+2 might`. This **item breaks** after *one fight*.",
+        count: 2,
+        carriable: true
+      },
+      combatBonus: 2
+    });
     logFn("event", `Champion${championId} left the Rusty sword on the ground.`);
     return {
       cardProcessed: true,
@@ -216,7 +241,17 @@ async function handleRustySword(
     tile.items.push(itemToDrop);
 
     // Add new treasure to champion
-    champion.items.push({ treasureCard: { id: "rusty-sword", name: "Rusty sword", tier: 1, description: "Gain `+2 might`. This **item breaks** after *one fight*.", count: 2, carriable: true } });
+    champion.items.push({
+      treasureCard: {
+        id: "rusty-sword",
+        name: "Rusty sword",
+        tier: 1,
+        description: "Gain `+2 might`. This **item breaks** after *one fight*.",
+        count: 2,
+        carriable: true
+      },
+      combatBonus: 2
+    });
 
     logFn("event", `Champion${championId} dropped ${getItemName(itemToDrop)} and picked up the Rusty sword (+2 might, breaks after one fight).`);
     return {

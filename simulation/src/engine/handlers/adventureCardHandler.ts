@@ -1,7 +1,8 @@
 import { getEventCardById } from "@/content/eventCards";
 import { getMonsterCardById } from "@/content/monsterCards";
 import { GameState } from "@/game/GameState";
-import { Monster, Player, Tile } from "@/lib/types";
+import { Card } from "@/lib/cards";
+import { GameLogEntry, Monster, Player, Tile } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { resolveMonsterPlacementAndCombat } from "./combatHandler";
 import { EventCardResult, handleEventCard } from "./eventCardHandler";
@@ -11,6 +12,7 @@ export interface AdventureCardResult {
   cardProcessed: boolean;
   cardType?: string;
   cardId?: string;
+  cardReturnedToDeck?: boolean; // For cards that should be returned to the top of the deck
   monsterPlaced?: {
     monsterName: string;
     combatOccurred: boolean;
@@ -108,7 +110,7 @@ export async function handleEventCardFromAdventure(
   player: Player,
   playerAgent: PlayerAgent,
   championId: number,
-  gameLog: any[],
+  gameLog: readonly GameLogEntry[],
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void
 ): Promise<AdventureCardResult> {
@@ -153,7 +155,7 @@ export async function handleTreasureCard(
   player: Player,
   playerAgent: PlayerAgent,
   championId: number,
-  gameLog: any[],
+  gameLog: readonly GameLogEntry[],
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void
 ): Promise<AdventureCardResult> {
@@ -174,6 +176,7 @@ export async function handleTreasureCard(
     cardProcessed: result.cardProcessed,
     cardType: "treasure",
     cardId: result.cardId,
+    cardReturnedToDeck: result.cardReturnedToDeck,
     errorMessage: result.errorMessage
   };
 }
@@ -188,7 +191,7 @@ export async function handleEncounterCard(
   player: Player,
   playerAgent: PlayerAgent,
   championId: number,
-  gameLog: any[],
+  gameLog: readonly GameLogEntry[],
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void
 ): Promise<AdventureCardResult> {
@@ -213,7 +216,7 @@ export async function handleFollowerCard(
   player: Player,
   playerAgent: PlayerAgent,
   championId: number,
-  gameLog: any[],
+  gameLog: readonly GameLogEntry[],
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void
 ): Promise<AdventureCardResult> {
@@ -232,13 +235,13 @@ export async function handleFollowerCard(
  * Main adventure card handler dispatcher
  */
 export async function handleAdventureCard(
-  adventureCard: any,
+  adventureCard: Card,
   gameState: GameState,
   tile: Tile,
   player: Player,
   playerAgent: PlayerAgent,
   championId: number,
-  gameLog: any[],
+  gameLog: readonly GameLogEntry[],
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void
 ): Promise<AdventureCardResult> {

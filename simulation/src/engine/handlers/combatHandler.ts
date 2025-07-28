@@ -17,7 +17,7 @@ function rollD3(): number {
 /**
  * Calculate item bonuses and effects for combat
  */
-function calculateItemEffects(champion: Champion | undefined, logFn: (type: string, content: string) => void, playerMight?: number, opponentMight?: number): { mightBonus: number; itemsToRemove: CarriableItem[] } {
+function calculateItemEffects(champion: Champion | undefined, logFn: (type: string, content: string) => void, playerMight?: number, opponentMight?: number, isDragonFight?: boolean): { mightBonus: number; itemsToRemove: CarriableItem[] } {
   let mightBonus = 0;
   let itemsToRemove: CarriableItem[] = [];
 
@@ -25,40 +25,48 @@ function calculateItemEffects(champion: Champion | undefined, logFn: (type: stri
     return { mightBonus, itemsToRemove };
   }
 
-  // Check for spear bonus against beasts
-  const hasSpear = champion.items.some(item => item.traderItem?.id === "spear") || false;
-  if (hasSpear) {
-    mightBonus += 1;
-    logFn("combat", `Spear provides +1 might`);
-  }
+  for (const item of champion.items) {
+    // Check for general combat bonus first
+    if (item.combatBonus) {
+      mightBonus += item.combatBonus;
+      const itemName = item.treasureCard?.name || item.traderItem?.name || 'Unknown Item';
+      logFn("combat", `${itemName} provides +${item.combatBonus} might`);
+    }
 
-  // Check for rusty sword (breaks after one fight)
-  const rustySwordItem = champion.items.find(item => item.treasureCard?.id === "rusty-sword");
-  if (rustySwordItem) {
-    mightBonus += 2;
-    itemsToRemove.push(rustySwordItem);
-    logFn("combat", `Rusty sword provides +2 might but breaks after this fight`);
-  }
+    // Check for spear bonus against beasts (trader item specific logic)
+    if (item.traderItem?.id === "spear") {
+      mightBonus += 1;
+      logFn("combat", `Spear provides +1 might`);
+    }
 
-  // Check for long sword (doesn't break)
-  const longSwordItem = champion.items.find(item => item.treasureCard?.id === "long-sword");
-  if (longSwordItem) {
-    mightBonus += 2;
-    logFn("combat", `Löng Swörd provides +2 might`);
-  }
+    // Check for rusty sword (breaks after one fight)
+    if (item.treasureCard?.id === "rusty-sword") {
+      mightBonus += 2;
+      itemsToRemove.push(item);
+      logFn("combat", `Rusty sword provides +2 might but breaks after this fight`);
+    }
 
-  // Check for porcupine (conditional bonus if opponent has more might)
-  const porcupineItem = champion.items.find(item => item.treasureCard?.id === "porcupine");
-  if (porcupineItem && opponentMight !== undefined && playerMight !== undefined && opponentMight > playerMight) {
-    mightBonus += 2;
-    logFn("combat", `Porcupine shield provides +2 might (opponent has more base might)`);
-  }
+    // Check for long sword (doesn't break)
+    if (item.treasureCard?.id === "long-sword") {
+      mightBonus += 2;
+      logFn("combat", `Löng Swörd provides +2 might`);
+    }
 
-  // Check for mysterious ring with dragon slaying power
-  const dragonRingItem = champion.items.find(item => item.treasureCard?.id === "dragonsbane-ring");
-  if (dragonRingItem) {
-    // This bonus will be applied in the dragon encounter function specifically
-    logFn("combat", `Dragonsbane ring detected - bonus will apply against dragons`);
+    // Check for porcupine (conditional bonus if opponent has more might)
+    if (item.treasureCard?.id === "porcupine" && opponentMight !== undefined && playerMight !== undefined && opponentMight > playerMight) {
+      mightBonus += 2;
+      logFn("combat", `Porcupine shield provides +2 might (opponent has more base might)`);
+    }
+
+    // Check for mysterious ring with dragon slaying power
+    if (item.treasureCard?.id === "dragonsbane-ring") {
+      if (isDragonFight) {
+        mightBonus += 3;
+        logFn("combat", `Dragonsbane ring provides +3 might against the dragon!`);
+      } else {
+        logFn("combat", `Dragonsbane ring detected - bonus only applies against dragons`);
+      }
+    }
   }
 
   return { mightBonus, itemsToRemove };
@@ -235,8 +243,8 @@ export async function resolveChampionVsChampionCombat(
 
   // Calculate item effects for both champions
   const attackingChampion = gameState.getChampion(attackingPlayer.name, attackingChampionId);
-  const { mightBonus: attackerMightBonus, itemsToRemove: attackerItemsToRemove } = calculateItemEffects(attackingChampion, logFn, attackingPlayer.might, defendingPlayer.might);
-  const { mightBonus: defenderMightBonus, itemsToRemove: defenderItemsToRemove } = calculateItemEffects(opposingChampion, logFn, defendingPlayer.might, attackingPlayer.might);
+  const { mightBonus: attackerMightBonus, itemsToRemove: attackerItemsToRemove } = calculateItemEffects(attackingChampion, logFn, attackingPlayer.might, defendingPlayer.might, false);
+  const { mightBonus: defenderMightBonus, itemsToRemove: defenderItemsToRemove } = calculateItemEffects(opposingChampion, logFn, defendingPlayer.might, attackingPlayer.might, false);
 
   // Roll dice for champion vs champion battle - keep rerolling on ties
   let attackerRoll: number;
@@ -449,7 +457,7 @@ export async function resolveChampionVsMonsterCombat(
   const champion = gameState.getChampion(player.name, championId);
 
   // Calculate item effects
-  const { mightBonus, itemsToRemove } = calculateItemEffects(champion, logFn, player.might, monster.might);
+  const { mightBonus, itemsToRemove } = calculateItemEffects(champion, logFn, player.might, monster.might, false);
 
   // Check for spear bonus against beasts (additional logic specific to monster combat)
   const hasSpear = champion?.items.some(item => item.traderItem?.id === "spear") || false;
@@ -579,23 +587,21 @@ export async function resolveChampionVsDragonEncounter(
     logFn("combat", `Combat support: +${supportBonus} might from adjacent units`);
   }
 
-  // Check for mysterious ring dragon bonus
+  // Calculate item effects for dragon combat
   const champion = gameState.getChampion(player.name, championId);
-  let dragonBonus = 0;
-  const dragonRingItem = champion?.items.find(item => item.treasureCard?.id === "dragonsbane-ring");
-  if (dragonRingItem) {
-    dragonBonus = 3;
-    logFn("combat", `Dragonsbane ring provides +3 might against the dragon!`);
-  }
+  const { mightBonus, itemsToRemove } = calculateItemEffects(champion, logFn, player.might, dragonMight, true);
 
   const championRoll = rollD3();
-  const championTotal = player.might + championRoll + supportBonus + dragonBonus;
+  const championTotal = player.might + championRoll + supportBonus + mightBonus;
   const championWins = championTotal >= dragonMight;
 
   if (!championWins) {
     // Champion was defeated by dragon - apply defeat effects immediately
-    const championBase = player.might + championRoll;
-    const combatDetails = `was eaten by the dragon (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""}${dragonBonus > 0 ? `+${dragonBonus}` : ""} vs ${dragonMight})! Actually, that's not implemented yet, so champion is just sent home.`;
+    const championBase = player.might + championRoll + mightBonus;
+    const combatDetails = `was eaten by the dragon (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${dragonMight})! Actually, that's not implemented yet, so champion is just sent home.`;
+
+    // Remove items that break after combat (even if defeated)
+    removeBrokenItems(champion, itemsToRemove, logFn);
 
     // Apply defeat effects internally
     await applyChampionDefeat(gameState, player, championId, combatDetails, logFn);
@@ -610,9 +616,12 @@ export async function resolveChampionVsDragonEncounter(
     };
   } else {
     // Champion won - COMBAT VICTORY!
-    const championBase = player.might + championRoll;
-    const combatDetails = `Combat Victory! ${player.name} defeated the dragon (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""}${dragonBonus > 0 ? `+${dragonBonus}` : ""} vs ${dragonMight})!`;
+    const championBase = player.might + championRoll + mightBonus;
+    const combatDetails = `Combat Victory! ${player.name} defeated the dragon (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${dragonMight})!`;
     logFn("victory", combatDetails);
+
+    // Remove items that break after combat
+    removeBrokenItems(champion, itemsToRemove, logFn);
 
     return {
       encounterOccurred: true,

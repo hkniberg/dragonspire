@@ -382,6 +382,12 @@ export class GameMaster {
           thinkingLogger
         );
 
+        // If the card should be returned to the deck (e.g., sword-in-stone resisted pull)
+        if (adventureResult.cardReturnedToDeck && adventureCard) {
+          this.gameDecks.returnCardToTop(tile.tier!, 1, adventureCard);
+          logFn("event", `The card returned to the top of the adventure deck.`);
+        }
+
         // Handle results from adventure card
         if (adventureResult.cardProcessed && adventureResult.monsterPlaced?.combatOccurred) {
           adventureCardCombatOccurred = true;

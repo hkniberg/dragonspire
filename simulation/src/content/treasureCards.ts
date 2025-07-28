@@ -67,9 +67,10 @@ Spend \`2 ore\` to gain \`+1 might\``,
     id: "sword-in-stone",
     name: "Sword in a stone",
     tier: 2,
-    description: `Card stays here until someone **pulls it out**. Roll \`3+D3\`:
-**(3)** You break off half and gain \`+2 might\`
-**(9)** You gain **Cloudslicer** and gain \`+4 might\``,
+    description: `Attempt to pull the sword! Roll \`D3\`:
+**(1)** It breaks off. You get **half a sword** which gives \`+2 might\`
+**(2)** Card goes back to the top of the deck where it came from.
+**(3)** You gain **Cloudslicer** which gives \`+4 might\``,
     count: 1,
     carriable: false, // This stays on the tile until someone pulls it out
   },

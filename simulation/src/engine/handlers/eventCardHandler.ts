@@ -1,5 +1,5 @@
 import { GameState } from "@/game/GameState";
-import { DecisionContext, OceanPosition, Player } from "@/lib/types";
+import { DecisionContext, GameLogEntry, OceanPosition, Player } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
 
 export interface EventCardResult {
@@ -122,25 +122,26 @@ export async function handleHungryPests(
  * Main event card handler dispatcher
  */
 export async function handleEventCard(
-  eventCard: any,
+  cardId: string,
   gameState: GameState,
-  currentPlayer: Player,
-  currentPlayerAgent: PlayerAgent,
-  gameLog: any[],
+  player: Player,
+  playerAgent: PlayerAgent,
+  championId: number,
+  gameLog: readonly GameLogEntry[],
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void
 ): Promise<EventCardResult> {
-  if (eventCard.id === "sudden-storm") {
+  if (cardId === "sudden-storm") {
     return handleSuddenStorm(gameState, logFn);
-  } else if (eventCard.id === "hungry-pests") {
-    return await handleHungryPests(gameState, currentPlayer, currentPlayerAgent, logFn, thinkingLogger);
+  } else if (cardId === "hungry-pests") {
+    return await handleHungryPests(gameState, player, playerAgent, logFn, thinkingLogger);
   } else {
     // Other event cards not yet implemented
-    const message = `Event card ${eventCard.name} drawn, but not yet implemented`;
+    const message = `Event card ${cardId} drawn, but not yet implemented`;
     logFn("event", message);
     return {
       eventProcessed: false,
-      errorMessage: `Event card ${eventCard.id} not implemented`
+      errorMessage: `Event card ${cardId} not implemented`
     };
   }
 }
