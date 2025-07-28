@@ -47,7 +47,7 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
     tier: 1,
     description: `Roll \`1+D3\`:  
 **(1)** Flee to your **home tile**  
-**(2)** Flee to your nearest **claimed tile**
+**(2)** Flee to your nearest **claimed tile** (unoccupied)  
 **(3)** Miracle! You survive and find \`+2 ore\``,
     count: 2,
   },

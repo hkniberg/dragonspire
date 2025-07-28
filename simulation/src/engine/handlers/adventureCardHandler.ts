@@ -6,6 +6,7 @@ import { EventCardResult, GameLogEntry, Monster, Player, Tile } from "@/lib/type
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { resolveMonsterPlacementAndCombat } from "./combatHandler";
 import { handleHungryPests } from "./eventCards/hungryPestsHandler";
+import { handleLandslide } from "./eventCards/landslideHandler";
 import { handleMarketDay } from "./eventCards/marketDayHandler";
 import { handleSuddenStorm } from "./eventCards/suddenStormHandler";
 import { handleThugAmbush } from "./eventCards/thugAmbushHandler";
@@ -142,6 +143,8 @@ export async function handleEventCardFromAdventure(
       eventResult = await handleMarketDay(gameState, player, playerAgent, logFn, thinkingLogger, getPlayerAgent);
     } else if (cardId === "thug-ambush") {
       eventResult = await handleThugAmbush(gameState, player, championId, logFn);
+    } else if (cardId === "landslide") {
+      eventResult = handleLandslide(gameState, player, championId, logFn);
     } else {
       // Other event cards not yet implemented
       const message = `Event card ${cardId} drawn, but not yet implemented`;
