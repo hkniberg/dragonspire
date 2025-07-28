@@ -76,7 +76,7 @@ export class GameMaster {
   /**
    * Execute a single turn for the current player using the new Game Master pattern
    */
-  public async executeTurn(): Promise<void> {
+  public async executeTurn(onStepUpdate?: () => void): Promise<void> {
     if (this.masterState !== "playing") {
       throw new Error(`Cannot execute turn: session is in state ${this.masterState}`);
     }
@@ -118,11 +118,21 @@ export class GameMaster {
 
     this.addGameLogEntry("dice", `Rolled ${actualDiceCount} dice: ${diceRollValues.map(die => `[${die}]`).join(", ")}`);
 
+    // Notify UI of dice roll update
+    if (onStepUpdate) {
+      onStepUpdate();
+    }
+
     // Step 2: Ask player for strategic assessment (strategic reflection) - now with dice context
     const thinkingLogger = (content: string) => this.addGameLogEntry("thinking", content);
     const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues, this.gameState.currentRound, thinkingLogger);
     if (strategicAssessment) {
       this.addGameLogEntry("assessment", strategicAssessment);
+    }
+
+    // Notify UI of strategic assessment update
+    if (onStepUpdate) {
+      onStepUpdate();
     }
 
     // Step 3: Ask the player to execute actions until they run out of dice.
@@ -169,6 +179,11 @@ export class GameMaster {
         throw new Error(`Unknown action type: ${actionType}`);
       }
 
+      // Notify UI of dice action update
+      if (onStepUpdate) {
+        onStepUpdate();
+      }
+
       // Step 4: Check for victory conditions
       const victoryCheck = checkVictory(this.gameState);
       if (victoryCheck.won) {
@@ -180,6 +195,11 @@ export class GameMaster {
 
     // Step 5: After all dice are consumed, check for building usage
     await this.handleBuildingUsage(currentPlayer, currentPlayerAgent, thinkingLogger);
+
+    // Notify UI of building usage update
+    if (onStepUpdate) {
+      onStepUpdate();
+    }
 
     // Check for max rounds limit
     if (this.gameState.currentRound >= this.maxRounds) {

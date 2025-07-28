@@ -154,8 +154,19 @@ export default function GameSimulation() {
     setIsExecutingTurn(true);
 
     try {
-      // Execute turn
-      await gameSession.executeTurn();
+      // Create callback for step updates during turn execution
+      const onStepUpdate = () => {
+        const updatedGameState = gameSession.getGameState();
+        const updatedGameLog = gameSession.getGameLog();
+        const updatedStatistics = gameSession.getStatistics();
+
+        setGameState(updatedGameState);
+        setActionLog(Array.from(updatedGameLog));
+        setStatistics(updatedStatistics);
+      };
+
+      // Execute turn with step update callback
+      await gameSession.executeTurn(onStepUpdate);
 
       // Final update after turn completion
       const updatedGameState = gameSession.getGameState();
