@@ -45,6 +45,7 @@ This is a board game design project, not a software application. Code in the sim
 - When needed, you can run `node run-test.js --single-turn` to run a single turn of the game in a headless mode to check that things are working. Or run `node run-test.js --complete` to run a complete game. Or run `node run-test.js --turns X` to run a specific number of turns.
 - You can change the starting resources for the random players by adding the following arguments: `--gold N`, `--fame N`, `--might N`, `--food N`, `--wood N`, `--ore N`. This is useful for accelerating the simulation when testing.
 - You can specify player types using `--p1 claude`, `--p2 random`, etc. Available types are `random` and `claude`. Don't use claude unless asked, since using it is slow and costly.
+- To test specific cards, you can temporarily rig the deck using the `ONLY_INCLUDE_CARDS` variable in `simulation/src/lib/cards.ts`.
 
 ## Committing
 

@@ -382,6 +382,17 @@ export function handleItemManagement(
       continue;
     }
 
+    // Check if item is stuck and cannot be dropped
+    if (itemToDropObj.stuck) {
+      const itemName = getCarriableItemName(itemToDropObj);
+      result.failedDrops.push({
+        itemId,
+        reason: `${itemName} is stuck and cannot be dropped`
+      });
+      logFn("event", `Champion ${championId} tried to drop ${itemName} but it's stuck!`);
+      continue;
+    }
+
     // Remove from champion inventory and add to tile
     const itemIndex = champion.items.indexOf(itemToDropObj);
     champion.items.splice(itemIndex, 1);

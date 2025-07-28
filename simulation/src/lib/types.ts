@@ -31,6 +31,7 @@ export interface Position {
 export interface CarriableItem {
   treasureCard?: TreasureCard;
   traderItem?: TraderItem;
+  stuck?: boolean; // If true, this item cannot be dropped by the champion
 }
 
 export interface Monster {

@@ -40,6 +40,13 @@ function calculateItemEffects(champion: Champion | undefined, logFn: (type: stri
     logFn("combat", `Rusty sword provides +2 might but breaks after this fight`);
   }
 
+  // Check for mysterious ring with dragon slaying power
+  const dragonRingItem = champion.items.find(item => item.treasureCard?.id === "dragonsbane-ring");
+  if (dragonRingItem) {
+    // This bonus will be applied in the dragon encounter function specifically
+    logFn("combat", `Dragonsbane ring detected - bonus will apply against dragons`);
+  }
+
   return { mightBonus, itemsToRemove };
 }
 
@@ -102,9 +109,14 @@ function generateChampionLootOptions(
     }
   }
 
-  // Add item options (only if the winning champion has room for more items)
+  // Add item options (only if the winning champion has room for more items and items aren't stuck)
   if (winningChampion.items.length < 2) {
     defeatedChampion.items.forEach((item: any, index: number) => {
+      // Skip stuck items - they cannot be looted
+      if (item.stuck) {
+        return;
+      }
+
       let itemName = "Unknown Item";
       if (item.treasureCard) {
         itemName = item.treasureCard.name;
@@ -553,14 +565,23 @@ export async function resolveChampionVsDragonEncounter(
     logFn("combat", `Combat support: +${supportBonus} might from adjacent units`);
   }
 
+  // Check for mysterious ring dragon bonus
+  const champion = gameState.getChampion(player.name, championId);
+  let dragonBonus = 0;
+  const dragonRingItem = champion?.items.find(item => item.treasureCard?.id === "dragonsbane-ring");
+  if (dragonRingItem) {
+    dragonBonus = 3;
+    logFn("combat", `Dragonsbane ring provides +3 might against the dragon!`);
+  }
+
   const championRoll = rollD3();
-  const championTotal = player.might + championRoll + supportBonus;
+  const championTotal = player.might + championRoll + supportBonus + dragonBonus;
   const championWins = championTotal >= dragonMight;
 
   if (!championWins) {
     // Champion was defeated by dragon - apply defeat effects immediately
     const championBase = player.might + championRoll;
-    const combatDetails = `was eaten by the dragon (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${dragonMight})! Actually, that's not implemented yet, so champion is just sent home.`;
+    const combatDetails = `was eaten by the dragon (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""}${dragonBonus > 0 ? `+${dragonBonus}` : ""} vs ${dragonMight})! Actually, that's not implemented yet, so champion is just sent home.`;
 
     // Apply defeat effects internally
     await applyChampionDefeat(gameState, player, championId, combatDetails, logFn);
@@ -576,7 +597,7 @@ export async function resolveChampionVsDragonEncounter(
   } else {
     // Champion won - COMBAT VICTORY!
     const championBase = player.might + championRoll;
-    const combatDetails = `Combat Victory! ${player.name} defeated the dragon (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${dragonMight})!`;
+    const combatDetails = `Combat Victory! ${player.name} defeated the dragon (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""}${dragonBonus > 0 ? `+${dragonBonus}` : ""} vs ${dragonMight})!`;
     logFn("victory", combatDetails);
 
     return {

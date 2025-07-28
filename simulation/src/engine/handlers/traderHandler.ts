@@ -2,7 +2,7 @@ import { getTraderItemById } from "@/content/traderItems";
 import { GameState } from "@/game/GameState";
 import { GameDecks } from "@/lib/cards";
 import { TraderAction, TraderContext, TraderDecision } from "@/lib/traderTypes";
-import { Player, ResourceType } from "@/lib/types";
+import { CarriableItem, Player, ResourceType } from "@/lib/types";
 import { formatResources } from "@/lib/utils";
 
 
@@ -171,15 +171,35 @@ function processBuyItemAction(
     };
   }
 
-  // If champion's inventory is full, drop the first item to the ground
+  // If champion's inventory is full, drop the first non-stuck item to the ground
   if (champion.items.length >= 2) {
     const currentTile = gameState.board.getTileAt(champion.position);
     if (!currentTile) {
       return { success: false, reason: `Champion ${championId} position is invalid` };
     }
 
-    // Drop the first item (oldest) to make space
-    const droppedItem = champion.items.shift()!;
+    // Find the first non-stuck item to drop
+    let droppedItem: CarriableItem | undefined;
+    let dropIndex = -1;
+
+    for (let i = 0; i < champion.items.length; i++) {
+      if (!champion.items[i].stuck) {
+        droppedItem = champion.items[i];
+        dropIndex = i;
+        break;
+      }
+    }
+
+    // If all items are stuck, refuse the purchase
+    if (!droppedItem || dropIndex === -1) {
+      return {
+        success: false,
+        reason: `Champion ${championId} cannot purchase ${traderItem.name} - inventory is full of stuck items that cannot be dropped`
+      };
+    }
+
+    // Remove the droppable item from champion's inventory
+    champion.items.splice(dropIndex, 1);
 
     // Initialize tile items array if it doesn't exist
     if (!currentTile.items) {

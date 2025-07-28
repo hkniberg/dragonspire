@@ -2,6 +2,7 @@ import { getTreasureCardById } from "@/content/treasureCards";
 import { GameState } from "@/game/GameState";
 import { Decision, DecisionContext, Player, Tile } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
+import { handleMysteriousRing } from "./mysteriousRingHandler";
 
 export interface TreasureCardResult {
   cardProcessed: boolean;
@@ -44,6 +45,9 @@ export async function handleTreasureCard(
 
     case "rusty-sword":
       return await handleRustySword(gameState, tile, player, playerAgent, championId, logFn, thinkingLogger);
+
+    case "mysterious-ring":
+      return await handleMysteriousRing(gameState, tile, player, playerAgent, championId, logFn, thinkingLogger);
 
     default:
       // Handle as generic carriable/non-carriable treasure
@@ -160,25 +164,35 @@ async function handleRustySword(
   }
 
   // Champion's inventory is full, need to ask what to drop
+  const droppableOptions: any[] = [];
+
+  // Only include items that aren't stuck
+  if (!champion.items[0].stuck) {
+    droppableOptions.push({
+      id: "drop_first",
+      description: `Drop ${getItemName(champion.items[0])} and take the Rusty sword`,
+      itemToDrop: champion.items[0]
+    });
+  }
+
+  if (!champion.items[1].stuck) {
+    droppableOptions.push({
+      id: "drop_second",
+      description: `Drop ${getItemName(champion.items[1])} and take the Rusty sword`,
+      itemToDrop: champion.items[1]
+    });
+  }
+
+  // Always allow leaving the treasure
+  droppableOptions.push({
+    id: "leave_treasure",
+    description: `Leave the Rusty sword on the ground`
+  });
+
   const decisionContext: DecisionContext = {
     type: "choose_item_to_drop",
     description: `Champion${championId}'s inventory is full! Choose what to do with the Rusty sword:`,
-    options: [
-      {
-        id: "drop_first",
-        description: `Drop ${getItemName(champion.items[0])} and take the Rusty sword`,
-        itemToDrop: champion.items[0]
-      },
-      {
-        id: "drop_second",
-        description: `Drop ${getItemName(champion.items[1])} and take the Rusty sword`,
-        itemToDrop: champion.items[1]
-      },
-      {
-        id: "leave_treasure",
-        description: `Leave the Rusty sword on the ground`
-      }
-    ]
+    options: droppableOptions
   };
 
   // Ask the player to make a decision
@@ -275,25 +289,35 @@ async function handleGenericTreasure(
   }
 
   // Champion's inventory is full, need to ask what to drop
+  const droppableOptions: any[] = [];
+
+  // Only include items that aren't stuck
+  if (!champion.items[0].stuck) {
+    droppableOptions.push({
+      id: "drop_first",
+      description: `Drop ${getItemName(champion.items[0])} and take ${treasureCard.name}`,
+      itemToDrop: champion.items[0]
+    });
+  }
+
+  if (!champion.items[1].stuck) {
+    droppableOptions.push({
+      id: "drop_second",
+      description: `Drop ${getItemName(champion.items[1])} and take ${treasureCard.name}`,
+      itemToDrop: champion.items[1]
+    });
+  }
+
+  // Always allow leaving the treasure
+  droppableOptions.push({
+    id: "leave_treasure",
+    description: `Leave ${treasureCard.name} on the ground`
+  });
+
   const decisionContext: DecisionContext = {
     type: "choose_item_to_drop",
     description: `Champion${championId}'s inventory is full! Choose what to do with ${treasureCard.name}:`,
-    options: [
-      {
-        id: "drop_first",
-        description: `Drop ${getItemName(champion.items[0])} and take ${treasureCard.name}`,
-        itemToDrop: champion.items[0]
-      },
-      {
-        id: "drop_second",
-        description: `Drop ${getItemName(champion.items[1])} and take ${treasureCard.name}`,
-        itemToDrop: champion.items[1]
-      },
-      {
-        id: "leave_treasure",
-        description: `Leave ${treasureCard.name} on the ground`
-      }
-    ]
+    options: droppableOptions
   };
 
   // Ask the player to make a decision
