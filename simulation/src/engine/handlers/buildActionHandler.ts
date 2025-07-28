@@ -27,6 +27,8 @@ export function handleBuildAction(
     return handleChapelBuild(player, action, logFn, reasoningText);
   } else if (action.buildActionType === "upgradeChapelToMonastery") {
     return handleMonasteryBuild(player, action, logFn, reasoningText);
+  } else if (action.buildActionType === "warshipUpgrade") {
+    return handleWarshipUpgrade(player, action, logFn, reasoningText);
   } else {
     return {
       actionSuccessful: false,
@@ -347,5 +349,49 @@ function handleMonasteryBuild(
   return {
     actionSuccessful: true,
     resourcesSpent: { food: 0, wood: 4, ore: 2, gold: 5 }
+  };
+}
+
+function handleWarshipUpgrade(
+  player: Player,
+  action: BuildAction,
+  logFn: (type: string, content: string) => void,
+  reasoningText: string
+): BuildActionResult {
+  // Check if player can afford warship upgrade: 2 Wood + 1 Ore + 1 Gold (according to rules)
+  if (player.resources.wood < 2 || player.resources.ore < 1 || player.resources.gold < 1) {
+    logFn("system", `Cannot afford warship upgrade - requires 2 Wood + 1 Ore + 1 Gold.${reasoningText}`);
+    return {
+      actionSuccessful: false,
+      reason: "Insufficient resources"
+    };
+  }
+
+  // Check if player already has warship upgrade (max 1 per player)
+  const hasWarshipUpgrade = player.buildings.includes("warshipUpgrade");
+  if (hasWarshipUpgrade) {
+    logFn("system", `Cannot build warship upgrade - player already has one.${reasoningText}`);
+    return {
+      actionSuccessful: false,
+      reason: "Already has warship upgrade"
+    };
+  }
+
+  // Deduct resources
+  player.resources.wood -= 2;
+  player.resources.ore -= 1;
+  player.resources.gold -= 1;
+
+  // Add warship upgrade to player's buildings
+  player.buildings.push("warshipUpgrade");
+
+  logFn(
+    "system",
+    `Built warship upgrade for 2 Wood + 1 Ore + 1 Gold, using die value [${action.diceValueUsed}]. All boats are now warships.${reasoningText}`
+  );
+
+  return {
+    actionSuccessful: true,
+    resourcesSpent: { food: 0, wood: 2, ore: 1, gold: 1 }
   };
 } 

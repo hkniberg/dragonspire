@@ -36,10 +36,11 @@ export class ClaudePlayerAgent implements PlayerAgent {
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
         diceValues: number[],
+        turnNumber: number,
         thinkingLogger?: (content: string) => void,
     ): Promise<string | undefined> {
         try {
-            const userMessage = await this.prepareAssessmentMessage(gameState, gameLog, diceValues);
+            const userMessage = await this.prepareAssessmentMessage(gameState, gameLog, diceValues, turnNumber);
 
             // Get text response for strategic assessment
             const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 1024, 2000, thinkingLogger);
@@ -128,6 +129,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
         diceRolls: number[],
+        turnNumber: number,
     ): Promise<string> {
         const boardState = stringifyGameState(gameState);
         const gameLogText = this.formatGameLogForPrompt(gameLog);
@@ -137,6 +139,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             boardState: boardState,
             gameLog: gameLogText,
             diceValues: diceRolls.join(", "),
+            turnNumber: turnNumber,
             extraInstructions: this.getExtraInstructionsSection(gameState),
         };
 
@@ -161,6 +164,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             boardState: boardState,
             turnNumber: turnContext.turnNumber,
             remainingDice: turnContext.remainingDiceValues.join(", "),
+            availableBuildActions: this.buildAvailableBuildActionsSummary(gameState.getCurrentPlayer()),
             extraInstructions: this.getExtraInstructionsSection(gameState)
         };
 
@@ -285,6 +289,63 @@ export class ClaudePlayerAgent implements PlayerAgent {
         }
 
         return buildingSummaries.join("\n");
+    }
+
+    private buildAvailableBuildActionsSummary(player: Player): string {
+        const availableActions: string[] = [];
+        const { resources } = player;
+
+        // Check Blacksmith (2 Food + 2 Ore, max 1 per player)
+        const hasBlacksmith = player.buildings.includes("blacksmith");
+        if (!hasBlacksmith && resources.food >= 2 && resources.ore >= 2) {
+            availableActions.push("blacksmith");
+        }
+
+        // Check Market (2 Food + 2 Wood, max 1 per player)
+        const hasMarket = player.buildings.includes("market");
+        if (!hasMarket && resources.food >= 2 && resources.wood >= 2) {
+            availableActions.push("market");
+        }
+
+        // Check Chapel (3 Wood + 4 Gold, only once per player)
+        const hasChapel = player.buildings.includes("chapel");
+        const hasMonastery = player.buildings.includes("monastery");
+        if (!hasChapel && !hasMonastery && resources.wood >= 3 && resources.gold >= 4) {
+            availableActions.push("chapel");
+        }
+
+        // Check Monastery upgrade (4 Wood + 5 Gold + 2 Ore, requires chapel)
+        if (hasChapel && !hasMonastery && resources.wood >= 4 && resources.gold >= 5 && resources.ore >= 2) {
+            availableActions.push("upgradeChapelToMonastery");
+        }
+
+        // Check Champion recruitment (max 3 total)
+        const currentChampionCount = player.champions.length;
+        if (currentChampionCount < 3) {
+            if (currentChampionCount === 1 && resources.food >= 3 && resources.gold >= 3 && resources.ore >= 1) {
+                availableActions.push("recruitChampion");
+            } else if (currentChampionCount === 2 && resources.food >= 6 && resources.gold >= 6 && resources.ore >= 3) {
+                availableActions.push("recruitChampion");
+            }
+        }
+
+        // Check Boat building (max 2 boats total)
+        const currentBoatCount = player.boats.length;
+        if (currentBoatCount < 2 && resources.wood >= 2 && resources.gold >= 2) {
+            availableActions.push("buildBoat");
+        }
+
+        // Check Warship upgrade (2 Wood + 1 Ore + 1 Gold, max 1 per player)
+        const hasWarshipUpgrade = player.buildings.includes("warshipUpgrade");
+        if (!hasWarshipUpgrade && resources.wood >= 2 && resources.ore >= 1 && resources.gold >= 1) {
+            availableActions.push("warshipUpgrade");
+        }
+
+        if (availableActions.length === 0) {
+            return "You cannot afford any build actions yet.";
+        }
+
+        return `You can currently afford build actions: ${availableActions.join(", ")}.`;
     }
 
     private getExtraInstructionsSection(gameState: GameState): string {

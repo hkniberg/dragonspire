@@ -25,7 +25,8 @@ export class RandomPlayerAgent implements PlayerAgent {
   async makeStrategicAssessment(
     gameState: GameState,
     gameLog: readonly GameLogEntry[],
-    diceRolls?: number[],
+    diceRolls: number[],
+    turnNumber: number,
     thinkingLogger?: (content: string) => void,
   ): Promise<string | undefined> {
     // RandomPlayer doesn't provide strategic assessments

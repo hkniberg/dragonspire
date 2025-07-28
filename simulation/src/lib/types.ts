@@ -156,4 +156,4 @@ export interface GameLogEntry {
 /**
  * Types of buildings that can be constructed in a player's castle
  */
-export type BuildingType = "blacksmith" | "market" | "chapel" | "monastery";
+export type BuildingType = "blacksmith" | "market" | "chapel" | "monastery" | "warshipUpgrade";

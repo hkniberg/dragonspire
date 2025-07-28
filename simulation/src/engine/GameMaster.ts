@@ -94,7 +94,7 @@ export class GameMaster {
 
     // Step 2: Ask player for strategic assessment (strategic reflection) - now with dice context
     const thinkingLogger = (content: string) => this.addGameLogEntry("thinking", content);
-    const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues, thinkingLogger);
+    const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues, this.gameState.currentRound, thinkingLogger);
     if (strategicAssessment) {
       this.addGameLogEntry("assessment", strategicAssessment);
     }

@@ -29,6 +29,7 @@ export interface PlayerAgent {
     gameState: GameState,
     gameLog: readonly GameLogEntry[],
     diceRolls: number[],
+    turnNumber: number,
     thinkingLogger?: (content: string) => void,
   ): Promise<string | undefined>;
 
