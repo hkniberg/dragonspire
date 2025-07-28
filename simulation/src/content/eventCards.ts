@@ -72,7 +72,7 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
     name: "Druid rampage",
     tier: 2,
     description:
-      "A *wild-eyed Druid* hands you a **runed dagger**. `+1 might`. Once you leave, he turns into a *Bear* `A:5`.",
+      "A *wild-eyed Druid* hands you a **runed dagger**. `+1 might`. Once you leave, he turns into a *Bear*.",
     count: 1,
   },
   {

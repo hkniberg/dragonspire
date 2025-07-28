@@ -5,6 +5,7 @@ import { Card } from "@/lib/cards";
 import { EventCardResult, GameLogEntry, Monster, Player, Tile } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { resolveMonsterPlacementAndCombat } from "./combatHandler";
+import { handleDruidRampage } from "./eventCards/druidRampageHandler";
 import { handleHungryPests } from "./eventCards/hungryPestsHandler";
 import { handleLandslide } from "./eventCards/landslideHandler";
 import { handleMarketDay } from "./eventCards/marketDayHandler";
@@ -112,6 +113,7 @@ export async function handleMonsterCard(
 export async function handleEventCardFromAdventure(
   cardId: string,
   gameState: GameState,
+  tile: Tile,
   player: Player,
   playerAgent: PlayerAgent,
   championId: number,
@@ -148,6 +150,8 @@ export async function handleEventCardFromAdventure(
       eventResult = handleLandslide(gameState, player, championId, logFn);
     } else if (cardId === "you-got-riches") {
       eventResult = handleYouGotRiches(gameState, logFn);
+    } else if (cardId === "druid-rampage") {
+      eventResult = await handleDruidRampage(gameState, tile, player, playerAgent, championId, logFn, thinkingLogger);
     } else {
       // Other event cards not yet implemented
       const message = `Event card ${cardId} drawn, but not yet implemented`;
@@ -283,7 +287,7 @@ export async function handleAdventureCard(
       return await handleMonsterCard(cardId, gameState, tile, player, championId, logFn);
 
     case "event":
-      return await handleEventCardFromAdventure(cardId, gameState, player, playerAgent, championId, gameLog, logFn, thinkingLogger, getPlayerAgent);
+      return await handleEventCardFromAdventure(cardId, gameState, tile, player, playerAgent, championId, gameLog, logFn, thinkingLogger, getPlayerAgent);
 
     case "treasure":
       return await handleTreasureCard(cardId, gameState, tile, player, playerAgent, championId, gameLog, logFn, thinkingLogger);
