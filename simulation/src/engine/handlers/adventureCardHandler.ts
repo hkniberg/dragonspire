@@ -5,6 +5,7 @@ import { Monster, Player, Tile } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { resolveMonsterPlacementAndCombat } from "./combatHandler";
 import { EventCardResult, handleEventCard } from "./eventCardHandler";
+import { handleTreasureCard as handleTreasureCardFromHandler } from "./treasureCardHandler";
 
 export interface AdventureCardResult {
   cardProcessed: boolean;
@@ -156,9 +157,6 @@ export async function handleTreasureCard(
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void
 ): Promise<AdventureCardResult> {
-  // Import the new treasure card handler
-  const { handleTreasureCard: handleTreasureCardFromHandler } = await import("./treasureCardHandler");
-
   const result = await handleTreasureCardFromHandler(
     cardId,
     gameState,

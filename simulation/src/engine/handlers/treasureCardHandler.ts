@@ -7,8 +7,6 @@ import { handleMysteriousRing } from "./mysteriousRingHandler";
 export interface TreasureCardResult {
   cardProcessed: boolean;
   cardId?: string;
-  treasureName?: string;
-  effectApplied?: string;
   errorMessage?: string;
 }
 
@@ -73,9 +71,7 @@ async function handleBrokenShield(
     logFn("event", `Champion${championId} found a Broken Shield! Not enough ore (2 required) for the might option, so automatically gained +1 ore.`);
     return {
       cardProcessed: true,
-      cardId: "broken-shield",
-      treasureName: "Broken Shield",
-      effectApplied: "Gained +1 ore (auto-chosen due to insufficient ore)"
+      cardId: "broken-shield"
     };
   }
 
@@ -103,9 +99,7 @@ async function handleBrokenShield(
     logFn("event", `Champion${championId} chose to gain +1 ore from the Broken Shield.`);
     return {
       cardProcessed: true,
-      cardId: "broken-shield",
-      treasureName: "Broken Shield",
-      effectApplied: "Gained +1 ore"
+      cardId: "broken-shield"
     };
   } else if (decision.choice.id === "gain_might") {
     player.resources.ore -= 2;
@@ -113,9 +107,7 @@ async function handleBrokenShield(
     logFn("event", `Champion${championId} spent 2 ore to gain +1 might from the Broken Shield.`);
     return {
       cardProcessed: true,
-      cardId: "broken-shield",
-      treasureName: "Broken Shield",
-      effectApplied: "Spent 2 ore to gain +1 might"
+      cardId: "broken-shield"
     };
   } else {
     const errorMessage = `Invalid choice for broken shield: ${decision.choice.id}`;
@@ -157,9 +149,7 @@ async function handleRustySword(
     logFn("event", `Champion${championId} picked up a Rusty sword (+2 might, breaks after one fight).`);
     return {
       cardProcessed: true,
-      cardId: "rusty-sword",
-      treasureName: "Rusty sword",
-      effectApplied: "Added to inventory (+2 might, breaks after one fight)"
+      cardId: "rusty-sword"
     };
   }
 
@@ -207,9 +197,7 @@ async function handleRustySword(
     logFn("event", `Champion${championId} left the Rusty sword on the ground.`);
     return {
       cardProcessed: true,
-      cardId: "rusty-sword",
-      treasureName: "Rusty sword",
-      effectApplied: "Left on ground"
+      cardId: "rusty-sword"
     };
   } else {
     // Drop an existing item and take the treasure
@@ -233,9 +221,7 @@ async function handleRustySword(
     logFn("event", `Champion${championId} dropped ${getItemName(itemToDrop)} and picked up the Rusty sword (+2 might, breaks after one fight).`);
     return {
       cardProcessed: true,
-      cardId: "rusty-sword",
-      treasureName: "Rusty sword",
-      effectApplied: "Dropped item and picked up treasure"
+      cardId: "rusty-sword"
     };
   }
 }
@@ -259,8 +245,7 @@ async function handleGenericTreasure(
     logFn("event", `${treasureCard.name} effect: ${treasureCard.description}`);
     return {
       cardProcessed: true,
-      cardId: treasureCard.id,
-      treasureName: treasureCard.name
+      cardId: treasureCard.id
     };
   }
 
@@ -282,9 +267,7 @@ async function handleGenericTreasure(
     logFn("event", `Champion${championId} picked up ${treasureCard.name}.`);
     return {
       cardProcessed: true,
-      cardId: treasureCard.id,
-      treasureName: treasureCard.name,
-      effectApplied: "Added to inventory"
+      cardId: treasureCard.id
     };
   }
 
@@ -332,9 +315,7 @@ async function handleGenericTreasure(
     logFn("event", `Champion${championId} left ${treasureCard.name} on the ground.`);
     return {
       cardProcessed: true,
-      cardId: treasureCard.id,
-      treasureName: treasureCard.name,
-      effectApplied: "Left on ground"
+      cardId: treasureCard.id
     };
   } else {
     // Drop an existing item and take the treasure
@@ -358,9 +339,7 @@ async function handleGenericTreasure(
     logFn("event", `Champion${championId} dropped ${getItemName(itemToDrop)} and picked up ${treasureCard.name}.`);
     return {
       cardProcessed: true,
-      cardId: treasureCard.id,
-      treasureName: treasureCard.name,
-      effectApplied: "Dropped item and picked up treasure"
+      cardId: treasureCard.id
     };
   }
 }
