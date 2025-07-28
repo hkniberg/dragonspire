@@ -36,9 +36,9 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
     name: "Thug Ambush",
     tier: 1,
     description: `Roll \`1+D3\`:  
-**(1)** They steal \`1 gold\`  
-**(2)** Fight *bandit* \`might 3\`  
-**(3)** You scare them off \`+1 fame\``,
+**(1)** They steal \`1 gold\` (if you have any)  
+**(2)** Fight *bandit* \`might 3\`, if you win, gain \`1 fame\` and \`2 gold\`  
+**(3)** You scare them off and gain \`1 fame\``,
     count: 2,
   },
   {
@@ -46,9 +46,9 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
     name: "Landslide",
     tier: 1,
     description: `Roll \`1+D3\`:  
-**(1)** Run back to *start*  
-**(2)** Move to nearest *selected tile*  
-**(3)** Miracle find \`+2 ore\``,
+**(1)** Flee to your **home tile**  
+**(2)** Flee to your nearest *claimed tile*  
+**(3)** Miracle! You survive and find \`+2 ore\``,
     count: 2,
   },
   {

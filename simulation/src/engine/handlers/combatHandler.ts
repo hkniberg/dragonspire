@@ -440,6 +440,114 @@ export async function resolveChampionVsChampionCombat(
 }
 
 /**
+ * Core champion vs monster combat logic (shared between immediate and tile-based combat)
+ */
+async function performChampionVsMonsterCombat(
+  gameState: GameState,
+  monster: Monster,
+  player: Player,
+  championId: number,
+  position: { row: number; col: number },
+  logFn: (type: string, content: string) => void
+): Promise<{
+  championWins: boolean;
+  combatDetails: string;
+  itemsToRemove: CarriableItem[];
+}> {
+  const champion = gameState.getChampion(player.name, championId);
+
+  // Calculate item effects
+  const { mightBonus, itemsToRemove } = calculateItemEffects(champion, logFn, player.might, monster.might, false);
+
+  // Check for spear bonus against beasts
+  const hasSpear = champion?.items.some(item => item.traderItem?.id === "spear") || false;
+  const isFightingBeast = monster.isBeast || false;
+  if (hasSpear && isFightingBeast) {
+    logFn("combat", `Spear provides +1 might against ${monster.name} (beast)`);
+  }
+
+  // Get combat support from adjacent units
+  const supportBonus = gameState.getCombatSupport(player.name, position);
+  if (supportBonus > 0) {
+    logFn("combat", `Combat support: +${supportBonus} might from adjacent units`);
+  }
+
+  // Roll dice for champion vs monster battle
+  const championRoll = rollD3();
+  const championTotal = player.might + championRoll + mightBonus + supportBonus;
+  const championWins = championTotal >= monster.might;
+
+  // Create combat details string (rewards will be added by calling function)
+  const championBase = player.might + championRoll + mightBonus;
+  const combatDetails = championWins
+    ? `Defeated ${monster.name} (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${monster.might})`
+    : `Fought ${monster.name}, but was defeated (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${monster.might})`;
+
+  return { championWins, combatDetails, itemsToRemove };
+}
+
+/**
+ * Handle immediate combat encounters without placing monsters on tiles (used for events)
+ */
+export async function resolveImmediateCombat(
+  gameState: GameState,
+  monster: Monster,
+  player: Player,
+  championId: number,
+  position: { row: number; col: number },
+  logFn: (type: string, content: string) => void
+): Promise<CombatResult> {
+  const champion = gameState.getChampion(player.name, championId);
+
+  const { championWins, combatDetails, itemsToRemove } = await performChampionVsMonsterCombat(
+    gameState, monster, player, championId, position, logFn
+  );
+
+  if (championWins) {
+    // Champion won - award fame and resources (monster not placed on board)
+    const fameAwarded = monster.fame || 0;
+    player.fame += fameAwarded;
+    player.resources.food += monster.resources.food;
+    player.resources.wood += monster.resources.wood;
+    player.resources.ore += monster.resources.ore;
+    player.resources.gold += monster.resources.gold;
+
+    const fullCombatDetails = `${combatDetails}, gained ${fameAwarded} fame and got ${formatResources(monster.resources)}`;
+    logFn("combat", fullCombatDetails);
+
+    // Remove items that break after combat
+    removeBrokenItems(champion, itemsToRemove, logFn);
+
+    // Track combat statistics
+    player.statistics.championVsMonsterWins += 1;
+
+    return {
+      combatOccurred: true,
+      victory: true,
+      combatDetails: fullCombatDetails
+    };
+  } else {
+    // Champion lost - apply defeat effects immediately
+    logFn("combat", combatDetails);
+
+    // Remove items that break after combat (even if defeated)
+    removeBrokenItems(champion, itemsToRemove, logFn);
+
+    // Apply defeat effects internally
+    await applyChampionDefeat(gameState, player, championId, combatDetails, logFn);
+
+    // Track combat statistics
+    player.statistics.championVsMonsterLosses += 1;
+
+    return {
+      combatOccurred: true,
+      defeat: true,
+      combatDetails
+    };
+  }
+}
+
+/**
  * Handle champion vs monster combat
  */
 export async function resolveChampionVsMonsterCombat(
@@ -456,26 +564,9 @@ export async function resolveChampionVsMonsterCombat(
   const monster = tile.monster;
   const champion = gameState.getChampion(player.name, championId);
 
-  // Calculate item effects
-  const { mightBonus, itemsToRemove } = calculateItemEffects(champion, logFn, player.might, monster.might, false);
-
-  // Check for spear bonus against beasts (additional logic specific to monster combat)
-  const hasSpear = champion?.items.some(item => item.traderItem?.id === "spear") || false;
-  const isFightingBeast = monster.isBeast || false;
-  if (hasSpear && isFightingBeast) {
-    logFn("combat", `Spear provides +1 might against ${monster.name} (beast)`);
-  }
-
-  // Get combat support from adjacent units
-  const supportBonus = gameState.getCombatSupport(player.name, tile.position);
-  if (supportBonus > 0) {
-    logFn("combat", `Combat support: +${supportBonus} might from adjacent units`);
-  }
-
-  // Roll dice for champion vs monster battle
-  const championRoll = rollD3();
-  const championTotal = player.might + championRoll + mightBonus + supportBonus;
-  const championWins = championTotal >= monster.might;
+  const { championWins, combatDetails, itemsToRemove } = await performChampionVsMonsterCombat(
+    gameState, monster, player, championId, tile.position, logFn
+  );
 
   if (championWins) {
     // Champion won - award fame and resources, remove monster
@@ -489,9 +580,8 @@ export async function resolveChampionVsMonsterCombat(
     // Remove monster from tile
     tile.monster = undefined;
 
-    const championBase = player.might + championRoll + mightBonus;
-    const combatDetails = `Defeated ${monster.name} (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${monster.might}), gained ${fameAwarded} fame and got ${formatResources(monster.resources)}`;
-    logFn("combat", combatDetails);
+    const fullCombatDetails = `${combatDetails}, gained ${fameAwarded} fame and got ${formatResources(monster.resources)}`;
+    logFn("combat", fullCombatDetails);
 
     // Remove items that break after combat
     removeBrokenItems(champion, itemsToRemove, logFn);
@@ -502,12 +592,11 @@ export async function resolveChampionVsMonsterCombat(
     return {
       combatOccurred: true,
       victory: true,
-      combatDetails
+      combatDetails: fullCombatDetails
     };
   } else {
     // Champion lost - monster stays on tile, apply defeat effects immediately
-    const championBase = player.might + championRoll + mightBonus;
-    const combatDetails = `Fought ${monster.name}, but was defeated (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${monster.might})`;
+    logFn("combat", combatDetails);
 
     // Remove items that break after combat (even if defeated)
     removeBrokenItems(champion, itemsToRemove, logFn);
