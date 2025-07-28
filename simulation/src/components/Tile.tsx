@@ -214,6 +214,10 @@ export const TileComponent = ({
     explored: tile.explored || debugMode,
   };
 
+  // Check if tile is blockaded (opposing knight is present on a claimed tile)
+  const isBlockaded =
+    !!effectiveTile.claimedBy && championsOnTile.some((champion) => champion.playerName !== effectiveTile.claimedBy);
+
   const specialLabel = getSpecialLocationLabel(effectiveTile);
 
   // Determine border color - use tile's borderColor only (no fallback)
@@ -263,7 +267,7 @@ ${
         .join(", ")}${effectiveTile.isStarred ? " ⭐" : ""}`
     : ""
 }
-${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}` : ""}${
+${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}${isBlockaded ? " (BLOCKADED)" : ""}` : ""}${
         effectiveTile.monster && effectiveTile.explored
           ? `\nMonster: ${effectiveTile.monster.name} (Might: ${effectiveTile.monster.might})`
           : ""
@@ -347,7 +351,7 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}` : ""}
             left: "4px",
           }}
         >
-          <ClaimFlag playerName={effectiveTile.claimedBy} getPlayerColor={getPlayerColor} />
+          <ClaimFlag playerName={effectiveTile.claimedBy} getPlayerColor={getPlayerColor} isBlockaded={isBlockaded} />
         </div>
       )}
 

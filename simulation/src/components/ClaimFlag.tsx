@@ -5,9 +5,10 @@ interface ClaimFlagProps {
     light: string;
     dark: string;
   };
+  isBlockaded?: boolean;
 }
 
-export const ClaimFlag = ({ playerName, getPlayerColor }: ClaimFlagProps) => {
+export const ClaimFlag = ({ playerName, getPlayerColor, isBlockaded = false }: ClaimFlagProps) => {
   const playerColors = getPlayerColor(playerName);
 
   return (
@@ -17,6 +18,7 @@ export const ClaimFlag = ({ playerName, getPlayerColor }: ClaimFlagProps) => {
         height: "24px",
         display: "flex",
         alignItems: "flex-start",
+        position: "relative",
       }}
     >
       {/* Flag pole */}
@@ -38,6 +40,32 @@ export const ClaimFlag = ({ playerName, getPlayerColor }: ClaimFlagProps) => {
           borderBottom: "6px solid transparent",
         }}
       />
+      {/* Cross-out overlay when blockaded */}
+      {isBlockaded && (
+        <div
+          style={{
+            position: "absolute",
+            top: "0",
+            left: "0",
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              height: "3px",
+              backgroundColor: "#FF0000",
+              transform: "rotate(-45deg)",
+              boxShadow: "0 0 2px rgba(0,0,0,0.5)",
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 };
