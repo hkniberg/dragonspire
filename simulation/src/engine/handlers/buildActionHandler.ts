@@ -15,16 +15,18 @@ export function handleBuildAction(
 ): BuildActionResult {
   const reasoningText = reasoning ? ` Reason: ${reasoning}.` : "";
 
-  if (action.buildingType === "blacksmith") {
+  if (action.buildActionType === "blacksmith") {
     return handleBlacksmithBuild(player, action, logFn, reasoningText);
-  } else if (action.buildingType === "market") {
+  } else if (action.buildActionType === "market") {
     return handleMarketBuild(player, action, logFn, reasoningText);
-  } else if (action.buildingType === "recruitChampion") {
+  } else if (action.buildActionType === "recruitChampion") {
     return handleChampionRecruitment(player, action, logFn, reasoningText);
+  } else if (action.buildActionType === "buildBoat") {
+    return handleBoatBuild(player, action, logFn, reasoningText);
   } else {
     return {
       actionSuccessful: false,
-      reason: `Unknown building type: ${action.buildingType}`
+      reason: `Unknown building type: ${action.buildActionType}`
     };
   }
 }
@@ -45,7 +47,7 @@ function handleBlacksmithBuild(
   }
 
   // Check if player already has a blacksmith (max 1 per player)
-  const hasBlacksmith = player.buildings.some(building => building.type === "blacksmith");
+  const hasBlacksmith = player.buildings.includes("blacksmith");
   if (hasBlacksmith) {
     logFn("system", `Cannot build blacksmith - player already has one.${reasoningText}`);
     return {
@@ -59,9 +61,7 @@ function handleBlacksmithBuild(
   player.resources.ore -= 2;
 
   // Add blacksmith to player's buildings
-  player.buildings.push({
-    type: "blacksmith"
-  });
+  player.buildings.push("blacksmith");
 
   logFn(
     "system",
@@ -90,7 +90,7 @@ function handleMarketBuild(
   }
 
   // Check if player already has a market (max 1 per player)
-  const hasMarket = player.buildings.some(building => building.type === "market");
+  const hasMarket = player.buildings.includes("market");
   if (hasMarket) {
     logFn("system", `Cannot build market - player already has one.${reasoningText}`);
     return {
@@ -104,9 +104,7 @@ function handleMarketBuild(
   player.resources.wood -= 2;
 
   // Add market to player's buildings
-  player.buildings.push({
-    type: "market"
-  });
+  player.buildings.push("market");
 
   logFn(
     "system",
@@ -187,5 +185,55 @@ function handleChampionRecruitment(
   return {
     actionSuccessful: true,
     resourcesSpent: { food: cost.food, wood: 0, ore: cost.ore, gold: cost.gold }
+  };
+}
+
+function handleBoatBuild(
+  player: Player,
+  action: BuildAction,
+  logFn: (type: string, content: string) => void,
+  reasoningText: string
+): BuildActionResult {
+  // Check if player can afford boat: 2 Wood + 2 Gold (according to rules)
+  if (player.resources.wood < 2 || player.resources.gold < 2) {
+    logFn("system", `Cannot afford boat - requires 2 Wood + 2 Gold.${reasoningText}`);
+    return {
+      actionSuccessful: false,
+      reason: "Insufficient resources"
+    };
+  }
+
+  // Check if player already has maximum boats (max 2 boats total)
+  const currentBoatCount = player.boats.length;
+  if (currentBoatCount >= 2) {
+    logFn("system", `Cannot build boat - already have maximum of 2 boats.${reasoningText}`);
+    return {
+      actionSuccessful: false,
+      reason: "Maximum boats reached"
+    };
+  }
+
+  // Deduct resources
+  player.resources.wood -= 2;
+  player.resources.gold -= 2;
+
+  // Add new boat to player's boats array
+  const newBoatId = currentBoatCount + 1;
+  const newBoat = {
+    id: newBoatId,
+    playerName: player.name,
+    position: player.boats[0].position, // Start in same position as first boat
+  };
+
+  player.boats.push(newBoat);
+
+  logFn(
+    "system",
+    `Built boat ${newBoatId} for 2 Wood + 2 Gold, using die value [${action.diceValueUsed}].${reasoningText}`
+  );
+
+  return {
+    actionSuccessful: true,
+    resourcesSpent: { food: 0, wood: 2, ore: 0, gold: 2 }
   };
 } 

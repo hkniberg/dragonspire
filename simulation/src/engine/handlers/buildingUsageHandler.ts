@@ -29,8 +29,8 @@ export async function handleBuildingUsage(
   };
 
   // Check if player has any usable buildings
-  const hasBlacksmith = player.buildings.some(building => building.type === "blacksmith");
-  const hasMarket = player.buildings.some(building => building.type === "market");
+  const hasBlacksmith = player.buildings.includes("blacksmith");
+  const hasMarket = player.buildings.includes("market");
 
   if (!hasBlacksmith && !hasMarket) {
     return result; // No buildings to use
@@ -41,9 +41,7 @@ export async function handleBuildingUsage(
 
   // Process blacksmith usage
   if (buildingUsageDecision.useBlacksmith) {
-    const blacksmith = player.buildings.find(building => building.type === "blacksmith");
-
-    if (blacksmith && player.resources.gold >= 1 && player.resources.ore >= 2) {
+    if (hasBlacksmith && player.resources.gold >= 1 && player.resources.ore >= 2) {
       // Deduct resources and gain might
       player.resources.gold -= 1;
       player.resources.ore -= 2;
@@ -60,9 +58,7 @@ export async function handleBuildingUsage(
 
   // Process market usage
   if (buildingUsageDecision.sellAtMarket) {
-    const market = player.buildings.find(building => building.type === "market");
-
-    if (market && Object.values(buildingUsageDecision.sellAtMarket).some(amount => amount > 0)) {
+    if (hasMarket && Object.values(buildingUsageDecision.sellAtMarket).some(amount => amount > 0)) {
       for (const [resourceType, amount] of Object.entries(buildingUsageDecision.sellAtMarket)) {
         if (amount > 0) {
           // Check if player has enough of this resource

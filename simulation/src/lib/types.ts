@@ -82,7 +82,7 @@ export interface Player {
   maxClaims: number;
   champions: Champion[];
   boats: Boat[];
-  buildings: Building[]; // Buildings constructed in the player's castle
+  buildings: BuildingType[]; // Buildings constructed in the player's castle
   homePosition: Position;
   extraInstructions?: string; // Optional extra instructions for AI players
 }
@@ -157,10 +157,3 @@ export interface GameLogEntry {
  * Types of buildings that can be constructed in a player's castle
  */
 export type BuildingType = "blacksmith" | "market";
-
-/**
- * Building interface representing a constructed building in a player's castle
- */
-export interface Building {
-  type: BuildingType;
-}

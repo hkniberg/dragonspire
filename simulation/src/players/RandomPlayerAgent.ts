@@ -130,13 +130,13 @@ export class RandomPlayerAgent implements PlayerAgent {
     }
 
     // Check if player has a blacksmith
-    const hasBlacksmith = player.buildings.some(building => building.type === "blacksmith");
+    const hasBlacksmith = player.buildings.includes("blacksmith");
 
     // Check if player can afford blacksmith (1 Gold + 2 Ore according to rules)
     const canAffordBlacksmith = player.resources.gold >= 1 && player.resources.ore >= 2;
 
     // Check if player has a market
-    const hasMarket = player.buildings.some(building => building.type === "market");
+    const hasMarket = player.buildings.includes("market");
 
     // Check if player has resources to sell at market
     const hasResourcesToSell = player.resources.food > 0 || player.resources.wood > 0 || player.resources.ore > 0;
@@ -289,15 +289,15 @@ export class RandomPlayerAgent implements PlayerAgent {
     }
 
     // Check if player already has a blacksmith
-    const hasBlacksmith = player.buildings.some(building => building.type === "blacksmith");
-    const hasMarket = player.buildings.some(building => building.type === "market");
+    const hasBlacksmith = player.buildings.includes("blacksmith");
+    const hasMarket = player.buildings.includes("market");
 
     // Check champion recruitment possibilities
     const currentChampionCount = player.champions.length;
     const canRecruitChampion = currentChampionCount < 3;
 
-    // Randomly choose between blacksmith, market, and champion recruitment (if available)
-    const availableBuildings: ("blacksmith" | "market" | "recruitChampion")[] = [];
+    // Randomly choose between blacksmith, market, champion recruitment, and boat building (if available)
+    const availableBuildings: ("blacksmith" | "market" | "recruitChampion" | "buildBoat")[] = [];
 
     if (!hasBlacksmith && player.resources.food >= 2 && player.resources.ore >= 2) {
       availableBuildings.push("blacksmith");
@@ -315,6 +315,14 @@ export class RandomPlayerAgent implements PlayerAgent {
       }
     }
 
+    // Check boat building possibilities
+    const currentBoatCount = player.boats.length;
+    const canBuildBoat = currentBoatCount < 2 && player.resources.wood >= 2 && player.resources.gold >= 2;
+
+    if (canBuildBoat) {
+      availableBuildings.push("buildBoat");
+    }
+
     if (availableBuildings.length === 0) {
       return null;
     }
@@ -327,7 +335,7 @@ export class RandomPlayerAgent implements PlayerAgent {
       actionType: "buildAction",
       buildAction: {
         diceValueUsed: dieValue,
-        buildingType: buildingType
+        buildActionType: buildingType
       }
     };
   }

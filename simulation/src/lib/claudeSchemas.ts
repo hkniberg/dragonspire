@@ -149,19 +149,19 @@ export const harvestActionSchema = {
  */
 export const buildActionSchema = {
   type: "object",
-  description: "Parameters for buildAction - construct a building in your castle or recruit a champion",
+  description: "Parameters for buildAction - construct a building in your castle or recruit a champion/boat",
   properties: {
     diceValueUsed: {
       type: "number",
       description: "The die value to use for this action",
     },
-    buildingType: {
+    buildActionType: {
       type: "string",
-      enum: ["blacksmith", "market", "recruitChampion"],
+      enum: ["blacksmith", "market", "recruitChampion", "buildBoat"],
       description: "Type of building to construct or action to perform"
     },
   },
-  required: ["diceValueUsed", "buildingType"],
+  required: ["diceValueUsed", "buildActionType"],
 };
 
 /**

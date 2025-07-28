@@ -1,5 +1,5 @@
 import { GameState } from "../game/GameState";
-import { Building, Player, Position, ResourceType, Tile } from "../lib/types";
+import { Player, Position, ResourceType, Tile } from "../lib/types";
 
 export interface Direction {
   row: number;
@@ -287,13 +287,13 @@ export function getUsableBuildings(player: Player): string[] {
   const usableBuildings: string[] = [];
 
   // Check for Blacksmith
-  const hasBlacksmith = player.buildings.some((building: Building) => building.type === "blacksmith");
+  const hasBlacksmith = player.buildings.includes("blacksmith");
   if (hasBlacksmith && player.resources.gold >= 1 && player.resources.ore >= 2) {
     usableBuildings.push("blacksmith");
   }
 
   // Check for Market
-  const hasMarket = player.buildings.some((building: Building) => building.type === "market");
+  const hasMarket = player.buildings.includes("market");
   if (hasMarket) {
     const totalResources = player.resources.food + player.resources.wood + player.resources.ore;
     if (totalResources >= 2) {

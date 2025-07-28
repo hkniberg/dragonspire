@@ -294,7 +294,7 @@ export const PlayerInfoBox = ({
             <div style={{ fontSize: "12px", fontWeight: "bold", marginBottom: "4px", color: "#495057" }}>
               Buildings ({player.buildings.length})
             </div>
-            {player.buildings.map((building, index) => (
+            {player.buildings.map((buildingType, index) => (
               <div
                 key={index}
                 style={{
@@ -304,14 +304,10 @@ export const PlayerInfoBox = ({
                 }}
               >
                 <span style={{ marginRight: "4px", fontSize: "12px" }}>
-                  {building.type === "blacksmith" ? "🔨" : building.type === "market" ? "🏪" : "🏗️"}
+                  {buildingType === "blacksmith" ? "🔨" : buildingType === "market" ? "🏪" : "🏗️"}
                 </span>
                 <span style={{ color: colors.main, fontWeight: "bold", fontSize: "12px" }}>
-                  {building.type === "blacksmith"
-                    ? "Blacksmith"
-                    : building.type === "market"
-                      ? "Market"
-                      : building.type}
+                  {buildingType === "blacksmith" ? "Blacksmith" : buildingType === "market" ? "Market" : buildingType}
                 </span>
               </div>
             ))}
