@@ -821,6 +821,12 @@ export default function GameSimulation() {
             debugMode={debugMode}
             playerConfigs={playerConfigs}
             onExtraInstructionsChange={handleExtraInstructionsChange}
+            onGameStateUpdate={(newGameState) => {
+              setGameState(newGameState);
+              if (gameSession) {
+                gameSession.updateGameState(newGameState);
+              }
+            }}
           />
         ) : simulationState === "setup" ? (
           <div

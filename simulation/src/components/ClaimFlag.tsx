@@ -6,10 +6,75 @@ interface ClaimFlagProps {
     dark: string;
   };
   isBlockaded?: boolean;
+  blockadingPlayer?: string;
 }
 
-export const ClaimFlag = ({ playerName, getPlayerColor, isBlockaded = false }: ClaimFlagProps) => {
+export const ClaimFlag = ({ playerName, getPlayerColor, isBlockaded = false, blockadingPlayer }: ClaimFlagProps) => {
   const playerColors = getPlayerColor(playerName);
+  const blockadingColors = blockadingPlayer ? getPlayerColor(blockadingPlayer) : null;
+
+  if (isBlockaded) {
+    return (
+      <div
+        style={{
+          width: "40px",
+          height: "24px",
+          display: "flex",
+          alignItems: "center",
+          position: "relative",
+        }}
+      >
+        {/* Rotated flag container */}
+        <div
+          style={{
+            transform: "rotate(90deg)",
+            transformOrigin: "center",
+            display: "flex",
+            alignItems: "flex-start",
+          }}
+        >
+          {/* Flag pole */}
+          <div
+            style={{
+              width: "3px",
+              height: "24px",
+              backgroundColor: "#8B4513",
+              marginRight: "2px",
+            }}
+          />
+          {/* Flag */}
+          <div
+            style={{
+              width: "0",
+              height: "0",
+              borderLeft: `18px solid ${playerColors.main}`,
+              borderTop: "6px solid transparent",
+              borderBottom: "6px solid transparent",
+            }}
+          />
+        </div>
+        {/* Blockade indicator */}
+        <div
+          style={{
+            marginLeft: "6px",
+            padding: "2px 6px",
+            borderRadius: "4px",
+            backgroundColor: blockadingColors?.main || "#FF0000",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "8px",
+            fontWeight: "bold",
+            color: "#FFFFFF",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          BLOCKADE
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -40,32 +105,6 @@ export const ClaimFlag = ({ playerName, getPlayerColor, isBlockaded = false }: C
           borderBottom: "6px solid transparent",
         }}
       />
-      {/* Cross-out overlay when blockaded */}
-      {isBlockaded && (
-        <div
-          style={{
-            position: "absolute",
-            top: "0",
-            left: "0",
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            pointerEvents: "none",
-          }}
-        >
-          <div
-            style={{
-              width: "100%",
-              height: "3px",
-              backgroundColor: "#FF0000",
-              transform: "rotate(-45deg)",
-              boxShadow: "0 0 2px rgba(0,0,0,0.5)",
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 };

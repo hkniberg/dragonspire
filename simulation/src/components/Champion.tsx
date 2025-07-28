@@ -1,8 +1,11 @@
+import React from "react";
 import type { Champion } from "../lib/types";
 
 export const ChampionComponent = ({
   champion,
   getPlayerColor,
+  onDragStart,
+  onDragEnd,
 }: {
   champion: Champion;
   getPlayerColor: (playerName: string) => {
@@ -10,8 +13,23 @@ export const ChampionComponent = ({
     light: string;
     dark: string;
   };
+  onDragStart?: (champion: Champion, event: React.DragEvent) => void;
+  onDragEnd?: (champion: Champion, event: React.DragEvent) => void;
 }) => {
   const playerColors = getPlayerColor(champion.playerName);
+
+  const handleDragStart = (e: React.DragEvent) => {
+    if (onDragStart) {
+      onDragStart(champion, e);
+    }
+    e.dataTransfer.setData("text/plain", JSON.stringify(champion));
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    if (onDragEnd) {
+      onDragEnd(champion, e);
+    }
+  };
 
   return (
     <div
@@ -29,8 +47,12 @@ export const ChampionComponent = ({
         border: "3px solid white",
         boxShadow: "0 3px 6px rgba(0,0,0,0.4)",
         position: "relative",
+        cursor: "grab",
       }}
-      title={`Champion ${champion.id} (${champion.playerName})`}
+      title={`Champion ${champion.id} (${champion.playerName}) - Drag to move`}
+      draggable={true}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
     >
       <img
         src="/knights/knight.png"

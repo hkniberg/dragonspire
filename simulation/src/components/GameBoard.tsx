@@ -1,4 +1,5 @@
-import type { GameState } from "../game/GameState";
+import { GameState } from "../game/GameState";
+import type { Champion, Tile } from "../lib/types";
 import { OceanZoneComponent, oceanZones } from "./OceanZone";
 import { PlayerInfoBox } from "./PlayerInfoBox";
 import { TileComponent } from "./Tile";
@@ -8,6 +9,7 @@ interface GameBoardProps {
   debugMode?: boolean;
   playerConfigs?: { name: string; type: string }[]; // Player configurations to determine types
   onExtraInstructionsChange?: (playerName: string, instructions: string) => void; // Callback for updating extra instructions
+  onGameStateUpdate?: (newGameState: GameState) => void; // Callback for updating game state
 }
 
 // Player color scheme - uses the color stored in the player's profile
@@ -34,11 +36,42 @@ export const GameBoard = ({
   debugMode = false,
   playerConfigs,
   onExtraInstructionsChange,
+  onGameStateUpdate,
 }: GameBoardProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
 
   // Create a getPlayerColor function that has gameState baked in
   const getPlayerColorWithState = (playerName: string) => getPlayerColor(playerName, gameState);
+
+  const handleChampionDrop = (champion: Champion, targetTile: Tile) => {
+    if (!onGameStateUpdate) return;
+
+    // Create a new game state with the champion moved to the target tile
+    const newGameState = new GameState(
+      gameState.board,
+      gameState.players.map((player) => {
+        if (player.name === champion.playerName) {
+          return {
+            ...player,
+            champions: player.champions.map((c) =>
+              c.id === champion.id ? { ...c, position: targetTile.position } : c,
+            ),
+          };
+        }
+        return player;
+      }),
+      gameState.currentPlayerIndex,
+      gameState.currentRound,
+      gameState.gameEnded,
+      gameState.winner,
+    );
+
+    onGameStateUpdate(newGameState);
+  };
+
+  const handleChampionDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+  };
 
   return (
     <div
@@ -144,6 +177,8 @@ export const GameBoard = ({
                   champions={gameState.players.flatMap((player) => player.champions)}
                   debugMode={debugMode}
                   getPlayerColor={getPlayerColorWithState}
+                  onChampionDrop={handleChampionDrop}
+                  onChampionDragOver={handleChampionDragOver}
                 />
               )),
             )}

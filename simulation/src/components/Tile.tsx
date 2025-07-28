@@ -192,6 +192,8 @@ export const TileComponent = ({
   champions,
   debugMode = false,
   getPlayerColor,
+  onChampionDrop,
+  onChampionDragOver,
 }: {
   tile: Tile;
   champions: Champion[];
@@ -201,6 +203,8 @@ export const TileComponent = ({
     light: string;
     dark: string;
   };
+  onChampionDrop?: (champion: Champion, targetTile: Tile) => void;
+  onChampionDragOver?: (event: React.DragEvent) => void;
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -215,8 +219,11 @@ export const TileComponent = ({
   };
 
   // Check if tile is blockaded (opposing knight is present on a claimed tile)
-  const isBlockaded =
-    !!effectiveTile.claimedBy && championsOnTile.some((champion) => champion.playerName !== effectiveTile.claimedBy);
+  const blockadingChampion = effectiveTile.claimedBy
+    ? championsOnTile.find((champion) => champion.playerName !== effectiveTile.claimedBy)
+    : null;
+  const isBlockaded = !!blockadingChampion;
+  const blockadingPlayer = blockadingChampion?.playerName;
 
   const specialLabel = getSpecialLocationLabel(effectiveTile);
 
@@ -230,6 +237,28 @@ export const TileComponent = ({
     e.stopPropagation();
     if (hasCards) {
       setIsModalOpen(true);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (onChampionDragOver) {
+      onChampionDragOver(e);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    try {
+      const championData = e.dataTransfer.getData("text/plain");
+      if (championData) {
+        const champion = JSON.parse(championData) as Champion;
+        if (onChampionDrop) {
+          onChampionDrop(champion, tile);
+        }
+      }
+    } catch (error) {
+      console.error("Error parsing dropped champion data:", error);
     }
   };
 
@@ -271,13 +300,15 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}${isBlo
         effectiveTile.monster && effectiveTile.explored
           ? `\nMonster: ${effectiveTile.monster.name} (Might: ${effectiveTile.monster.might})`
           : ""
-      }${debugMode && !tile.explored ? " (DEBUG REVEALED)" : ""}`}
+      }${debugMode && !tile.explored ? " (DEBUG REVEALED)" : ""}\nDrop champions here to move them`}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = "scale(1.1)";
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = "scale(1)";
       }}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
     >
       {/* Main tile symbol - moved to bottom */}
       <div
@@ -351,7 +382,12 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}${isBlo
             left: "4px",
           }}
         >
-          <ClaimFlag playerName={effectiveTile.claimedBy} getPlayerColor={getPlayerColor} isBlockaded={isBlockaded} />
+          <ClaimFlag
+            playerName={effectiveTile.claimedBy}
+            getPlayerColor={getPlayerColor}
+            isBlockaded={isBlockaded}
+            blockadingPlayer={blockadingPlayer}
+          />
         </div>
       )}
 
