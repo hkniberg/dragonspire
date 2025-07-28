@@ -1,5 +1,5 @@
 import { GameState } from "../game/GameState";
-import { Position, ResourceType, Tile } from "../lib/types";
+import { Building, Player, Position, ResourceType, Tile } from "../lib/types";
 
 export interface Direction {
   row: number;
@@ -278,4 +278,28 @@ export function getHarvestableResourcesInfo(gameState: GameState, playerName: st
  */
 export function getHarvestableResources(gameState: GameState, playerName: string): Record<ResourceType, number> {
   return getHarvestableResourcesInfo(gameState, playerName).totalHarvestableResources;
+}
+
+/**
+ * Get a list of buildings that the player can afford to use
+ */
+export function getUsableBuildings(player: Player): string[] {
+  const usableBuildings: string[] = [];
+
+  // Check for Blacksmith
+  const hasBlacksmith = player.buildings.some((building: Building) => building.type === "blacksmith");
+  if (hasBlacksmith && player.resources.gold >= 1 && player.resources.ore >= 2) {
+    usableBuildings.push("blacksmith");
+  }
+
+  // Check for Market
+  const hasMarket = player.buildings.some((building: Building) => building.type === "market");
+  if (hasMarket) {
+    const totalResources = player.resources.food + player.resources.wood + player.resources.ore;
+    if (totalResources >= 2) {
+      usableBuildings.push("market");
+    }
+  }
+
+  return usableBuildings;
 }

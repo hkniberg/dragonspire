@@ -4,12 +4,13 @@ import { getTraderItemById } from "@/content/traderItems";
 import { stringifyGameState } from "@/game/gameStateStringifier";
 import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
-import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
+import { Decision, DecisionContext, GameLogEntry, Player, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
 import { buildingUsageSchema, decisionSchema, diceActionSchema, traderDecisionSchema } from "../lib/claudeSchemas";
 import { TemplateProcessor, TemplateVariables } from "../lib/templateProcessor";
 import { Claude } from "../llm/claude";
 import { PlayerAgent } from "./PlayerAgent";
+import { getUsableBuildings } from "./PlayerUtils";
 
 export class ClaudePlayerAgent implements PlayerAgent {
     private name: string;
@@ -72,23 +73,13 @@ export class ClaudePlayerAgent implements PlayerAgent {
         decisionContext: DecisionContext,
         thinkingLogger?: (content: string) => void,
     ): Promise<Decision> {
-        try {
-            // Prepare decision context message
-            const userMessage = await this.prepareDecisionMessage(gameState, gameLog, decisionContext);
+        // Prepare decision context message
+        const userMessage = await this.prepareDecisionMessage(gameState, gameLog, decisionContext);
 
-            // Get structured JSON response for decision
-            const response = await this.claude.useClaude(userMessage, decisionSchema, 0, 200, thinkingLogger);
+        // Get structured JSON response for decision
+        const response = await this.claude.useClaude(userMessage, decisionSchema, 0, 200, thinkingLogger);
 
-            return response as Decision;
-        } catch (error) {
-            console.error(`${this.name} encountered an error during decision:`, error);
-
-            // Fallback to first available option
-            return {
-                choice: decisionContext.options.length > 0 ? decisionContext.options[0] : null,
-                reasoning: "Error occurred, chose first available option",
-            };
-        }
+        return response as Decision;
     }
 
     async makeTraderDecision(
@@ -97,23 +88,13 @@ export class ClaudePlayerAgent implements PlayerAgent {
         traderContext: TraderContext,
         thinkingLogger?: (content: string) => void,
     ): Promise<TraderDecision> {
-        try {
-            // Prepare trader decision context message
-            const userMessage = await this.prepareTraderDecisionMessage(gameState, gameLog, traderContext);
+        // Prepare trader decision context message
+        const userMessage = await this.prepareTraderDecisionMessage(gameState, gameLog, traderContext);
 
-            // Get structured JSON response for trader decision
-            const response = await this.claude.useClaude(userMessage, traderDecisionSchema, 0, 500, thinkingLogger);
+        // Get structured JSON response for trader decision
+        const response = await this.claude.useClaude(userMessage, traderDecisionSchema, 0, 500, thinkingLogger);
 
-            return response as TraderDecision;
-        } catch (error) {
-            console.error(`${this.name} encountered an error during trader decision:`, error);
-
-            // Fallback to no actions
-            return {
-                actions: [],
-                reasoning: "Error occurred, chose to perform no trader actions",
-            };
-        }
+        return response as TraderDecision;
     }
 
     async useBuilding(
@@ -122,19 +103,25 @@ export class ClaudePlayerAgent implements PlayerAgent {
         playerName: string,
         thinkingLogger?: (content: string) => void,
     ): Promise<BuildingUsageDecision> {
-        try {
-            const userMessage = await this.prepareBuildingUsageMessage(gameState, gameLog, playerName);
-
-            // Get structured JSON response for building usage decision
-            const response = await this.claude.useClaude(userMessage, buildingUsageSchema, 0, 300, thinkingLogger);
-
-            return response as BuildingUsageDecision;
-        } catch (error) {
-            console.error(`${this.name} encountered an error during building usage decision:`, error);
-
-            // Fallback to not using any buildings
-            return { useBlacksmith: false, sellAtMarket: { food: 0, wood: 0, ore: 0 } };
+        const player = gameState.getPlayer(playerName);
+        if (!player) {
+            throw new Error(`Player with name ${playerName} not found`);
         }
+
+        // Check for usable buildings early
+        const usableBuildings = getUsableBuildings(player);
+        if (usableBuildings.length === 0) {
+            // No buildings can be used, return empty decision
+            return {};
+        }
+
+        const userMessage = await this.prepareBuildingUsageMessage(gameState, gameLog, playerName, usableBuildings);
+
+        // Get structured JSON response for building usage decision
+        const response = await this.claude.useClaude(userMessage, buildingUsageSchema, 0, 300, thinkingLogger);
+
+        return response as BuildingUsageDecision;
+
     }
 
     private async prepareAssessmentMessage(
@@ -250,6 +237,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
         playerName: string,
+        usableBuildings: string[],
     ): Promise<string> {
         const player = gameState.getPlayer(playerName);
         if (!player) {
@@ -259,14 +247,44 @@ export class ClaudePlayerAgent implements PlayerAgent {
         const boardState = stringifyGameState(gameState);
         const gameLogText = this.formatGameLogForPrompt(gameLog);
 
+        // Build available buildings summary
+        const availableBuildings = this.buildAvailableBuildingsSummary(player, usableBuildings);
+
         const variables: TemplateVariables = {
             playerName: player.name,
             boardState: boardState,
             gameLog: gameLogText,
+            availableBuildings: availableBuildings,
             extraInstructions: this.getExtraInstructionsSection(gameState),
         };
 
         return await this.templateProcessor.processTemplate("useBuilding", variables);
+    }
+
+    private buildAvailableBuildingsSummary(player: Player, usableBuildings: string[]): string {
+        const buildingSummaries: string[] = [];
+
+        // Check for Blacksmith
+        const hasBlacksmith = player.buildings.some((building: any) => building.type === "blacksmith");
+        if (hasBlacksmith) {
+            const canUseBlacksmith = usableBuildings.includes("blacksmith");
+            const status = canUseBlacksmith ? "Available" : "Cannot use (need 1 Gold + 2 Ore)";
+            buildingSummaries.push(`- Blacksmith: ${status} - Buy 1 Might for 1 Gold + 2 Ore`);
+        }
+
+        // Check for Market
+        const hasMarket = player.buildings.some((building: any) => building.type === "market");
+        if (hasMarket) {
+            const canUseMarket = usableBuildings.includes("market");
+            const status = canUseMarket ? "Available" : "Cannot use (no resources to sell)";
+            buildingSummaries.push(`- Market: ${status} - Sell resources for Gold (2:1 rate)`);
+        }
+
+        if (buildingSummaries.length === 0) {
+            return "You have no buildings that can be used after your turn.";
+        }
+
+        return buildingSummaries.join("\n");
     }
 
     private getExtraInstructionsSection(gameState: GameState): string {
