@@ -877,7 +877,7 @@ export default function GameSimulation() {
             )}
 
             {/* Action Log */}
-            <GameLog gameLog={actionLog} isVisible={showActionLog} />
+            <GameLog gameLog={actionLog} isVisible={showActionLog} players={gameState?.players || []} />
 
             {/* Card Decks */}
             {gameState && (

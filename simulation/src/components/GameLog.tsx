@@ -1,10 +1,12 @@
-import { GameLogEntry, GameLogEntryType } from "@/lib/types";
+import { GameLogEntry, GameLogEntryType, Player } from "@/lib/types";
 import React, { useState } from "react";
 import { LuCopy, LuDownload, LuMaximize2, LuMinimize2 } from "react-icons/lu";
+import { PlayerFilter } from "./PlayerFilter";
 
 interface GameLogProps {
   gameLog: GameLogEntry[];
   isVisible: boolean;
+  players?: Player[];
 }
 
 interface GroupedLogEntry {
@@ -156,19 +158,23 @@ function getEntryColor(type: GameLogEntryType): string {
   }
 }
 
-export const GameLog: React.FC<GameLogProps> = ({ gameLog, isVisible }) => {
+export const GameLog: React.FC<GameLogProps> = ({ gameLog, isVisible, players = [] }) => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [expandedThinking, setExpandedThinking] = useState<Set<number>>(new Set());
+  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
 
   if (!isVisible || gameLog.length === 0) {
     return null;
   }
 
+  // Filter game log entries based on selected player
+  const filteredGameLog = selectedPlayer ? gameLog.filter((entry) => entry.playerName === selectedPlayer) : gameLog;
+
   const convertToMarkdown = (): string => {
     let markdown = "# Game Log\n\n";
     // Filter out thinking entries from markdown export
-    const filteredGameLog = gameLog.filter((entry) => entry.type !== "thinking");
-    const groupedEntries = groupGameLogEntriesByRound(filteredGameLog);
+    const filteredGameLogForExport = filteredGameLog.filter((entry) => entry.type !== "thinking");
+    const groupedEntries = groupGameLogEntriesByRound(filteredGameLogForExport);
 
     groupedEntries.forEach(({ round, entries }) => {
       markdown += `## Round ${round}\n\n`;
@@ -234,7 +240,7 @@ export const GameLog: React.FC<GameLogProps> = ({ gameLog, isVisible }) => {
     zIndex: isMaximized ? 1000 : "auto",
   };
 
-  const groupedEntries = groupGameLogEntriesByRoundAndPlayer(gameLog);
+  const groupedEntries = groupGameLogEntriesByRoundAndPlayer(filteredGameLog);
 
   return (
     <div style={containerStyle}>
@@ -246,7 +252,12 @@ export const GameLog: React.FC<GameLogProps> = ({ gameLog, isVisible }) => {
           marginBottom: "10px",
         }}
       >
-        <h3 style={{ margin: 0, color: "#2c3e50" }}>📋 Game Log</h3>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <h3 style={{ margin: 0, color: "#2c3e50" }}>📋 Game Log</h3>
+          {players.length > 0 && (
+            <PlayerFilter players={players} selectedPlayer={selectedPlayer} onPlayerFilterChange={setSelectedPlayer} />
+          )}
+        </div>
         <div>
           <button
             style={{
