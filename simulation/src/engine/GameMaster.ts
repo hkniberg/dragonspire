@@ -466,6 +466,36 @@ export class GameMaster {
           `Cannot afford blacksmith - requires 2 Food + 2 Ore.${reasoningText}`
         );
       }
+    } else if (action.buildingType === "market") {
+      // Check if player can afford market: 2 Food + 2 Wood (according to rules)
+      if (player.resources.food >= 2 && player.resources.wood >= 2) {
+        // Check if player already has a market (max 1 per player)
+        const hasMarket = player.buildings.some(building => building.type === "market");
+
+        if (hasMarket) {
+          this.addGameLogEntry("system", `Cannot build market - player already has one.${reasoningText}`);
+          return;
+        }
+
+        // Deduct resources
+        player.resources.food -= 2;
+        player.resources.wood -= 2;
+
+        // Add market to player's buildings
+        player.buildings.push({
+          type: "market"
+        });
+
+        this.addGameLogEntry(
+          "system",
+          `Built a market for 2 Food + 2 Wood, using die value [${action.diceValueUsed}].${reasoningText}`
+        );
+      } else {
+        this.addGameLogEntry(
+          "system",
+          `Cannot afford market - requires 2 Food + 2 Wood.${reasoningText}`
+        );
+      }
     }
   }
 
@@ -476,8 +506,9 @@ export class GameMaster {
   ): Promise<void> {
     // Check if player has any usable buildings
     const hasBlacksmith = player.buildings.some(building => building.type === "blacksmith");
+    const hasMarket = player.buildings.some(building => building.type === "market");
 
-    if (!hasBlacksmith) {
+    if (!hasBlacksmith && !hasMarket) {
       return; // No buildings to use
     }
 
@@ -502,6 +533,56 @@ export class GameMaster {
         this.addGameLogEntry(
           "system",
           `Cannot use blacksmith - requires 1 Gold + 2 Ore.`
+        );
+      }
+    }
+
+    // Process market usage
+    if (buildingUsageDecision.useMarket) {
+      const market = player.buildings.find(building => building.type === "market");
+
+      if (market && buildingUsageDecision.marketSellDecisions && buildingUsageDecision.marketSellDecisions.length > 0) {
+        let totalGoldGained = 0;
+        let totalResourcesSold = 0;
+
+        for (const sellDecision of buildingUsageDecision.marketSellDecisions) {
+          const resourceType = sellDecision.resourceType;
+          const amount = sellDecision.amount;
+
+          // Check if player has enough of this resource
+          if (player.resources[resourceType] >= amount) {
+            // Calculate gold gained (2 resources = 1 gold)
+            const goldGained = Math.floor(amount / 2);
+
+            // Deduct resources and add gold
+            player.resources[resourceType] -= amount;
+            player.resources.gold += goldGained;
+
+            totalGoldGained += goldGained;
+            totalResourcesSold += amount;
+
+            this.addGameLogEntry(
+              "system",
+              `Sold ${amount} ${resourceType} for ${goldGained} gold at market.`
+            );
+          } else {
+            this.addGameLogEntry(
+              "system",
+              `Cannot sell ${amount} ${resourceType} - only have ${player.resources[resourceType]}.`
+            );
+          }
+        }
+
+        if (totalGoldGained > 0) {
+          this.addGameLogEntry(
+            "system",
+            `Market transaction complete: sold ${totalResourcesSold} resources for ${totalGoldGained} gold total.`
+          );
+        }
+      } else if (!buildingUsageDecision.marketSellDecisions || buildingUsageDecision.marketSellDecisions.length === 0) {
+        this.addGameLogEntry(
+          "system",
+          `Market is available but no resources were selected for sale.`
         );
       }
     }

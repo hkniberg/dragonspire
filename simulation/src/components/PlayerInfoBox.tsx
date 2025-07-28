@@ -303,9 +303,15 @@ export const PlayerInfoBox = ({
                   alignItems: "center",
                 }}
               >
-                <span style={{ marginRight: "4px", fontSize: "12px" }}>🔨</span>
+                <span style={{ marginRight: "4px", fontSize: "12px" }}>
+                  {building.type === "blacksmith" ? "🔨" : building.type === "market" ? "🏪" : "🏗️"}
+                </span>
                 <span style={{ color: colors.main, fontWeight: "bold", fontSize: "12px" }}>
-                  {building.type === "blacksmith" ? "Blacksmith" : building.type}
+                  {building.type === "blacksmith"
+                    ? "Blacksmith"
+                    : building.type === "market"
+                      ? "Market"
+                      : building.type}
                 </span>
               </div>
             ))}

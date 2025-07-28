@@ -23,6 +23,7 @@ export interface CLIConfig {
   seed?: number;
   startingGold?: number;
   startingFame?: number;
+  startingMight?: number;
   startingFood?: number;
   startingWood?: number;
   startingOre?: number;
@@ -87,7 +88,7 @@ export class CLIRunner {
  * Apply starting resources to all players in the game state
  */
   private static applyStartingResources(gameMaster: GameMaster, config: CLIConfig): void {
-    if (!config.startingGold && !config.startingFame && !config.startingFood && !config.startingWood && !config.startingOre) {
+    if (!config.startingGold && !config.startingFame && !config.startingMight && !config.startingFood && !config.startingWood && !config.startingOre) {
       return;
     }
 
@@ -97,6 +98,9 @@ export class CLIRunner {
     }
     if (config.startingFame) {
       console.log(`  Starting Fame: ${config.startingFame}`);
+    }
+    if (config.startingMight) {
+      console.log(`  Starting Might: ${config.startingMight}`);
     }
     if (config.startingFood) {
       console.log(`  Starting Food: ${config.startingFood}`);
@@ -118,6 +122,9 @@ export class CLIRunner {
       }
       if (config.startingFame) {
         player.fame += config.startingFame;
+      }
+      if (config.startingMight) {
+        player.might += config.startingMight;
       }
       if (config.startingFood) {
         player.resources.food += config.startingFood;
@@ -347,6 +354,10 @@ export class CLIRunner {
           break;
         case "--fame":
           config.startingFame = parseInt(args[i + 1]);
+          i++; // Skip next argument
+          break;
+        case "--might":
+          config.startingMight = parseInt(args[i + 1]);
           i++; // Skip next argument
           break;
         case "--food":

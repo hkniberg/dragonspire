@@ -121,7 +121,6 @@ export class ClaudePlayerAgent implements PlayerAgent {
         thinkingLogger?: (content: string) => void,
     ): Promise<BuildingUsageDecision> {
         try {
-            // Prepare building usage decision message
             const userMessage = await this.prepareBuildingUsageMessage(gameState, gameLog, playerName);
 
             // Define schema for building usage decision
@@ -132,12 +131,35 @@ export class ClaudePlayerAgent implements PlayerAgent {
                         type: "boolean",
                         description: "Whether to use the blacksmith to buy 1 Might for 1 Gold + 2 Ore"
                     },
+                    useMarket: {
+                        type: "boolean",
+                        description: "Whether to use the market to sell resources for gold at 2:1 rate"
+                    },
+                    marketSellDecisions: {
+                        type: "array",
+                        description: "Array of resources to sell at the market (only used if useMarket is true)",
+                        items: {
+                            type: "object",
+                            properties: {
+                                resourceType: {
+                                    type: "string",
+                                    enum: ["food", "wood", "ore"],
+                                    description: "Type of resource to sell"
+                                },
+                                amount: {
+                                    type: "number",
+                                    description: "Amount of this resource to sell"
+                                }
+                            },
+                            required: ["resourceType", "amount"]
+                        }
+                    },
                     reasoning: {
                         type: "string",
                         description: "Brief reasoning for the decision"
                     }
                 },
-                required: ["useBlacksmith"]
+                required: ["useBlacksmith", "useMarket"]
             };
 
             // Get structured JSON response for building usage decision
@@ -148,7 +170,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             console.error(`${this.name} encountered an error during building usage decision:`, error);
 
             // Fallback to not using any buildings
-            return { useBlacksmith: false };
+            return { useBlacksmith: false, useMarket: false };
         }
     }
 

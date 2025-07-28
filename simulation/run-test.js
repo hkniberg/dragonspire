@@ -46,6 +46,25 @@ const args = process.argv.slice(2);
 // Find player arguments (p1=random, p2=claude, etc.)
 const playerArgs = args.filter((arg) => arg.match(/^p[1-4]=(random|claude)$/));
 
+// Find resource arguments (--gold, --fame, --might, --food, --wood, --ore) and their values
+const resourceArgs = [];
+for (let i = 0; i < args.length; i++) {
+  const arg = args[i];
+  if (
+    arg === "--gold" ||
+    arg === "--fame" ||
+    arg === "--might" ||
+    arg === "--food" ||
+    arg === "--wood" ||
+    arg === "--ore"
+  ) {
+    resourceArgs.push(arg);
+    if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
+      resourceArgs.push(args[i + 1]);
+    }
+  }
+}
+
 // Find other arguments (like --max-rounds, --seed)
 const otherArgs = args.filter((arg, index) => {
   // Skip command flags and their values
@@ -64,12 +83,22 @@ const otherArgs = args.filter((arg, index) => {
   if (args[index - 1] === "--seed") return false;
   // Skip max-rounds value
   if (args[index - 1] === "--max-rounds") return false;
+  // Skip resource arguments (handled separately)
+  if (
+    arg === "--gold" ||
+    arg === "--fame" ||
+    arg === "--might" ||
+    arg === "--food" ||
+    arg === "--wood" ||
+    arg === "--ore"
+  )
+    return false;
   // Skip player arguments (already extracted)
   if (arg.match(/^p[1-4]=(random|claude)$/)) return false;
   return true;
 });
 
-const allExtraArgs = [...playerArgs, ...otherArgs];
+const allExtraArgs = [...playerArgs, ...resourceArgs, ...otherArgs];
 
 if (args.includes("--single-turn") || args.includes("-s")) {
   runSingleTurn(allExtraArgs);
@@ -97,6 +126,12 @@ if (args.includes("--single-turn") || args.includes("-s")) {
   console.log("\nAdditional Options:");
   console.log("  --max-rounds N                   # Set maximum rounds for complete games");
   console.log("  --seed N                         # Set random seed for board generation");
+  console.log("  --gold N                         # Set starting gold for all players");
+  console.log("  --fame N                         # Set starting fame for all players");
+  console.log("  --might N                        # Set starting might for all players");
+  console.log("  --food N                         # Set starting food for all players");
+  console.log("  --wood N                         # Set starting wood for all players");
+  console.log("  --ore N                          # Set starting ore for all players");
   console.log("\nPlayer Configuration:");
   console.log("  p1=random p2=claude p3=random p4=claude  # Specify player types");
   console.log("  Available types: random, claude");
@@ -111,4 +146,7 @@ if (args.includes("--single-turn") || args.includes("-s")) {
   console.log("  node run-test.js --complete --max-rounds 25         # Complete game with 25 max rounds");
   console.log("  node run-test.js --complete --seed 12345            # Complete game with specific board layout");
   console.log("  node run-test.js -t 5 p1=claude p2=claude p3=claude # 5 turns, first 3 players are Claude AI");
+  console.log("  node run-test.js --complete --gold 10 --fame 5      # Complete game with starting resources");
+  console.log("  node run-test.js --turns 2 --food 3 --wood 2        # 2 turns with starting food and wood");
+  console.log("  node run-test.js --single-turn --might 3            # 1 turn with starting might");
 }

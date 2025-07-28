@@ -1,6 +1,6 @@
 // Lords of Doomspire Random Player
 
-import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
+import { BuildingUsageDecision, DiceAction, MarketSellDecision } from "@/lib/actionTypes";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
@@ -43,8 +43,8 @@ export class RandomPlayerAgent implements PlayerAgent {
     // Use the first remaining die value
     const dieValue = turnContext.remainingDiceValues[0];
 
-    // 10% chance to try building if it's not the first die
-    const shouldBuild = Math.random() < 0.1 && turnContext.remainingDiceValues.length < turnContext.diceRolled.length;
+    // 30% chance to try building (increased from 10%)
+    const shouldBuild = Math.random() < 0.3;
 
     if (shouldBuild) {
       const buildAction = this.generateRandomBuildAction(gameState, playerName, dieValue);
@@ -126,7 +126,7 @@ export class RandomPlayerAgent implements PlayerAgent {
   ): Promise<BuildingUsageDecision> {
     const player = gameState.getPlayer(playerName);
     if (!player) {
-      return { useBlacksmith: false };
+      return { useBlacksmith: false, useMarket: false };
     }
 
     // Check if player has a blacksmith
@@ -135,8 +135,45 @@ export class RandomPlayerAgent implements PlayerAgent {
     // Check if player can afford blacksmith (1 Gold + 2 Ore according to rules)
     const canAffordBlacksmith = player.resources.gold >= 1 && player.resources.ore >= 2;
 
+    // Check if player has a market
+    const hasMarket = player.buildings.some(building => building.type === "market");
+
+    // Check if player has resources to sell at market
+    const hasResourcesToSell = player.resources.food > 0 || player.resources.wood > 0 || player.resources.ore > 0;
+
     // RandomPlayer always uses blacksmith if available and affordable
-    return { useBlacksmith: hasBlacksmith && canAffordBlacksmith };
+    const useBlacksmith = hasBlacksmith && canAffordBlacksmith;
+
+    // RandomPlayer uses market if available and has resources to sell
+    const useMarket = hasMarket && hasResourcesToSell;
+
+    // Generate random market sell decisions if using market
+    let marketSellDecisions: MarketSellDecision[] = [];
+    if (useMarket) {
+      // Randomly decide which resources to sell
+      const resourceTypes: ("food" | "wood" | "ore")[] = ["food", "wood", "ore"];
+
+      for (const resourceType of resourceTypes) {
+        if (player.resources[resourceType] > 0) {
+          // Randomly decide to sell 0 to all of this resource
+          const maxAmount = player.resources[resourceType];
+          const sellAmount = Math.floor(Math.random() * (maxAmount + 1));
+
+          if (sellAmount > 0) {
+            marketSellDecisions.push({
+              resourceType,
+              amount: sellAmount
+            });
+          }
+        }
+      }
+    }
+
+    return {
+      useBlacksmith,
+      useMarket,
+      marketSellDecisions: marketSellDecisions.length > 0 ? marketSellDecisions : undefined
+    };
   }
 
   private generateRandomChampionMoveAction(
@@ -252,21 +289,33 @@ export class RandomPlayerAgent implements PlayerAgent {
 
     // Check if player already has a blacksmith
     const hasBlacksmith = player.buildings.some(building => building.type === "blacksmith");
-    if (hasBlacksmith) {
+    const hasMarket = player.buildings.some(building => building.type === "market");
+
+    // Randomly choose between blacksmith and market (if both are available)
+    const availableBuildings: ("blacksmith" | "market")[] = [];
+
+    if (!hasBlacksmith && player.resources.food >= 2 && player.resources.ore >= 2) {
+      availableBuildings.push("blacksmith");
+    }
+
+    if (!hasMarket && player.resources.food >= 2 && player.resources.wood >= 2) {
+      availableBuildings.push("market");
+    }
+
+    if (availableBuildings.length === 0) {
       return null;
     }
 
-    // Check if player can afford blacksmith (2 Food + 2 Ore)
-    if (player.resources.food >= 2 && player.resources.ore >= 2) {
-      return {
-        actionType: "buildAction",
-        buildAction: {
-          diceValueUsed: dieValue,
-          buildingType: "blacksmith"
-        }
-      };
-    }
+    // Pick a random available building
+    const randomBuildingIndex = Math.floor(Math.random() * availableBuildings.length);
+    const buildingType = availableBuildings[randomBuildingIndex];
 
-    return null;
+    return {
+      actionType: "buildAction",
+      buildAction: {
+        diceValueUsed: dieValue,
+        buildingType: buildingType
+      }
+    };
   }
 }

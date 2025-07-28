@@ -32,11 +32,18 @@ export interface HarvestAction {
 
 export interface BuildAction {
   diceValueUsed: number;
-  buildingType: "blacksmith";
+  buildingType: "blacksmith" | "market";
 }
 
 export interface BuildingUsageDecision {
   useBlacksmith: boolean;
+  useMarket: boolean;
+  marketSellDecisions?: MarketSellDecision[];
+}
+
+export interface MarketSellDecision {
+  resourceType: "food" | "wood" | "ore";
+  amount: number;
 }
 
 // Nested DiceAction structure for Claude communication (matches schema)

@@ -19,11 +19,23 @@ BLACKSMITH:
 - Benefit: Gain 1 Might
 - Limitations: Can only be used once per harvest phase
 
+MARKET:
+
+- Cost: Free to use (building already constructed)
+- Benefit: Sell any resources for Gold at 2:1 rate (2 resources = 1 Gold)
+- Limitations: Can be used multiple times per harvest phase
+- Available resources to sell: Food, Wood, Ore
+
 Check if you have any buildings available to use and whether you can afford their costs. Consider your current strategic situation and resource needs.
 
 Respond with a JSON object containing:
 
 - useBlacksmith: Boolean indicating whether to use your blacksmith (if you have one)
+- useMarket: Boolean indicating whether to use your market (if you have one)
+- marketSellDecisions: Array of resources to sell at market (only if useMarket is true)
+  - Each item should have:
+    - resourceType: "food", "wood", or "ore"
+    - amount: Number of resources to sell
 - reasoning: Your explanation for this decision
 
 Remember that building usage happens after all dice actions are complete, so this is your final opportunity to spend resources this turn.
