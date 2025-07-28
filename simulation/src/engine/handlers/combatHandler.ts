@@ -1,6 +1,6 @@
 import { GameState } from "@/game/GameState";
 import { GameSettings } from "@/lib/GameSettings";
-import { Champion, ChampionLootOption, Decision, DecisionContext, GameLogEntry, Monster, NON_COMBAT_TILES, Player, ResourceType, Tile } from "@/lib/types";
+import { CarriableItem, Champion, ChampionLootOption, Decision, DecisionContext, GameLogEntry, Monster, NON_COMBAT_TILES, Player, ResourceType, Tile } from "@/lib/types";
 import { formatResources } from "@/lib/utils";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { handleBackpackEffect } from "./backpackHandler";
@@ -12,6 +12,50 @@ import { handlePaddedHelmetRespawn } from "./paddedHelmetHandler";
 function rollD3(): number {
   const outcomes = [1, 1, 2, 2, 3, 3];
   return outcomes[Math.floor(Math.random() * outcomes.length)];
+}
+
+/**
+ * Calculate item bonuses and effects for combat
+ */
+function calculateItemEffects(champion: Champion | undefined, logFn: (type: string, content: string) => void): { mightBonus: number; itemsToRemove: CarriableItem[] } {
+  let mightBonus = 0;
+  let itemsToRemove: CarriableItem[] = [];
+
+  if (!champion) {
+    return { mightBonus, itemsToRemove };
+  }
+
+  // Check for spear bonus against beasts
+  const hasSpear = champion.items.some(item => item.traderItem?.id === "spear") || false;
+  if (hasSpear) {
+    mightBonus += 1;
+    logFn("combat", `Spear provides +1 might`);
+  }
+
+  // Check for rusty sword (breaks after one fight)
+  const rustySwordItem = champion.items.find(item => item.treasureCard?.id === "rusty-sword");
+  if (rustySwordItem) {
+    mightBonus += 2;
+    itemsToRemove.push(rustySwordItem);
+    logFn("combat", `Rusty sword provides +2 might but breaks after this fight`);
+  }
+
+  return { mightBonus, itemsToRemove };
+}
+
+/**
+ * Remove items that break after combat
+ */
+function removeBrokenItems(champion: Champion | undefined, itemsToRemove: CarriableItem[], logFn: (type: string, content: string) => void, championDescription: string = "champion"): void {
+  if (itemsToRemove.length > 0 && champion) {
+    for (const itemToRemove of itemsToRemove) {
+      const itemIndex = champion.items.indexOf(itemToRemove);
+      if (itemIndex > -1) {
+        champion.items.splice(itemIndex, 1);
+        logFn("combat", `${itemToRemove.treasureCard?.name || itemToRemove.traderItem?.name} broke and was removed from ${championDescription}'s inventory`);
+      }
+    }
+  }
 }
 
 export interface CombatResult {
@@ -163,6 +207,11 @@ export async function resolveChampionVsChampionCombat(
   const attackerSupport = gameState.getCombatSupport(attackingPlayer.name, tile.position);
   const defenderSupport = gameState.getCombatSupport(defendingPlayer.name, tile.position);
 
+  // Calculate item effects for both champions
+  const attackingChampion = gameState.getChampion(attackingPlayer.name, attackingChampionId);
+  const { mightBonus: attackerMightBonus, itemsToRemove: attackerItemsToRemove } = calculateItemEffects(attackingChampion, logFn);
+  const { mightBonus: defenderMightBonus, itemsToRemove: defenderItemsToRemove } = calculateItemEffects(opposingChampion, logFn);
+
   // Roll dice for champion vs champion battle - keep rerolling on ties
   let attackerRoll: number;
   let defenderRoll: number;
@@ -172,8 +221,8 @@ export async function resolveChampionVsChampionCombat(
   do {
     attackerRoll = rollD3();
     defenderRoll = rollD3();
-    attackerTotal = attackingPlayer.might + attackerRoll + attackerSupport;
-    defenderTotal = defendingPlayer.might + defenderRoll + defenderSupport;
+    attackerTotal = attackingPlayer.might + attackerRoll + attackerSupport + attackerMightBonus;
+    defenderTotal = defendingPlayer.might + defenderRoll + defenderSupport + defenderMightBonus;
   } while (attackerTotal === defenderTotal); // Keep rerolling on ties
 
   const attackerWins = attackerTotal > defenderTotal;
@@ -260,6 +309,10 @@ export async function resolveChampionVsChampionCombat(
 
     logFn("combat", fullCombatDetails);
 
+    // Remove items that break after combat
+    removeBrokenItems(attackingChampion, attackerItemsToRemove, logFn, "attacker's");
+    removeBrokenItems(opposingChampion, defenderItemsToRemove, logFn, "defender's");
+
     // Track combat statistics
     attackingPlayer.statistics.championVsChampionWins += 1;
     defendingPlayer.statistics.championVsChampionLosses += 1;
@@ -333,6 +386,10 @@ export async function resolveChampionVsChampionCombat(
     const defenderBase = defendingPlayer.might + defenderRoll;
     const fullCombatDetails = `was defeated by ${defendingPlayer.name}'s champion (${attackerBase}${attackerSupport > 0 ? `+${attackerSupport}` : ""} vs ${defenderBase}${defenderSupport > 0 ? `+${defenderSupport}` : ""})${lootInfo}`;
 
+    // Remove items that break after combat (even if defeated)
+    removeBrokenItems(attackingChampion, attackerItemsToRemove, logFn, "attacker's");
+    removeBrokenItems(opposingChampion, defenderItemsToRemove, logFn, "defender's");
+
     // Apply defeat effects for champion vs champion combat (no healing cost)
     await applyChampionDefeatInChampionCombat(gameState, attackingPlayer, attackingChampionId, fullCombatDetails, logFn, playerAgent, gameLog, thinkingLogger);
 
@@ -365,13 +422,13 @@ export async function resolveChampionVsMonsterCombat(
   const monster = tile.monster;
   const champion = gameState.getChampion(player.name, championId);
 
-  // Check for spear bonus against beasts
-  let mightBonus = 0;
+  // Calculate item effects
+  const { mightBonus, itemsToRemove } = calculateItemEffects(champion, logFn);
+
+  // Check for spear bonus against beasts (additional logic specific to monster combat)
   const hasSpear = champion?.items.some(item => item.traderItem?.id === "spear") || false;
   const isFightingBeast = monster.isBeast || false;
-
   if (hasSpear && isFightingBeast) {
-    mightBonus = 1;
     logFn("combat", `Spear provides +1 might against ${monster.name} (beast)`);
   }
 
@@ -402,6 +459,9 @@ export async function resolveChampionVsMonsterCombat(
     const combatDetails = `Defeated ${monster.name} (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${monster.might}), gained ${fameAwarded} fame and got ${formatResources(monster.resources)}`;
     logFn("combat", combatDetails);
 
+    // Remove items that break after combat
+    removeBrokenItems(champion, itemsToRemove, logFn);
+
     // Track combat statistics
     player.statistics.championVsMonsterWins += 1;
 
@@ -414,6 +474,9 @@ export async function resolveChampionVsMonsterCombat(
     // Champion lost - monster stays on tile, apply defeat effects immediately
     const championBase = player.might + championRoll + mightBonus;
     const combatDetails = `Fought ${monster.name}, but was defeated (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${monster.might})`;
+
+    // Remove items that break after combat (even if defeated)
+    removeBrokenItems(champion, itemsToRemove, logFn);
 
     // Apply defeat effects internally
     await applyChampionDefeat(gameState, player, championId, combatDetails, logFn);

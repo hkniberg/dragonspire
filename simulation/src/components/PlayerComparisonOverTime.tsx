@@ -6,7 +6,7 @@ interface PlayerComparisonOverTimeProps {
   statistics: readonly TurnStatistics[];
 }
 
-type MetricType = "food" | "wood" | "ore" | "gold" | "might" | "fame";
+type MetricType = "food" | "wood" | "ore" | "gold" | "might" | "fame" | "claimedTiles" | "starredTiles";
 
 const getPlayerColor = (playerName: string): string => {
   const colors = {
@@ -107,6 +107,8 @@ export const PlayerComparisonOverTime: React.FC<PlayerComparisonOverTimeProps> =
             { key: "gold", label: "Gold" },
             { key: "might", label: "Might" },
             { key: "fame", label: "Fame" },
+            { key: "claimedTiles", label: "Claimed Tiles" },
+            { key: "starredTiles", label: "Starred Tiles" },
           ].map(({ key, label }) => (
             <button
               key={key}

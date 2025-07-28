@@ -124,6 +124,8 @@ function getEntryEmoji(type: GameLogEntryType): string {
       return "👑";
     case "thinking":
       return "💭";
+    case "error":
+      return "❌";
     default:
       return "📝";
   }
@@ -153,6 +155,8 @@ function getEntryColor(type: GameLogEntryType): string {
       return "#e83e8c";
     case "thinking":
       return "#6c757d";
+    case "error":
+      return "#dc3545";
     default:
       return "#495057";
   }
@@ -174,15 +178,37 @@ export const GameLog: React.FC<GameLogProps> = ({ gameLog, isVisible, players = 
     let markdown = "# Game Log\n\n";
     // Filter out thinking entries from markdown export
     const filteredGameLogForExport = filteredGameLog.filter((entry) => entry.type !== "thinking");
-    const groupedEntries = groupGameLogEntriesByRound(filteredGameLogForExport);
+    const groupedEntries = groupGameLogEntriesByRoundAndPlayer(filteredGameLogForExport);
 
-    groupedEntries.forEach(({ round, entries }) => {
+    groupedEntries.forEach(({ round, playerGroups }) => {
       markdown += `## Round ${round}\n\n`;
-      entries.forEach((entry) => {
-        const formattedEntry = formatGameLogEntry(entry);
-        markdown += `- ${formattedEntry}\n`;
+
+      playerGroups.forEach(({ playerName, entries }) => {
+        markdown += `### ${playerName}\n\n`;
+
+        entries.forEach((entry) => {
+          const typeEmoji = getEntryEmoji(entry.type);
+          const content = entry.content;
+
+          if (entry.type === "assessment") {
+            // Use blockquote for assessment entries that may have multiple lines
+            // Split content by lines and prefix each line with > to maintain blockquote
+            const lines = content.split("\n");
+            lines.forEach((line, index) => {
+              if (index === 0) {
+                markdown += `> ${typeEmoji} ${line}\n`;
+              } else {
+                markdown += `> ${line}\n`;
+              }
+            });
+            markdown += "\n";
+          } else {
+            markdown += `- ${typeEmoji} ${content}\n`;
+          }
+        });
+
+        markdown += "\n";
       });
-      markdown += "\n";
     });
 
     return markdown;

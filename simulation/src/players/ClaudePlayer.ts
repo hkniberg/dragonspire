@@ -39,17 +39,12 @@ export class ClaudePlayerAgent implements PlayerAgent {
         turnNumber: number,
         thinkingLogger?: (content: string) => void,
     ): Promise<string | undefined> {
-        try {
-            const userMessage = await this.prepareAssessmentMessage(gameState, gameLog, diceValues, turnNumber);
+        const userMessage = await this.prepareAssessmentMessage(gameState, gameLog, diceValues, turnNumber);
 
-            // Get text response for strategic assessment
-            const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 1024, 2000, thinkingLogger);
+        // Get text response for strategic assessment
+        const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 1024, 2000, thinkingLogger);
 
-            return strategicAssessment.trim() || undefined;
-        } catch (error) {
-            console.error(`${this.name} encountered an error during strategic assessment:`, error);
-            return undefined;
-        }
+        return strategicAssessment.trim() || undefined;
     }
 
     async decideDiceAction(

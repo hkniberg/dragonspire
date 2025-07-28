@@ -82,7 +82,6 @@ export const EVENT_CARDS: EventCard[] = [
       "A shouting **genie** is granting everyone wishes. All players collect `1x food, ore, wood, gold`. All *oasis* also gain `+1 mystery card`.",
     count: 1,
   },
-
   // Tier 3 Event Cards
   {
     id: "curse-of-the-earth",
@@ -103,6 +102,15 @@ export const EVENT_CARDS: EventCard[] = [
     name: "Dragon raid",
     tier: 3,
     description: "All players must remove `2x Claims` from tiles in the **outer region**.",
+    count: 1,
+  },
+  {
+    id: "sea-monsters",
+    name: "Sea monsters",
+    tier: 3,
+    description: `Sea monsters invade one **ocean tile** of your choice. For each **boat** there, owning player decides:  
+**Captain fights to the end.** Gain \`+2 fame\`, lose the boat.  
+**Captain flees.** Lose \`−1 fame\`, move the boat one step.`,
     count: 1,
   },
 ];

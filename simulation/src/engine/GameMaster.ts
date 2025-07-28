@@ -125,9 +125,16 @@ export class GameMaster {
 
     // Step 2: Ask player for strategic assessment (strategic reflection) - now with dice context
     const thinkingLogger = (content: string) => this.addGameLogEntry("thinking", content);
-    const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues, this.gameState.currentRound, thinkingLogger);
-    if (strategicAssessment) {
-      this.addGameLogEntry("assessment", strategicAssessment);
+
+    try {
+      const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues, this.gameState.currentRound, thinkingLogger);
+      if (strategicAssessment) {
+        this.addGameLogEntry("assessment", strategicAssessment);
+      }
+    } catch (error) {
+      console.error("Error during strategic assessment:", error);
+      this.addGameLogEntry("error", `Strategic assessment failed: ${error instanceof Error ? error.message : String(error)}`);
+      // Continue with the turn despite the assessment failure
     }
 
     // Notify UI of strategic assessment update
@@ -146,37 +153,49 @@ export class GameMaster {
         remainingDiceValues: diceRolls.getRemainingRolls(),
       };
 
-      // Ask player decide on a dice action
-      const diceAction = await currentPlayerAgent.decideDiceAction(currentState, this.gameLog, turnContext, thinkingLogger);
+      try {
+        // Ask player decide on a dice action
+        const diceAction = await currentPlayerAgent.decideDiceAction(currentState, this.gameLog, turnContext, thinkingLogger);
 
-      // Execute the action and consume the appropriate dice
-      const actionType = diceAction.actionType;
-      if (actionType == "championAction") {
-        const championAction = diceAction.championAction!;
-        diceRolls.consumeDiceRoll(championAction.diceValueUsed);
-        await this.executeChampionAction(currentPlayer, championAction, diceAction.reasoning);
-        // Track statistics
-        currentPlayer.statistics.championActions += 1;
-      } else if (actionType === "boatAction") {
-        const boatAction = diceAction.boatAction!;
-        diceRolls.consumeDiceRoll(boatAction.diceValueUsed);
-        await this.executeBoatAction(currentPlayer, boatAction, diceAction.reasoning);
-        // Track statistics
-        currentPlayer.statistics.boatActions += 1;
-      } else if (actionType === "harvestAction") {
-        const harvestAction = diceAction.harvestAction!;
-        diceRolls.consumeMultipleDiceRolls(harvestAction.diceValuesUsed);
-        await this.executeHarvestAction(currentPlayer, harvestAction, diceAction.reasoning);
-        // Track statistics
-        currentPlayer.statistics.harvestActions += 1;
-      } else if (actionType === "buildAction") {
-        const buildAction = diceAction.buildAction!;
-        diceRolls.consumeDiceRoll(buildAction.diceValueUsed);
-        await this.executeBuildAction(currentPlayer, buildAction, diceAction.reasoning);
-        // Track statistics
-        currentPlayer.statistics.buildActions += 1;
-      } else {
-        throw new Error(`Unknown action type: ${actionType}`);
+        // Execute the action and consume the appropriate dice
+        const actionType = diceAction.actionType;
+        if (actionType == "championAction") {
+          const championAction = diceAction.championAction!;
+          diceRolls.consumeDiceRoll(championAction.diceValueUsed);
+          await this.executeChampionAction(currentPlayer, championAction, diceAction.reasoning);
+          // Track statistics
+          currentPlayer.statistics.championActions += 1;
+        } else if (actionType === "boatAction") {
+          const boatAction = diceAction.boatAction!;
+          diceRolls.consumeDiceRoll(boatAction.diceValueUsed);
+          await this.executeBoatAction(currentPlayer, boatAction, diceAction.reasoning);
+          // Track statistics
+          currentPlayer.statistics.boatActions += 1;
+        } else if (actionType === "harvestAction") {
+          const harvestAction = diceAction.harvestAction!;
+          diceRolls.consumeMultipleDiceRolls(harvestAction.diceValuesUsed);
+          await this.executeHarvestAction(currentPlayer, harvestAction, diceAction.reasoning);
+          // Track statistics
+          currentPlayer.statistics.harvestActions += 1;
+        } else if (actionType === "buildAction") {
+          const buildAction = diceAction.buildAction!;
+          diceRolls.consumeDiceRoll(buildAction.diceValueUsed);
+          await this.executeBuildAction(currentPlayer, buildAction, diceAction.reasoning);
+          // Track statistics
+          currentPlayer.statistics.buildActions += 1;
+        } else {
+          throw new Error(`Unknown action type: ${actionType}`);
+        }
+      } catch (error) {
+        console.error("Error during dice action execution:", error);
+        this.addGameLogEntry("error", `Dice action failed: ${error instanceof Error ? error.message : String(error)}`);
+
+        // Consume a die to prevent infinite loops, but don't execute any action
+        const remainingRolls = diceRolls.getRemainingRolls();
+        if (remainingRolls.length > 0) {
+          diceRolls.consumeDiceRoll(remainingRolls[0]);
+          this.addGameLogEntry("dice", `Consumed die [${remainingRolls[0]}] due to action failure`);
+        }
       }
 
       // Notify UI of dice action update
@@ -194,7 +213,13 @@ export class GameMaster {
     }
 
     // Step 5: After all dice are consumed, check for building usage
-    await this.handleBuildingUsage(currentPlayer, currentPlayerAgent, thinkingLogger);
+    try {
+      await this.handleBuildingUsage(currentPlayer, currentPlayerAgent, thinkingLogger);
+    } catch (error) {
+      console.error("Error during building usage:", error);
+      this.addGameLogEntry("error", `Building usage failed: ${error instanceof Error ? error.message : String(error)}`);
+      // Continue with the turn despite the building usage failure
+    }
 
     // Notify UI of building usage update
     if (onStepUpdate) {

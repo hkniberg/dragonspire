@@ -1,8 +1,7 @@
 import { getEventCardById } from "@/content/eventCards";
 import { getMonsterCardById } from "@/content/monsterCards";
-import { getTreasureCardById } from "@/content/treasureCards";
 import { GameState } from "@/game/GameState";
-import { Decision, DecisionContext, Monster, Player, Tile } from "@/lib/types";
+import { Monster, Player, Tile } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { resolveMonsterPlacementAndCombat } from "./combatHandler";
 import { EventCardResult, handleEventCard } from "./eventCardHandler";
@@ -157,110 +156,27 @@ export async function handleTreasureCard(
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void
 ): Promise<AdventureCardResult> {
-  const treasureCard = getTreasureCardById(cardId);
-  if (!treasureCard) {
-    const errorMessage = `Champion${championId} drew unknown treasure card ${cardId}`;
-    logFn("event", errorMessage);
-    return {
-      cardProcessed: false,
-      errorMessage
-    };
-  }
+  // Import the new treasure card handler
+  const { handleTreasureCard: handleTreasureCardFromHandler } = await import("./treasureCardHandler");
 
-  logFn("event", `Champion${championId} found treasure: ${treasureCard.name}!`);
+  const result = await handleTreasureCardFromHandler(
+    cardId,
+    gameState,
+    tile,
+    player,
+    playerAgent,
+    championId,
+    gameLog,
+    logFn,
+    thinkingLogger
+  );
 
-  // Check if this treasure can be carried as an item
-  if (!treasureCard.carriable) {
-    // For non-carriable treasures, just log the effect (implementation depends on specific treasure)
-    logFn("event", `${treasureCard.name} effect: ${treasureCard.description}`);
-    return {
-      cardProcessed: true,
-      cardType: "treasure",
-      cardId
-    };
-  }
-
-  // Find the champion
-  const champion = player.champions.find(c => c.id === championId);
-  if (!champion) {
-    const errorMessage = `Champion${championId} not found for player ${player.name}`;
-    logFn("event", errorMessage);
-    return {
-      cardProcessed: false,
-      errorMessage
-    };
-  }
-
-  // Check if champion has space for the item
-  if (champion.items.length < 2) {
-    // Add the item directly
-    champion.items.push({ treasureCard });
-    logFn("event", `Champion${championId} picked up ${treasureCard.name}.`);
-    return {
-      cardProcessed: true,
-      cardType: "treasure",
-      cardId
-    };
-  }
-
-  // Champion's inventory is full, need to ask what to drop
-  const decisionContext: DecisionContext = {
-    type: "choose_item_to_drop",
-    description: `Champion${championId}'s inventory is full! Choose what to do with ${treasureCard.name}:`,
-    options: [
-      {
-        id: "drop_first",
-        description: `Drop ${getItemName(champion.items[0])} and take ${treasureCard.name}`,
-        itemToDrop: champion.items[0]
-      },
-      {
-        id: "drop_second",
-        description: `Drop ${getItemName(champion.items[1])} and take ${treasureCard.name}`,
-        itemToDrop: champion.items[1]
-      },
-      {
-        id: "leave_treasure",
-        description: `Leave ${treasureCard.name} on the ground`
-      }
-    ]
-  };
-
-  // Ask the player to make a decision
-  const decision: Decision = await playerAgent.makeDecision(gameState, gameLog, decisionContext, thinkingLogger);
-
-  if (decision.choice.id === "leave_treasure") {
-    // Leave the treasure on the tile
-    if (!tile.items) {
-      tile.items = [];
-    }
-    tile.items.push({ treasureCard });
-    logFn("event", `Champion${championId} left ${treasureCard.name} on the ground.`);
-  } else {
-    // Drop an existing item and take the treasure
-    const itemToDrop = decision.choice.itemToDrop;
-
-    // Remove the item from champion's inventory
-    const itemIndex = champion.items.indexOf(itemToDrop);
-    if (itemIndex > -1) {
-      champion.items.splice(itemIndex, 1);
-    }
-
-    // Add dropped item to tile
-    if (!tile.items) {
-      tile.items = [];
-    }
-    tile.items.push(itemToDrop);
-
-    // Add new treasure to champion
-    champion.items.push({ treasureCard });
-
-    logFn("event", `Champion${championId} dropped ${getItemName(itemToDrop)} and picked up ${treasureCard.name}.`);
-  }
-
+  // Convert the result to AdventureCardResult format
   return {
-    cardProcessed: true,
+    cardProcessed: result.cardProcessed,
     cardType: "treasure",
-    cardId
+    cardId: result.cardId,
+    errorMessage: result.errorMessage
   };
 }
 
@@ -357,14 +273,3 @@ export async function handleAdventureCard(
   }
 }
 
-// Helper function to get the name of a CarriableItem
-function getItemName(item: any): string {
-  if (item.treasureCard) {
-    return item.treasureCard.name;
-  }
-  if (item.traderItem) {
-    return item.traderItem.name;
-  }
-  // Fallback for old string-based items during migration
-  return typeof item === 'string' ? item : 'Unknown Item';
-} 

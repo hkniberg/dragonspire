@@ -321,14 +321,8 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
 }
 
 function isTileInteresting(tile: Tile, gameState: GameState): boolean {
-  // Show explored tiles, tiles with champions, or home tiles
-  if (tile.explored || tile.tileType === "home") {
-    return true;
-  }
-
-  // Show tiles with champions
-  const championsOnTile = getChampionsOnTile(tile.position, gameState);
-  return championsOnTile.length > 0;
+  // Show all tiles - explored, unexplored, home tiles, and tiles with champions
+  return true;
 }
 
 function getChampionsOnTile(position: { row: number; col: number }, gameState: GameState): Champion[] {

@@ -212,7 +212,7 @@ export interface ChampionLootContext {
   options: ChampionLootOption[];
 }
 
-export type GameLogEntryType = "dice" | "movement" | "boat" | "exploration" | "combat" | "harvest" | "assessment" | "event" | "system" | "victory" | "thinking";
+export type GameLogEntryType = "dice" | "movement" | "boat" | "exploration" | "combat" | "harvest" | "assessment" | "event" | "system" | "victory" | "thinking" | "error";
 
 /**
  * Tagged log entry in the sequential game log
