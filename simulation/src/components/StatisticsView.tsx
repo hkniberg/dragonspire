@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { TurnStatistics } from "../lib/types";
+import { exportStatisticsToCSV } from "../lib/utils";
 import { Counters } from "./Counters";
 import { PlayerComparisonOverTime } from "./PlayerComparisonOverTime";
 import { PlayerResources } from "./PlayerResources";
@@ -12,6 +13,27 @@ type ViewType = "comparison" | "resources" | "counters";
 
 export const StatisticsView: React.FC<StatisticsViewProps> = ({ statistics }) => {
   const [activeView, setActiveView] = useState<ViewType>("comparison");
+
+  const downloadCSV = () => {
+    if (!statistics || statistics.length === 0) {
+      return;
+    }
+
+    const csvContent = exportStatisticsToCSV(statistics);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const filename = `game-statistics-${timestamp}.csv`;
+
+    // Create download link
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const renderContent = () => {
     switch (activeView) {
@@ -55,7 +77,42 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({ statistics }) =>
       }}
     >
       <div style={{ marginBottom: "20px" }}>
-        <h2 style={{ color: "#2c3e50", marginBottom: "15px" }}>Game Statistics</h2>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "15px",
+          }}
+        >
+          <h2 style={{ color: "#2c3e50", margin: 0 }}>Game Statistics</h2>
+
+          {/* Download CSV Button */}
+          <button
+            onClick={downloadCSV}
+            style={{
+              padding: "8px 16px",
+              backgroundColor: "#28a745",
+              color: "white",
+              border: "none",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = "#218838";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = "#28a745";
+            }}
+          >
+            📄 Download CSV
+          </button>
+        </div>
 
         {/* Navigation Tabs */}
         <div style={{ display: "flex", gap: "5px", marginBottom: "20px" }}>
