@@ -50,9 +50,16 @@ node run-test.js --turns 5
 
 # Run a complete game
 node run-test.js --complete
+
+# Run a single turn with a Claude AI player (requires ANTHROPIC_API_KEY in .env)
+node run-test.js --single-turn p1=claude
+
+# Run with extra instructions for Claude players
+node run-test.js --single-turn p1=claude --claude-instructions "Hoard gold"
+
 ```
 
-The CLI mode supports automated playtesting with AI players for game balance analysis.
+The CLI mode supports automated playtesting with AI players for game balance analysis. When using Claude players, make sure to set your `ANTHROPIC_API_KEY` in a `.env` file in the simulation directory.
 
 ## Live Demo
 

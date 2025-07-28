@@ -27,6 +27,7 @@ export interface CLIConfig {
   startingFood?: number;
   startingWood?: number;
   startingOre?: number;
+  claudeInstructions?: string; // Extra instructions for all Claude players
 }
 
 export class CLIRunner {
@@ -85,38 +86,50 @@ export class CLIRunner {
   }
 
   /**
- * Apply starting resources to all players in the game state
+ * Apply starting resources and extra instructions to all players in the game state
  */
   private static applyStartingResources(gameMaster: GameMaster, config: CLIConfig): void {
-    if (!config.startingGold && !config.startingFame && !config.startingMight && !config.startingFood && !config.startingWood && !config.startingOre) {
+    const hasStartingResources = config.startingGold || config.startingFame || config.startingMight || config.startingFood || config.startingWood || config.startingOre;
+    const hasClaudeInstructions = config.claudeInstructions && config.claudeInstructions.trim();
+
+    if (!hasStartingResources && !hasClaudeInstructions) {
       return;
     }
 
-    console.log("Applying starting resources:");
-    if (config.startingGold) {
-      console.log(`  Starting Gold: ${config.startingGold}`);
+    if (hasStartingResources) {
+      console.log("Applying starting resources:");
+      if (config.startingGold) {
+        console.log(`  Starting Gold: ${config.startingGold}`);
+      }
+      if (config.startingFame) {
+        console.log(`  Starting Fame: ${config.startingFame}`);
+      }
+      if (config.startingMight) {
+        console.log(`  Starting Might: ${config.startingMight}`);
+      }
+      if (config.startingFood) {
+        console.log(`  Starting Food: ${config.startingFood}`);
+      }
+      if (config.startingWood) {
+        console.log(`  Starting Wood: ${config.startingWood}`);
+      }
+      if (config.startingOre) {
+        console.log(`  Starting Ore: ${config.startingOre}`);
+      }
+      console.log();
     }
-    if (config.startingFame) {
-      console.log(`  Starting Fame: ${config.startingFame}`);
+
+    if (hasClaudeInstructions) {
+      console.log("Applying Claude instructions:");
+      console.log(`  Instructions: ${config.claudeInstructions}`);
+      console.log();
     }
-    if (config.startingMight) {
-      console.log(`  Starting Might: ${config.startingMight}`);
-    }
-    if (config.startingFood) {
-      console.log(`  Starting Food: ${config.startingFood}`);
-    }
-    if (config.startingWood) {
-      console.log(`  Starting Wood: ${config.startingWood}`);
-    }
-    if (config.startingOre) {
-      console.log(`  Starting Ore: ${config.startingOre}`);
-    }
-    console.log();
 
     const gameState = gameMaster.getGameState();
     const players = gameState.players;
 
     for (const player of players) {
+      // Apply starting resources
       if (config.startingGold) {
         player.resources.gold += config.startingGold;
       }
@@ -134,6 +147,15 @@ export class CLIRunner {
       }
       if (config.startingOre) {
         player.resources.ore += config.startingOre;
+      }
+
+      // Apply extra instructions to Claude players
+      if (hasClaudeInstructions) {
+        // Check if this player is a Claude player by looking at the player configs
+        const playerConfig = config.playerConfigs?.find(pc => pc.name === player.name);
+        if (playerConfig?.type === "claude") {
+          player.extraInstructions = config.claudeInstructions;
+        }
       }
     }
   }
@@ -370,6 +392,10 @@ export class CLIRunner {
           break;
         case "--ore":
           config.startingOre = parseInt(args[i + 1]);
+          i++; // Skip next argument
+          break;
+        case "--claude-instructions":
+          config.claudeInstructions = args[i + 1];
           i++; // Skip next argument
           break;
         // Skip player arguments as they're already parsed

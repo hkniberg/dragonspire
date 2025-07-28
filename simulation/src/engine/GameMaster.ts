@@ -1,7 +1,7 @@
 // Lords of Doomspire Game Master
 
 import { BoatAction, BuildAction, ChampionAction, HarvestAction, TileAction } from "@/lib/actionTypes";
-import { GameLogEntry, GameLogEntryType, Player, ResourceType, Tile, TurnContext } from "@/lib/types";
+import { GameLogEntry, GameLogEntryType, Player, Tile, TurnContext } from "@/lib/types";
 import { formatPosition, formatResources } from "@/lib/utils";
 import { GameState } from "../game/GameState";
 import { stringifyTile } from "../game/gameStateStringifier";
@@ -13,6 +13,7 @@ import { checkVictory } from "./actions/victoryChecker";
 import { DiceRoller, RandomDiceRoller } from "./DiceRoller";
 import { DiceRolls } from "./DiceRolls";
 import { handleAdventureCard } from "./handlers/adventureCardHandler";
+import { handleBuildingUsage as handleBuildingUsageHandler } from "./handlers/buildingUsageHandler";
 import {
   handleChampionCombat,
   handleDoomspireTile,
@@ -504,82 +505,16 @@ export class GameMaster {
     playerAgent: PlayerAgent,
     thinkingLogger?: (content: string) => void
   ): Promise<void> {
-    // Check if player has any usable buildings
-    const hasBlacksmith = player.buildings.some(building => building.type === "blacksmith");
-    const hasMarket = player.buildings.some(building => building.type === "market");
+    const logFn = (type: string, content: string) => this.addGameLogEntry(type as GameLogEntryType, content);
 
-    if (!hasBlacksmith && !hasMarket) {
-      return; // No buildings to use
-    }
-
-    // Ask player which buildings to use
-    const buildingUsageDecision = await playerAgent.useBuilding(this.gameState, this.gameLog, player.name, thinkingLogger);
-
-    // Process blacksmith usage
-    if (buildingUsageDecision.useBlacksmith) {
-      const blacksmith = player.buildings.find(building => building.type === "blacksmith");
-
-      if (blacksmith && player.resources.gold >= 1 && player.resources.ore >= 2) {
-        // Deduct resources and gain might
-        player.resources.gold -= 1;
-        player.resources.ore -= 2;
-        player.might += 1;
-
-        this.addGameLogEntry(
-          "system",
-          `Used blacksmith to buy 1 Might for 1 Gold + 2 Ore.`
-        );
-      } else if (player.resources.gold < 1 || player.resources.ore < 2) {
-        this.addGameLogEntry(
-          "system",
-          `Cannot use blacksmith - requires 1 Gold + 2 Ore.`
-        );
-      }
-    }
-
-    // Process market usage
-    if (buildingUsageDecision.sellAtMarket) {
-      const market = player.buildings.find(building => building.type === "market");
-
-      if (market && Object.values(buildingUsageDecision.sellAtMarket).some(amount => amount > 0)) {
-        let totalGoldGained = 0;
-        let totalResourcesSold = 0;
-
-        for (const [resourceType, amount] of Object.entries(buildingUsageDecision.sellAtMarket)) {
-          if (amount > 0) {
-            // Check if player has enough of this resource
-            if (player.resources[resourceType as ResourceType] >= amount) {
-              // Calculate gold gained (2 resources = 1 gold)
-              const goldGained = Math.floor(amount / 2);
-
-              // Deduct resources and add gold
-              player.resources[resourceType as ResourceType] -= amount;
-              player.resources.gold += goldGained;
-
-              totalGoldGained += goldGained;
-              totalResourcesSold += amount;
-
-              this.addGameLogEntry(
-                "system",
-                `Sold ${amount} ${resourceType} for ${goldGained} gold at market.`
-              );
-            } else {
-              this.addGameLogEntry(
-                "system",
-                `Cannot sell ${amount} ${resourceType} - only have ${player.resources[resourceType as ResourceType]}.`
-              );
-            }
-          }
-        }
-
-        if (totalGoldGained > 0) {
-          this.addGameLogEntry(
-            "system",
-            `Market transaction complete: sold ${totalResourcesSold} resources for ${totalGoldGained} gold total.`
-          );
-        }
-      }
-    }
+    await handleBuildingUsageHandler(
+      player,
+      playerAgent,
+      this.gameState,
+      this.gameLog,
+      logFn,
+      thinkingLogger
+    );
   }
 
   /**

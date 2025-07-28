@@ -65,6 +65,18 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
+// Find claude instructions argument
+const claudeInstructionsArgs = [];
+for (let i = 0; i < args.length; i++) {
+  const arg = args[i];
+  if (arg === "--claude-instructions") {
+    claudeInstructionsArgs.push(arg);
+    if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
+      claudeInstructionsArgs.push(args[i + 1]);
+    }
+  }
+}
+
 // Find other arguments (like --max-rounds, --seed)
 const otherArgs = args.filter((arg, index) => {
   // Skip command flags and their values
@@ -93,12 +105,14 @@ const otherArgs = args.filter((arg, index) => {
     arg === "--ore"
   )
     return false;
+  // Skip claude instructions arguments (handled separately)
+  if (arg === "--claude-instructions") return false;
   // Skip player arguments (already extracted)
   if (arg.match(/^p[1-4]=(random|claude)$/)) return false;
   return true;
 });
 
-const allExtraArgs = [...playerArgs, ...resourceArgs, ...otherArgs];
+const allExtraArgs = [...playerArgs, ...resourceArgs, ...claudeInstructionsArgs, ...otherArgs];
 
 if (args.includes("--single-turn") || args.includes("-s")) {
   runSingleTurn(allExtraArgs);
@@ -132,6 +146,7 @@ if (args.includes("--single-turn") || args.includes("-s")) {
   console.log("  --food N                         # Set starting food for all players");
   console.log("  --wood N                         # Set starting wood for all players");
   console.log("  --ore N                          # Set starting ore for all players");
+  console.log('  --claude-instructions "TEXT"     # Set extra instructions for all Claude players');
   console.log("\nPlayer Configuration:");
   console.log("  p1=random p2=claude p3=random p4=claude  # Specify player types");
   console.log("  Available types: random, claude");
@@ -149,4 +164,5 @@ if (args.includes("--single-turn") || args.includes("-s")) {
   console.log("  node run-test.js --complete --gold 10 --fame 5      # Complete game with starting resources");
   console.log("  node run-test.js --turns 2 --food 3 --wood 2        # 2 turns with starting food and wood");
   console.log("  node run-test.js --single-turn --might 3            # 1 turn with starting might");
+  console.log('  node run-test.js --single-turn p1=claude --claude-instructions "Focus on aggressive expansion"');
 }
