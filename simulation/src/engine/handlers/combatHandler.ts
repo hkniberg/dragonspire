@@ -17,7 +17,7 @@ function rollD3(): number {
 /**
  * Calculate item bonuses and effects for combat
  */
-function calculateItemEffects(champion: Champion | undefined, logFn: (type: string, content: string) => void): { mightBonus: number; itemsToRemove: CarriableItem[] } {
+function calculateItemEffects(champion: Champion | undefined, logFn: (type: string, content: string) => void, playerMight?: number, opponentMight?: number): { mightBonus: number; itemsToRemove: CarriableItem[] } {
   let mightBonus = 0;
   let itemsToRemove: CarriableItem[] = [];
 
@@ -38,6 +38,20 @@ function calculateItemEffects(champion: Champion | undefined, logFn: (type: stri
     mightBonus += 2;
     itemsToRemove.push(rustySwordItem);
     logFn("combat", `Rusty sword provides +2 might but breaks after this fight`);
+  }
+
+  // Check for long sword (doesn't break)
+  const longSwordItem = champion.items.find(item => item.treasureCard?.id === "long-sword");
+  if (longSwordItem) {
+    mightBonus += 2;
+    logFn("combat", `Löng Swörd provides +2 might`);
+  }
+
+  // Check for porcupine (conditional bonus if opponent has more might)
+  const porcupineItem = champion.items.find(item => item.treasureCard?.id === "porcupine");
+  if (porcupineItem && opponentMight !== undefined && playerMight !== undefined && opponentMight > playerMight) {
+    mightBonus += 2;
+    logFn("combat", `Porcupine shield provides +2 might (opponent has more base might)`);
   }
 
   // Check for mysterious ring with dragon slaying power
@@ -221,8 +235,8 @@ export async function resolveChampionVsChampionCombat(
 
   // Calculate item effects for both champions
   const attackingChampion = gameState.getChampion(attackingPlayer.name, attackingChampionId);
-  const { mightBonus: attackerMightBonus, itemsToRemove: attackerItemsToRemove } = calculateItemEffects(attackingChampion, logFn);
-  const { mightBonus: defenderMightBonus, itemsToRemove: defenderItemsToRemove } = calculateItemEffects(opposingChampion, logFn);
+  const { mightBonus: attackerMightBonus, itemsToRemove: attackerItemsToRemove } = calculateItemEffects(attackingChampion, logFn, attackingPlayer.might, defendingPlayer.might);
+  const { mightBonus: defenderMightBonus, itemsToRemove: defenderItemsToRemove } = calculateItemEffects(opposingChampion, logFn, defendingPlayer.might, attackingPlayer.might);
 
   // Roll dice for champion vs champion battle - keep rerolling on ties
   let attackerRoll: number;
@@ -435,7 +449,7 @@ export async function resolveChampionVsMonsterCombat(
   const champion = gameState.getChampion(player.name, championId);
 
   // Calculate item effects
-  const { mightBonus, itemsToRemove } = calculateItemEffects(champion, logFn);
+  const { mightBonus, itemsToRemove } = calculateItemEffects(champion, logFn, player.might, monster.might);
 
   // Check for spear bonus against beasts (additional logic specific to monster combat)
   const hasSpear = champion?.items.some(item => item.traderItem?.id === "spear") || false;
