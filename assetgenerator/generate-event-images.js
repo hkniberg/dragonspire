@@ -66,8 +66,8 @@ class EventImageGenerator {
   }
 
   // Helper function to convert event name to filename
-  eventNameToFilename(eventName) {
-    return eventName.toLowerCase().replace(/\s+/g, "-") + ".png";
+  eventIdToFilename(eventId) {
+    return eventId + ".png";
   }
 
   // Load all events from eventCards.ts
@@ -105,18 +105,35 @@ class EventImageGenerator {
 
       const events = eventMatches
         .map((eventString) => {
-          const nameMatch = eventString.match(/name: '([^']+)'/);
-          const descriptionMatch = eventString.match(/description: '([^']+)'/);
-          const tierMatch = eventString.match(/tier: (\d+)/);
+          // Handle both single and double quotes for id
+          const idMatch = eventString.match(/id:\s*["']([^"']+)["']/);
 
-          if (!nameMatch || !descriptionMatch || !tierMatch) {
+          // Handle both single and double quotes for name
+          const nameMatch = eventString.match(/name:\s*["']([^"']+)["']/);
+
+          // Handle description with template literals (backticks) and regular quotes
+          const descriptionMatch = eventString.match(
+            /description:\s*[`"']([\s\S]*?)[`"']\s*,/
+          );
+
+          const tierMatch = eventString.match(/tier:\s*(\d+)/);
+
+          if (!idMatch || !nameMatch || !descriptionMatch || !tierMatch) {
             console.warn("Could not parse event:", eventString);
             return null;
           }
 
+          // Clean up the description - remove extra whitespace and newlines
+          let description = descriptionMatch[1]
+            .replace(/\\n/g, "\n") // Convert escaped newlines
+            .replace(/\\`/g, "`") // Convert escaped backticks
+            .replace(/\\"/g, '"') // Convert escaped quotes
+            .trim();
+
           return {
+            id: idMatch[1],
             name: nameMatch[1],
-            description: descriptionMatch[1],
+            description: description,
             tier: parseInt(tierMatch[1]),
           };
         })
@@ -157,7 +174,7 @@ class EventImageGenerator {
     const existingImages = this.getExistingEventImages();
 
     const missingEvents = allEvents.filter((event) => {
-      const expectedFilename = this.eventNameToFilename(event.name).replace(
+      const expectedFilename = this.eventIdToFilename(event.id).replace(
         ".png",
         ""
       );
@@ -201,9 +218,9 @@ Description: ${event.description}`;
     }
   }
 
-  async generateImage(prompt, eventName) {
+  async generateImage(prompt, eventId) {
     try {
-      console.log(`🎨 Generating image for "${eventName}"...`);
+      console.log(`🎨 Generating image for "${eventId}"...`);
 
       const finalPrompt =
         prompt + "\n\nIMPORTANT: Do not include any text in the image.";
@@ -234,19 +251,19 @@ Description: ${event.description}`;
       }
 
       // Use the standardized naming format
-      const filename = this.eventNameToFilename(eventName);
+      const filename = this.eventIdToFilename(eventId);
       const filepath = join(eventsDir, filename);
 
       // Convert base64 to buffer and save
       const imageBuffer = Buffer.from(imageData.b64_json, "base64");
       writeFileSync(filepath, imageBuffer);
 
-      console.log(`✅ "${eventName}" image saved to: ${filename}`);
+      console.log(`✅ "${eventId}" image saved to: ${filename}`);
 
       return filepath;
     } catch (error) {
       console.error(
-        `❌ Failed to generate image for "${eventName}":`,
+        `❌ Failed to generate image for "${eventId}":`,
         error.message
       );
       throw error;
@@ -277,7 +294,7 @@ Description: ${event.description}`;
       console.log("─".repeat(60));
 
       // Step 2: Generate image with OpenAI
-      const imagePath = await this.generateImage(detailedPrompt, event.name);
+      const imagePath = await this.generateImage(detailedPrompt, event.id);
 
       return imagePath;
     } catch (error) {
@@ -324,13 +341,23 @@ Description: ${event.description}`;
         try {
           console.log(`🤖 Creating prompt for "${event.name}"...`);
           const prompt = await this.generatePromptWithClaude(event);
-          return { event: event.name, prompt, success: true };
+          return {
+            event: event.id,
+            eventName: event.name,
+            prompt,
+            success: true,
+          };
         } catch (error) {
           console.error(
             `❌ Failed to generate prompt for ${event.name}:`,
             error.message
           );
-          return { event: event.name, success: false, error: error.message };
+          return {
+            event: event.id,
+            eventName: event.name,
+            success: false,
+            error: error.message,
+          };
         }
       });
 
@@ -354,8 +381,8 @@ Description: ${event.description}`;
 
       // Show generated prompts
       console.log(`\n📝 Generated prompts:`);
-      successfulPrompts.forEach(({ event, prompt }) => {
-        console.log(`\n🎭 ${event}:`);
+      successfulPrompts.forEach(({ eventName, prompt }) => {
+        console.log(`\n🎭 ${eventName}:`);
         console.log("─".repeat(60));
         console.log(prompt);
         console.log("─".repeat(60));
@@ -366,18 +393,20 @@ Description: ${event.description}`;
         `\n🎨 Generating ${successfulPrompts.length} images in parallel...`
       );
 
-      const imagePromises = successfulPrompts.map(async ({ event, prompt }) => {
-        try {
-          await this.generateImage(prompt, event);
-          return { event, success: true };
-        } catch (error) {
-          console.error(
-            `❌ Failed to generate image for ${event}:`,
-            error.message
-          );
-          return { event, success: false, error: error.message };
+      const imagePromises = successfulPrompts.map(
+        async ({ event, eventName, prompt }) => {
+          try {
+            await this.generateImage(prompt, event);
+            return { event, eventName, success: true };
+          } catch (error) {
+            console.error(
+              `❌ Failed to generate image for ${eventName}:`,
+              error.message
+            );
+            return { event, eventName, success: false, error: error.message };
+          }
         }
-      });
+      );
 
       const imageResults = await Promise.all(imagePromises);
 
@@ -390,11 +419,13 @@ Description: ${event.description}`;
 
       console.log("\n📊 Generation Results:");
       console.log(`✅ Successful: ${successful.length}`);
-      successful.forEach((r) => console.log(`  - ${r.event}`));
+      successful.forEach((r) => console.log(`  - ${r.eventName} (${r.event})`));
 
       if (failed.length > 0) {
         console.log(`❌ Failed: ${failed.length}`);
-        failed.forEach((r) => console.log(`  - ${r.event}: ${r.error}`));
+        failed.forEach((r) =>
+          console.log(`  - ${r.eventName || r.event}: ${r.error}`)
+        );
       }
     } catch (error) {
       console.error("❌ Batch generation failed:", error.message);

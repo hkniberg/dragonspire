@@ -67,9 +67,9 @@ class TreasureImageGenerator {
     }
   }
 
-  // Helper function to convert treasure name to filename
-  treasureNameToFilename(treasureName) {
-    return treasureName.toLowerCase().replace(/\s+/g, "-") + ".png";
+  // Helper function to convert treasure id to filename
+  treasureIdToFilename(treasureId) {
+    return treasureId + ".png";
   }
 
   // Load all treasures from treasureCards.ts
@@ -109,20 +109,34 @@ class TreasureImageGenerator {
 
       const treasures = treasureMatches
         .map((treasureString) => {
-          const nameMatch = treasureString.match(/name: ['"]([^'"]+)['"]/);
-          const descriptionMatch = treasureString.match(
-            /description: ['"]([^'"]*(?:[^'"\\]|\\.[^'"]*)*)['"]/
-          );
-          const tierMatch = treasureString.match(/tier: (\d+)/);
+          // Handle both single and double quotes for id
+          const idMatch = treasureString.match(/id:\s*["']([^"']+)["']/);
 
-          if (!nameMatch || !descriptionMatch || !tierMatch) {
+          const nameMatch = treasureString.match(/name:\s*["']([^"']+)["']/);
+
+          // Handle description with template literals (backticks) and regular quotes
+          const descriptionMatch = treasureString.match(
+            /description:\s*[`"']([\s\S]*?)[`"']\s*,/
+          );
+
+          const tierMatch = treasureString.match(/tier:\s*(\d+)/);
+
+          if (!idMatch || !nameMatch || !descriptionMatch || !tierMatch) {
             console.warn("Could not parse treasure:", treasureString);
             return null;
           }
 
+          // Clean up the description - remove extra whitespace and newlines
+          let description = descriptionMatch[1]
+            .replace(/\\n/g, "\n") // Convert escaped newlines
+            .replace(/\\`/g, "`") // Convert escaped backticks
+            .replace(/\\"/g, '"') // Convert escaped quotes
+            .trim();
+
           return {
+            id: idMatch[1],
             name: nameMatch[1],
-            description: descriptionMatch[1],
+            description: description,
             tier: parseInt(tierMatch[1]),
           };
         })
@@ -169,9 +183,10 @@ class TreasureImageGenerator {
     const existingImages = this.getExistingTreasureImages();
 
     const missingTreasures = allTreasures.filter((treasure) => {
-      const expectedFilename = this.treasureNameToFilename(
-        treasure.name
-      ).replace(".png", "");
+      const expectedFilename = this.treasureIdToFilename(treasure.id).replace(
+        ".png",
+        ""
+      );
       return !existingImages.includes(expectedFilename);
     });
 
@@ -213,9 +228,9 @@ Tier: ${treasure.tier}`;
     }
   }
 
-  async generateImage(prompt, treasureName) {
+  async generateImage(prompt, treasureId) {
     try {
-      console.log(`🎨 Generating image for "${treasureName}"...`);
+      console.log(`🎨 Generating image for "${treasureId}"...`);
 
       const finalPrompt =
         prompt + "\n\nIMPORTANT: Do not include any text in the image.";
@@ -252,19 +267,19 @@ Tier: ${treasure.tier}`;
       }
 
       // Use the standardized naming format
-      const filename = this.treasureNameToFilename(treasureName);
+      const filename = this.treasureIdToFilename(treasureId);
       const filepath = join(treasuresDir, filename);
 
       // Convert base64 to buffer and save
       const imageBuffer = Buffer.from(imageData.b64_json, "base64");
       writeFileSync(filepath, imageBuffer);
 
-      console.log(`✅ "${treasureName}" image saved to: ${filename}`);
+      console.log(`✅ "${treasureId}" image saved to: ${filename}`);
 
       return filepath;
     } catch (error) {
       console.error(
-        `❌ Failed to generate image for "${treasureName}":`,
+        `❌ Failed to generate image for "${treasureId}":`,
         error.message
       );
       throw error;
@@ -297,7 +312,7 @@ Tier: ${treasure.tier}`;
       console.log("─".repeat(60));
 
       // Step 2: Generate image with OpenAI
-      const imagePath = await this.generateImage(detailedPrompt, treasure.name);
+      const imagePath = await this.generateImage(detailedPrompt, treasure.id);
 
       return imagePath;
     } catch (error) {

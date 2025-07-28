@@ -77,9 +77,9 @@ class TraderItemImageGenerator {
     }
   }
 
-  // Helper function to convert trader item name to filename
-  traderItemNameToFilename(traderItemName) {
-    return traderItemName.toLowerCase().replace(/\s+/g, "-") + ".png";
+  // Helper function to convert trader item id to filename
+  traderItemIdToFilename(traderItemId) {
+    return traderItemId + ".png";
   }
 
   // Load all trader items from traderItems.ts
@@ -117,22 +117,32 @@ class TraderItemImageGenerator {
 
       const traderItems = traderItemMatches
         .map((traderItemString) => {
-          const idMatch = traderItemString.match(/id: ['"]([^'"]+)['"]/);
-          const nameMatch = traderItemString.match(/name: ['"]([^'"]+)['"]/);
+          const idMatch = traderItemString.match(/id:\s*["']([^"']+)["']/);
+          const nameMatch = traderItemString.match(/name:\s*["']([^"']+)["']/);
+
+          // Handle description with template literals (backticks) and regular quotes
           const descriptionMatch = traderItemString.match(
-            /description: ['"]([^'"]*(?:[^'"\\]|\\.[^'"]*)*)['"]/
+            /description:\s*[`"']([\s\S]*?)[`"']\s*,/
           );
-          const costMatch = traderItemString.match(/cost: (\d+)/);
+
+          const costMatch = traderItemString.match(/cost:\s*(\d+)/);
 
           if (!idMatch || !nameMatch || !descriptionMatch || !costMatch) {
             console.warn("Could not parse trader item:", traderItemString);
             return null;
           }
 
+          // Clean up the description - remove extra whitespace and newlines
+          let description = descriptionMatch[1]
+            .replace(/\\n/g, "\n") // Convert escaped newlines
+            .replace(/\\`/g, "`") // Convert escaped backticks
+            .replace(/\\"/g, '"') // Convert escaped quotes
+            .trim();
+
           return {
             id: idMatch[1],
             name: nameMatch[1],
-            description: descriptionMatch[1],
+            description: description,
             cost: parseInt(costMatch[1]),
           };
         })
@@ -179,8 +189,8 @@ class TraderItemImageGenerator {
     const existingImages = this.getExistingTraderItemImages();
 
     const missingTraderItems = allTraderItems.filter((traderItem) => {
-      const expectedFilename = this.traderItemNameToFilename(
-        traderItem.name
+      const expectedFilename = this.traderItemIdToFilename(
+        traderItem.id
       ).replace(".png", "");
       return !existingImages.includes(expectedFilename);
     });
@@ -223,9 +233,9 @@ Cost: ${traderItem.cost} gold`;
     }
   }
 
-  async generateImage(prompt, traderItemName) {
+  async generateImage(prompt, traderItemId) {
     try {
-      console.log(`🎨 Generating image for "${traderItemName}"...`);
+      console.log(`🎨 Generating image for "${traderItemId}"...`);
 
       const finalPrompt =
         prompt + "\n\nIMPORTANT: Do not include any text in the image.";
@@ -262,19 +272,19 @@ Cost: ${traderItem.cost} gold`;
       }
 
       // Use the standardized naming format
-      const filename = this.traderItemNameToFilename(traderItemName);
+      const filename = this.traderItemIdToFilename(traderItemId);
       const filepath = join(traderItemsDir, filename);
 
       // Convert base64 to buffer and save
       const imageBuffer = Buffer.from(imageData.b64_json, "base64");
       writeFileSync(filepath, imageBuffer);
 
-      console.log(`✅ "${traderItemName}" image saved to: ${filename}`);
+      console.log(`✅ "${traderItemId}" image saved to: ${filename}`);
 
       return filepath;
     } catch (error) {
       console.error(
-        `❌ Failed to generate image for "${traderItemName}":`,
+        `❌ Failed to generate image for "${traderItemId}":`,
         error.message
       );
       throw error;
@@ -307,10 +317,7 @@ Cost: ${traderItem.cost} gold`;
       console.log("─".repeat(60));
 
       // Step 2: Generate image with OpenAI
-      const imagePath = await this.generateImage(
-        detailedPrompt,
-        traderItem.name
-      );
+      const imagePath = await this.generateImage(detailedPrompt, traderItem.id);
 
       return imagePath;
     } catch (error) {

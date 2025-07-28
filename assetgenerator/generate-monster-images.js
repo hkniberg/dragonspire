@@ -59,9 +59,9 @@ class MonsterImageGenerator {
     }
   }
 
-  // Helper function to convert monster name to filename
-  monsterNameToFilename(monsterName) {
-    return monsterName.toLowerCase().replace(/\s+/g, "-") + ".png";
+  // Helper function to convert monster id to filename
+  monsterIdToFilename(monsterId) {
+    return monsterId + ".png";
   }
 
   // Load all monsters from monsterCards.ts
@@ -101,20 +101,21 @@ class MonsterImageGenerator {
 
       const monsters = monsterMatches
         .map((monsterString) => {
-          const nameMatch = monsterString.match(/name: ['"]([^'"]+)['"]/);
-          const descriptionMatch = monsterString.match(
-            /description: ['"]([^'"]*(?:[^'"\\]|\\.[^'"]*)*)['"]/
-          );
-          const tierMatch = monsterString.match(/tier: (\d+)/);
+          // Handle both single and double quotes for id
+          const idMatch = monsterString.match(/id:\s*["']([^"']+)["']/);
 
-          if (!nameMatch || !descriptionMatch || !tierMatch) {
+          const nameMatch = monsterString.match(/name:\s*["']([^"']+)["']/);
+
+          const tierMatch = monsterString.match(/tier:\s*(\d+)/);
+
+          if (!idMatch || !nameMatch || !tierMatch) {
             console.warn("Could not parse monster:", monsterString);
             return null;
           }
 
           return {
+            id: idMatch[1],
             name: nameMatch[1],
-            description: descriptionMatch[1],
             tier: parseInt(tierMatch[1]),
           };
         })
@@ -161,7 +162,7 @@ class MonsterImageGenerator {
     const existingImages = this.getExistingMonsterImages();
 
     const missingMonsters = allMonsters.filter((monster) => {
-      const expectedFilename = this.monsterNameToFilename(monster.name).replace(
+      const expectedFilename = this.monsterIdToFilename(monster.id).replace(
         ".png",
         ""
       );
@@ -205,9 +206,9 @@ Description: ${monster.description}`;
     }
   }
 
-  async generateImage(prompt, monsterName) {
+  async generateImage(prompt, monsterId) {
     try {
-      console.log(`🎨 Generating image for "${monsterName}"...`);
+      console.log(`🎨 Generating image for "${monsterId}"...`);
 
       const finalPrompt =
         prompt + "\n\nIMPORTANT: Do not include any text in the image.";
@@ -231,7 +232,7 @@ Description: ${monster.description}`;
       }
 
       // Use the standardized naming format
-      const filename = this.monsterNameToFilename(monsterName);
+      const filename = this.monsterIdToFilename(monsterId);
       const filepath = join(
         __dirname,
         "..",
@@ -245,12 +246,12 @@ Description: ${monster.description}`;
       const imageBuffer = Buffer.from(imageData.b64_json, "base64");
       writeFileSync(filepath, imageBuffer);
 
-      console.log(`✅ "${monsterName}" image saved to: ${filename}`);
+      console.log(`✅ "${monsterId}" image saved to: ${filename}`);
 
       return filepath;
     } catch (error) {
       console.error(
-        `❌ Failed to generate image for "${monsterName}":`,
+        `❌ Failed to generate image for "${monsterId}":`,
         error.message
       );
       throw error;
@@ -283,7 +284,7 @@ Description: ${monster.description}`;
       console.log("─".repeat(60));
 
       // Step 2: Generate image with OpenAI
-      const imagePath = await this.generateImage(detailedPrompt, monster.name);
+      const imagePath = await this.generateImage(detailedPrompt, monster.id);
 
       return imagePath;
     } catch (error) {

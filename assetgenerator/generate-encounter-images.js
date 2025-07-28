@@ -67,9 +67,9 @@ class EncounterImageGenerator {
     }
   }
 
-  // Helper function to convert encounter name to filename
-  encounterNameToFilename(encounterName) {
-    return encounterName.toLowerCase().replace(/\s+/g, "-") + ".png";
+  // Helper function to convert encounter id to filename
+  encounterIdToFilename(encounterId) {
+    return encounterId + ".png";
   }
 
   // Load all encounters from encounterCards.ts
@@ -107,21 +107,43 @@ class EncounterImageGenerator {
 
       const encounters = encounterMatches
         .map((encounterString) => {
-          const nameMatch = encounterString.match(/name: ['"]([^'"]+)['"]/);
-          const descriptionMatch = encounterString.match(
-            /description: ['"]([^'"]*(?:[^'"\\]|\\.[^'"]*)*)['"]/
-          );
-          const tierMatch = encounterString.match(/tier: (\d+)/);
-          const followerMatch = encounterString.match(/follower: (true|false)/);
+          // Handle both single and double quotes for id
+          const idMatch = encounterString.match(/id:\s*["']([^"']+)["']/);
 
-          if (!nameMatch || !descriptionMatch || !tierMatch || !followerMatch) {
+          const nameMatch = encounterString.match(/name:\s*["']([^"']+)["']/);
+
+          // Handle description with template literals (backticks) and regular quotes
+          const descriptionMatch = encounterString.match(
+            /description:\s*[`"']([\s\S]*?)[`"']\s*,/
+          );
+
+          const tierMatch = encounterString.match(/tier:\s*(\d+)/);
+          const followerMatch = encounterString.match(
+            /follower:\s*(true|false)/
+          );
+
+          if (
+            !idMatch ||
+            !nameMatch ||
+            !descriptionMatch ||
+            !tierMatch ||
+            !followerMatch
+          ) {
             console.warn("Could not parse encounter:", encounterString);
             return null;
           }
 
+          // Clean up the description - remove extra whitespace and newlines
+          let description = descriptionMatch[1]
+            .replace(/\\n/g, "\n") // Convert escaped newlines
+            .replace(/\\`/g, "`") // Convert escaped backticks
+            .replace(/\\"/g, '"') // Convert escaped quotes
+            .trim();
+
           return {
+            id: idMatch[1],
             name: nameMatch[1],
-            description: descriptionMatch[1],
+            description: description,
             tier: parseInt(tierMatch[1]),
             follower: followerMatch[1] === "true",
           };
@@ -169,9 +191,10 @@ class EncounterImageGenerator {
     const existingImages = this.getExistingEncounterImages();
 
     const missingEncounters = allEncounters.filter((encounter) => {
-      const expectedFilename = this.encounterNameToFilename(
-        encounter.name
-      ).replace(".png", "");
+      const expectedFilename = this.encounterIdToFilename(encounter.id).replace(
+        ".png",
+        ""
+      );
       return !existingImages.includes(expectedFilename);
     });
 
@@ -212,9 +235,9 @@ Description: ${encounter.description}`;
     }
   }
 
-  async generateImage(prompt, encounterName) {
+  async generateImage(prompt, encounterId) {
     try {
-      console.log(`🎨 Generating image for "${encounterName}"...`);
+      console.log(`🎨 Generating image for "${encounterId}"...`);
 
       const finalPrompt =
         prompt + "\n\nIMPORTANT: Do not include any text in the image.";
@@ -251,19 +274,19 @@ Description: ${encounter.description}`;
       }
 
       // Use the standardized naming format
-      const filename = this.encounterNameToFilename(encounterName);
+      const filename = this.encounterIdToFilename(encounterId);
       const filepath = join(encountersDir, filename);
 
       // Convert base64 to buffer and save
       const imageBuffer = Buffer.from(imageData.b64_json, "base64");
       writeFileSync(filepath, imageBuffer);
 
-      console.log(`✅ "${encounterName}" image saved to: ${filename}`);
+      console.log(`✅ "${encounterId}" image saved to: ${filename}`);
 
       return filepath;
     } catch (error) {
       console.error(
-        `❌ Failed to generate image for "${encounterName}":`,
+        `❌ Failed to generate image for "${encounterId}":`,
         error.message
       );
       throw error;
@@ -296,10 +319,7 @@ Description: ${encounter.description}`;
       console.log("─".repeat(60));
 
       // Step 2: Generate image with OpenAI
-      const imagePath = await this.generateImage(
-        detailedPrompt,
-        encounter.name
-      );
+      const imagePath = await this.generateImage(detailedPrompt, encounter.id);
 
       return imagePath;
     } catch (error) {
@@ -354,14 +374,20 @@ Description: ${encounter.description}`;
         try {
           console.log(`🤖 Creating prompt for "${encounter.name}"...`);
           const prompt = await this.generatePromptWithClaude(encounter);
-          return { encounter: encounter.name, prompt, success: true };
+          return {
+            encounter: encounter.id,
+            encounterName: encounter.name,
+            prompt,
+            success: true,
+          };
         } catch (error) {
           console.error(
             `❌ Failed to generate prompt for ${encounter.name}:`,
             error.message
           );
           return {
-            encounter: encounter.name,
+            encounter: encounter.id,
+            encounterName: encounter.name,
             success: false,
             error: error.message,
           };
@@ -390,8 +416,8 @@ Description: ${encounter.description}`;
 
       // Show generated prompts
       console.log(`\n📝 Generated prompts:`);
-      successfulPrompts.forEach(({ encounter, prompt }) => {
-        console.log(`\n🤝 ${encounter}:`);
+      successfulPrompts.forEach(({ encounterName, prompt }) => {
+        console.log(`\n🤝 ${encounterName}:`);
         console.log("─".repeat(60));
         console.log(prompt);
         console.log("─".repeat(60));
@@ -403,16 +429,21 @@ Description: ${encounter.description}`;
       );
 
       const imagePromises = successfulPrompts.map(
-        async ({ encounter, prompt }) => {
+        async ({ encounter, encounterName, prompt }) => {
           try {
             await this.generateImage(prompt, encounter);
-            return { encounter, success: true };
+            return { encounter, encounterName, success: true };
           } catch (error) {
             console.error(
-              `❌ Failed to generate image for ${encounter}:`,
+              `❌ Failed to generate image for ${encounterName}:`,
               error.message
             );
-            return { encounter, success: false, error: error.message };
+            return {
+              encounter,
+              encounterName,
+              success: false,
+              error: error.message,
+            };
           }
         }
       );
@@ -428,11 +459,15 @@ Description: ${encounter.description}`;
 
       console.log("\n📊 Generation Results:");
       console.log(`✅ Successful: ${successful.length}`);
-      successful.forEach((r) => console.log(`  - ${r.encounter}`));
+      successful.forEach((r) =>
+        console.log(`  - ${r.encounterName} (${r.encounter})`)
+      );
 
       if (failed.length > 0) {
         console.log(`❌ Failed: ${failed.length}`);
-        failed.forEach((r) => console.log(`  - ${r.encounter}: ${r.error}`));
+        failed.forEach((r) =>
+          console.log(`  - ${r.encounterName || r.encounter}: ${r.error}`)
+        );
       }
     } catch (error) {
       console.error("❌ Batch generation failed:", error.message);
