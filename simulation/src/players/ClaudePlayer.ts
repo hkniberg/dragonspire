@@ -6,7 +6,7 @@ import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
-import { decisionSchema, diceActionSchema, traderDecisionSchema } from "../lib/claudeSchemas";
+import { buildingUsageSchema, decisionSchema, diceActionSchema, traderDecisionSchema } from "../lib/claudeSchemas";
 import { templateProcessor, TemplateVariables } from "../lib/templateProcessor";
 import { Claude } from "../llm/claude";
 import { PlayerAgent } from "./PlayerAgent";
@@ -123,41 +123,6 @@ export class ClaudePlayerAgent implements PlayerAgent {
         try {
             const userMessage = await this.prepareBuildingUsageMessage(gameState, gameLog, playerName);
 
-            // Define schema for building usage decision
-            const buildingUsageSchema = {
-                type: "object",
-                properties: {
-                    useBlacksmith: {
-                        type: "boolean",
-                        description: "Whether to use the blacksmith to buy 1 Might for 1 Gold + 2 Ore"
-                    },
-                    sellAtMarket: {
-                        type: "object",
-                        description: "Resources to sell at market (only used if you have a market)",
-                        properties: {
-                            food: {
-                                type: "number",
-                                description: "Amount of food to sell"
-                            },
-                            wood: {
-                                type: "number",
-                                description: "Amount of wood to sell"
-                            },
-                            ore: {
-                                type: "number",
-                                description: "Amount of ore to sell"
-                            }
-                        },
-                        additionalProperties: false
-                    },
-                    reasoning: {
-                        type: "string",
-                        description: "Brief reasoning for the decision"
-                    }
-                },
-                required: ["useBlacksmith", "sellAtMarket"]
-            };
-
             // Get structured JSON response for building usage decision
             const response = await this.claude.useClaude(userMessage, buildingUsageSchema, 0, 300, thinkingLogger);
 
@@ -166,7 +131,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             console.error(`${this.name} encountered an error during building usage decision:`, error);
 
             // Fallback to not using any buildings
-            return { useBlacksmith: false, sellAtMarket: { food: 0, wood: 0, ore: 0, gold: 0 } };
+            return { useBlacksmith: false, sellAtMarket: { food: 0, wood: 0, ore: 0 } };
         }
     }
 

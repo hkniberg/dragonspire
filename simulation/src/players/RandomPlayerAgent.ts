@@ -2,7 +2,7 @@
 
 import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
-import { Decision, DecisionContext, GameLogEntry, PlayerType, ResourceType, TurnContext } from "@/lib/types";
+import { Decision, DecisionContext, GameLogEntry, MarketResourceType, PlayerType, ResourceType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
 import { PlayerAgent } from "./PlayerAgent";
 import { generateAllPaths, getHarvestableResourcesInfo, getReachableTiles } from "./PlayerUtils";
@@ -126,7 +126,7 @@ export class RandomPlayerAgent implements PlayerAgent {
   ): Promise<BuildingUsageDecision> {
     const player = gameState.getPlayer(playerName);
     if (!player) {
-      return { useBlacksmith: false, sellAtMarket: { food: 0, wood: 0, ore: 0, gold: 0 } };
+      return {};
     }
 
     // Check if player has a blacksmith
@@ -144,28 +144,37 @@ export class RandomPlayerAgent implements PlayerAgent {
     // RandomPlayer always uses blacksmith if available and affordable
     const useBlacksmith = hasBlacksmith && canAffordBlacksmith;
 
-    // RandomPlayer uses market if available and has resources to sell
-    const sellAtMarket: Record<ResourceType, number> = { food: 0, wood: 0, ore: 0, gold: 0 };
+    // Only create sellAtMarket if player has market and resources to sell
+    let sellAtMarket: Record<MarketResourceType, number> | undefined;
 
     if (hasMarket && hasResourcesToSell) {
+      sellAtMarket = { food: 0, wood: 0, ore: 0 };
+
       // Randomly decide which resources to sell
-      const resourceTypes: ResourceType[] = ["food", "wood", "ore"];
+      const resourceTypes: MarketResourceType[] = ["food", "wood", "ore"];
 
       for (const resourceType of resourceTypes) {
-        if (player.resources[resourceType] > 0) {
+        if (player.resources[resourceType as ResourceType] > 0) {
           // Randomly decide to sell 0 to all of this resource
-          const maxAmount = player.resources[resourceType];
+          const maxAmount = player.resources[resourceType as ResourceType];
           const sellAmount = Math.floor(Math.random() * (maxAmount + 1));
 
-          sellAtMarket[resourceType] = sellAmount;
+          sellAtMarket![resourceType] = sellAmount;
         }
       }
     }
 
-    return {
-      useBlacksmith,
-      sellAtMarket
-    };
+    const result: BuildingUsageDecision = {};
+
+    if (useBlacksmith) {
+      result.useBlacksmith = useBlacksmith;
+    }
+
+    if (sellAtMarket) {
+      result.sellAtMarket = sellAtMarket;
+    }
+
+    return result;
   }
 
   private generateRandomChampionMoveAction(

@@ -1,4 +1,4 @@
-import { OceanPosition, Position, ResourceType } from './types';
+import { MarketResourceType, OceanPosition, Position } from './types';
 
 export interface ChampionAction {
   diceValueUsed: number;
@@ -36,8 +36,8 @@ export interface BuildAction {
 }
 
 export interface BuildingUsageDecision {
-  useBlacksmith: boolean;
-  sellAtMarket: Record<ResourceType, number>;
+  useBlacksmith?: boolean;
+  sellAtMarket?: Record<MarketResourceType, number>;
 }
 
 // Nested DiceAction structure for Claude communication (matches schema)

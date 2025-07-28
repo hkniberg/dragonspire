@@ -28,15 +28,7 @@ MARKET:
 
 Check if you have any buildings available to use and whether you can afford their costs. Consider your current strategic situation and resource needs.
 
-Respond with a JSON object containing:
-
-- useBlacksmith: Boolean indicating whether to use your blacksmith (if you have one)
-- sellAtMarket: Object with resource amounts to sell at market (only if you have a market)
-  - food: Number of food to sell
-  - wood: Number of wood to sell
-  - ore: Number of ore to sell
-  - gold: Number of gold to sell (should be 0, you can't sell gold)
-- reasoning: Your explanation for this decision
+Respond with a JSON object containing info about whether you want to use the blacksmith or market, and which resources to sell in that case.
 
 Remember that building usage happens after all dice actions are complete, so this is your final opportunity to spend resources this turn.
 </building-usage-decision-request>

@@ -4,6 +4,7 @@ import type { TraderItem } from "../content/traderItems";
 import type { TreasureCard } from "../content/treasureCards";
 
 export type ResourceType = "food" | "wood" | "ore" | "gold";
+export type MarketResourceType = "food" | "wood" | "ore";
 export type TileTier = 1 | 2 | 3;
 export type BiomeType = "plains" | "mountains" | "woodlands";
 export type OceanPosition = "nw" | "ne" | "sw" | "se";

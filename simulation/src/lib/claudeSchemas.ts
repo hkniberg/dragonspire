@@ -256,3 +256,40 @@ export const traderDecisionSchema = {
   },
   required: ["actions"],
 };
+
+/**
+ * Schema for building usage decision responses from Claude
+ */
+export const buildingUsageSchema = {
+  type: "object",
+  properties: {
+    useBlacksmith: {
+      type: "boolean",
+      description: "Whether to use the blacksmith to buy 1 Might for 1 Gold + 2 Ore"
+    },
+    sellAtMarket: {
+      type: "object",
+      description: "Resources to sell at market (only used if you have a market). You can only sell food, wood, and ore - not gold.",
+      properties: {
+        food: {
+          type: "number",
+          description: "Amount of food to sell"
+        },
+        wood: {
+          type: "number",
+          description: "Amount of wood to sell"
+        },
+        ore: {
+          type: "number",
+          description: "Amount of ore to sell"
+        }
+      },
+      additionalProperties: false
+    },
+    reasoning: {
+      type: "string",
+      description: "Brief reasoning for the decision"
+    }
+  },
+  required: ["useBlacksmith", "sellAtMarket"]
+};
