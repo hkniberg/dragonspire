@@ -1,7 +1,7 @@
 // Lords of Doomspire Game Master
 
 import { BoatAction, BuildAction, ChampionAction, HarvestAction, TileAction } from "@/lib/actionTypes";
-import { Champion, GameLogEntry, GameLogEntryType, Player, Tile, TurnContext } from "@/lib/types";
+import { GameLogEntry, GameLogEntryType, Player, Tile, TurnContext } from "@/lib/types";
 import { formatPosition, formatResources } from "@/lib/utils";
 import { GameState } from "../game/GameState";
 import { stringifyTile } from "../game/gameStateStringifier";
@@ -13,6 +13,7 @@ import { checkVictory } from "./actions/victoryChecker";
 import { DiceRoller, RandomDiceRoller } from "./DiceRoller";
 import { DiceRolls } from "./DiceRolls";
 import { handleAdventureCard } from "./handlers/adventureCardHandler";
+import { handleBuildAction } from "./handlers/buildActionHandler";
 import { handleBuildingUsage as handleBuildingUsageHandler } from "./handlers/buildingUsageHandler";
 import {
   handleChampionCombat,
@@ -435,121 +436,11 @@ export class GameMaster {
   }
 
   private async executeBuildAction(player: Player, action: BuildAction, reasoning?: string): Promise<void> {
-    const reasoningText = reasoning ? ` Reason: ${reasoning}.` : "";
+    const logFn = (type: string, content: string) => this.addGameLogEntry(type as GameLogEntryType, content);
+    const result = handleBuildAction(player, action, logFn, reasoning);
 
-    if (action.buildingType === "blacksmith") {
-      // Check if player can afford blacksmith: 2 Food + 2 Ore (according to rules)
-      if (player.resources.food >= 2 && player.resources.ore >= 2) {
-        // Check if player already has a blacksmith (max 1 per player)
-        const hasBlacksmith = player.buildings.some(building => building.type === "blacksmith");
-
-        if (hasBlacksmith) {
-          this.addGameLogEntry("system", `Cannot build blacksmith - player already has one.${reasoningText}`);
-          return;
-        }
-
-        // Deduct resources
-        player.resources.food -= 2;
-        player.resources.ore -= 2;
-
-        // Add blacksmith to player's buildings
-        player.buildings.push({
-          type: "blacksmith"
-        });
-
-        this.addGameLogEntry(
-          "system",
-          `Built a blacksmith for 2 Food + 2 Ore, using die value [${action.diceValueUsed}].${reasoningText}`
-        );
-      } else {
-        this.addGameLogEntry(
-          "system",
-          `Cannot afford blacksmith - requires 2 Food + 2 Ore.${reasoningText}`
-        );
-      }
-    } else if (action.buildingType === "market") {
-      // Check if player can afford market: 2 Food + 2 Wood (according to rules)
-      if (player.resources.food >= 2 && player.resources.wood >= 2) {
-        // Check if player already has a market (max 1 per player)
-        const hasMarket = player.buildings.some(building => building.type === "market");
-
-        if (hasMarket) {
-          this.addGameLogEntry("system", `Cannot build market - player already has one.${reasoningText}`);
-          return;
-        }
-
-        // Deduct resources
-        player.resources.food -= 2;
-        player.resources.wood -= 2;
-
-        // Add market to player's buildings
-        player.buildings.push({
-          type: "market"
-        });
-
-        this.addGameLogEntry(
-          "system",
-          `Built a market for 2 Food + 2 Wood, using die value [${action.diceValueUsed}].${reasoningText}`
-        );
-      } else {
-        this.addGameLogEntry(
-          "system",
-          `Cannot afford market - requires 2 Food + 2 Wood.${reasoningText}`
-        );
-      }
-    } else if (action.buildingType === "recruitChampion") {
-      // Check if player can recruit a champion
-      const currentChampionCount = player.champions.length;
-
-      if (currentChampionCount >= 3) {
-        this.addGameLogEntry("system", `Cannot recruit champion - already have maximum of 3 champions.${reasoningText}`);
-        return;
-      }
-
-      let cost: { food: number; gold: number; ore: number };
-      let championId: number;
-
-      if (currentChampionCount === 1) {
-        // 2nd Knight: 3 Food, 3 Gold, 1 Ore
-        cost = { food: 3, gold: 3, ore: 1 };
-        championId = 2;
-      } else if (currentChampionCount === 2) {
-        // 3rd Knight: 6 Food, 6 Gold, 3 Ore
-        cost = { food: 6, gold: 6, ore: 3 };
-        championId = 3;
-      } else {
-        this.addGameLogEntry("system", `Cannot recruit champion - invalid champion count.${reasoningText}`);
-        return;
-      }
-
-      // Check if player can afford the champion
-      if (player.resources.food >= cost.food && player.resources.gold >= cost.gold && player.resources.ore >= cost.ore) {
-        // Deduct resources
-        player.resources.food -= cost.food;
-        player.resources.gold -= cost.gold;
-        player.resources.ore -= cost.ore;
-
-        // Add new champion to player's home tile
-        const newChampion: Champion = {
-          id: championId,
-          position: player.homePosition,
-          playerName: player.name,
-          items: [],
-        };
-
-        player.champions.push(newChampion);
-
-        this.addGameLogEntry(
-          "system",
-          `Recruited champion ${championId} for ${cost.food} Food + ${cost.gold} Gold + ${cost.ore} Ore, using die value [${action.diceValueUsed}].${reasoningText}`
-        );
-      } else {
-        this.addGameLogEntry(
-          "system",
-          `Cannot afford champion ${championId} - requires ${cost.food} Food + ${cost.gold} Gold + ${cost.ore} Ore.${reasoningText}`
-        );
-      }
-    }
+    // The handler already logs the results, so we don't need to do anything else here
+    // The result object contains information about whether the action was successful
   }
 
   private async handleBuildingUsage(
