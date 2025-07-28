@@ -5,6 +5,7 @@ import { Card } from "@/lib/cards";
 import { EventCardResult, GameLogEntry, Monster, Player, Tile } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { resolveMonsterPlacementAndCombat } from "./combatHandler";
+import { handleCurseOfTheEarth } from "./eventCards/curseOfTheEarthHandler";
 import { handleDruidRampage } from "./eventCards/druidRampageHandler";
 import { handleHungryPests } from "./eventCards/hungryPestsHandler";
 import { handleLandslide } from "./eventCards/landslideHandler";
@@ -152,6 +153,8 @@ export async function handleEventCardFromAdventure(
       eventResult = handleYouGotRiches(gameState, logFn);
     } else if (cardId === "druid-rampage") {
       eventResult = await handleDruidRampage(gameState, tile, player, playerAgent, championId, logFn, thinkingLogger);
+    } else if (cardId === "curse-of-the-earth") {
+      eventResult = await handleCurseOfTheEarth(gameState, player, playerAgent, logFn, thinkingLogger);
     } else {
       // Other event cards not yet implemented
       const message = `Event card ${cardId} drawn, but not yet implemented`;

@@ -88,7 +88,7 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
     id: "curse-of-the-earth",
     name: "Curse of the Earth",
     tier: 3,
-    description: "You may pay the Bogwitch `2x gold` to curse the lands. All players lose `−2 might`, as their **weapons** *rust and crumble*.",
+    description: "You may pay the Bogwitch `2x gold` to **curse the lands**. If so *all* players (including you) lose `2 might` (if they have it), as their weapons rust and crumble.",
     count: 1,
   },
   {
