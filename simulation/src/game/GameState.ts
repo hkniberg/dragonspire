@@ -1,8 +1,9 @@
 // Lords of Doomspire Game State Model
 
+import { getCoastalTilesForOceanPosition } from "../engine/actions/moveCalculator";
 import { Board } from "../lib/Board";
 import { BoardBuilder } from "../lib/BoardBuilder";
-import type { Boat, Champion, Player, Position, Tile } from "../lib/types";
+import type { Boat, Champion, OceanPosition, Player, Position, Tile } from "../lib/types";
 
 export class GameState {
 
@@ -288,5 +289,92 @@ export class GameState {
       gameEnded: this.gameEnded,
       winner: this.winner,
     };
+  }
+
+  /**
+   * Get the number of supporting units (knights and warships) for a player at a given position
+   * This implements the combat support rules where your own units provide +1 might per supporting unit
+   */
+  public getCombatSupport(playerName: string, combatPosition: Position): number {
+    let supportCount = 0;
+
+    // Find all adjacent positions
+    const adjacentPositions = this.getAdjacentPositions(combatPosition);
+
+    // Check for supporting knights in adjacent tiles
+    for (const adjacentPos of adjacentPositions) {
+      const adjacentTile = this.getTile(adjacentPos);
+      if (adjacentTile) {
+        // Find champions of the same player in adjacent tiles
+        const supportingChampions = this.getChampionsAtPosition(playerName, adjacentPos);
+        supportCount += supportingChampions.length;
+      }
+    }
+
+    // Check for supporting warships in adjacent ocean zones
+    const player = this.getPlayer(playerName);
+    if (player) {
+      for (const boat of player.boats) {
+        if (this.isWarship(player) && this.isBoatAdjacentToPosition(boat.position, combatPosition)) {
+          supportCount += 1;
+        }
+      }
+    }
+
+    return supportCount;
+  }
+
+  /**
+   * Get all adjacent positions to a given position (horizontally and vertically only)
+   */
+  private getAdjacentPositions(position: Position): Position[] {
+    const adjacent: Position[] = [];
+    const { row, col } = position;
+
+    // Check all four directions: up, down, left, right
+    const directions = [
+      { row: row - 1, col: col }, // up
+      { row: row + 1, col: col }, // down
+      { row: row, col: col - 1 }, // left
+      { row: row, col: col + 1 }, // right
+    ];
+
+    for (const dir of directions) {
+      if (dir.row >= 0 && dir.row < 8 && dir.col >= 0 && dir.col < 8) {
+        adjacent.push(dir);
+      }
+    }
+
+    return adjacent;
+  }
+
+  /**
+   * Get all champions of a specific player at a given position
+   */
+  private getChampionsAtPosition(playerName: string, position: Position): Champion[] {
+    const player = this.getPlayer(playerName);
+    if (!player) return [];
+
+    return player.champions.filter(champion =>
+      champion.position.row === position.row && champion.position.col === position.col
+    );
+  }
+
+  /**
+   * Check if a player has the warship upgrade
+   */
+  private isWarship(player: Player): boolean {
+    return player.buildings.includes("warshipUpgrade");
+  }
+
+  /**
+   * Check if a boat's ocean position is adjacent to a given tile position
+   * Warships provide +1 might to battles in tiles adjacent to their ocean zone
+   */
+  private isBoatAdjacentToPosition(boatPosition: OceanPosition, tilePosition: Position): boolean {
+    const adjacentTiles = getCoastalTilesForOceanPosition(boatPosition);
+    return adjacentTiles.some(pos =>
+      pos.row === tilePosition.row && pos.col === tilePosition.col
+    );
   }
 }

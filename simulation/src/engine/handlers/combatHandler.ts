@@ -159,6 +159,10 @@ export async function resolveChampionVsChampionCombat(
     throw new Error(`Opposing player ${opposingChampion.playerName} not found`);
   }
 
+  // Get combat support for both players
+  const attackerSupport = gameState.getCombatSupport(attackingPlayer.name, tile.position);
+  const defenderSupport = gameState.getCombatSupport(defendingPlayer.name, tile.position);
+
   // Roll dice for champion vs champion battle - keep rerolling on ties
   let attackerRoll: number;
   let defenderRoll: number;
@@ -168,8 +172,8 @@ export async function resolveChampionVsChampionCombat(
   do {
     attackerRoll = rollD3();
     defenderRoll = rollD3();
-    attackerTotal = attackingPlayer.might + attackerRoll;
-    defenderTotal = defendingPlayer.might + defenderRoll;
+    attackerTotal = attackingPlayer.might + attackerRoll + attackerSupport;
+    defenderTotal = defendingPlayer.might + defenderRoll + defenderSupport;
   } while (attackerTotal === defenderTotal); // Keep rerolling on ties
 
   const attackerWins = attackerTotal > defenderTotal;
@@ -250,7 +254,9 @@ export async function resolveChampionVsChampionCombat(
       lootInfo = ", nothing to loot";
     }
 
-    const fullCombatDetails = `Defeated ${defendingPlayer.name}'s champion (${attackerTotal} vs ${defenderTotal}), who went home${lootInfo}`;
+    const attackerBase = attackingPlayer.might + attackerRoll;
+    const defenderBase = defendingPlayer.might + defenderRoll;
+    const fullCombatDetails = `Defeated ${defendingPlayer.name}'s champion (${attackerBase}${attackerSupport > 0 ? `+${attackerSupport}` : ""} vs ${defenderBase}${defenderSupport > 0 ? `+${defenderSupport}` : ""}), who went home${lootInfo}`;
 
     logFn("combat", fullCombatDetails);
 
@@ -319,7 +325,9 @@ export async function resolveChampionVsChampionCombat(
       }
     }
 
-    const fullCombatDetails = `was defeated by ${defendingPlayer.name}'s champion (${attackerTotal} vs ${defenderTotal})${lootInfo}`;
+    const attackerBase = attackingPlayer.might + attackerRoll;
+    const defenderBase = defendingPlayer.might + defenderRoll;
+    const fullCombatDetails = `was defeated by ${defendingPlayer.name}'s champion (${attackerBase}${attackerSupport > 0 ? `+${attackerSupport}` : ""} vs ${defenderBase}${defenderSupport > 0 ? `+${defenderSupport}` : ""})${lootInfo}`;
 
     // Apply defeat effects for champion vs champion combat (no healing cost)
     await applyChampionDefeatInChampionCombat(gameState, attackingPlayer, attackingChampionId, fullCombatDetails, logFn, playerAgent, gameLog, thinkingLogger);
@@ -359,9 +367,15 @@ export async function resolveChampionVsMonsterCombat(
     logFn("combat", `Spear provides +1 might against ${monster.name} (beast)`);
   }
 
+  // Get combat support from adjacent units
+  const supportBonus = gameState.getCombatSupport(player.name, tile.position);
+  if (supportBonus > 0) {
+    logFn("combat", `Combat support: +${supportBonus} might from adjacent units`);
+  }
+
   // Roll dice for champion vs monster battle
   const championRoll = rollD3();
-  const championTotal = player.might + championRoll + mightBonus;
+  const championTotal = player.might + championRoll + mightBonus + supportBonus;
   const championWins = championTotal >= monster.might;
 
   if (championWins) {
@@ -376,7 +390,8 @@ export async function resolveChampionVsMonsterCombat(
     // Remove monster from tile
     tile.monster = undefined;
 
-    const combatDetails = `Defeated ${monster.name} (${championTotal} vs ${monster.might}), gained ${fameAwarded} fame and got ${formatResources(monster.resources)}`;
+    const championBase = player.might + championRoll + mightBonus;
+    const combatDetails = `Defeated ${monster.name} (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${monster.might}), gained ${fameAwarded} fame and got ${formatResources(monster.resources)}`;
     logFn("combat", combatDetails);
 
     return {
@@ -386,7 +401,8 @@ export async function resolveChampionVsMonsterCombat(
     };
   } else {
     // Champion lost - monster stays on tile, apply defeat effects immediately
-    const combatDetails = `Fought ${monster.name}, but was defeated (${championTotal} vs ${monster.might})`;
+    const championBase = player.might + championRoll + mightBonus;
+    const combatDetails = `Fought ${monster.name}, but was defeated (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${monster.might})`;
 
     // Apply defeat effects internally
     await applyChampionDefeat(gameState, player, championId, combatDetails, logFn);
@@ -450,13 +466,21 @@ export async function resolveChampionVsDragonEncounter(
 
   // Must fight the dragon - roll dice for champion vs dragon battle
   const dragonMight = GameSettings.DRAGON_BASE_MIGHT + rollD3();
+
+  // Get combat support from adjacent units
+  const supportBonus = gameState.getCombatSupport(player.name, tile.position);
+  if (supportBonus > 0) {
+    logFn("combat", `Combat support: +${supportBonus} might from adjacent units`);
+  }
+
   const championRoll = rollD3();
-  const championTotal = player.might + championRoll;
+  const championTotal = player.might + championRoll + supportBonus;
   const championWins = championTotal >= dragonMight;
 
   if (!championWins) {
     // Champion was defeated by dragon - apply defeat effects immediately
-    const combatDetails = `was eaten by the dragon (${championTotal} vs ${dragonMight})! Actually, that's not implemented yet, so champion is just sent home.`;
+    const championBase = player.might + championRoll;
+    const combatDetails = `was eaten by the dragon (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${dragonMight})! Actually, that's not implemented yet, so champion is just sent home.`;
 
     // Apply defeat effects internally
     await applyChampionDefeat(gameState, player, championId, combatDetails, logFn);
@@ -471,7 +495,8 @@ export async function resolveChampionVsDragonEncounter(
     };
   } else {
     // Champion won - COMBAT VICTORY!
-    const combatDetails = `Combat Victory! ${player.name} defeated the dragon (${championTotal} vs ${dragonMight})!`;
+    const championBase = player.might + championRoll;
+    const combatDetails = `Combat Victory! ${player.name} defeated the dragon (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${dragonMight})!`;
     logFn("victory", combatDetails);
 
     return {

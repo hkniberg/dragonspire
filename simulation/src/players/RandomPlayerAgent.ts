@@ -294,13 +294,14 @@ export class RandomPlayerAgent implements PlayerAgent {
     const hasMarket = player.buildings.includes("market");
     const hasChapel = player.buildings.includes("chapel");
     const hasMonastery = player.buildings.includes("monastery");
+    const hasWarshipUpgrade = player.buildings.includes("warshipUpgrade");
 
     // Check champion recruitment possibilities
     const currentChampionCount = player.champions.length;
     const canRecruitChampion = currentChampionCount < 3;
 
-    // Randomly choose between blacksmith, market, chapel, monastery, champion recruitment, and boat building (if available)
-    const availableBuildings: ("blacksmith" | "market" | "chapel" | "upgradeChapelToMonastery" | "recruitChampion" | "buildBoat")[] = [];
+    // Randomly choose between blacksmith, market, chapel, monastery, warship upgrade, champion recruitment, and boat building (if available)
+    const availableBuildings: ("blacksmith" | "market" | "chapel" | "upgradeChapelToMonastery" | "warshipUpgrade" | "recruitChampion" | "buildBoat")[] = [];
 
     if (!hasBlacksmith && player.resources.food >= 2 && player.resources.ore >= 2) {
       availableBuildings.push("blacksmith");
@@ -334,6 +335,11 @@ export class RandomPlayerAgent implements PlayerAgent {
 
     if (canBuildBoat) {
       availableBuildings.push("buildBoat");
+    }
+
+    // Check warship upgrade possibilities
+    if (!hasWarshipUpgrade && player.resources.wood >= 2 && player.resources.ore >= 1 && player.resources.gold >= 1) {
+      availableBuildings.push("warshipUpgrade");
     }
 
     if (availableBuildings.length === 0) {
