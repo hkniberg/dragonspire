@@ -36,7 +36,9 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser. Enter your Anthropic API key when prompted (stays local in browser).
 
-### Running CLI Simulation
+### Running the Command Line Interface (CLI) Simulation
+
+The CLI supports comprehensive argument parsing with automatic help text. Run `node run-test.js --help` for full documentation.
 
 ```bash
 # Run a headless game simulation
@@ -52,11 +54,16 @@ node run-test.js --turns 5
 node run-test.js --complete
 
 # Run a single turn with a Claude AI player (requires ANTHROPIC_API_KEY in .env)
-node run-test.js --single-turn p1=claude
+node run-test.js --single-turn --p1 claude
 
 # Run with extra instructions for Claude players
-node run-test.js --single-turn p1=claude --claude-instructions "Hoard gold"
+node run-test.js --single-turn --p1 claude --claude-instructions "Hoard gold"
 
+# Run with starting resources for faster testing
+node run-test.js --turns 3 --gold 10 --fame 5
+
+# Run with specific player configurations
+node run-test.js --complete --p1 claude --p2 random --p3 claude --p4 random
 ```
 
 The CLI mode supports automated playtesting with AI players for game balance analysis. When using Claude players, make sure to set your `ANTHROPIC_API_KEY` in a `.env` file in the simulation directory.

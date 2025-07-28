@@ -1,5 +1,6 @@
 // Simple runner for the Lords of Doomspire simulation
 const { execSync } = require("child_process");
+const yargs = require("yargs");
 
 function runSingleTurn(extraArgs = []) {
   console.log("🎮 Running single turn test...\n");
@@ -40,138 +41,147 @@ function runSpecificTurns(numTurns, extraArgs = []) {
   }
 }
 
-// Parse command line arguments
-const args = process.argv.slice(2);
+// Configure yargs
+const argv = yargs
+  .usage("🎮 Lords of Doomspire Simulation Runner\n\nUsage: $0 <command> [options]")
 
-// Find player arguments (p1=random, p2=claude, etc.)
-const playerArgs = args.filter((arg) => arg.match(/^p[1-4]=(random|claude)$/));
+  // Command options
+  .option("single-turn", {
+    alias: "s",
+    type: "boolean",
+    description: "Test one turn",
+  })
+  .option("complete", {
+    alias: "c",
+    type: "boolean",
+    description: "Run complete game",
+  })
+  .option("turns", {
+    alias: "t",
+    type: "number",
+    description: "Run X turns",
+  })
 
-// Find resource arguments (--gold, --fame, --might, --food, --wood, --ore) and their values
-const resourceArgs = [];
-for (let i = 0; i < args.length; i++) {
-  const arg = args[i];
-  if (
-    arg === "--gold" ||
-    arg === "--fame" ||
-    arg === "--might" ||
-    arg === "--food" ||
-    arg === "--wood" ||
-    arg === "--ore"
-  ) {
-    resourceArgs.push(arg);
-    if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
-      resourceArgs.push(args[i + 1]);
-    }
-  }
+  // Game configuration options
+  .option("max-rounds", {
+    type: "number",
+    description: "Set maximum rounds for complete games",
+  })
+  .option("seed", {
+    type: "number",
+    description: "Set random seed for board generation",
+  })
+
+  // Starting resource options
+  .option("gold", {
+    type: "number",
+    description: "Set starting gold for all players",
+  })
+  .option("fame", {
+    type: "number",
+    description: "Set starting fame for all players",
+  })
+  .option("might", {
+    type: "number",
+    description: "Set starting might for all players",
+  })
+  .option("food", {
+    type: "number",
+    description: "Set starting food for all players",
+  })
+  .option("wood", {
+    type: "number",
+    description: "Set starting wood for all players",
+  })
+  .option("ore", {
+    type: "number",
+    description: "Set starting ore for all players",
+  })
+
+  // Player configuration options
+  .option("p1", {
+    choices: ["random", "claude"],
+    description: "Player 1 type (random or claude)",
+  })
+  .option("p2", {
+    choices: ["random", "claude"],
+    description: "Player 2 type (random or claude)",
+  })
+  .option("p3", {
+    choices: ["random", "claude"],
+    description: "Player 3 type (random or claude)",
+  })
+  .option("p4", {
+    choices: ["random", "claude"],
+    description: "Player 4 type (random or claude)",
+  })
+
+  // Claude instructions
+  .option("claude-instructions", {
+    type: "string",
+    description: "Set extra instructions for all Claude players",
+  })
+
+  // Help and examples
+  .help("h")
+  .alias("h", "help").epilog(`
+Examples:
+  $0 --single-turn                          # Test one turn
+  $0 --turns 5                             # Run 5 turns
+  $0 --complete                             # Run complete game
+  $0 --single-turn --p1 claude             # 1 turn, Player 1 is Claude AI
+  $0 --complete --p1 random --p2 claude    # Complete game, mixed players
+  $0 --complete --max-rounds 25            # Complete game with 25 max rounds
+  $0 --complete --seed 12345               # Complete game with specific board layout
+  $0 --turns 5 --p1 claude --p2 claude    # 5 turns, first 2 players are Claude AI
+  $0 --complete --gold 10 --fame 5        # Complete game with starting resources
+  $0 --turns 2 --food 3 --wood 2          # 2 turns with starting food and wood
+  $0 --single-turn --might 3               # 1 turn with starting might
+  $0 --single-turn --p1 claude --claude-instructions "Focus on aggressive expansion"
+
+Environment Setup:
+  Create a .env file with: ANTHROPIC_API_KEY=your_api_key_here
+  This is required when using claude players
+  `).argv;
+
+// Build extra arguments array
+const extraArgs = [];
+
+// Add player arguments
+if (argv.p1) extraArgs.push(`p1=${argv.p1}`);
+if (argv.p2) extraArgs.push(`p2=${argv.p2}`);
+if (argv.p3) extraArgs.push(`p3=${argv.p3}`);
+if (argv.p4) extraArgs.push(`p4=${argv.p4}`);
+
+// Add resource arguments
+if (argv.gold !== undefined) extraArgs.push(`--gold ${argv.gold}`);
+if (argv.fame !== undefined) extraArgs.push(`--fame ${argv.fame}`);
+if (argv.might !== undefined) extraArgs.push(`--might ${argv.might}`);
+if (argv.food !== undefined) extraArgs.push(`--food ${argv.food}`);
+if (argv.wood !== undefined) extraArgs.push(`--wood ${argv.wood}`);
+if (argv.ore !== undefined) extraArgs.push(`--ore ${argv.ore}`);
+
+// Add claude instructions
+if (argv.claudeInstructions) {
+  extraArgs.push(`--claude-instructions "${argv.claudeInstructions}"`);
 }
 
-// Find claude instructions argument
-const claudeInstructionsArgs = [];
-for (let i = 0; i < args.length; i++) {
-  const arg = args[i];
-  if (arg === "--claude-instructions") {
-    claudeInstructionsArgs.push(arg);
-    // Collect all arguments until we hit another flag or run out of args
-    let instructionParts = [];
-    let j = i + 1;
-    while (j < args.length && !args[j].startsWith("--")) {
-      instructionParts.push(args[j]);
-      j++;
-    }
-    if (instructionParts.length > 0) {
-      claudeInstructionsArgs.push(instructionParts.join(" "));
-    }
-    // Skip the instruction parts we just processed
-    i = j - 1;
-  }
-}
+// Add other game configuration
+if (argv.maxRounds !== undefined) extraArgs.push(`--max-rounds ${argv.maxRounds}`);
+if (argv.seed !== undefined) extraArgs.push(`--seed ${argv.seed}`);
 
-// Find other arguments (like --max-rounds, --seed)
-const otherArgs = args.filter((arg, index) => {
-  // Skip command flags and their values
-  if (
-    arg === "--single-turn" ||
-    arg === "-s" ||
-    arg === "--complete" ||
-    arg === "-c" ||
-    arg === "--turns" ||
-    arg === "-t"
-  )
-    return false;
-  // Skip turn number value
-  if (args[index - 1] === "--turns" || args[index - 1] === "-t") return false;
-  // Skip seed value
-  if (args[index - 1] === "--seed") return false;
-  // Skip max-rounds value
-  if (args[index - 1] === "--max-rounds") return false;
-  // Skip resource arguments (handled separately)
-  if (
-    arg === "--gold" ||
-    arg === "--fame" ||
-    arg === "--might" ||
-    arg === "--food" ||
-    arg === "--wood" ||
-    arg === "--ore"
-  )
-    return false;
-  // Skip claude instructions arguments (handled separately)
-  if (arg === "--claude-instructions") return false;
-  // Skip player arguments (already extracted)
-  if (arg.match(/^p[1-4]=(random|claude)$/)) return false;
-  return true;
-});
-
-const allExtraArgs = [...playerArgs, ...resourceArgs, ...claudeInstructionsArgs, ...otherArgs];
-
-if (args.includes("--single-turn") || args.includes("-s")) {
-  runSingleTurn(allExtraArgs);
-} else if (args.includes("--complete") || args.includes("-c")) {
-  runCompleteGame(allExtraArgs);
-} else if (args.includes("--turns") || args.includes("-t")) {
-  const turnsIndex = args.findIndex((arg) => arg === "--turns" || arg === "-t");
-  const numTurns = parseInt(args[turnsIndex + 1]);
-
-  if (isNaN(numTurns) || numTurns < 1) {
+// Execute based on command
+if (argv.singleTurn) {
+  runSingleTurn(extraArgs);
+} else if (argv.complete) {
+  runCompleteGame(extraArgs);
+} else if (argv.turns) {
+  if (argv.turns < 1) {
     console.error("❌ Invalid number of turns. Please provide a positive integer.");
-    console.log("Example: node run-test.js --turns 5");
     process.exit(1);
   }
-
-  runSpecificTurns(numTurns, allExtraArgs);
+  runSpecificTurns(argv.turns, extraArgs);
 } else {
-  console.log("🎮 Lords of Doomspire Simulation Runner\n");
-  console.log("Usage:");
-  console.log("  node run-test.js --single-turn   # Test one turn");
-  console.log("  node run-test.js --turns X       # Run X turns");
-  console.log("  node run-test.js --complete      # Run complete game");
-  console.log("  npm run test-turn                # Test one turn");
-  console.log("  npm run simulate                 # Run complete game");
-  console.log("\nAdditional Options:");
-  console.log("  --max-rounds N                   # Set maximum rounds for complete games");
-  console.log("  --seed N                         # Set random seed for board generation");
-  console.log("  --gold N                         # Set starting gold for all players");
-  console.log("  --fame N                         # Set starting fame for all players");
-  console.log("  --might N                        # Set starting might for all players");
-  console.log("  --food N                         # Set starting food for all players");
-  console.log("  --wood N                         # Set starting wood for all players");
-  console.log("  --ore N                          # Set starting ore for all players");
-  console.log('  --claude-instructions "TEXT"     # Set extra instructions for all Claude players');
-  console.log("\nPlayer Configuration:");
-  console.log("  p1=random p2=claude p3=random p4=claude  # Specify player types");
-  console.log("  Available types: random, claude");
-  console.log("  Default: All players are 'random' if not specified");
-  console.log("\nEnvironment Setup:");
-  console.log("  Create a .env file with: ANTHROPIC_API_KEY=your_api_key_here");
-  console.log("  This is required when using claude players");
-  console.log("\nExamples:");
-  console.log("  node run-test.js --turns 3                          # 3 turns, all random players");
-  console.log("  node run-test.js --single-turn p1=claude            # 1 turn, Player 1 is Claude AI");
-  console.log("  node run-test.js --complete p1=random p2=claude     # Complete game, mixed players");
-  console.log("  node run-test.js --complete --max-rounds 25         # Complete game with 25 max rounds");
-  console.log("  node run-test.js --complete --seed 12345            # Complete game with specific board layout");
-  console.log("  node run-test.js -t 5 p1=claude p2=claude p3=claude # 5 turns, first 3 players are Claude AI");
-  console.log("  node run-test.js --complete --gold 10 --fame 5      # Complete game with starting resources");
-  console.log("  node run-test.js --turns 2 --food 3 --wood 2        # 2 turns with starting food and wood");
-  console.log("  node run-test.js --single-turn --might 3            # 1 turn with starting might");
-  console.log('  node run-test.js --single-turn p1=claude --claude-instructions "Focus on aggressive expansion"');
+  // No command specified, show help
+  yargs.showHelp();
 }
