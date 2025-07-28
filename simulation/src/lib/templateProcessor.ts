@@ -2,35 +2,42 @@ export interface TemplateVariables {
   [key: string]: string | number | boolean;
 }
 
+export type FileLoader = (path: string) => Promise<string>;
+
 export class TemplateProcessor {
+  private fileLoader: FileLoader;
+
+  constructor(fileLoader?: FileLoader) {
+    this.fileLoader = fileLoader || this.defaultFileLoader;
+  }
+
   /**
-   * Load a template file from the public/prompts directory via HTTP
+   * Default file loader that loads templates via HTTP fetch
    */
-  private async loadTemplate(templateName: string): Promise<string> {
+  private async defaultFileLoader(path: string): Promise<string> {
     try {
-      const response = await fetch(`/prompts/${templateName}.md`);
+      const response = await fetch(path);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       return await response.text();
     } catch (error) {
-      throw new Error(`Failed to load template "${templateName}": ${error}`);
+      throw new Error(`Failed to load file "${path}": ${error}`);
     }
   }
 
   /**
-   * Load the game rules from the game-rules.md file via HTTP
+   * Load a template file from the public/prompts directory
+   */
+  private async loadTemplate(templateName: string): Promise<string> {
+    return this.fileLoader(`/prompts/${templateName}.md`);
+  }
+
+  /**
+   * Load the game rules from the game-rules.md file
    */
   private async loadGameRules(): Promise<string> {
-    try {
-      const response = await fetch("/prompts/game-rules.md");
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      return await response.text();
-    } catch (error) {
-      throw new Error(`Failed to load game rules: ${error}`);
-    }
+    return this.fileLoader("/prompts/game-rules.md");
   }
 
   /**
@@ -59,5 +66,4 @@ export class TemplateProcessor {
   }
 }
 
-// Export a singleton instance
-export const templateProcessor = new TemplateProcessor();
+

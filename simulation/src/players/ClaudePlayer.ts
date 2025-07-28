@@ -7,17 +7,19 @@ import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
 import { buildingUsageSchema, decisionSchema, diceActionSchema, traderDecisionSchema } from "../lib/claudeSchemas";
-import { templateProcessor, TemplateVariables } from "../lib/templateProcessor";
+import { TemplateProcessor, TemplateVariables } from "../lib/templateProcessor";
 import { Claude } from "../llm/claude";
 import { PlayerAgent } from "./PlayerAgent";
 
 export class ClaudePlayerAgent implements PlayerAgent {
     private name: string;
     private claude: Claude;
+    private templateProcessor: TemplateProcessor;
 
-    constructor(name: string, claude: Claude) {
+    constructor(name: string, claude: Claude, templateProcessor: TemplateProcessor) {
         this.name = name;
         this.claude = claude;
+        this.templateProcessor = templateProcessor;
     }
 
     getName(): string {
@@ -151,7 +153,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             extraInstructions: this.getExtraInstructionsSection(gameState),
         };
 
-        return await templateProcessor.processTemplate("strategicAssessment", variables);
+        return await this.templateProcessor.processTemplate("strategicAssessment", variables);
     }
 
     private async prepareDiceActionMessage(
@@ -175,7 +177,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             extraInstructions: this.getExtraInstructionsSection(gameState)
         };
 
-        return await templateProcessor.processTemplate("diceAction", variables);
+        return await this.templateProcessor.processTemplate("diceAction", variables);
     }
 
     private async prepareDecisionMessage(
@@ -197,7 +199,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             gameLog: gameLogText,
         };
 
-        return await templateProcessor.processTemplate("makeDecision", variables);
+        return await this.templateProcessor.processTemplate("makeDecision", variables);
     }
 
     private async prepareTraderDecisionMessage(
@@ -241,7 +243,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             extraInstructions: this.getExtraInstructionsSection(gameState),
         };
 
-        return await templateProcessor.processTemplate("traderDecision", variables);
+        return await this.templateProcessor.processTemplate("traderDecision", variables);
     }
 
     private async prepareBuildingUsageMessage(
@@ -264,7 +266,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             extraInstructions: this.getExtraInstructionsSection(gameState),
         };
 
-        return await templateProcessor.processTemplate("useBuilding", variables);
+        return await this.templateProcessor.processTemplate("useBuilding", variables);
     }
 
     private getExtraInstructionsSection(gameState: GameState): string {

@@ -1,4 +1,4 @@
-import { templateProcessor } from "@/lib/templateProcessor";
+import { TemplateProcessor } from "@/lib/templateProcessor";
 import { Claude } from "@/llm/claude";
 import Head from "next/head";
 import { useEffect, useRef, useState } from "react";
@@ -149,11 +149,8 @@ export default function GameSimulation() {
     setIsExecutingTurn(true);
 
     try {
-      // Execute turn with real-time UI updates
-      await gameSession.executeTurn((newGameState, newGameLog) => {
-        setGameState(newGameState);
-        setActionLog(Array.from(newGameLog));
-      });
+      // Execute turn
+      await gameSession.executeTurn();
 
       // Final update after turn completion
       const updatedGameState = gameSession.getGameState();
@@ -184,10 +181,12 @@ export default function GameSimulation() {
         if (!apiKey.trim()) {
           throw new Error("API key is required for Claude players");
         }
+        // Create template processor for web usage (uses fetch)
+        const templateProcessor = new TemplateProcessor();
         // Get the system message for Claude
         const systemMessage = await templateProcessor.processTemplate("SystemPrompt", {});
         const claude = new Claude(apiKey.trim(), systemMessage);
-        return new ClaudePlayerAgent(config.name, claude);
+        return new ClaudePlayerAgent(config.name, claude, templateProcessor);
       default:
         throw new Error(`Unknown player type: ${config.type}`);
     }

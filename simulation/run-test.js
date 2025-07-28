@@ -71,9 +71,18 @@ for (let i = 0; i < args.length; i++) {
   const arg = args[i];
   if (arg === "--claude-instructions") {
     claudeInstructionsArgs.push(arg);
-    if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
-      claudeInstructionsArgs.push(args[i + 1]);
+    // Collect all arguments until we hit another flag or run out of args
+    let instructionParts = [];
+    let j = i + 1;
+    while (j < args.length && !args[j].startsWith("--")) {
+      instructionParts.push(args[j]);
+      j++;
     }
+    if (instructionParts.length > 0) {
+      claudeInstructionsArgs.push(instructionParts.join(" "));
+    }
+    // Skip the instruction parts we just processed
+    i = j - 1;
   }
 }
 

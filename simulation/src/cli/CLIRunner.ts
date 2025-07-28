@@ -1,7 +1,10 @@
 // Lords of Doomspire CLI Runner
 
 import * as dotenv from "dotenv";
+import * as fs from "fs/promises";
+import * as path from "path";
 import { GameMaster, GameMasterConfig } from "../engine/GameMaster";
+import { FileLoader } from "../lib/templateProcessor";
 import { Claude } from "../llm/claude";
 import { ClaudePlayerAgent } from "../players/ClaudePlayer";
 import { PlayerAgent } from "../players/PlayerAgent";
@@ -31,6 +34,23 @@ export interface CLIConfig {
 }
 
 export class CLIRunner {
+  /**
+   * Create a file system-based file loader for CLI usage
+   */
+  private static createFileLoader(): FileLoader {
+    return async (filePath: string): Promise<string> => {
+      // Remove leading slash and convert to file system path
+      const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath;
+      const fullPath = path.join(process.cwd(), 'public', cleanPath);
+
+      try {
+        return await fs.readFile(fullPath, 'utf-8');
+      } catch (error) {
+        throw new Error(`Failed to load file "${filePath}" from file system: ${error}`);
+      }
+    };
+  }
+
   private static async createPlayer(config: PlayerConfig): Promise<PlayerAgent> {
     switch (config.type) {
       case "random":
@@ -41,12 +61,16 @@ export class CLIRunner {
           throw new Error("ANTHROPIC_API_KEY not found in environment variables. Please add it to your .env file.");
         }
 
+        // Create file system-based template processor for CLI usage
+        const { TemplateProcessor } = await import("../lib/templateProcessor");
+        const fileLoader = this.createFileLoader();
+        const templateProcessor = new TemplateProcessor(fileLoader);
+
         // Load system prompt from template
-        const { templateProcessor } = await import("../lib/templateProcessor");
         const systemPrompt = await templateProcessor.processTemplate("SystemPrompt", {});
 
         const claude = new Claude(apiKey, systemPrompt);
-        return new ClaudePlayerAgent(config.name, claude);
+        return new ClaudePlayerAgent(config.name, claude, templateProcessor);
       default:
         throw new Error(`Unknown player type: ${config.type}`);
     }
@@ -349,6 +373,8 @@ export class CLIRunner {
   public static async main(args: string[] = []): Promise<void> {
     const config: CLIConfig = {};
 
+
+
     // Parse player configurations first
     config.playerConfigs = this.parsePlayerArgs(args);
 
@@ -395,8 +421,18 @@ export class CLIRunner {
           i++; // Skip next argument
           break;
         case "--claude-instructions":
-          config.claudeInstructions = args[i + 1];
-          i++; // Skip next argument
+          // Collect all arguments until we hit another flag
+          let instructionParts = [];
+          let j = i + 1;
+          while (j < args.length && !args[j].startsWith("--")) {
+            instructionParts.push(args[j]);
+            j++;
+          }
+          if (instructionParts.length > 0) {
+            config.claudeInstructions = instructionParts.join(" ");
+
+          }
+          i = j - 1; // Skip the instruction parts we just processed
           break;
         // Skip player arguments as they're already parsed
         default:

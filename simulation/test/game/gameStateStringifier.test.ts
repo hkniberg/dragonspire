@@ -286,6 +286,7 @@ function createSampleGameState(): GameState {
           position: "sw",
         },
       ],
+      buildings: [],
     },
     {
       name: "Bob",
@@ -315,6 +316,7 @@ function createSampleGameState(): GameState {
           position: "se",
         },
       ],
+      buildings: [],
     },
     {
       name: "Alice",
@@ -339,6 +341,7 @@ function createSampleGameState(): GameState {
           position: "sw",
         },
       ],
+      buildings: [],
     },
     {
       name: "David",
@@ -363,6 +366,7 @@ function createSampleGameState(): GameState {
           position: "se",
         },
       ],
+      buildings: [],
     },
   ];
 
