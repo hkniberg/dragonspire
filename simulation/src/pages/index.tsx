@@ -99,8 +99,8 @@ export default function GameSimulation() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [forceRender, setForceRender] = useState(0);
 
-  // Ref to hold the autoplay interval
-  const autoPlayInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Ref to hold the autoplay timeout
+  const autoPlayTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Initialize component only on client side
   useEffect(() => {
@@ -112,36 +112,36 @@ export default function GameSimulation() {
     }
   }, []);
 
-  // Simple autoplay effect
+  // Autoplay effect - starts initial autoplay and cleans up on changes
   useEffect(() => {
-    // Clear any existing interval
-    if (autoPlayInterval.current) {
-      clearInterval(autoPlayInterval.current);
-      autoPlayInterval.current = null;
+    // Clear any existing timeout when autoplay settings change
+    if (autoPlayTimeout.current) {
+      clearTimeout(autoPlayTimeout.current);
+      autoPlayTimeout.current = null;
     }
 
-    // Start new interval if autoplay is enabled
-    if (autoPlay && simulationState === "playing") {
-      autoPlayInterval.current = setInterval(() => {
+    // Start initial autoplay turn if enabled and ready
+    if (autoPlay && simulationState === "playing" && !isExecutingTurn) {
+      autoPlayTimeout.current = setTimeout(() => {
         executeNextTurn();
       }, autoPlaySpeed);
     }
 
     // Cleanup function
     return () => {
-      if (autoPlayInterval.current) {
-        clearInterval(autoPlayInterval.current);
-        autoPlayInterval.current = null;
+      if (autoPlayTimeout.current) {
+        clearTimeout(autoPlayTimeout.current);
+        autoPlayTimeout.current = null;
       }
     };
   }, [autoPlay, simulationState, autoPlaySpeed]);
 
-  // Cleanup interval on unmount
+  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
-      if (autoPlayInterval.current) {
-        clearInterval(autoPlayInterval.current);
-        autoPlayInterval.current = null;
+      if (autoPlayTimeout.current) {
+        clearTimeout(autoPlayTimeout.current);
+        autoPlayTimeout.current = null;
       }
     };
   }, []);
@@ -177,6 +177,13 @@ export default function GameSimulation() {
       setAutoPlay(false);
     } finally {
       setIsExecutingTurn(false);
+
+      // Schedule next autoplay turn if still enabled and game is still playing
+      if (autoPlay && simulationState === "playing" && gameSession?.getMasterState() !== "finished") {
+        autoPlayTimeout.current = setTimeout(() => {
+          executeNextTurn();
+        }, autoPlaySpeed);
+      }
     }
   };
 
