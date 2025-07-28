@@ -112,7 +112,8 @@ export async function handleEventCardFromAdventure(
   championId: number,
   gameLog: readonly GameLogEntry[],
   logFn: (type: string, content: string) => void,
-  thinkingLogger?: (content: string) => void
+  thinkingLogger?: (content: string) => void,
+  getPlayerAgent?: (playerName: string) => PlayerAgent | undefined
 ): Promise<AdventureCardResult> {
   const eventCard = getEventCardById(cardId);
   if (!eventCard) {
@@ -127,7 +128,7 @@ export async function handleEventCardFromAdventure(
   logFn("event", `Champion${championId} drew event card: ${eventCard.name}!`);
 
   try {
-    const eventResult = await handleEventCard(eventCard, gameState, player, playerAgent, gameLog, logFn, thinkingLogger);
+    const eventResult = await handleEventCard(eventCard.id, gameState, player, playerAgent, championId, gameLog, logFn, thinkingLogger, getPlayerAgent);
 
     return {
       cardProcessed: true,
@@ -243,7 +244,8 @@ export async function handleAdventureCard(
   championId: number,
   gameLog: readonly GameLogEntry[],
   logFn: (type: string, content: string) => void,
-  thinkingLogger?: (content: string) => void
+  thinkingLogger?: (content: string) => void,
+  getPlayerAgent?: (playerName: string) => PlayerAgent | undefined
 ): Promise<AdventureCardResult> {
   const cardType = adventureCard.type;
   const cardId = adventureCard.id;
@@ -253,7 +255,7 @@ export async function handleAdventureCard(
       return await handleMonsterCard(cardId, gameState, tile, player, championId, logFn);
 
     case "event":
-      return await handleEventCardFromAdventure(cardId, gameState, player, playerAgent, championId, gameLog, logFn, thinkingLogger);
+      return await handleEventCardFromAdventure(cardId, gameState, player, playerAgent, championId, gameLog, logFn, thinkingLogger, getPlayerAgent);
 
     case "treasure":
       return await handleTreasureCard(cardId, gameState, tile, player, playerAgent, championId, gameLog, logFn, thinkingLogger);

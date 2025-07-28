@@ -9,6 +9,7 @@ import { GameBoard } from "../components/GameBoard";
 import { GameLog } from "../components/GameLog";
 import { GameStatus } from "../components/GameStatus";
 import { StatisticsView } from "../components/StatisticsView";
+import { TokenUsage } from "../components/TokenUsage";
 import { GameMaster, GameMasterConfig } from "../engine/GameMaster";
 import { GameState } from "../game/GameState";
 import { TurnStatistics } from "../lib/types";
@@ -198,7 +199,10 @@ export default function GameSimulation() {
     }
   };
 
-  const createPlayer = async (config: PlayerConfig): Promise<PlayerAgent> => {
+  const createPlayer = async (
+    config: PlayerConfig,
+    tokenUsageTracker?: import("@/lib/TokenUsageTracker").TokenUsageTracker,
+  ): Promise<PlayerAgent> => {
     switch (config.type) {
       case "random":
         return new RandomPlayerAgent(config.name);
@@ -210,7 +214,7 @@ export default function GameSimulation() {
         const templateProcessor = new TemplateProcessor();
         // Get the system message for Claude
         const systemMessage = await templateProcessor.processTemplate("SystemPrompt", {});
-        const claude = new Claude(apiKey.trim(), systemMessage);
+        const claude = new Claude(apiKey.trim(), systemMessage, undefined, tokenUsageTracker);
         return new ClaudePlayerAgent(config.name, claude, templateProcessor);
       default:
         throw new Error(`Unknown player type: ${config.type}`);
@@ -228,8 +232,12 @@ export default function GameSimulation() {
 
       setIsStartingGame(true);
 
+      // Create token usage tracker for Claude players
+      const { TokenUsageTracker } = await import("@/lib/TokenUsageTracker");
+      const tokenUsageTracker = new TokenUsageTracker();
+
       // Create all players asynchronously
-      const players = await Promise.all(playerConfigs.map((config) => createPlayer(config)));
+      const players = await Promise.all(playerConfigs.map((config) => createPlayer(config, tokenUsageTracker)));
 
       // Validate player names
       const playerNames = players.map((p) => p.getName());
@@ -258,6 +266,7 @@ export default function GameSimulation() {
           gold: gameConfig.startGold,
         },
         seed: gameConfig.seed,
+        tokenUsageTracker: tokenUsageTracker, // Pass the same tracker instance
       };
 
       const session = new GameMaster(sessionConfig);
@@ -365,11 +374,11 @@ export default function GameSimulation() {
           minWidth: "fit-content",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+        <div style={{ marginBottom: "20px" }}>
           <h1
             style={{
               fontSize: "2.5rem",
-              margin: "0",
+              margin: "0 0 15px 0",
               color: "#2c3e50",
               fontFamily: "serif",
             }}
@@ -377,7 +386,7 @@ export default function GameSimulation() {
             Lords of Doomspire - Game Simulation
           </h1>
 
-          <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
             {/* View Switching Buttons - Only show when game is active */}
             {(simulationState === "playing" || simulationState === "finished") && (
               <div style={{ display: "flex", gap: "5px" }}>
@@ -446,6 +455,9 @@ export default function GameSimulation() {
             >
               📋 Player Cheat Sheet
             </a>
+
+            {/* Token Usage Widget */}
+            {gameSession && <TokenUsage tokenUsageTracker={gameSession.getTokenUsageTracker()} />}
           </div>
         </div>
 

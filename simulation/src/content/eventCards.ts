@@ -27,7 +27,8 @@ export const EVENT_CARDS: EventCard[] = [
     id: "market-day",
     name: "Market day",
     tier: 1,
-    description: "**Open trade** for all players this turn. Move `1 champion` to the *trader* (yours).",
+    description: `Decide if today is **Market Day**.  
+If so, *every player* must send **1 champion** to the trader, or refuse and pay \`1 gold\` in tax.`,
     count: 2,
   },
   {

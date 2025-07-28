@@ -1,6 +1,7 @@
 // Lords of Doomspire Game Master
 
 import { BoatAction, BuildAction, ChampionAction, HarvestAction, TileAction } from "@/lib/actionTypes";
+import { TokenUsageTracker } from "@/lib/TokenUsageTracker";
 import { GameLogEntry, GameLogEntryType, Player, Tile, TurnContext } from "@/lib/types";
 import { formatPosition, formatResources } from "@/lib/utils";
 import { GameState } from "../game/GameState";
@@ -33,6 +34,7 @@ export interface GameMasterConfig {
   maxRounds?: number; // Optional limit for testing
   startingValues?: { fame?: number; might?: number; food?: number; wood?: number; ore?: number; gold?: number }; // Optional starting values
   seed?: number; // Optional seed for board generation
+  tokenUsageTracker?: TokenUsageTracker; // Optional shared token usage tracker
 }
 
 export class GameMaster {
@@ -44,6 +46,7 @@ export class GameMaster {
   private gameLog: GameLogEntry[];
   private gameDecks: GameDecks;
   private statisticsCollector: StatisticsCollector;
+  private tokenUsageTracker: TokenUsageTracker;
 
   constructor(config: GameMasterConfig) {
     // Create GameState with the correct player names from the start
@@ -56,6 +59,8 @@ export class GameMaster {
     this.gameLog = [];
     this.gameDecks = new GameDecks(CARDS);
     this.statisticsCollector = new StatisticsCollector();
+    // Use provided tracker or create a new one
+    this.tokenUsageTracker = config.tokenUsageTracker || new TokenUsageTracker();
   }
 
   /**
@@ -379,7 +384,8 @@ export class GameMaster {
           championId,
           this.gameLog,
           logFn,
-          thinkingLogger
+          thinkingLogger,
+          getPlayerAgent
         );
 
         // If the card should be returned to the deck (e.g., sword-in-stone resisted pull)
@@ -655,6 +661,13 @@ export class GameMaster {
  */
   public getGameDecks(): GameDecks {
     return this.gameDecks;
+  }
+
+  /**
+   * Get the token usage tracker for monitoring Claude API costs
+   */
+  public getTokenUsageTracker(): TokenUsageTracker {
+    return this.tokenUsageTracker;
   }
 
   /**

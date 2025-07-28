@@ -1,3 +1,4 @@
+import { TokenUsageTracker } from "@/lib/TokenUsageTracker";
 import { Anthropic } from "@anthropic-ai/sdk";
 import { jsonrepair } from "jsonrepair";
 import pRetry, { AbortError } from "p-retry";
@@ -20,11 +21,13 @@ export class Claude {
   private anthropic: Anthropic;
   private model: string;
   private systemMessage: string;
+  private tokenUsageTracker?: TokenUsageTracker;
 
-  constructor(apiKey: string, systemMessage: string, model: string = DEFAULT_MODEL) {
+  constructor(apiKey: string, systemMessage: string, model: string = DEFAULT_MODEL, tokenUsageTracker?: TokenUsageTracker) {
     this.anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
     this.model = model;
     this.systemMessage = systemMessage;
+    this.tokenUsageTracker = tokenUsageTracker;
   }
 
   /**
@@ -74,6 +77,16 @@ export class Claude {
     const operation = async (attemptNumber: number) => {
       try {
         const response = await this.anthropic.messages.create(params);
+
+        // Track token usage if tracker is available
+        if (this.tokenUsageTracker && response.usage) {
+          this.tokenUsageTracker.addUsage({
+            input_tokens: response.usage.input_tokens || undefined,
+            cache_creation_input_tokens: response.usage.cache_creation_input_tokens || undefined,
+            cache_read_input_tokens: response.usage.cache_read_input_tokens || undefined,
+            output_tokens: response.usage.output_tokens || undefined,
+          });
+        }
 
         // Check for truncated thinking blocks (no text content)
         const textBlocks = response.content.filter((block): block is Anthropic.TextBlock => block.type === "text");
