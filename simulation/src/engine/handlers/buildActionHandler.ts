@@ -179,6 +179,7 @@ function handleChampionRecruitment(
     position: player.homePosition,
     playerName: player.name,
     items: [],
+    followers: [],
   };
 
   player.champions.push(newChampion);

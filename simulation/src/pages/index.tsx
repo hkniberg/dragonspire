@@ -8,8 +8,10 @@ import { ControlPanel } from "../components/ControlPanel";
 import { GameBoard } from "../components/GameBoard";
 import { GameLog } from "../components/GameLog";
 import { GameStatus } from "../components/GameStatus";
+import { StatisticsView } from "../components/StatisticsView";
 import { GameMaster, GameMasterConfig } from "../engine/GameMaster";
 import { GameState } from "../game/GameState";
+import { TurnStatistics } from "../lib/types";
 import { ClaudePlayerAgent } from "../players/ClaudePlayer";
 import { PlayerAgent } from "../players/PlayerAgent";
 import { RandomPlayerAgent } from "../players/RandomPlayerAgent";
@@ -39,6 +41,7 @@ const spinnerStyles = `
 
 type SimulationState = "setup" | "playing" | "finished";
 type PlayerType = "random" | "claude";
+type ViewType = "game" | "statistics";
 
 interface PlayerConfig {
   name: string;
@@ -64,6 +67,8 @@ export default function GameSimulation() {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [simulationState, setSimulationState] = useState<SimulationState>("setup");
   const [actionLog, setActionLog] = useState<any[]>([]);
+  const [currentView, setCurrentView] = useState<ViewType>("game");
+  const [statistics, setStatistics] = useState<readonly TurnStatistics[]>([]);
 
   // Player configuration state
   const [playerConfigs, setPlayerConfigs] = useState<PlayerConfig[]>([
@@ -155,9 +160,11 @@ export default function GameSimulation() {
       // Final update after turn completion
       const updatedGameState = gameSession.getGameState();
       const updatedGameLog = gameSession.getGameLog();
+      const updatedStatistics = gameSession.getStatistics();
 
       setGameState(updatedGameState);
       setActionLog(Array.from(updatedGameLog));
+      setStatistics(updatedStatistics);
 
       // Check if game is finished
       if (gameSession.getMasterState() === "finished") {
@@ -242,6 +249,8 @@ export default function GameSimulation() {
       setGameState(session.getGameState());
       setSimulationState("playing");
       setActionLog([]);
+      setStatistics([]);
+      setCurrentView("game");
       setAutoPlay(false);
 
       console.log(
@@ -273,6 +282,8 @@ export default function GameSimulation() {
     setGameState(null);
     setSimulationState("setup");
     setActionLog([]);
+    setStatistics([]);
+    setCurrentView("game");
     setAutoPlay(false);
   };
 
@@ -348,36 +359,76 @@ export default function GameSimulation() {
             Lords of Doomspire - Game Simulation
           </h1>
 
-          <a
-            href="/cheat-sheet"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#8b4513",
-              color: "white",
-              textDecoration: "none",
-              borderRadius: "6px",
-              fontSize: "14px",
-              fontWeight: "bold",
-              border: "2px solid #654321",
-              boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-              transition: "all 0.2s ease",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = "#a0522d";
-              e.currentTarget.style.transform = "translateY(-1px)";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = "#8b4513";
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
-          >
-            📋 Player Cheat Sheet
-          </a>
+          <div style={{ display: "flex", gap: "15px", alignItems: "center" }}>
+            {/* View Switching Buttons - Only show when game is active */}
+            {(simulationState === "playing" || simulationState === "finished") && (
+              <div style={{ display: "flex", gap: "5px" }}>
+                <button
+                  onClick={() => setCurrentView("game")}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: currentView === "game" ? "#2c3e50" : "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  Game View
+                </button>
+                <button
+                  onClick={() => setCurrentView("statistics")}
+                  style={{
+                    padding: "8px 16px",
+                    backgroundColor: currentView === "statistics" ? "#2c3e50" : "#6c757d",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  Statistics View
+                </button>
+              </div>
+            )}
+
+            <a
+              href="/cheat-sheet"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#8b4513",
+                color: "white",
+                textDecoration: "none",
+                borderRadius: "6px",
+                fontSize: "14px",
+                fontWeight: "bold",
+                border: "2px solid #654321",
+                boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                transition: "all 0.2s ease",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = "#a0522d";
+                e.currentTarget.style.transform = "translateY(-1px)";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = "#8b4513";
+                e.currentTarget.style.transform = "translateY(0)";
+              }}
+            >
+              📋 Player Cheat Sheet
+            </a>
+          </div>
         </div>
 
         {/* Player Configuration Panel */}
@@ -799,58 +850,67 @@ export default function GameSimulation() {
           onToggleDebugMode={toggleDebugMode}
         />
 
-        {/* Game Status */}
-        {gameState && (
-          <GameStatus gameState={gameState} simulationState={simulationState} actionLogLength={actionLog.length} />
-        )}
+        {/* Conditional View Rendering */}
+        {currentView === "game" ? (
+          <>
+            {/* Game Status */}
+            {gameState && (
+              <GameStatus gameState={gameState} simulationState={simulationState} actionLogLength={actionLog.length} />
+            )}
 
-        {/* Action Log */}
-        <GameLog gameLog={actionLog} isVisible={showActionLog} />
+            {/* Action Log */}
+            <GameLog gameLog={actionLog} isVisible={showActionLog} />
 
-        {/* Card Decks */}
-        {gameState && (
+            {/* Card Decks */}
+            {gameState && (
+              <div style={{ marginTop: "20px" }}>
+                <CardDecks gameSession={gameSession} />
+              </div>
+            )}
+
+            {/* Game Board */}
+            {gameState ? (
+              <GameBoard
+                gameState={gameState}
+                debugMode={debugMode}
+                playerConfigs={playerConfigs}
+                onExtraInstructionsChange={handleExtraInstructionsChange}
+                onGameStateUpdate={(newGameState) => {
+                  setGameState(newGameState);
+                  if (gameSession) {
+                    gameSession.updateGameState(newGameState);
+                  }
+                }}
+              />
+            ) : simulationState === "setup" ? (
+              <div
+                style={{
+                  padding: "60px",
+                  textAlign: "center",
+                  backgroundColor: "rgba(255, 255, 255, 0.8)",
+                  borderRadius: "8px",
+                  border: "2px dashed #ddd",
+                }}
+              >
+                <h2 style={{ color: "#6c757d", marginBottom: "20px" }}>Welcome to Lords of Doomspire!</h2>
+                <p
+                  style={{
+                    color: "#6c757d",
+                    fontSize: "18px",
+                    marginBottom: "30px",
+                  }}
+                >
+                  Configure your players above and click "Start New Game" to begin.
+                </p>
+                <p style={{ color: "#6c757d", fontSize: "14px" }}>
+                  Choose between Random AI and Claude AI players for strategic gameplay!
+                </p>
+              </div>
+            ) : null}
+          </>
+        ) : currentView === "statistics" ? (
           <div style={{ marginTop: "20px" }}>
-            <CardDecks gameSession={gameSession} />
-          </div>
-        )}
-
-        {/* Game Board */}
-        {gameState ? (
-          <GameBoard
-            gameState={gameState}
-            debugMode={debugMode}
-            playerConfigs={playerConfigs}
-            onExtraInstructionsChange={handleExtraInstructionsChange}
-            onGameStateUpdate={(newGameState) => {
-              setGameState(newGameState);
-              if (gameSession) {
-                gameSession.updateGameState(newGameState);
-              }
-            }}
-          />
-        ) : simulationState === "setup" ? (
-          <div
-            style={{
-              padding: "60px",
-              textAlign: "center",
-              backgroundColor: "rgba(255, 255, 255, 0.8)",
-              borderRadius: "8px",
-              border: "2px dashed #ddd",
-            }}
-          >
-            <h2 style={{ color: "#6c757d", marginBottom: "20px" }}>Welcome to Lords of Doomspire!</h2>
-            <p
-              style={{
-                color: "#6c757d",
-                fontSize: "18px",
-                marginBottom: "30px",
-              }}
-            >
-              Configure your players above and click "Start New Game" to begin.
-            </p>
-            <p style={{ color: "#6c757d", fontSize: "14px" }}>
-              Choose between Random AI and Claude AI players for strategic gameplay!
-            </p>
+            <StatisticsView statistics={statistics} />
           </div>
         ) : null}
 

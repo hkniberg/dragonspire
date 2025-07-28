@@ -613,6 +613,13 @@ export class GameMaster {
     return this.statisticsCollector.exportToCSV();
   }
 
+  /**
+   * Get raw statistics data for visualization
+   */
+  public getStatistics(): readonly import("../lib/types").TurnStatistics[] {
+    return this.statisticsCollector.getTurnHistory();
+  }
+
   private endGame(winnerName?: string, condition?: string): void {
     this.masterState = "finished";
 
