@@ -23,9 +23,9 @@ Think deeply about these areas:
 
 3. **Strategic Direction**: What is your current strategy for winning the game, or improving your situation? If you have an existing strategy from before, is it still valid? Or should it be tweaked or completely changed?
 
-4. **Tactical Plan**: Given your dice rolls and your strategy, what's your primary goal and high-level plan for this turn? For example "Claim the nearby gold, then harvest as much gold and wood as possible" or "Attack the enemy near my gold tile" or "Explore towards the middle and take tier 2 adventure cards"
+4. **Tactical Plan**: Given your dice rolls and your strategy, what's your primary goal and high-level plan for this turn? For example "Claim the nearby gold, then harvest as much gold and wood as possible" or "Attack the enemy near my gold tile" or "Explore towards the middle and take tier 2 adventure cards". What game mechanics could you use to achieve your goals? Think broadly and be creative. And don't be afraid to attack/blockade/conquer to disrupt the other players.
 
-Summmarize this in 1-2 paragraphs.
+Summmarize this in 1-3 paragraphs.
 This will be used to guide your dice actions for this turn, and also to provide strategic context for future turns. Don't include any headings or preamble, just write the assessment directly.
 
 </strategic-assessment-request>
@@ -36,7 +36,7 @@ As an AI player, you should:
 - Consider multiple strategic paths to victory
 - Make efficient use of your dice rolls
 - Make sure you follow the rules of the game
-- Utilize the different game mechanics - buying buildings, buying new champions, attacking other champions, blockading and conquering tiles, using multiple champions to support each other, using warships to support coastal tiles, using boats for mobility between coastal tiles, etc.
+- Utilize the different game mechanics - buying buildings, buying new champions, attacking other champions, blockading and conquering tiles, using multiple champions to support each other, using warships to support coastal tiles, using boats for mobility between coastal tiles, using the trader, the mercenary, the temple, etc.
 - Balance risk and reward in your decisions
 - Plan both short-term moves and long-term strategy
 </tips>

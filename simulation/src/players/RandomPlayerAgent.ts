@@ -44,8 +44,8 @@ export class RandomPlayerAgent implements PlayerAgent {
     // Use the first remaining die value
     const dieValue = turnContext.remainingDiceValues[0];
 
-    // 30% chance to try building (increased from 10%)
-    const shouldBuild = Math.random() < 0.3;
+    // 60% chance to try building (increased from 30%)
+    const shouldBuild = Math.random() < 0.6;
 
     if (shouldBuild) {
       const buildAction = this.generateRandomBuildAction(gameState, playerName, dieValue);
@@ -358,8 +358,8 @@ export class RandomPlayerAgent implements PlayerAgent {
       return null;
     }
 
-    // If champion recruitment is available, always choose it (100% chance)
-    if (availableBuildings.includes("recruitChampion")) {
+    // If champion recruitment is available, give it a 50% chance (reduced from 100%)
+    if (availableBuildings.includes("recruitChampion") && Math.random() < 0.5) {
       return {
         actionType: "buildAction",
         buildAction: {

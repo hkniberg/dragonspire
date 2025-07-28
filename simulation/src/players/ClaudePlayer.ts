@@ -42,7 +42,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         const userMessage = await this.prepareAssessmentMessage(gameState, gameLog, diceValues, turnNumber);
 
         // Get text response for strategic assessment
-        const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 1024, 2000, thinkingLogger);
+        const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 2000, 4000, thinkingLogger);
 
         return strategicAssessment.trim() || undefined;
     }
@@ -276,7 +276,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         if (hasMarket) {
             const canUseMarket = usableBuildings.includes("market");
             const status = canUseMarket ? "Available" : "Cannot use (no resources to sell)";
-            buildingSummaries.push(`- Market: ${status} - Sell resources for Gold (2:1 rate)`);
+            buildingSummaries.push(`- Market: ${status} - Sell resources for Gold (earn 1 gold for every 2 resources)`);
         }
 
         if (buildingSummaries.length === 0) {

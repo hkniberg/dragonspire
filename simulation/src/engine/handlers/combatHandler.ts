@@ -755,14 +755,7 @@ export async function applyChampionDefeat(
     }
 
     // Still pay healing cost
-    if (player.resources.gold > 0) {
-      player.resources.gold -= 1;
-      logFn("combat", `${defeatContext}, paid 1 gold to heal`);
-    } else {
-      player.fame = Math.max(0, player.fame - 1);
-      logFn("combat", `${defeatContext}, had no gold to heal so lost 1 fame`);
-    }
-
+    await handleHealingCost(player, defeatContext, logFn, playerAgent, gameState, gameLog, thinkingLogger);
     return;
   }
 
@@ -770,12 +763,99 @@ export async function applyChampionDefeat(
   gameState.moveChampionToHome(player.name, championId);
 
   // Pay healing cost
+  await handleHealingCost(player, `${defeatContext}, went home`, logFn, playerAgent, gameState, gameLog, thinkingLogger);
+}
+
+/**
+ * Handle the healing cost payment after champion defeat
+ */
+async function handleHealingCost(
+  player: Player,
+  defeatContext: string,
+  logFn: (type: string, content: string) => void,
+  playerAgent?: PlayerAgent,
+  gameState?: GameState,
+  gameLog?: readonly GameLogEntry[],
+  thinkingLogger?: (content: string) => void
+): Promise<void> {
+  // Check what resources the player has available
+  const availableResources: Array<{ type: ResourceType; name: string; amount: number }> = [];
+
+  if (player.resources.food > 0) {
+    availableResources.push({ type: "food", name: "Food", amount: player.resources.food });
+  }
+  if (player.resources.wood > 0) {
+    availableResources.push({ type: "wood", name: "Wood", amount: player.resources.wood });
+  }
+  if (player.resources.ore > 0) {
+    availableResources.push({ type: "ore", name: "Ore", amount: player.resources.ore });
+  }
   if (player.resources.gold > 0) {
-    player.resources.gold -= 1;
-    logFn("combat", `${defeatContext}, went home, paid 1 gold to heal`);
-  } else {
+    availableResources.push({ type: "gold", name: "Gold", amount: player.resources.gold });
+  }
+
+  if (availableResources.length === 0) {
+    // No resources available - lose 1 fame
     player.fame = Math.max(0, player.fame - 1);
-    logFn("combat", `${defeatContext}, went home, had no gold to heal so lost 1 fame`);
+    logFn("combat", `${defeatContext}, had no resources to heal so lost 1 fame`);
+    return;
+  }
+
+  if (availableResources.length === 1) {
+    // Only one resource type available - automatically use it
+    const resourceToSpend = availableResources[0];
+    player.resources[resourceToSpend.type] -= 1;
+    logFn("combat", `${defeatContext}, paid 1 ${resourceToSpend.name.toLowerCase()} to heal`);
+    return;
+  }
+
+  // Multiple resource types available - ask player to choose
+  if (!playerAgent || !gameState || !gameLog) {
+    // Fallback: use gold if available, otherwise use the first resource
+    const resourceToSpend = availableResources.find(r => r.type === "gold") || availableResources[0];
+    player.resources[resourceToSpend.type] -= 1;
+    logFn("combat", `${defeatContext}, paid 1 ${resourceToSpend.name.toLowerCase()} to heal (automatic choice)`);
+    return;
+  }
+
+  // Create decision context for resource choice
+  const decisionContext: DecisionContext = {
+    type: "healing_cost",
+    description: "Choose which resource to spend for healing:",
+    options: availableResources.map(resource => ({
+      type: "resource",
+      resourceType: resource.type,
+      displayName: `1 ${resource.name} (you have ${resource.amount})`
+    }))
+  };
+
+  try {
+    const decision = await playerAgent.makeDecision(gameState, gameLog, decisionContext, thinkingLogger);
+    const chosenOption = decision.choice;
+
+    if (chosenOption.type === "resource" && chosenOption.resourceType) {
+      const resourceType = chosenOption.resourceType as ResourceType;
+      if (player.resources[resourceType] > 0) {
+        player.resources[resourceType] -= 1;
+        const resourceName = availableResources.find(r => r.type === resourceType)?.name || resourceType;
+        logFn("combat", `${defeatContext}, paid 1 ${resourceName.toLowerCase()} to heal`);
+      } else {
+        // Fallback if somehow the chosen resource is no longer available
+        const fallbackResource = availableResources[0];
+        player.resources[fallbackResource.type] -= 1;
+        logFn("combat", `${defeatContext}, paid 1 ${fallbackResource.name.toLowerCase()} to heal (fallback)`);
+      }
+    } else {
+      // Invalid decision - use fallback
+      const fallbackResource = availableResources[0];
+      player.resources[fallbackResource.type] -= 1;
+      logFn("combat", `${defeatContext}, paid 1 ${fallbackResource.name.toLowerCase()} to heal (fallback)`);
+    }
+  } catch (error) {
+    // Error getting decision - use fallback
+    const fallbackResource = availableResources[0];
+    player.resources[fallbackResource.type] -= 1;
+    logFn("combat", `${defeatContext}, paid 1 ${fallbackResource.name.toLowerCase()} to heal (error fallback)`);
   }
 }
 

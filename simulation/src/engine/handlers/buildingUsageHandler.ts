@@ -62,21 +62,19 @@ export async function handleBuildingUsage(
   // Process market usage
   if (buildingUsageDecision.sellAtMarket) {
     if (hasMarket && Object.values(buildingUsageDecision.sellAtMarket).some(amount => amount > 0)) {
+      const soldResources: string[] = [];
+
+      // First pass: validate all resources and collect what can be sold
       for (const [resourceType, amount] of Object.entries(buildingUsageDecision.sellAtMarket)) {
         if (amount > 0) {
           // Check if player has enough of this resource
           if (player.resources[resourceType as ResourceType] >= amount) {
-            // Calculate gold gained (2 resources = 1 gold)
-            const goldGained = Math.floor(amount / 2);
-
-            // Deduct resources and add gold
+            // Deduct resources
             player.resources[resourceType as ResourceType] -= amount;
-            player.resources.gold += goldGained;
-
-            result.totalGoldGained += goldGained;
             result.totalResourcesSold += amount;
 
-            logFn("system", `Sold ${amount} ${resourceType} for ${goldGained} gold at market.`);
+            // Track what was sold for the combined message
+            soldResources.push(`${amount} ${resourceType}`);
           } else {
             const reason = `Cannot sell ${amount} ${resourceType} - only have ${player.resources[resourceType as ResourceType]}.`;
             logFn("system", reason);
@@ -85,8 +83,13 @@ export async function handleBuildingUsage(
         }
       }
 
-      if (result.totalGoldGained > 0) {
-        logFn("system", `Market transaction complete: sold ${result.totalResourcesSold} resources for ${result.totalGoldGained} gold total.`);
+      // Calculate total gold gained from ALL resources combined (2:1 ratio)
+      if (result.totalResourcesSold > 0) {
+        result.totalGoldGained = Math.floor(result.totalResourcesSold / 2);
+        player.resources.gold += result.totalGoldGained;
+
+        const soldText = soldResources.join(', ');
+        logFn("system", `Sold ${soldText} for ${result.totalGoldGained} gold at market.`);
         result.marketUsed = true;
 
         // Track statistics
