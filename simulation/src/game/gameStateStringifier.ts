@@ -26,7 +26,7 @@ export function stringifyTile(tile: Tile, gameState: GameState, ignorePlayerName
   const sentences: string[] = [];
 
   if (!tile.explored) {
-    sentences.push(`This is an unexplored tier ${tile.tier} tile`);
+    sentences.push(`This is an unexplored tile`);
   } else {
     // Format based on tile type
     switch (tile.tileType) {
@@ -233,7 +233,7 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
   const lines: string[] = [`Tile ${formatPosition(tile.position)}`];
 
   if (!tile.explored) {
-    lines.push(`- Unexplored tier ${tile.tier} tile`);
+    lines.push(`- Unexplored tile`);
   } else {
     // Format based on tile type
     switch (tile.tileType) {
@@ -321,8 +321,19 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
 }
 
 function isTileInteresting(tile: Tile, gameState: GameState): boolean {
-  // Show all tiles - explored, unexplored, home tiles, and tiles with champions
-  return true;
+  // Show explored tiles
+  if (tile.explored) {
+    return true;
+  }
+
+  // Show unexplored tiles that have champions on them
+  const championsOnTile = getChampionsOnTile(tile.position, gameState);
+  if (championsOnTile.length > 0) {
+    return true;
+  }
+
+  // Don't show empty unexplored tiles
+  return false;
 }
 
 function getChampionsOnTile(position: { row: number; col: number }, gameState: GameState): Champion[] {

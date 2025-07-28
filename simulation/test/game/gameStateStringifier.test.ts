@@ -92,7 +92,7 @@ Tile (2,6)
 - Monster: wolf (might 6)
 
 Tile (3,3)
-- Unexplored tier 1 tile
+- Unexplored tile
 - Jim champion1 is here
 
 Tile (3,5)

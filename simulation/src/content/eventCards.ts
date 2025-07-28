@@ -64,7 +64,7 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
     id: "hornet-swarm",
     name: "Hornet swarm",
     tier: 2,
-    description: "Roll `2D3` to flee the swarm. The player to your right chooses direction, you must then move in that direction. Any **champion** passed by or through must *repeat this*.",
+    description: "*NOT IMPLEMENTED YET* Roll `2D3` to flee the swarm. The player to your right chooses direction, you must then move in that direction. Any **champion** passed by or through must *repeat this*.",
     count: 1,
   },
   {
@@ -102,14 +102,14 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
     id: "dragon-raid",
     name: "Dragon raid",
     tier: 3,
-    description: "All players must remove `2x Claims` from tiles in the **outer region**.",
+    description: "Each player loses 1D3 claimed tiles of their choice. Home tiles are never raided.",
     count: 1,
   },
   {
     id: "sea-monsters",
     name: "Sea monsters",
     tier: 3,
-    description: `Sea monsters invade one **ocean tile** of your choice. For each **boat** there, owning player decides:  
+    description: `Sea monsters invade one **ocean tile** of your choice. For each **boat** there, the boat owner decides:  
 **Captain fights to the end.** Gain \`+2 fame\`, lose the boat.  
 **Captain flees.** Lose \`−1 fame\`, move the boat one step.`,
     count: 1,

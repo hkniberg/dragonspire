@@ -6,11 +6,13 @@ import { EventCardResult, GameLogEntry, Monster, Player, Tile } from "@/lib/type
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { resolveMonsterPlacementAndCombat } from "./combatHandler";
 import { handleCurseOfTheEarth } from "./eventCards/curseOfTheEarthHandler";
+import { handleDragonRaid } from "./eventCards/dragonRaidHandler";
 import { handleDruidRampage } from "./eventCards/druidRampageHandler";
 import { handleHungryPests } from "./eventCards/hungryPestsHandler";
 import { handleLandslide } from "./eventCards/landslideHandler";
 import { handleMarketDay } from "./eventCards/marketDayHandler";
 import { handleSuddenStorm } from "./eventCards/suddenStormHandler";
+import { handleThievingCrows } from "./eventCards/thievingCrowsHandler";
 import { handleThugAmbush } from "./eventCards/thugAmbushHandler";
 import { handleYouGotRiches } from "./eventCards/youGotRichesHandler";
 import { handleTreasureCard as handleTreasureCardFromHandler } from "./treasureCardHandler";
@@ -155,6 +157,10 @@ export async function handleEventCardFromAdventure(
       eventResult = await handleDruidRampage(gameState, tile, player, playerAgent, championId, logFn, thinkingLogger);
     } else if (cardId === "curse-of-the-earth") {
       eventResult = await handleCurseOfTheEarth(gameState, player, playerAgent, logFn, thinkingLogger);
+    } else if (cardId === "thieving-crows") {
+      eventResult = handleThievingCrows(gameState, logFn);
+    } else if (cardId === "dragon-raid") {
+      eventResult = handleDragonRaid(gameState, logFn);
     } else {
       // Other event cards not yet implemented
       const message = `Event card ${cardId} drawn, but not yet implemented`;
