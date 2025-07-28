@@ -47,17 +47,39 @@ export function calculateHarvest(
       continue;
     }
 
-    // Check if player owns this tile
-    if (tile.claimedBy !== playerName) {
-      console.log(`Cannot harvest from ${formatPosition(position)}: tile not owned by ${playerName}`);
+    // Check if player owns this tile or is blockading it
+    const isOwned = tile.claimedBy === playerName;
+    const isBlockading = !isOwned && tile.claimedBy !== undefined && tile.claimedBy !== playerName;
+
+    if (!isOwned && !isBlockading) {
+      console.log(`Cannot harvest from ${formatPosition(position)}: tile not owned by ${playerName} and not blockaded`);
       continue;
     }
 
-    // Check if there are opposing champions blocking this tile
-    const opposingChampions = gameState.getOpposingChampionsAtPosition(playerName, position);
-    if (opposingChampions.length > 0) {
-      console.log(`Cannot harvest from ${formatPosition(position)}: blocked by opposing champion`);
-      continue;
+    // If owned, check if there are opposing champions blocking this tile
+    if (isOwned) {
+      const opposingChampions = gameState.getOpposingChampionsAtPosition(playerName, position);
+      if (opposingChampions.length > 0) {
+        console.log(`Cannot harvest from ${formatPosition(position)}: blocked by opposing champion`);
+        continue;
+      }
+    }
+
+    // If blockading, check if player has a champion on this tile
+    if (isBlockading) {
+      const player = gameState.getPlayer(playerName);
+      if (!player) {
+        console.log(`Cannot harvest from ${formatPosition(position)}: player not found`);
+        continue;
+      }
+
+      const playerChampionsOnTile = player.champions.filter(champion =>
+        champion.position.row === position.row && champion.position.col === position.col
+      );
+      if (playerChampionsOnTile.length === 0) {
+        console.log(`Cannot harvest from ${formatPosition(position)}: not blockading this tile`);
+        continue;
+      }
     }
 
     // Harvest all resources from this tile
@@ -67,6 +89,7 @@ export function calculateHarvest(
       harvestedResources.ore += tile.resources.ore || 0;
       harvestedResources.gold += tile.resources.gold || 0;
       harvestedTileCount++;
+      console.log(`Harvested from ${formatPosition(position)}: ${isOwned ? 'owned tile' : 'blockaded tile'}`);
     } else {
       console.log(`Cannot harvest from ${formatPosition(position)}: tile has no resources`);
     }
