@@ -377,4 +377,91 @@ export class GameState {
       pos.row === tilePosition.row && pos.col === tilePosition.col
     );
   }
+
+  /**
+   * Check if a claimed tile is protected from blockade or conquest
+   * A tile is protected if the owner has knights in the tile, adjacent tiles, or warships in adjacent ocean zones
+   */
+  public isClaimProtected(tile: Tile): boolean {
+    // Only claimed tiles can be protected
+    if (!tile.claimedBy) {
+      return false;
+    }
+
+    const tileOwner = this.getPlayer(tile.claimedBy);
+    if (!tileOwner) {
+      return false;
+    }
+
+    // Check for knight protection (in the tile itself)
+    const ownerChampionsInTile = tileOwner.champions.filter(champion =>
+      champion.position.row === tile.position.row && champion.position.col === tile.position.col
+    );
+
+    if (ownerChampionsInTile.length > 0) {
+      return true;
+    }
+
+    // Check for knight protection (adjacent tiles)
+    const adjacentPositions = this.getAdjacentPositions(tile.position);
+
+    for (const adjacentPos of adjacentPositions) {
+      const adjacentTile = this.getTile(adjacentPos);
+      if (!adjacentTile) continue;
+
+      // Check if the tile owner has a knight in this adjacent position
+      const ownerChampionsAtPosition = tileOwner.champions.filter(champion =>
+        champion.position.row === adjacentPos.row && champion.position.col === adjacentPos.col
+      );
+
+      if (ownerChampionsAtPosition.length > 0) {
+        return true;
+      }
+    }
+
+    // Check for warship protection (coastal tiles in ocean zones)
+    const hasWarshipUpgrade = tileOwner.buildings.includes("warshipUpgrade");
+    if (hasWarshipUpgrade) {
+      for (const boat of tileOwner.boats) {
+        if (this.isBoatAdjacentToPosition(boat.position, tile.position)) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if a claimed tile is being blockaded and return the blockading player's name
+   * According to game rules: "A knight that is in another player's resource tile will blockade it"
+   * A tile can only be blockaded if it's not protected by adjacent knights or warships
+   */
+  public getClaimBlockader(tile: Tile): string | null {
+    // Only claimed resource tiles can be blockaded
+    if (!tile.claimedBy || tile.tileType !== "resource") {
+      return null;
+    }
+
+    // A tile cannot be blockaded if it's protected
+    if (this.isClaimProtected(tile)) {
+      return null;
+    }
+
+    // Check if any opposing player has a champion on this tile
+    for (const player of this.players) {
+      if (player.name === tile.claimedBy) {
+        continue; // Skip the tile owner
+      }
+
+      // Check if this player has a champion on the tile
+      for (const champion of player.champions) {
+        if (champion.position.row === tile.position.row && champion.position.col === tile.position.col) {
+          return player.name; // This player is blockading the tile
+        }
+      }
+    }
+
+    return null; // No blockade
+  }
 }

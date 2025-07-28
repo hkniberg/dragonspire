@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { GameState } from "../game/GameState";
 import type { Champion, ResourceType, Tile } from "../lib/types";
 import { getTierSolidColor } from "../lib/uiConstants";
 import { CardComponent, formatMonsterContent, formatTraderContent } from "./cards/Card";
@@ -194,6 +195,7 @@ export const TileComponent = ({
   getPlayerColor,
   onChampionDrop,
   onChampionDragOver,
+  gameState,
 }: {
   tile: Tile;
   champions: Champion[];
@@ -205,6 +207,7 @@ export const TileComponent = ({
   };
   onChampionDrop?: (champion: Champion, targetTile: Tile) => void;
   onChampionDragOver?: (event: React.DragEvent) => void;
+  gameState?: GameState;
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -218,12 +221,12 @@ export const TileComponent = ({
     explored: tile.explored || debugMode,
   };
 
-  // Check if tile is blockaded (opposing knight is present on a claimed tile)
-  const blockadingChampion = effectiveTile.claimedBy
-    ? championsOnTile.find((champion) => champion.playerName !== effectiveTile.claimedBy)
-    : null;
-  const isBlockaded = !!blockadingChampion;
-  const blockadingPlayer = blockadingChampion?.playerName;
+  // Check if tile is blockaded using the game state logic
+  const blockadingPlayer = gameState ? gameState.getClaimBlockader(effectiveTile) || undefined : undefined;
+  const isBlockaded = !!blockadingPlayer;
+
+  // Check if the claim is protected
+  const isProtected = gameState && effectiveTile.claimedBy ? gameState.isClaimProtected(effectiveTile) : false;
 
   const specialLabel = getSpecialLocationLabel(effectiveTile);
 
@@ -387,6 +390,7 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}${isBlo
             getPlayerColor={getPlayerColor}
             isBlockaded={isBlockaded}
             blockadingPlayer={blockadingPlayer}
+            isProtected={isProtected}
           />
         </div>
       )}

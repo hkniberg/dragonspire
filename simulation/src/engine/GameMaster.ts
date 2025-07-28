@@ -401,6 +401,18 @@ export class GameMaster {
 
     // Step 10: Handle tile claiming
     handleTileClaiming(this.gameState, tile, player, championId, !!tileAction?.claimTile, logFn);
+
+    // Step 11: Handle tile conquest
+    const { handleTileConquest } = await import("@/engine/handlers/tileArrivalHandler");
+    handleTileConquest(
+      this.gameState,
+      tile,
+      player,
+      championId,
+      !!tileAction?.conquerWithMight,
+      !!tileAction?.conquerWithFame,
+      logFn
+    );
   }
 
   private async executeHarvestAction(player: Player, action: HarvestAction, reasoning?: string): Promise<void> {

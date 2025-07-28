@@ -14,6 +14,8 @@ export interface TileAction {
   useTemple?: boolean;
   pickUpItems?: string[]; // Array of item IDs to pick up from the tile
   dropItems?: string[]; // Array of item IDs to drop on the tile
+  conquerWithMight?: boolean; // Conquer tile using military might (costs 1 might)
+  conquerWithFame?: boolean; // Conquer tile using treachery (costs 1 fame)
 }
 
 export interface BoatAction {

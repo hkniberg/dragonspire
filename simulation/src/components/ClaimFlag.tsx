@@ -7,9 +7,16 @@ interface ClaimFlagProps {
   };
   isBlockaded?: boolean;
   blockadingPlayer?: string;
+  isProtected?: boolean;
 }
 
-export const ClaimFlag = ({ playerName, getPlayerColor, isBlockaded = false, blockadingPlayer }: ClaimFlagProps) => {
+export const ClaimFlag = ({
+  playerName,
+  getPlayerColor,
+  isBlockaded = false,
+  blockadingPlayer,
+  isProtected = false,
+}: ClaimFlagProps) => {
   const playerColors = getPlayerColor(playerName);
   const blockadingColors = blockadingPlayer ? getPlayerColor(blockadingPlayer) : null;
 
@@ -72,6 +79,28 @@ export const ClaimFlag = ({ playerName, getPlayerColor, isBlockaded = false, blo
         >
           BLOCKADE
         </div>
+        {/* Protection indicator */}
+        {isProtected && (
+          <div
+            style={{
+              marginLeft: "4px",
+              padding: "2px 4px",
+              borderRadius: "4px",
+              backgroundColor: playerColors.main,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "8px",
+              fontWeight: "bold",
+              color: "#FFFFFF",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+              whiteSpace: "nowrap",
+            }}
+            title="This claim is protected by adjacent knights or warships"
+          >
+            P
+          </div>
+        )}
       </div>
     );
   }
@@ -105,6 +134,28 @@ export const ClaimFlag = ({ playerName, getPlayerColor, isBlockaded = false, blo
           borderBottom: "6px solid transparent",
         }}
       />
+      {/* Protection indicator */}
+      {isProtected && (
+        <div
+          style={{
+            marginLeft: "4px",
+            padding: "2px 4px",
+            borderRadius: "4px",
+            backgroundColor: playerColors.main,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "8px",
+            fontWeight: "bold",
+            color: "#FFFFFF",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            whiteSpace: "nowrap",
+          }}
+          title="This claim is protected by adjacent knights or warships"
+        >
+          P
+        </div>
+      )}
     </div>
   );
 };

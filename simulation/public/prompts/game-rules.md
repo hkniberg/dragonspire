@@ -344,7 +344,12 @@ Additional bonuses can be gained from:
 
 ### Protection
 
-Knights protect all 4 adjacent tiles from blockade or conquering.
+Knights and warships protect tiles from blockade or conquering:
+
+- **Knights**: Protect all 4 adjacent tiles (north, south, east, west) from blockade or conquest
+- **Warships**: Protect all coastal tiles in their current ocean zone from blockade or conquest
+
+This protection is automatic and passive - no action is required. Protected tiles cannot be blockaded or conquered by other players.
 
 ---
 

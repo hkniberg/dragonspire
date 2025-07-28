@@ -80,6 +80,12 @@ export function calculateHarvest(
         console.log(`Cannot harvest from ${formatPosition(position)}: not blockading this tile`);
         continue;
       }
+
+      // Check if the tile is protected by adjacent knights of the owner
+      if (gameState.isClaimProtected(tile)) {
+        console.log(`Cannot harvest from ${formatPosition(position)}: tile is protected by adjacent knights`);
+        continue;
+      }
     }
 
     // Harvest all resources from this tile

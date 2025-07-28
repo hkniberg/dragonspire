@@ -179,6 +179,7 @@ export const GameBoard = ({
                   getPlayerColor={getPlayerColorWithState}
                   onChampionDrop={handleChampionDrop}
                   onChampionDragOver={handleChampionDragOver}
+                  gameState={gameState}
                 />
               )),
             )}

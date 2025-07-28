@@ -1,5 +1,5 @@
-import { GameState } from "../game/GameState";
-import { Player, Position, ResourceType, Tile } from "../lib/types";
+import { GameState } from "@/game/GameState";
+import { Player, Position, ResourceType, Tile } from "@/lib/types";
 
 export interface Direction {
   row: number;
@@ -174,7 +174,7 @@ export function generateAllPaths(
 }
 
 /**
- * Get detailed information about harvestable resources for a player, taking blockading into account
+ * Get detailed information about harvestable resources, taking blockading into account
  *
  * A player can harvest from:
  * - Any tile that is claimed by them and doesn't have an opposing champion on it
@@ -253,9 +253,12 @@ export function getHarvestableResourcesInfo(gameState: GameState, playerName: st
 
       // Case 2: Tile is claimed by an opposing player and player's champion is on it (blockading)
       if (tile.claimedBy !== undefined && tile.claimedBy !== playerName && hasPlayerChampion) {
-        blockadedOpponentTiles.push(tile);
-        for (const [resourceType, amount] of Object.entries(tile.resources)) {
-          totalHarvestableResources[resourceType as ResourceType] += amount as number;
+        // Check if the tile is protected by adjacent knights or warships of the owner
+        if (!gameState.isClaimProtected(tile)) {
+          blockadedOpponentTiles.push(tile);
+          for (const [resourceType, amount] of Object.entries(tile.resources)) {
+            totalHarvestableResources[resourceType as ResourceType] += amount as number;
+          }
         }
       }
     }

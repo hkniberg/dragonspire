@@ -37,6 +37,14 @@ export const tileActionSchema = {
         type: "string"
       }
     },
+    conquerWithMight: {
+      type: "boolean",
+      description: "Whether to conquer the tile using military might (costs 1 might, only for resource tiles claimed by other players)",
+    },
+    conquerWithFame: {
+      type: "boolean",
+      description: "Whether to conquer the tile using treachery (costs 1 fame, only for resource tiles claimed by other players)",
+    },
   },
 };
 

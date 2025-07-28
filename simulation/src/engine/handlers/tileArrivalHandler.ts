@@ -229,6 +229,79 @@ export function handleTileClaiming(
 }
 
 /**
+ * Handle conquering of resource tiles
+ */
+export function handleTileConquest(
+  gameState: GameState,
+  tile: Tile,
+  player: Player,
+  championId: number,
+  conquerWithMight: boolean,
+  conquerWithFame: boolean,
+  logFn: (type: string, content: string) => void
+): void {
+  // Only one conquest method can be used
+  if (conquerWithMight && conquerWithFame) {
+    logFn("event", `Champion${championId} cannot use both might and fame to conquer tile (${tile.position.row}, ${tile.position.col})`);
+    return;
+  }
+
+  if (!conquerWithMight && !conquerWithFame) {
+    return;
+  }
+
+  // Only resource tiles can be conquered
+  if (tile.tileType !== "resource") {
+    logFn("event", `Champion${championId} cannot conquer non-resource tile (${tile.position.row}, ${tile.position.col})`);
+    return;
+  }
+
+  // Tile must be claimed by another player
+  if (tile.claimedBy === undefined || tile.claimedBy === player.name) {
+    logFn("event", `Champion${championId} cannot conquer unclaimed tile or own tile (${tile.position.row}, ${tile.position.col})`);
+    return;
+  }
+
+  // Check if there are other knights on this tile (conquest should only happen after combat)
+  const otherKnightsOnTile = gameState.getOpposingChampionsAtPosition(player.name, tile.position);
+  if (otherKnightsOnTile.length > 0) {
+    logFn("event", `Champion${championId} cannot conquer tile (${tile.position.row}, ${tile.position.col}) - other knights are present`);
+    return;
+  }
+
+  // Check if the tile is protected by adjacent knights
+  if (gameState.isClaimProtected(tile)) {
+    logFn("event", `Champion${championId} cannot conquer tile (${tile.position.row}, ${tile.position.col}) - protected by adjacent knight of ${tile.claimedBy}`);
+    return;
+  }
+
+  // Check if player has enough might or fame
+  if (conquerWithMight) {
+    if (player.might <= 0) {
+      logFn("event", `Champion${championId} cannot conquer with might - insufficient might (${player.might})`);
+      return;
+    }
+
+    // Successful conquest with might
+    const previousOwner = tile.claimedBy;
+    tile.claimedBy = player.name;
+    player.might = Math.max(0, player.might - 1);
+    logFn("event", `Champion${championId} conquered tile (${tile.position.row}, ${tile.position.col}) from ${previousOwner} using might. New might: ${player.might}`);
+  } else if (conquerWithFame) {
+    if (player.fame <= 0) {
+      logFn("event", `Champion${championId} cannot conquer with fame - insufficient fame (${player.fame})`);
+      return;
+    }
+
+    // Successful conquest with fame
+    const previousOwner = tile.claimedBy;
+    tile.claimedBy = player.name;
+    player.fame = Math.max(0, player.fame - 1);
+    logFn("event", `Champion${championId} conquered tile (${tile.position.row}, ${tile.position.col}) from ${previousOwner} using fame. New fame: ${player.fame}`);
+  }
+}
+
+/**
  * Handle special tiles (adventure/oasis) that provide cards
  */
 export function handleSpecialTiles(

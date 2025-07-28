@@ -233,6 +233,17 @@ export class RandomPlayerAgent implements PlayerAgent {
       tileAction.useTemple = true;
     }
 
+    // Check if we should conquer the tile (if it's claimed by another player and we have might or fame)
+    if (destinationTile?.tileType === "resource" && destinationTile.claimedBy && destinationTile.claimedBy !== playerName) {
+      if (player.might > 0) {
+        tileAction.conquerWithMight = true;
+        tileAction.claimTile = false; // Don't claim if we're conquering
+      } else if (player.fame > 0) {
+        tileAction.conquerWithFame = true;
+        tileAction.claimTile = false; // Don't claim if we're conquering
+      }
+    }
+
     return {
       actionType: "championAction",
       championAction: {

@@ -193,15 +193,16 @@ function formatClaimedTile(tile: Tile, gameState: GameState): string {
     }
   }
 
-  // Check if blockaded
-  const blockadingChampions = getChampionsOnTile(tile.position, gameState).filter(
-    (champ) => champ.playerName != tile.claimedBy,
-  );
-
-  if (blockadingChampions.length > 0) {
-    const blockader = blockadingChampions[0];
-    const player = gameState.getPlayer(blockader.playerName);
-    line += ` (blockaded by ${player?.name} champion${blockader.id})`;
+  // Check if blockaded (using game rules)
+  const blockaderPlayerName = gameState.getClaimBlockader(tile);
+  if (blockaderPlayerName) {
+    const blockaderPlayer = gameState.getPlayer(blockaderPlayerName);
+    // Find the champion that's doing the blockading
+    const blockadingChampions = getChampionsOnTile(tile.position, gameState).filter(
+      (champ) => champ.playerName === blockaderPlayerName,
+    );
+    const championId = blockadingChampions.length > 0 ? blockadingChampions[0].id : '';
+    line += ` (blockaded by ${blockaderPlayer?.name} champion${championId})`;
   }
 
   return line;
