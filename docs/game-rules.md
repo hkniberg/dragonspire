@@ -225,8 +225,7 @@ Each action die can be used for ONE of the following:
 
 ### Action: Build & Recruit
 
-- Spend an action die to construct a building or upgrade your castle, or buy more knights or boats.
-- A castle is limited to 4 buildings. If you upgrade it, you can add 4 more buildings.
+- Spend an action die to construct a building or buy more knights or boats.
 - The die value doesn't matter for building.
   [Buildings](#castle-buildings)
 
@@ -355,7 +354,7 @@ This protection is automatic and passive - no action is required. Protected tile
 
 ## Castle buildings
 
-You och purchase a castle building or boat/champion by spending a die during the harvest phase. The die value doesn't matter.
+You can purchase a castle building or boat/champion by spending a die during the harvest phase. The die value doesn't matter.
 
 ### Warship upgrade
 

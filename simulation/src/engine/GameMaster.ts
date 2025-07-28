@@ -86,11 +86,34 @@ export class GameMaster {
     // Step 1: Roll dice for player
     const currentPlayer = this.gameState.getCurrentPlayer();
     const championCount = currentPlayer.champions.length;
-    const diceCount = 1 + championCount;
-    const diceRollValues = this.diceRoller.rollMultipleD3(diceCount);
+    const totalDiceCount = 1 + championCount;
+
+    // Calculate dice tax: 2 food per die after the first 2
+    const freeDice = 2;
+    const taxedDice = Math.max(0, totalDiceCount - freeDice);
+    const foodCost = taxedDice * 2;
+
+    // Check if player can afford the dice tax
+    const affordableDice = currentPlayer.resources.food >= foodCost ? totalDiceCount : freeDice + Math.floor(currentPlayer.resources.food / 2);
+    const actualDiceCount = Math.min(totalDiceCount, affordableDice);
+    const actualFoodCost = Math.min(foodCost, currentPlayer.resources.food);
+
+    // Deduct food cost
+    currentPlayer.resources.food -= actualFoodCost;
+
+    // Log dice tax information
+    if (taxedDice > 0) {
+      if (actualDiceCount < totalDiceCount) {
+        const lostDice = totalDiceCount - actualDiceCount;
+        this.addGameLogEntry("dice", `Lost ${lostDice} dice due to insufficient food (dice tax: ${foodCost} food needed).`);
+      }
+      // Removed the else clause that logged when player could afford all dice
+    }
+
+    const diceRollValues = this.diceRoller.rollMultipleD3(actualDiceCount);
     const diceRolls = new DiceRolls(diceRollValues);
 
-    this.addGameLogEntry("dice", `Rolled dice: ${diceRollValues.map(die => `[${die}]`).join(", ")}`);
+    this.addGameLogEntry("dice", `Rolled ${actualDiceCount} dice: ${diceRollValues.map(die => `[${die}]`).join(", ")}`);
 
     // Step 2: Ask player for strategic assessment (strategic reflection) - now with dice context
     const thinkingLogger = (content: string) => this.addGameLogEntry("thinking", content);

@@ -1,6 +1,6 @@
 # LORDS OF DOOMSPIRE - PLAYER CHEAT SHEET
 
-## Side 1: Core Gameplay
+## Core Gameplay
 
 ### TURN STRUCTURE
 
@@ -29,8 +29,8 @@
 
 **Harvest Phase:**
 
-- **Harvest**: Collect from owned tiles (die value = max different tiles)
-- **Build**: Construct building or recruit knight (die value doesn't matter)
+- **Harvest**: Collect from owned non-blockaded tiles (die value = how many tiles)
+- **Build**: Buy buildings/knights/boats (die value doesn't matter)
 
 ### MOVEMENT RULES
 
@@ -54,14 +54,14 @@
 
 - Both roll 2D3 + Might + adjacent support
 - Winner gains 1 Fame, stays in tile
-- Loser returns home, pays 1 resource or loses 1 Fame
+- Loser returns home (no resource cost to heal)
 - Winner may steal 1 resource OR 1 item
 
 **Adjacent Support:** +1 per knight/warship in adjacent tiles
 
 ---
 
-## Side 2: Strategic Reference
+## Strategic Reference
 
 ### VICTORY CONDITIONS (First to achieve ANY wins!)
 
@@ -76,34 +76,36 @@
 - **3rd Knight**: 6 Food, 6 Gold, 3 Ore → +1 die
 - **Market**: 2 Food, 2 Wood → Sell resources for Gold (2:1 rate)
 - **Blacksmith**: 2 Food, 2 Ore → Buy 1 Might for 1 Gold + 2 Ore
-- **Dock**: 2 Wood, 2 Gold → +1 boat (max 2)
+- **Boat**: 2 Wood, 2 Gold → +1 boat (max 2)
 - **Chapel**: 3 Wood, 4 Gold → +3 Fame
 - **Monastery**: 4 Wood, 5 Gold, 2 Ore → +5 Fame
 - **Warship Upgrade**: 2 Wood, 1 Ore, 1 Gold → All boats become warships. Boats give +1 to coastal battles
 
 ### SPECIAL LOCATIONS (Non-combat zones)
 
-- **Temple**: Sacrifice 3 Fame → gain 1 Might
-- **Trader**: Trade any resource for any other (2:1 rate) + buy items
-- **Mercenary Camp**: Buy 1 Might for 3 Gold
-- **Doomspire**: Dragon lair - multiple victory paths!
+- **Temple**: Sacrifice 3 Fame → gain 1 Might (once per turn)
+- **Trader**: Exchange any resource for any other (2:1 rate) + buy items
+- **Mercenary Camp**: Buy 1 Might for 3 Gold (once per turn)
 
 ### KNIGHT INVENTORY
 
 - **2 items max** per knight (can drop/pick up)
 - **2 followers max** per knight (cannot be stolen)
 - Items can be stolen in combat; followers cannot
+- Followers only acquired through adventure cards
 
 ### TILE INTERACTION
 
 - **Resource Tiles**: Claim with flag OR conquer (costs 1 Might or 1 Fame)
 - **Adventure Tiles**: Draw card, remove adventure token
+- **Oasis Tiles**: Same as adventure, but can be restocked by events
 - **Blockading**: Knight in enemy tile can harvest from it
-- **Protection**: Knights protect 4 adjacent tiles from conquest/blockade
+- **Protection**: Knights protect 4 adjacent tiles, warships protect coastal tiles in their ocean zone
 
 ### QUICK REFERENCES
 
 - **Home Tile**: Permanent, provides 1 Wood + 1 Food when harvested
-- **Trading**: Current player can trade with others anytime
+- **Trading**: Current player can trade resources with others anytime
 - **Fame/Might**: Cannot go below 0
 - **Dragon Might**: 8 + D3 (determined when revealed)
+- **Tile Conquering**: Costs 1 Might (military) or 1 Fame (treachery)

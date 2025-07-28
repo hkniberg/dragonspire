@@ -314,6 +314,15 @@ export class RandomPlayerAgent implements PlayerAgent {
     // Randomly choose between blacksmith, market, chapel, monastery, warship upgrade, champion recruitment, and boat building (if available)
     const availableBuildings: ("blacksmith" | "market" | "chapel" | "upgradeChapelToMonastery" | "warshipUpgrade" | "recruitChampion" | "buildBoat")[] = [];
 
+    // Prioritize champion recruitment - add it first if available
+    if (canRecruitChampion) {
+      if (currentChampionCount === 1 && player.resources.food >= 3 && player.resources.gold >= 3 && player.resources.ore >= 1) {
+        availableBuildings.push("recruitChampion");
+      } else if (currentChampionCount === 2 && player.resources.food >= 6 && player.resources.gold >= 6 && player.resources.ore >= 3) {
+        availableBuildings.push("recruitChampion");
+      }
+    }
+
     if (!hasBlacksmith && player.resources.food >= 2 && player.resources.ore >= 2) {
       availableBuildings.push("blacksmith");
     }
@@ -330,14 +339,6 @@ export class RandomPlayerAgent implements PlayerAgent {
     // Monastery can only be built if player has chapel and doesn't have monastery
     if (hasChapel && !hasMonastery && player.resources.wood >= 4 && player.resources.gold >= 5 && player.resources.ore >= 2) {
       availableBuildings.push("upgradeChapelToMonastery");
-    }
-
-    if (canRecruitChampion) {
-      if (currentChampionCount === 1 && player.resources.food >= 3 && player.resources.gold >= 3 && player.resources.ore >= 1) {
-        availableBuildings.push("recruitChampion");
-      } else if (currentChampionCount === 2 && player.resources.food >= 6 && player.resources.gold >= 6 && player.resources.ore >= 3) {
-        availableBuildings.push("recruitChampion");
-      }
     }
 
     // Check boat building possibilities
@@ -357,7 +358,18 @@ export class RandomPlayerAgent implements PlayerAgent {
       return null;
     }
 
-    // Pick a random available building
+    // If champion recruitment is available, always choose it (100% chance)
+    if (availableBuildings.includes("recruitChampion")) {
+      return {
+        actionType: "buildAction",
+        buildAction: {
+          diceValueUsed: dieValue,
+          buildActionType: "recruitChampion"
+        }
+      };
+    }
+
+    // Pick a random available building for other options
     const randomBuildingIndex = Math.floor(Math.random() * availableBuildings.length);
     const buildingType = availableBuildings[randomBuildingIndex];
 
