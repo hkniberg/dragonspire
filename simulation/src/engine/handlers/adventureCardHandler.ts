@@ -11,6 +11,7 @@ import { handleDruidRampage } from "./eventCards/druidRampageHandler";
 import { handleHungryPests } from "./eventCards/hungryPestsHandler";
 import { handleLandslide } from "./eventCards/landslideHandler";
 import { handleMarketDay } from "./eventCards/marketDayHandler";
+import { handleSeaMonsters } from "./eventCards/seaMonstersHandler";
 import { handleSuddenStorm } from "./eventCards/suddenStormHandler";
 import { handleThievingCrows } from "./eventCards/thievingCrowsHandler";
 import { handleThugAmbush } from "./eventCards/thugAmbushHandler";
@@ -161,6 +162,8 @@ export async function handleEventCardFromAdventure(
       eventResult = handleThievingCrows(gameState, logFn);
     } else if (cardId === "dragon-raid") {
       eventResult = handleDragonRaid(gameState, logFn);
+    } else if (cardId === "sea-monsters") {
+      eventResult = await handleSeaMonsters(gameState, player, playerAgent, logFn, thinkingLogger, getPlayerAgent);
     } else {
       // Other event cards not yet implemented
       const message = `Event card ${cardId} drawn, but not yet implemented`;
