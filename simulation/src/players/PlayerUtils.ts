@@ -1,5 +1,5 @@
 import { GameState } from "@/game/GameState";
-import { Player, Position, ResourceType, Tile } from "@/lib/types";
+import { CarriableItem, Champion, Decision, DecisionContext, Player, Position, ResourceType, Tile } from "@/lib/types";
 
 export interface Direction {
   row: number;
@@ -305,4 +305,158 @@ export function getUsableBuildings(player: Player): string[] {
   }
 
   return usableBuildings;
+}
+
+/**
+ * Get the name of a CarriableItem
+ */
+function getItemName(item: CarriableItem): string {
+  if (item.treasureCard) {
+    return item.treasureCard.name;
+  }
+  if (item.traderItem) {
+    return item.traderItem.name;
+  }
+  return 'Unknown Item';
+}
+
+/**
+ * Result of a drop item decision
+ */
+export interface DropItemDecisionResult {
+  /** The DecisionContext to present to the player */
+  decisionContext: DecisionContext;
+  /** Whether the decision includes an option to refuse the new item */
+  canRefuse: boolean;
+}
+
+/**
+ * Create a decision context for choosing what item to drop when inventory is full
+ * 
+ * @param championId - ID of the champion whose inventory is full
+ * @param newItemName - Name of the new item being offered
+ * @param champion - The champion whose inventory is full
+ * @param newItemDescription - Optional description of what the new item does
+ * @param canRefuseNewItem - Whether the player can refuse the new item (vs must drop something)
+ * @param refuseActionText - Text for the refuse action (e.g., "Leave on ground", "Refuse item")
+ * @returns DecisionContext and metadata about the decision
+ */
+export function createDropItemDecision(
+  championId: number,
+  newItemName: string,
+  champion: Champion,
+  newItemDescription?: string,
+  canRefuseNewItem: boolean = true,
+  refuseActionText: string = `Leave the ${newItemName} on the ground`
+): DropItemDecisionResult {
+  const droppableOptions: any[] = [];
+
+  // Add options to drop existing items (only if not stuck)
+  if (champion.items.length >= 1 && !champion.items[0].stuck) {
+    const dropText = canRefuseNewItem
+      ? `Drop ${getItemName(champion.items[0])} and take the ${newItemName}`
+      : `Drop ${getItemName(champion.items[0])} for the ${newItemName}`;
+
+    droppableOptions.push({
+      id: "drop_first",
+      description: dropText,
+      itemToDrop: champion.items[0]
+    });
+  }
+
+  if (champion.items.length >= 2 && !champion.items[1].stuck) {
+    const dropText = canRefuseNewItem
+      ? `Drop ${getItemName(champion.items[1])} and take the ${newItemName}`
+      : `Drop ${getItemName(champion.items[1])} for the ${newItemName}`;
+
+    droppableOptions.push({
+      id: "drop_second",
+      description: dropText,
+      itemToDrop: champion.items[1]
+    });
+  }
+
+  // Add refuse option if allowed
+  if (canRefuseNewItem) {
+    droppableOptions.push({
+      id: "refuse_item",
+      description: refuseActionText
+    });
+  }
+
+  // Build the description
+  let description = `Champion${championId}'s inventory is full!`;
+  if (newItemDescription) {
+    description += ` ${newItemDescription}`;
+  }
+  description += ` Choose what to do with the ${newItemName}:`;
+
+  const decisionContext: DecisionContext = {
+    type: "choose_item_to_drop",
+    description,
+    options: droppableOptions
+  };
+
+  return {
+    decisionContext,
+    canRefuse: canRefuseNewItem
+  };
+}
+
+/**
+ * Handle the result of a drop item decision
+ * 
+ * @param decision - The player's decision
+ * @param champion - The champion whose inventory is being modified
+ * @param newItem - The new item to add (if not refused)
+ * @param tile - The tile to place dropped items on
+ * @param championId - ID of the champion (for logging)
+ * @param newItemName - Name of the new item (for logging)
+ * @param logFn - Logging function
+ * @returns Whether the new item was acquired
+ */
+export function handleDropItemDecision(
+  decision: Decision,
+  champion: Champion,
+  newItem: CarriableItem | null,
+  tile: Tile,
+  championId: number,
+  newItemName: string,
+  logFn: (type: string, content: string) => void
+): boolean {
+  if (decision.choice.id === "refuse_item") {
+    // Player refused the new item
+    if (newItem) {
+      // Place the refused item on the tile
+      if (!tile.items) {
+        tile.items = [];
+      }
+      tile.items.push(newItem);
+    }
+    logFn("event", `Champion${championId} left the ${newItemName} on the ground.`);
+    return false;
+  } else {
+    // Player chose to drop an existing item
+    const itemToDrop = decision.choice.itemToDrop;
+
+    // Remove the item from champion's inventory
+    const itemIndex = champion.items.indexOf(itemToDrop);
+    if (itemIndex > -1) {
+      champion.items.splice(itemIndex, 1);
+    }
+
+    // Add dropped item to tile
+    if (!tile.items) {
+      tile.items = [];
+    }
+    tile.items.push(itemToDrop);
+
+    // Add new item to champion (if provided)
+    if (newItem) {
+      champion.items.push(newItem);
+    }
+
+    logFn("event", `Champion${championId} dropped ${getItemName(itemToDrop)} and took the ${newItemName}!`);
+    return true;
+  }
 }

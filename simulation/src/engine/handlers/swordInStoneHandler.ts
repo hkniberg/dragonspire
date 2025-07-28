@@ -1,6 +1,7 @@
 import { GameState } from "@/game/GameState";
 import { CarriableItem, Decision, DecisionContext, Player, Tile, TileTier } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
+import { createDropItemDecision, handleDropItemDecision } from "@/players/PlayerUtils";
 
 /**
  * Roll a D3 (returns 1, 2, or 3 with equal probability like the game rules)
@@ -42,17 +43,6 @@ function createCloudslicer(): CarriableItem {
     },
     combatBonus: 4
   };
-}
-
-// Helper function to get the name of a CarriableItem
-function getItemName(item: CarriableItem): string {
-  if (item.treasureCard) {
-    return item.treasureCard.name;
-  }
-  if (item.traderItem) {
-    return item.traderItem.name;
-  }
-  return 'Unknown Item';
 }
 
 export interface SwordInStoneResult {
@@ -211,7 +201,7 @@ async function handleCloudslicerOutcome(
 }
 
 /**
- * Handle inventory full case for any sword reward
+ * Handle inventory full case when pulling a sword from the stone
  */
 async function handleInventoryFullForSword(
   gameState: GameState,
@@ -225,78 +215,42 @@ async function handleInventoryFullForSword(
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void
 ): Promise<SwordInStoneResult> {
-  const droppableOptions: any[] = [];
+  // Use the new utility for drop item decision
+  const dropDecision = createDropItemDecision(
+    championId,
+    swordName,
+    champion,
+    `The ${swordName} was pulled from the stone.`,
+    true,
+    `Leave the ${swordName} on the ground`
+  );
 
-  // Only include items that aren't stuck
-  if (!champion.items[0].stuck) {
-    droppableOptions.push({
-      id: "drop_first",
-      description: `Drop ${getItemName(champion.items[0])} for the ${swordName}`,
-      itemToDrop: champion.items[0]
-    });
-  }
+  const decision: Decision = await playerAgent.makeDecision(gameState, [], dropDecision.decisionContext, thinkingLogger);
 
-  if (!champion.items[1].stuck) {
-    droppableOptions.push({
-      id: "drop_second",
-      description: `Drop ${getItemName(champion.items[1])} for the ${swordName}`,
-      itemToDrop: champion.items[1]
-    });
-  }
+  const itemAcquired = handleDropItemDecision(
+    decision,
+    champion,
+    swordItem,
+    tile,
+    championId,
+    swordName,
+    logFn
+  );
 
-  // Always allow leaving the sword
-  droppableOptions.push({
-    id: "leave_sword",
-    description: `Leave the ${swordName} on the ground`
-  });
-
-  const decisionContext: DecisionContext = {
-    type: "choose_item_to_drop",
-    description: `Champion${championId}'s inventory is full! The ${swordName} was pulled from the stone. Choose what to drop:`,
-    options: droppableOptions
-  };
-
-  const decision: Decision = await playerAgent.makeDecision(gameState, [], decisionContext, thinkingLogger);
-
-  if (decision.choice.id === "leave_sword") {
-    // Leave the sword on the tile
-    if (!tile.items) {
-      tile.items = [];
-    }
-    tile.items.push(swordItem);
-    logFn("event", `Champion${championId} left the ${swordName} on the ground.`);
-    return {
-      cardProcessed: true,
-      cardId: "sword-in-stone",
-      treasureName: "Sword in a Stone",
-      effectApplied: `Left ${swordName} on ground`
-    };
-  } else {
-    // Drop an existing item and take the sword
-    const itemToDrop = decision.choice.itemToDrop;
-
-    // Remove the item from champion's inventory
-    const itemIndex = champion.items.indexOf(itemToDrop);
-    if (itemIndex > -1) {
-      champion.items.splice(itemIndex, 1);
-    }
-
-    // Add dropped item to tile
-    if (!tile.items) {
-      tile.items = [];
-    }
-    tile.items.push(itemToDrop);
-
-    // Add sword to champion
-    champion.items.push(swordItem);
-
+  if (itemAcquired) {
     const bonus = swordItem.combatBonus || 0;
-    logFn("event", `Champion${championId} dropped ${getItemName(itemToDrop)} and took the ${swordName} (+${bonus} might)!`);
     return {
       cardProcessed: true,
       cardId: "sword-in-stone",
       treasureName: "Sword in a Stone",
       effectApplied: `Gained ${swordName} (+${bonus} might)`
+    };
+  } else {
+    return {
+      cardProcessed: true,
+      cardId: "sword-in-stone",
+      treasureName: "Sword in a Stone",
+      effectApplied: `Left ${swordName} on ground`
     };
   }
 } 

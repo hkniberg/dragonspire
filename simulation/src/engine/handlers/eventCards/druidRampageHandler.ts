@@ -1,7 +1,8 @@
 import { getMonsterCardById } from "@/content/monsterCards";
 import { GameState } from "@/game/GameState";
-import { CarriableItem, Decision, DecisionContext, EventCardResult, Monster, Player, Tile, TileTier } from "@/lib/types";
+import { CarriableItem, Decision, EventCardResult, Monster, Player, Tile, TileTier } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
+import { createDropItemDecision, handleDropItemDecision } from "@/players/PlayerUtils";
 
 /**
  * Create a runed dagger item (+1 might)
@@ -20,16 +21,7 @@ function createRunedDagger(): CarriableItem {
   };
 }
 
-// Helper function to get the name of a CarriableItem
-function getItemName(item: CarriableItem): string {
-  if (item.treasureCard) {
-    return item.treasureCard.name;
-  }
-  if (item.traderItem) {
-    return item.traderItem.name;
-  }
-  return 'Unknown Item';
-}
+
 
 /**
  * Handle the druid-rampage event card
@@ -64,62 +56,31 @@ export async function handleDruidRampage(
     champion.items.push(runedDagger);
     logFn("event", `The Druid hands Champion${championId} a Runed Dagger (+1 might)!`);
   } else {
-    // Need to ask what to drop for the runed dagger
-    const droppableOptions: any[] = [];
+    // Use the new utility for drop item decision
+    const dropDecision = createDropItemDecision(
+      championId,
+      "Runed Dagger",
+      champion,
+      "The Druid offers a Runed Dagger (+1 might).",
+      true,
+      "Refuse the Runed Dagger"
+    );
 
-    // Only include items that aren't stuck
-    if (!champion.items[0].stuck) {
-      droppableOptions.push({
-        id: "drop_first",
-        description: `Drop ${getItemName(champion.items[0])} for the Runed Dagger`,
-        itemToDrop: champion.items[0]
-      });
-    }
+    const decision: Decision = await playerAgent.makeDecision(gameState, [], dropDecision.decisionContext, thinkingLogger);
 
-    if (!champion.items[1].stuck) {
-      droppableOptions.push({
-        id: "drop_second",
-        description: `Drop ${getItemName(champion.items[1])} for the Runed Dagger`,
-        itemToDrop: champion.items[1]
-      });
-    }
+    // Handle the decision using the utility
+    const itemAcquired = handleDropItemDecision(
+      decision,
+      champion,
+      runedDagger,
+      tile,
+      championId,
+      "Runed Dagger",
+      logFn
+    );
 
-    // Always allow refusing the dagger
-    droppableOptions.push({
-      id: "refuse_dagger",
-      description: "Refuse the Runed Dagger"
-    });
-
-    const decisionContext: DecisionContext = {
-      type: "choose_item_to_drop",
-      description: `Champion${championId}'s inventory is full! The Druid offers a Runed Dagger (+1 might). Choose what to drop:`,
-      options: droppableOptions
-    };
-
-    const decision: Decision = await playerAgent.makeDecision(gameState, [], decisionContext, thinkingLogger);
-
-    if (decision.choice.id === "refuse_dagger") {
+    if (!itemAcquired) {
       logFn("event", `Champion${championId} refused the Runed Dagger.`);
-    } else {
-      // Drop an existing item and take the dagger
-      const itemToDrop = decision.choice.itemToDrop;
-
-      // Remove the item from champion's inventory
-      const itemIndex = champion.items.indexOf(itemToDrop);
-      if (itemIndex > -1) {
-        champion.items.splice(itemIndex, 1);
-      }
-
-      // Add dropped item to tile
-      if (!tile.items) {
-        tile.items = [];
-      }
-      tile.items.push(itemToDrop);
-
-      // Add dagger to champion
-      champion.items.push(runedDagger);
-
-      logFn("event", `Champion${championId} dropped ${getItemName(itemToDrop)} and took the Runed Dagger (+1 might)!`);
     }
   }
 

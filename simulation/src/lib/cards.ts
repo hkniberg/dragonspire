@@ -6,7 +6,7 @@ import { TREASURE_CARDS } from "../content/treasureCards";
 import { BiomeType, TileTier } from "./types";
 
 /**
- * Deck Rigging:
+ * Development/Testing Configuration
  *
  * Set ONLY_INCLUDE_CARDS to an array of card IDs to only include those cards in the deck.
  * Set to undefined to include all cards as usual.

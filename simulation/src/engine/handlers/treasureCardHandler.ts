@@ -1,7 +1,8 @@
 import { getTreasureCardById } from "@/content/treasureCards";
 import { GameState } from "@/game/GameState";
-import { Decision, DecisionContext, GameLogEntry, Player, Tile } from "@/lib/types";
+import { Decision, DecisionContext, GameLogEntry, Player, Tile, TileTier } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
+import { createDropItemDecision, handleDropItemDecision } from "@/players/PlayerUtils";
 import { handleMysteriousRing } from "./mysteriousRingHandler";
 import { handleSwordInStone } from "./swordInStoneHandler";
 
@@ -150,17 +151,18 @@ async function handleRustySword(
   // Check if champion has space for the item
   if (champion.items.length < 2) {
     // Add the item directly
-    champion.items.push({
+    const rustySword = {
       treasureCard: {
         id: "rusty-sword",
         name: "Rusty sword",
-        tier: 1,
+        tier: 1 as TileTier,
         description: "Gain `+2 might`. This **item breaks** after *one fight*.",
         count: 2,
         carriable: true
       },
       combatBonus: 2
-    });
+    };
+    champion.items.push(rustySword);
     logFn("event", `Champion${championId} picked up a Rusty sword (+2 might, breaks after one fight).`);
     return {
       cardProcessed: true,
@@ -168,97 +170,44 @@ async function handleRustySword(
     };
   }
 
-  // Champion's inventory is full, need to ask what to drop
-  const droppableOptions: any[] = [];
-
-  // Only include items that aren't stuck
-  if (!champion.items[0].stuck) {
-    droppableOptions.push({
-      id: "drop_first",
-      description: `Drop ${getItemName(champion.items[0])} and take the Rusty sword`,
-      itemToDrop: champion.items[0]
-    });
-  }
-
-  if (!champion.items[1].stuck) {
-    droppableOptions.push({
-      id: "drop_second",
-      description: `Drop ${getItemName(champion.items[1])} and take the Rusty sword`,
-      itemToDrop: champion.items[1]
-    });
-  }
-
-  // Always allow leaving the treasure
-  droppableOptions.push({
-    id: "leave_treasure",
-    description: `Leave the Rusty sword on the ground`
-  });
-
-  const decisionContext: DecisionContext = {
-    type: "choose_item_to_drop",
-    description: `Champion${championId}'s inventory is full! Choose what to do with the Rusty sword:`,
-    options: droppableOptions
+  // Use the new utility for drop item decision
+  const rustySword = {
+    treasureCard: {
+      id: "rusty-sword",
+      name: "Rusty sword",
+      tier: 1 as TileTier,
+      description: "Gain `+2 might`. This **item breaks** after *one fight*.",
+      count: 2,
+      carriable: true
+    },
+    combatBonus: 2
   };
 
-  // Ask the player to make a decision
-  const decision: Decision = await playerAgent.makeDecision(gameState, [], decisionContext, thinkingLogger);
+  const dropDecision = createDropItemDecision(
+    championId,
+    "Rusty sword",
+    champion,
+    undefined,
+    true,
+    "Leave the Rusty sword on the ground"
+  );
 
-  if (decision.choice.id === "leave_treasure") {
-    // Leave the treasure on the tile
-    if (!tile.items) {
-      tile.items = [];
-    }
-    tile.items.push({
-      treasureCard: {
-        id: "rusty-sword",
-        name: "Rusty sword",
-        tier: 1,
-        description: "Gain `+2 might`. This **item breaks** after *one fight*.",
-        count: 2,
-        carriable: true
-      },
-      combatBonus: 2
-    });
-    logFn("event", `Champion${championId} left the Rusty sword on the ground.`);
-    return {
-      cardProcessed: true,
-      cardId: "rusty-sword"
-    };
-  } else {
-    // Drop an existing item and take the treasure
-    const itemToDrop = decision.choice.itemToDrop;
+  const decision: Decision = await playerAgent.makeDecision(gameState, [], dropDecision.decisionContext, thinkingLogger);
 
-    // Remove the item from champion's inventory
-    const itemIndex = champion.items.indexOf(itemToDrop);
-    if (itemIndex > -1) {
-      champion.items.splice(itemIndex, 1);
-    }
+  const itemAcquired = handleDropItemDecision(
+    decision,
+    champion,
+    rustySword,
+    tile,
+    championId,
+    "Rusty sword",
+    logFn
+  );
 
-    // Add dropped item to tile
-    if (!tile.items) {
-      tile.items = [];
-    }
-    tile.items.push(itemToDrop);
-
-    // Add new treasure to champion
-    champion.items.push({
-      treasureCard: {
-        id: "rusty-sword",
-        name: "Rusty sword",
-        tier: 1,
-        description: "Gain `+2 might`. This **item breaks** after *one fight*.",
-        count: 2,
-        carriable: true
-      },
-      combatBonus: 2
-    });
-
-    logFn("event", `Champion${championId} dropped ${getItemName(itemToDrop)} and picked up the Rusty sword (+2 might, breaks after one fight).`);
-    return {
-      cardProcessed: true,
-      cardId: "rusty-sword"
-    };
-  }
+  return {
+    cardProcessed: true,
+    cardId: "rusty-sword"
+  };
 }
 
 /**
@@ -306,87 +255,30 @@ async function handleGenericTreasure(
     };
   }
 
-  // Champion's inventory is full, need to ask what to drop
-  const droppableOptions: any[] = [];
+  // Use the new utility for drop item decision
+  const dropDecision = createDropItemDecision(
+    championId,
+    treasureCard.name,
+    champion,
+    undefined,
+    true,
+    `Leave ${treasureCard.name} on the ground`
+  );
 
-  // Only include items that aren't stuck
-  if (!champion.items[0].stuck) {
-    droppableOptions.push({
-      id: "drop_first",
-      description: `Drop ${getItemName(champion.items[0])} and take ${treasureCard.name}`,
-      itemToDrop: champion.items[0]
-    });
-  }
+  const decision: Decision = await playerAgent.makeDecision(gameState, [], dropDecision.decisionContext, thinkingLogger);
 
-  if (!champion.items[1].stuck) {
-    droppableOptions.push({
-      id: "drop_second",
-      description: `Drop ${getItemName(champion.items[1])} and take ${treasureCard.name}`,
-      itemToDrop: champion.items[1]
-    });
-  }
+  const itemAcquired = handleDropItemDecision(
+    decision,
+    champion,
+    { treasureCard },
+    tile,
+    championId,
+    treasureCard.name,
+    logFn
+  );
 
-  // Always allow leaving the treasure
-  droppableOptions.push({
-    id: "leave_treasure",
-    description: `Leave ${treasureCard.name} on the ground`
-  });
-
-  const decisionContext: DecisionContext = {
-    type: "choose_item_to_drop",
-    description: `Champion${championId}'s inventory is full! Choose what to do with ${treasureCard.name}:`,
-    options: droppableOptions
+  return {
+    cardProcessed: true,
+    cardId: treasureCard.id
   };
-
-  // Ask the player to make a decision
-  const decision: Decision = await playerAgent.makeDecision(gameState, [], decisionContext, thinkingLogger);
-
-  if (decision.choice.id === "leave_treasure") {
-    // Leave the treasure on the tile
-    if (!tile.items) {
-      tile.items = [];
-    }
-    tile.items.push({ treasureCard });
-    logFn("event", `Champion${championId} left ${treasureCard.name} on the ground.`);
-    return {
-      cardProcessed: true,
-      cardId: treasureCard.id
-    };
-  } else {
-    // Drop an existing item and take the treasure
-    const itemToDrop = decision.choice.itemToDrop;
-
-    // Remove the item from champion's inventory
-    const itemIndex = champion.items.indexOf(itemToDrop);
-    if (itemIndex > -1) {
-      champion.items.splice(itemIndex, 1);
-    }
-
-    // Add dropped item to tile
-    if (!tile.items) {
-      tile.items = [];
-    }
-    tile.items.push(itemToDrop);
-
-    // Add new treasure to champion
-    champion.items.push({ treasureCard });
-
-    logFn("event", `Champion${championId} dropped ${getItemName(itemToDrop)} and picked up ${treasureCard.name}.`);
-    return {
-      cardProcessed: true,
-      cardId: treasureCard.id
-    };
-  }
-}
-
-// Helper function to get the name of a CarriableItem
-function getItemName(item: any): string {
-  if (item.treasureCard) {
-    return item.treasureCard.name;
-  }
-  if (item.traderItem) {
-    return item.traderItem.name;
-  }
-  // Fallback for old string-based items during migration
-  return typeof item === 'string' ? item : 'Unknown Item';
 } 

@@ -1,6 +1,7 @@
 import { GameState } from "@/game/GameState";
 import { CarriableItem, Decision, DecisionContext, Player, Tile, TileTier } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
+import { createDropItemDecision, handleDropItemDecision } from "@/players/PlayerUtils";
 
 /**
  * Roll a D3 (returns 1, 2, or 3 with equal probability like the game rules)
@@ -42,17 +43,6 @@ function createDragonsbaneRing(): CarriableItem {
     },
     combatBonus: 3 // Note: This bonus only applies against dragons, handled specially in calculateItemEffects
   };
-}
-
-// Helper function to get the name of a CarriableItem
-function getItemName(item: CarriableItem): string {
-  if (item.treasureCard) {
-    return item.treasureCard.name;
-  }
-  if (item.traderItem) {
-    return item.traderItem.name;
-  }
-  return 'Unknown Item';
 }
 
 export interface MysteriousRingResult {
@@ -278,51 +268,29 @@ async function handleInventoryFullForStuckRing(
     };
   }
 
-  const droppableOptions: any[] = [];
+  // Use the new utility for drop item decision (forced drop, can't refuse)
+  const dropDecision = createDropItemDecision(
+    championId,
+    "stuck ring",
+    champion,
+    "The Mysterious Ring does nothing but gets stuck anyway.",
+    false // Can't refuse stuck ring
+  );
 
-  // Only include items that aren't stuck
-  if (!champion.items[0].stuck) {
-    droppableOptions.push({
-      id: "drop_first",
-      description: `Drop ${getItemName(champion.items[0])} for the stuck ring`,
-      itemToDrop: champion.items[0]
-    });
-  }
-
-  if (!champion.items[1].stuck) {
-    droppableOptions.push({
-      id: "drop_second",
-      description: `Drop ${getItemName(champion.items[1])} for the stuck ring`,
-      itemToDrop: champion.items[1]
-    });
-  }
-
-  const decisionContext: DecisionContext = {
-    type: "choose_item_to_drop",
-    description: `Champion${championId}'s inventory is full! The Mysterious Ring does nothing but gets stuck anyway. Choose what to drop:`,
-    options: droppableOptions
-  };
-
-  const decision: Decision = await playerAgent.makeDecision(gameState, [], decisionContext, thinkingLogger);
-  const itemToDrop = decision.choice.itemToDrop;
-
-  // Remove the item from champion's inventory
-  const itemIndex = champion.items.indexOf(itemToDrop);
-  if (itemIndex > -1) {
-    champion.items.splice(itemIndex, 1);
-  }
-
-  // Add dropped item to tile
-  if (!tile.items) {
-    tile.items = [];
-  }
-  tile.items.push(itemToDrop);
+  const decision: Decision = await playerAgent.makeDecision(gameState, [], dropDecision.decisionContext, thinkingLogger);
 
   // Add stuck ring to champion
   const stuckRing = createStuckRing();
-  champion.items.push(stuckRing);
 
-  logFn("event", `Champion${championId} dropped ${getItemName(itemToDrop)} and the Mysterious Ring got stuck on their finger!`);
+  const itemAcquired = handleDropItemDecision(
+    decision,
+    champion,
+    stuckRing,
+    tile,
+    championId,
+    "stuck ring",
+    logFn
+  );
 
   return {
     cardProcessed: true,
@@ -345,79 +313,46 @@ async function handleInventoryFullForDragonRing(
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void
 ): Promise<MysteriousRingResult> {
-  const droppableOptions: any[] = [];
+  // Use the new utility for drop item decision
+  const dropDecision = createDropItemDecision(
+    championId,
+    "dragon ring",
+    champion,
+    "The Mysterious Ring grants +3 might against dragons.",
+    true,
+    "Leave the dragon ring on the ground"
+  );
 
-  // Only include items that aren't stuck
-  if (!champion.items[0].stuck) {
-    droppableOptions.push({
-      id: "drop_first",
-      description: `Drop ${getItemName(champion.items[0])} for the dragon ring`,
-      itemToDrop: champion.items[0]
-    });
-  }
+  const decision: Decision = await playerAgent.makeDecision(gameState, [], dropDecision.decisionContext, thinkingLogger);
 
-  if (!champion.items[1].stuck) {
-    droppableOptions.push({
-      id: "drop_second",
-      description: `Drop ${getItemName(champion.items[1])} for the dragon ring`,
-      itemToDrop: champion.items[1]
-    });
-  }
+  // Create dragon ring
+  const dragonRing = createDragonsbaneRing();
 
-  // Always allow leaving the treasure
-  droppableOptions.push({
-    id: "leave_treasure",
-    description: `Leave the dragon ring on the ground`
-  });
+  const itemAcquired = handleDropItemDecision(
+    decision,
+    champion,
+    dragonRing,
+    tile,
+    championId,
+    "dragon ring",
+    logFn
+  );
 
-  const decisionContext: DecisionContext = {
-    type: "choose_item_to_drop",
-    description: `Champion${championId}'s inventory is full! The Mysterious Ring grants +3 might against dragons. Choose what to drop:`,
-    options: droppableOptions
-  };
-
-  const decision: Decision = await playerAgent.makeDecision(gameState, [], decisionContext, thinkingLogger);
-
-  if (decision.choice.id === "leave_treasure") {
-    // Leave the dragon ring on the tile
-    if (!tile.items) {
-      tile.items = [];
-    }
-    const dragonRing = createDragonsbaneRing();
-    tile.items.push(dragonRing);
+  if (itemAcquired) {
+    logFn("event", `The Mysterious Ring glows with dragon-slaying power!`);
+    return {
+      cardProcessed: true,
+      cardId: "mysterious-ring",
+      treasureName: "Mysterious Ring",
+      effectApplied: "Gained +3 might against dragons"
+    };
+  } else {
     logFn("event", `Champion${championId} left the powerful Mysterious Ring on the ground.`);
     return {
       cardProcessed: true,
       cardId: "mysterious-ring",
       treasureName: "Mysterious Ring",
       effectApplied: "Left dragon ring on ground"
-    };
-  } else {
-    // Drop an existing item and take the dragon ring
-    const itemToDrop = decision.choice.itemToDrop;
-
-    // Remove the item from champion's inventory
-    const itemIndex = champion.items.indexOf(itemToDrop);
-    if (itemIndex > -1) {
-      champion.items.splice(itemIndex, 1);
-    }
-
-    // Add dropped item to tile
-    if (!tile.items) {
-      tile.items = [];
-    }
-    tile.items.push(itemToDrop);
-
-    // Add dragon ring to champion
-    const dragonRing = createDragonsbaneRing();
-    champion.items.push(dragonRing);
-
-    logFn("event", `Champion${championId} dropped ${getItemName(itemToDrop)} and the Mysterious Ring glows with dragon-slaying power!`);
-    return {
-      cardProcessed: true,
-      cardId: "mysterious-ring",
-      treasureName: "Mysterious Ring",
-      effectApplied: "Gained +3 might against dragons"
     };
   }
 } 
