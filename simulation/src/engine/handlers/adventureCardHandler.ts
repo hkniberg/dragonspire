@@ -10,6 +10,7 @@ import { handleLandslide } from "./eventCards/landslideHandler";
 import { handleMarketDay } from "./eventCards/marketDayHandler";
 import { handleSuddenStorm } from "./eventCards/suddenStormHandler";
 import { handleThugAmbush } from "./eventCards/thugAmbushHandler";
+import { handleYouGotRiches } from "./eventCards/youGotRichesHandler";
 import { handleTreasureCard as handleTreasureCardFromHandler } from "./treasureCardHandler";
 
 export interface AdventureCardResult {
@@ -145,6 +146,8 @@ export async function handleEventCardFromAdventure(
       eventResult = await handleThugAmbush(gameState, player, championId, logFn);
     } else if (cardId === "landslide") {
       eventResult = handleLandslide(gameState, player, championId, logFn);
+    } else if (cardId === "you-got-riches") {
+      eventResult = handleYouGotRiches(gameState, logFn);
     } else {
       // Other event cards not yet implemented
       const message = `Event card ${cardId} drawn, but not yet implemented`;
