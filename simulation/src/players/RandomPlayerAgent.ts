@@ -292,8 +292,12 @@ export class RandomPlayerAgent implements PlayerAgent {
     const hasBlacksmith = player.buildings.some(building => building.type === "blacksmith");
     const hasMarket = player.buildings.some(building => building.type === "market");
 
-    // Randomly choose between blacksmith and market (if both are available)
-    const availableBuildings: ("blacksmith" | "market")[] = [];
+    // Check champion recruitment possibilities
+    const currentChampionCount = player.champions.length;
+    const canRecruitChampion = currentChampionCount < 3;
+
+    // Randomly choose between blacksmith, market, and champion recruitment (if available)
+    const availableBuildings: ("blacksmith" | "market" | "recruitChampion")[] = [];
 
     if (!hasBlacksmith && player.resources.food >= 2 && player.resources.ore >= 2) {
       availableBuildings.push("blacksmith");
@@ -301,6 +305,14 @@ export class RandomPlayerAgent implements PlayerAgent {
 
     if (!hasMarket && player.resources.food >= 2 && player.resources.wood >= 2) {
       availableBuildings.push("market");
+    }
+
+    if (canRecruitChampion) {
+      if (currentChampionCount === 1 && player.resources.food >= 3 && player.resources.gold >= 3 && player.resources.ore >= 1) {
+        availableBuildings.push("recruitChampion");
+      } else if (currentChampionCount === 2 && player.resources.food >= 6 && player.resources.gold >= 6 && player.resources.ore >= 3) {
+        availableBuildings.push("recruitChampion");
+      }
     }
 
     if (availableBuildings.length === 0) {

@@ -1,7 +1,7 @@
 // Lords of Doomspire Game Master
 
 import { BoatAction, BuildAction, ChampionAction, HarvestAction, TileAction } from "@/lib/actionTypes";
-import { GameLogEntry, GameLogEntryType, Player, Tile, TurnContext } from "@/lib/types";
+import { Champion, GameLogEntry, GameLogEntryType, Player, Tile, TurnContext } from "@/lib/types";
 import { formatPosition, formatResources } from "@/lib/utils";
 import { GameState } from "../game/GameState";
 import { stringifyTile } from "../game/gameStateStringifier";
@@ -495,6 +495,58 @@ export class GameMaster {
         this.addGameLogEntry(
           "system",
           `Cannot afford market - requires 2 Food + 2 Wood.${reasoningText}`
+        );
+      }
+    } else if (action.buildingType === "recruitChampion") {
+      // Check if player can recruit a champion
+      const currentChampionCount = player.champions.length;
+
+      if (currentChampionCount >= 3) {
+        this.addGameLogEntry("system", `Cannot recruit champion - already have maximum of 3 champions.${reasoningText}`);
+        return;
+      }
+
+      let cost: { food: number; gold: number; ore: number };
+      let championId: number;
+
+      if (currentChampionCount === 1) {
+        // 2nd Knight: 3 Food, 3 Gold, 1 Ore
+        cost = { food: 3, gold: 3, ore: 1 };
+        championId = 2;
+      } else if (currentChampionCount === 2) {
+        // 3rd Knight: 6 Food, 6 Gold, 3 Ore
+        cost = { food: 6, gold: 6, ore: 3 };
+        championId = 3;
+      } else {
+        this.addGameLogEntry("system", `Cannot recruit champion - invalid champion count.${reasoningText}`);
+        return;
+      }
+
+      // Check if player can afford the champion
+      if (player.resources.food >= cost.food && player.resources.gold >= cost.gold && player.resources.ore >= cost.ore) {
+        // Deduct resources
+        player.resources.food -= cost.food;
+        player.resources.gold -= cost.gold;
+        player.resources.ore -= cost.ore;
+
+        // Add new champion to player's home tile
+        const newChampion: Champion = {
+          id: championId,
+          position: player.homePosition,
+          playerName: player.name,
+          items: [],
+        };
+
+        player.champions.push(newChampion);
+
+        this.addGameLogEntry(
+          "system",
+          `Recruited champion ${championId} for ${cost.food} Food + ${cost.gold} Gold + ${cost.ore} Ore, using die value [${action.diceValueUsed}].${reasoningText}`
+        );
+      } else {
+        this.addGameLogEntry(
+          "system",
+          `Cannot afford champion ${championId} - requires ${cost.food} Food + ${cost.gold} Gold + ${cost.ore} Ore.${reasoningText}`
         );
       }
     }

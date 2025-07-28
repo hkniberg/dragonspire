@@ -32,7 +32,7 @@ export interface HarvestAction {
 
 export interface BuildAction {
   diceValueUsed: number;
-  buildingType: "blacksmith" | "market";
+  buildingType: "blacksmith" | "market" | "recruitChampion";
 }
 
 export interface BuildingUsageDecision {
