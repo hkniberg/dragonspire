@@ -304,10 +304,26 @@ export const PlayerInfoBox = ({
                 }}
               >
                 <span style={{ marginRight: "4px", fontSize: "12px" }}>
-                  {buildingType === "blacksmith" ? "🔨" : buildingType === "market" ? "🏪" : "🏗️"}
+                  {buildingType === "blacksmith"
+                    ? "🔨"
+                    : buildingType === "market"
+                      ? "🏪"
+                      : buildingType === "chapel"
+                        ? "⛪"
+                        : buildingType === "monastery"
+                          ? "🏛️"
+                          : "🏗️"}
                 </span>
                 <span style={{ color: colors.main, fontWeight: "bold", fontSize: "12px" }}>
-                  {buildingType === "blacksmith" ? "Blacksmith" : buildingType === "market" ? "Market" : buildingType}
+                  {buildingType === "blacksmith"
+                    ? "Blacksmith"
+                    : buildingType === "market"
+                      ? "Market"
+                      : buildingType === "chapel"
+                        ? "Chapel"
+                        : buildingType === "monastery"
+                          ? "Monastery"
+                          : buildingType}
                 </span>
               </div>
             ))}

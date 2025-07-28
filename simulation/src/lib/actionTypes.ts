@@ -32,7 +32,7 @@ export interface HarvestAction {
 
 export interface BuildAction {
   diceValueUsed: number;
-  buildActionType: "blacksmith" | "market" | "recruitChampion" | "buildBoat";
+  buildActionType: "blacksmith" | "market" | "recruitChampion" | "buildBoat" | "chapel" | "upgradeChapelToMonastery";
 }
 
 export interface BuildingUsageDecision {

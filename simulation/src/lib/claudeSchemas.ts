@@ -157,7 +157,7 @@ export const buildActionSchema = {
     },
     buildActionType: {
       type: "string",
-      enum: ["blacksmith", "market", "recruitChampion", "buildBoat"],
+      enum: ["blacksmith", "market", "recruitChampion", "buildBoat", "chapel", "upgradeChapelToMonastery"],
       description: "Type of building to construct or action to perform"
     },
   },

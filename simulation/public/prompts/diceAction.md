@@ -33,6 +33,7 @@ Build actions include:
 - recruitChampion: Recruit additional champions (max 3 total)
   - 2nd champion: Cost 3 Food + 3 Gold + 1 Ore
   - 3rd champion: Cost 6 Food + 6 Gold + 3 Ore
+- buildBoat: Build an additional boat (max 2 boats total)
 
 If you harvest or build, no more championAction or boatAction actions can be carried out after that.
 

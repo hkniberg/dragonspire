@@ -369,12 +369,12 @@ You och purchase a castle building or boat/champion by spending a die during the
 
 ### Chapel
 
-- **Cost**: 3 Wood, 4 Gold
+- **Cost**: 3 Wood, 4 Gold (only once per player)
 - **Benefit**: Gain 3 Fame immediately
 
 ### Monastery (Chapel upgrade)
 
-- **Cost**: 4 Wood, 5 Gold, 2 Ore
+- **Cost**: 4 Wood, 5 Gold, 2 Ore (only once per player)
 - **Benefit**: Gain 5 Fame immediately
 
 ### Hire Knights

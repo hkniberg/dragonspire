@@ -23,6 +23,10 @@ export function handleBuildAction(
     return handleChampionRecruitment(player, action, logFn, reasoningText);
   } else if (action.buildActionType === "buildBoat") {
     return handleBoatBuild(player, action, logFn, reasoningText);
+  } else if (action.buildActionType === "chapel") {
+    return handleChapelBuild(player, action, logFn, reasoningText);
+  } else if (action.buildActionType === "upgradeChapelToMonastery") {
+    return handleMonasteryBuild(player, action, logFn, reasoningText);
   } else {
     return {
       actionSuccessful: false,
@@ -235,5 +239,113 @@ function handleBoatBuild(
   return {
     actionSuccessful: true,
     resourcesSpent: { food: 0, wood: 2, ore: 0, gold: 2 }
+  };
+}
+
+function handleChapelBuild(
+  player: Player,
+  action: BuildAction,
+  logFn: (type: string, content: string) => void,
+  reasoningText: string
+): BuildActionResult {
+  // Check if player can afford chapel: 3 Wood + 4 Gold (according to rules)
+  if (player.resources.wood < 3 || player.resources.gold < 4) {
+    logFn("system", `Cannot afford chapel - requires 3 Wood + 4 Gold.${reasoningText}`);
+    return {
+      actionSuccessful: false,
+      reason: "Insufficient resources"
+    };
+  }
+
+  // Check if player already has a chapel or monastery (max 1 per player)
+  const hasChapel = player.buildings.includes("chapel");
+  const hasMonastery = player.buildings.includes("monastery");
+  if (hasChapel || hasMonastery) {
+    logFn("system", `Cannot build chapel - player already has a chapel or monastery.${reasoningText}`);
+    return {
+      actionSuccessful: false,
+      reason: "Already has chapel or monastery"
+    };
+  }
+
+  // Deduct resources
+  player.resources.wood -= 3;
+  player.resources.gold -= 4;
+
+  // Add chapel to player's buildings
+  player.buildings.push("chapel");
+
+  // Gain 3 Fame immediately
+  player.fame += 3;
+
+  logFn(
+    "system",
+    `Built a chapel for 3 Wood + 4 Gold, using die value [${action.diceValueUsed}]. Gained 3 Fame.${reasoningText}`
+  );
+
+  return {
+    actionSuccessful: true,
+    resourcesSpent: { food: 0, wood: 3, ore: 0, gold: 4 }
+  };
+}
+
+function handleMonasteryBuild(
+  player: Player,
+  action: BuildAction,
+  logFn: (type: string, content: string) => void,
+  reasoningText: string
+): BuildActionResult {
+  // Check if player can afford monastery: 4 Wood + 5 Gold + 2 Ore (according to rules)
+  if (player.resources.wood < 4 || player.resources.gold < 5 || player.resources.ore < 2) {
+    logFn("system", `Cannot afford monastery - requires 4 Wood + 5 Gold + 2 Ore.${reasoningText}`);
+    return {
+      actionSuccessful: false,
+      reason: "Insufficient resources"
+    };
+  }
+
+  // Check if player has a chapel (monastery can only be built if chapel exists)
+  const hasChapel = player.buildings.includes("chapel");
+  if (!hasChapel) {
+    logFn("system", `Cannot build monastery - requires a chapel first.${reasoningText}`);
+    return {
+      actionSuccessful: false,
+      reason: "No chapel to upgrade"
+    };
+  }
+
+  // Check if player already has a monastery (max 1 per player)
+  const hasMonastery = player.buildings.includes("monastery");
+  if (hasMonastery) {
+    logFn("system", `Cannot build monastery - player already has one.${reasoningText}`);
+    return {
+      actionSuccessful: false,
+      reason: "Already has monastery"
+    };
+  }
+
+  // Deduct resources
+  player.resources.wood -= 4;
+  player.resources.gold -= 5;
+  player.resources.ore -= 2;
+
+  // Remove chapel and add monastery (monastery replaces chapel)
+  const chapelIndex = player.buildings.indexOf("chapel");
+  if (chapelIndex !== -1) {
+    player.buildings.splice(chapelIndex, 1);
+  }
+  player.buildings.push("monastery");
+
+  // Gain 5 Fame immediately
+  player.fame += 5;
+
+  logFn(
+    "system",
+    `Built a monastery for 4 Wood + 5 Gold + 2 Ore, using die value [${action.diceValueUsed}]. Upgraded chapel to monastery. Gained 5 Fame.${reasoningText}`
+  );
+
+  return {
+    actionSuccessful: true,
+    resourcesSpent: { food: 0, wood: 4, ore: 2, gold: 5 }
   };
 } 
