@@ -2,10 +2,13 @@ import { getEventCardById } from "@/content/eventCards";
 import { getMonsterCardById } from "@/content/monsterCards";
 import { GameState } from "@/game/GameState";
 import { Card } from "@/lib/cards";
-import { GameLogEntry, Monster, Player, Tile } from "@/lib/types";
+import { EventCardResult, GameLogEntry, Monster, Player, Tile } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { resolveMonsterPlacementAndCombat } from "./combatHandler";
-import { EventCardResult, handleEventCard } from "./eventCardHandler";
+import { handleHungryPests } from "./eventCards/hungryPestsHandler";
+import { handleMarketDay } from "./eventCards/marketDayHandler";
+import { handleSuddenStorm } from "./eventCards/suddenStormHandler";
+import { handleThugAmbush } from "./eventCards/thugAmbushHandler";
 import { handleTreasureCard as handleTreasureCardFromHandler } from "./treasureCardHandler";
 
 export interface AdventureCardResult {
@@ -128,7 +131,26 @@ export async function handleEventCardFromAdventure(
   logFn("event", `Champion${championId} drew event card: ${eventCard.name}!`);
 
   try {
-    const eventResult = await handleEventCard(eventCard.id, gameState, player, playerAgent, championId, gameLog, logFn, thinkingLogger, getPlayerAgent);
+    let eventResult: EventCardResult;
+
+    // Dispatch to individual event handlers
+    if (cardId === "sudden-storm") {
+      eventResult = handleSuddenStorm(gameState, logFn);
+    } else if (cardId === "hungry-pests") {
+      eventResult = await handleHungryPests(gameState, player, playerAgent, logFn, thinkingLogger);
+    } else if (cardId === "market-day") {
+      eventResult = await handleMarketDay(gameState, player, playerAgent, logFn, thinkingLogger, getPlayerAgent);
+    } else if (cardId === "thug-ambush") {
+      eventResult = await handleThugAmbush(gameState, player, championId, logFn);
+    } else {
+      // Other event cards not yet implemented
+      const message = `Event card ${cardId} drawn, but not yet implemented`;
+      logFn("event", message);
+      eventResult = {
+        eventProcessed: false,
+        errorMessage: `Event card ${cardId} not implemented`
+      };
+    }
 
     return {
       cardProcessed: true,

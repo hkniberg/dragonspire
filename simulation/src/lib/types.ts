@@ -230,3 +230,12 @@ export interface GameLogEntry {
  * Types of buildings that can be constructed in a player's castle
  */
 export type BuildingType = "blacksmith" | "market" | "chapel" | "monastery" | "warshipUpgrade";
+
+export interface EventCardResult {
+  eventProcessed: boolean;
+  playersAffected?: string[];
+  resourcesChanged?: Record<string, { food?: number; wood?: number; ore?: number; gold?: number }>;
+  boatsMoved?: boolean;
+  oasisTokensAdded?: number;
+  errorMessage?: string;
+}
