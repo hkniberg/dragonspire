@@ -260,6 +260,10 @@ export async function resolveChampionVsChampionCombat(
 
     logFn("combat", fullCombatDetails);
 
+    // Track combat statistics
+    attackingPlayer.statistics.championVsChampionWins += 1;
+    defendingPlayer.statistics.championVsChampionLosses += 1;
+
     return {
       combatOccurred: true,
       victory: true,
@@ -332,6 +336,10 @@ export async function resolveChampionVsChampionCombat(
     // Apply defeat effects for champion vs champion combat (no healing cost)
     await applyChampionDefeatInChampionCombat(gameState, attackingPlayer, attackingChampionId, fullCombatDetails, logFn, playerAgent, gameLog, thinkingLogger);
 
+    // Track combat statistics
+    defendingPlayer.statistics.championVsChampionWins += 1;
+    attackingPlayer.statistics.championVsChampionLosses += 1;
+
     return {
       combatOccurred: true,
       defeat: true,
@@ -394,6 +402,9 @@ export async function resolveChampionVsMonsterCombat(
     const combatDetails = `Defeated ${monster.name} (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${monster.might}), gained ${fameAwarded} fame and got ${formatResources(monster.resources)}`;
     logFn("combat", combatDetails);
 
+    // Track combat statistics
+    player.statistics.championVsMonsterWins += 1;
+
     return {
       combatOccurred: true,
       victory: true,
@@ -406,6 +417,9 @@ export async function resolveChampionVsMonsterCombat(
 
     // Apply defeat effects internally
     await applyChampionDefeat(gameState, player, championId, combatDetails, logFn);
+
+    // Track combat statistics
+    player.statistics.championVsMonsterLosses += 1;
 
     return {
       combatOccurred: true,
@@ -465,6 +479,9 @@ export async function resolveChampionVsDragonEncounter(
   }
 
   // Must fight the dragon - roll dice for champion vs dragon battle
+  // Track dragon encounter statistics
+  player.statistics.dragonEncounters += 1;
+
   const dragonMight = GameSettings.DRAGON_BASE_MIGHT + rollD3();
 
   // Get combat support from adjacent units

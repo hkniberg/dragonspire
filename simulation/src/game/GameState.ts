@@ -89,6 +89,7 @@ export class GameState {
         position: startingPositions[i],
         playerName: playerName,
         items: [],
+        followers: [],
       };
 
       const boat: Boat = {
@@ -114,6 +115,23 @@ export class GameState {
         buildings: [], // Initialize with no buildings
         homePosition: startingPositions[i],
         extraInstructions: "", // Initialize with empty extra instructions
+        statistics: { // Initialize statistics counters
+          championVsChampionWins: 0,
+          championVsChampionLosses: 0,
+          championVsMonsterWins: 0,
+          championVsMonsterLosses: 0,
+          dragonEncounters: 0,
+          marketInteractions: 0,
+          blacksmithInteractions: 0,
+          traderInteractions: 0,
+          templeInteractions: 0,
+          mercenaryInteractions: 0,
+          championActions: 0,
+          boatActions: 0,
+          harvestActions: 0,
+          buildActions: 0,
+          adventureCards: 0,
+        },
       });
     }
 

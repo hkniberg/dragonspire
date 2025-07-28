@@ -458,6 +458,9 @@ export function handleMercenaryAction(
 
   logFn("event", `Champion ${championId} hired mercenaries for 3 gold, gaining 1 might`);
 
+  // Track statistics
+  player.statistics.mercenaryInteractions += 1;
+
   return {
     actionSuccessful: true
   };
@@ -497,6 +500,9 @@ export function handleTempleAction(
   player.might += 1;
 
   logFn("event", `Champion ${championId} sacrificed 3 fame at the temple, gaining 1 might`);
+
+  // Track statistics
+  player.statistics.templeInteractions += 1;
 
   return {
     actionSuccessful: true

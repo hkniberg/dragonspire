@@ -122,6 +122,9 @@ export function handleTraderInteraction(
 
     summary += parts.join(", ");
     logFn("event", summary);
+
+    // Track statistics
+    player.statistics.traderInteractions += 1;
   }
 
   return result;

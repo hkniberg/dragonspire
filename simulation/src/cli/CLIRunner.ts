@@ -51,6 +51,38 @@ export class CLIRunner {
     };
   }
 
+  /**
+   * Save game log and statistics CSV files with timestamp
+   */
+  private static async saveGameFiles(gameMaster: GameMaster, testType: string): Promise<void> {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const baseFilename = `${testType}-${timestamp}`;
+
+    try {
+      // Ensure gamelogs directory exists
+      const gamelogsDir = path.join(process.cwd(), 'gamelogs');
+      await fs.mkdir(gamelogsDir, { recursive: true });
+
+      // Save game log as JSON
+      const gameLog = gameMaster.getGameLog();
+      const gameLogFilename = path.join(gamelogsDir, `${baseFilename}-gamelog.json`);
+      await fs.writeFile(gameLogFilename, JSON.stringify(gameLog, null, 2));
+      console.log(`\n📄 Game log saved to: gamelogs/${baseFilename}-gamelog.json`);
+
+      // Save statistics as CSV
+      const statisticsCSV = gameMaster.getStatisticsCSV();
+      if (statisticsCSV) {
+        const statisticsFilename = path.join(gamelogsDir, `${baseFilename}-statistics.csv`);
+        await fs.writeFile(statisticsFilename, statisticsCSV);
+        console.log(`📊 Statistics saved to: gamelogs/${baseFilename}-statistics.csv`);
+      } else {
+        console.log(`📊 No statistics data available to save`);
+      }
+    } catch (error) {
+      console.error(`❌ Failed to save game files: ${error}`);
+    }
+  }
+
   private static async createPlayer(config: PlayerConfig): Promise<PlayerAgent> {
     switch (config.type) {
       case "random":
@@ -236,6 +268,9 @@ export class CLIRunner {
         console.log(`\nTurn executed by: ${currentPlayer.name}`);
         console.log(`Game log entries: ${gameLog.length}`);
       }
+
+      // Save game files
+      await this.saveGameFiles(gameMaster, "single-turn");
     } catch (error) {
       console.error("❌ Single turn test failed:", error);
       throw error;
@@ -299,6 +334,9 @@ export class CLIRunner {
       // Print summary
       const gameLog = gameMaster.getGameLog();
       console.log(`\nTotal log entries: ${gameLog.length}`);
+
+      // Save game files
+      await this.saveGameFiles(gameMaster, `${numTurns}-turns`);
     } catch (error) {
       console.error(`❌ ${numTurns} turn(s) simulation failed:`, error);
       throw error;
@@ -361,6 +399,9 @@ export class CLIRunner {
       }
 
       console.log("✅ Complete game simulation successful!");
+
+      // Save game files
+      await this.saveGameFiles(gameMaster, "complete-game");
     } catch (error) {
       console.error("❌ Complete game simulation failed:", error);
       throw error;

@@ -65,12 +65,34 @@ export interface Champion {
   position: Position;
   playerName: string;
   items: CarriableItem[]; // Items held by the champion
+  followers: string[]; // not implemented yet.
 }
 
 export interface Boat {
   id: number;
   playerName: string;
   position: OceanPosition;
+}
+
+/**
+ * Statistics counters for tracking player actions throughout the game
+ */
+export interface PlayerStatistics {
+  championVsChampionWins: number;
+  championVsChampionLosses: number;
+  championVsMonsterWins: number;
+  championVsMonsterLosses: number;
+  dragonEncounters: number;
+  marketInteractions: number;
+  blacksmithInteractions: number;
+  traderInteractions: number;
+  templeInteractions: number;
+  mercenaryInteractions: number;
+  championActions: number;
+  boatActions: number;
+  harvestActions: number;
+  buildActions: number;
+  adventureCards: number;
 }
 
 export interface Player {
@@ -85,10 +107,59 @@ export interface Player {
   buildings: BuildingType[]; // Buildings constructed in the player's castle
   homePosition: Position;
   extraInstructions?: string; // Optional extra instructions for AI players
+  statistics: PlayerStatistics; // Match statistics tracking
 }
 
 
 export type PlayerType = "random" | "claude" | "human";
+
+/**
+ * Player statistics snapshot for a single turn (combines counters and point-in-time data)
+ */
+export interface PlayerTurnStats {
+  playerName: string;
+  fame: number;
+  might: number;
+  food: number;
+  wood: number;
+  ore: number;
+  gold: number;
+  championCount: number;
+  boatCount: number;
+  totalItems: number;
+  totalFollowers: number;
+  championVsChampionWins: number;
+  championVsChampionLosses: number;
+  championVsMonsterWins: number;
+  championVsMonsterLosses: number;
+  dragonEncounters: number;
+  marketInteractions: number;
+  blacksmithInteractions: number;
+  traderInteractions: number;
+  templeInteractions: number;
+  mercenaryInteractions: number;
+  championActions: number;
+  boatActions: number;
+  harvestActions: number;
+  buildActions: number;
+  adventureCards: number;
+  claimedTiles: number;
+  starredTiles: number;
+  totalResourcesFromTiles: number;
+  hasBlacksmith: boolean;
+  hasMarket: boolean;
+  hasChapel: boolean;
+  hasMonastery: boolean;
+  hasWarshipUpgrade: boolean;
+}
+
+/**
+ * Complete statistics for one turn (all players)
+ */
+export interface TurnStatistics {
+  round: number;
+  playerStats: PlayerTurnStats[];
+}
 
 /**
  * Turn context provided to players for dice decisions

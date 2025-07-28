@@ -49,6 +49,9 @@ export async function handleBuildingUsage(
 
       logFn("system", `Used blacksmith to buy 1 Might for 1 Gold + 2 Ore.`);
       result.blacksmithUsed = true;
+
+      // Track statistics
+      player.statistics.blacksmithInteractions += 1;
     } else if (player.resources.gold < 1 || player.resources.ore < 2) {
       const reason = `Cannot use blacksmith - requires 1 Gold + 2 Ore.`;
       logFn("system", reason);
@@ -85,6 +88,9 @@ export async function handleBuildingUsage(
       if (result.totalGoldGained > 0) {
         logFn("system", `Market transaction complete: sold ${result.totalResourcesSold} resources for ${result.totalGoldGained} gold total.`);
         result.marketUsed = true;
+
+        // Track statistics
+        player.statistics.marketInteractions += 1;
       }
     }
   }

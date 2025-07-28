@@ -24,6 +24,7 @@ import {
   handleTileClaiming
 } from "./handlers/tileArrivalHandler";
 import { createTraderContext, handleTraderInteraction } from "./handlers/traderHandler";
+import { StatisticsCollector } from "./StatisticsCollector";
 
 export type GameMasterState = "setup" | "playing" | "finished";
 
@@ -42,6 +43,7 @@ export class GameMaster {
   private maxRounds: number;
   private gameLog: GameLogEntry[];
   private gameDecks: GameDecks;
+  private statisticsCollector: StatisticsCollector;
 
   constructor(config: GameMasterConfig) {
     // Create GameState with the correct player names from the start
@@ -53,6 +55,7 @@ export class GameMaster {
     this.maxRounds = config.maxRounds || 100; // Default limit to prevent infinite games
     this.gameLog = [];
     this.gameDecks = new GameDecks(CARDS);
+    this.statisticsCollector = new StatisticsCollector();
   }
 
   /**
@@ -142,18 +145,26 @@ export class GameMaster {
         const championAction = diceAction.championAction!;
         diceRolls.consumeDiceRoll(championAction.diceValueUsed);
         await this.executeChampionAction(currentPlayer, championAction, diceAction.reasoning);
+        // Track statistics
+        currentPlayer.statistics.championActions += 1;
       } else if (actionType === "boatAction") {
         const boatAction = diceAction.boatAction!;
         diceRolls.consumeDiceRoll(boatAction.diceValueUsed);
         await this.executeBoatAction(currentPlayer, boatAction, diceAction.reasoning);
+        // Track statistics
+        currentPlayer.statistics.boatActions += 1;
       } else if (actionType === "harvestAction") {
         const harvestAction = diceAction.harvestAction!;
         diceRolls.consumeMultipleDiceRolls(harvestAction.diceValuesUsed);
         await this.executeHarvestAction(currentPlayer, harvestAction, diceAction.reasoning);
+        // Track statistics
+        currentPlayer.statistics.harvestActions += 1;
       } else if (actionType === "buildAction") {
         const buildAction = diceAction.buildAction!;
         diceRolls.consumeDiceRoll(buildAction.diceValueUsed);
         await this.executeBuildAction(currentPlayer, buildAction, diceAction.reasoning);
+        // Track statistics
+        currentPlayer.statistics.buildActions += 1;
       } else {
         throw new Error(`Unknown action type: ${actionType}`);
       }
@@ -177,7 +188,10 @@ export class GameMaster {
       return;
     }
 
-    // Step 6: Advance to next player
+    // Step 6: Capture turn statistics before advancing to next player
+    this.statisticsCollector.captureTurnStatistics(this.gameState);
+
+    // Step 7: Advance to next player
     this.gameState = this.gameState.advanceToNextPlayer();
   }
 
@@ -304,6 +318,8 @@ export class GameMaster {
     if (specialTileResult.interactionOccurred && specialTileResult.adventureCardDrawn) {
       // Draw and handle adventure card
       const adventureCard = this.gameDecks.drawCard(tile.tier!, 1);
+      // Track statistics
+      player.statistics.adventureCards += 1;
 
       if (!adventureCard) {
         console.log(`No adventure card found for tier ${tile.tier}`);
@@ -588,6 +604,13 @@ export class GameMaster {
  */
   public getGameDecks(): GameDecks {
     return this.gameDecks;
+  }
+
+  /**
+   * Get match statistics as CSV string
+   */
+  public getStatisticsCSV(): string {
+    return this.statisticsCollector.exportToCSV();
   }
 
   private endGame(winnerName?: string, condition?: string): void {
