@@ -36,9 +36,9 @@ As an AI player, you should:
 - Consider multiple strategic paths to victory
 - Make efficient use of your dice rolls
 - Make sure you follow the rules of the game
+- Utilize the different game mechanics - buying buildings, buying new champions, attacking other champions, blockading and conquering tiles, using multiple champions to support each other, using warships to support coastal tiles, using boats for mobility between coastal tiles, etc.
 - Balance risk and reward in your decisions
 - Plan both short-term moves and long-term strategy
-- Boats give you easy mobility between coastal tiles.
 </tips>
 
 {{extraInstructions}}
