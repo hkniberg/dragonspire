@@ -131,35 +131,31 @@ export class ClaudePlayerAgent implements PlayerAgent {
                         type: "boolean",
                         description: "Whether to use the blacksmith to buy 1 Might for 1 Gold + 2 Ore"
                     },
-                    useMarket: {
-                        type: "boolean",
-                        description: "Whether to use the market to sell resources for gold at 2:1 rate"
-                    },
-                    marketSellDecisions: {
-                        type: "array",
-                        description: "Array of resources to sell at the market (only used if useMarket is true)",
-                        items: {
-                            type: "object",
-                            properties: {
-                                resourceType: {
-                                    type: "string",
-                                    enum: ["food", "wood", "ore"],
-                                    description: "Type of resource to sell"
-                                },
-                                amount: {
-                                    type: "number",
-                                    description: "Amount of this resource to sell"
-                                }
+                    sellAtMarket: {
+                        type: "object",
+                        description: "Resources to sell at market (only used if you have a market)",
+                        properties: {
+                            food: {
+                                type: "number",
+                                description: "Amount of food to sell"
                             },
-                            required: ["resourceType", "amount"]
-                        }
+                            wood: {
+                                type: "number",
+                                description: "Amount of wood to sell"
+                            },
+                            ore: {
+                                type: "number",
+                                description: "Amount of ore to sell"
+                            }
+                        },
+                        additionalProperties: false
                     },
                     reasoning: {
                         type: "string",
                         description: "Brief reasoning for the decision"
                     }
                 },
-                required: ["useBlacksmith", "useMarket"]
+                required: ["useBlacksmith", "sellAtMarket"]
             };
 
             // Get structured JSON response for building usage decision
@@ -170,7 +166,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             console.error(`${this.name} encountered an error during building usage decision:`, error);
 
             // Fallback to not using any buildings
-            return { useBlacksmith: false, useMarket: false };
+            return { useBlacksmith: false, sellAtMarket: { food: 0, wood: 0, ore: 0, gold: 0 } };
         }
     }
 

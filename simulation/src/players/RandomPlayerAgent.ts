@@ -1,8 +1,8 @@
 // Lords of Doomspire Random Player
 
-import { BuildingUsageDecision, DiceAction, MarketSellDecision } from "@/lib/actionTypes";
+import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
-import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
+import { Decision, DecisionContext, GameLogEntry, PlayerType, ResourceType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
 import { PlayerAgent } from "./PlayerAgent";
 import { generateAllPaths, getHarvestableResourcesInfo, getReachableTiles } from "./PlayerUtils";
@@ -126,7 +126,7 @@ export class RandomPlayerAgent implements PlayerAgent {
   ): Promise<BuildingUsageDecision> {
     const player = gameState.getPlayer(playerName);
     if (!player) {
-      return { useBlacksmith: false, useMarket: false };
+      return { useBlacksmith: false, sellAtMarket: { food: 0, wood: 0, ore: 0, gold: 0 } };
     }
 
     // Check if player has a blacksmith
@@ -145,13 +145,11 @@ export class RandomPlayerAgent implements PlayerAgent {
     const useBlacksmith = hasBlacksmith && canAffordBlacksmith;
 
     // RandomPlayer uses market if available and has resources to sell
-    const useMarket = hasMarket && hasResourcesToSell;
+    const sellAtMarket: Record<ResourceType, number> = { food: 0, wood: 0, ore: 0, gold: 0 };
 
-    // Generate random market sell decisions if using market
-    let marketSellDecisions: MarketSellDecision[] = [];
-    if (useMarket) {
+    if (hasMarket && hasResourcesToSell) {
       // Randomly decide which resources to sell
-      const resourceTypes: ("food" | "wood" | "ore")[] = ["food", "wood", "ore"];
+      const resourceTypes: ResourceType[] = ["food", "wood", "ore"];
 
       for (const resourceType of resourceTypes) {
         if (player.resources[resourceType] > 0) {
@@ -159,20 +157,14 @@ export class RandomPlayerAgent implements PlayerAgent {
           const maxAmount = player.resources[resourceType];
           const sellAmount = Math.floor(Math.random() * (maxAmount + 1));
 
-          if (sellAmount > 0) {
-            marketSellDecisions.push({
-              resourceType,
-              amount: sellAmount
-            });
-          }
+          sellAtMarket[resourceType] = sellAmount;
         }
       }
     }
 
     return {
       useBlacksmith,
-      useMarket,
-      marketSellDecisions: marketSellDecisions.length > 0 ? marketSellDecisions : undefined
+      sellAtMarket
     };
   }
 

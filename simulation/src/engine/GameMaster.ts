@@ -1,7 +1,7 @@
 // Lords of Doomspire Game Master
 
 import { BoatAction, BuildAction, ChampionAction, HarvestAction, TileAction } from "@/lib/actionTypes";
-import { GameLogEntry, GameLogEntryType, Player, Tile, TurnContext } from "@/lib/types";
+import { GameLogEntry, GameLogEntryType, Player, ResourceType, Tile, TurnContext } from "@/lib/types";
 import { formatPosition, formatResources } from "@/lib/utils";
 import { GameState } from "../game/GameState";
 import { stringifyTile } from "../game/gameStateStringifier";
@@ -538,38 +538,37 @@ export class GameMaster {
     }
 
     // Process market usage
-    if (buildingUsageDecision.useMarket) {
+    if (buildingUsageDecision.sellAtMarket) {
       const market = player.buildings.find(building => building.type === "market");
 
-      if (market && buildingUsageDecision.marketSellDecisions && buildingUsageDecision.marketSellDecisions.length > 0) {
+      if (market && Object.values(buildingUsageDecision.sellAtMarket).some(amount => amount > 0)) {
         let totalGoldGained = 0;
         let totalResourcesSold = 0;
 
-        for (const sellDecision of buildingUsageDecision.marketSellDecisions) {
-          const resourceType = sellDecision.resourceType;
-          const amount = sellDecision.amount;
+        for (const [resourceType, amount] of Object.entries(buildingUsageDecision.sellAtMarket)) {
+          if (amount > 0) {
+            // Check if player has enough of this resource
+            if (player.resources[resourceType as ResourceType] >= amount) {
+              // Calculate gold gained (2 resources = 1 gold)
+              const goldGained = Math.floor(amount / 2);
 
-          // Check if player has enough of this resource
-          if (player.resources[resourceType] >= amount) {
-            // Calculate gold gained (2 resources = 1 gold)
-            const goldGained = Math.floor(amount / 2);
+              // Deduct resources and add gold
+              player.resources[resourceType as ResourceType] -= amount;
+              player.resources.gold += goldGained;
 
-            // Deduct resources and add gold
-            player.resources[resourceType] -= amount;
-            player.resources.gold += goldGained;
+              totalGoldGained += goldGained;
+              totalResourcesSold += amount;
 
-            totalGoldGained += goldGained;
-            totalResourcesSold += amount;
-
-            this.addGameLogEntry(
-              "system",
-              `Sold ${amount} ${resourceType} for ${goldGained} gold at market.`
-            );
-          } else {
-            this.addGameLogEntry(
-              "system",
-              `Cannot sell ${amount} ${resourceType} - only have ${player.resources[resourceType]}.`
-            );
+              this.addGameLogEntry(
+                "system",
+                `Sold ${amount} ${resourceType} for ${goldGained} gold at market.`
+              );
+            } else {
+              this.addGameLogEntry(
+                "system",
+                `Cannot sell ${amount} ${resourceType} - only have ${player.resources[resourceType as ResourceType]}.`
+              );
+            }
           }
         }
 
@@ -579,11 +578,6 @@ export class GameMaster {
             `Market transaction complete: sold ${totalResourcesSold} resources for ${totalGoldGained} gold total.`
           );
         }
-      } else if (!buildingUsageDecision.marketSellDecisions || buildingUsageDecision.marketSellDecisions.length === 0) {
-        this.addGameLogEntry(
-          "system",
-          `Market is available but no resources were selected for sale.`
-        );
       }
     }
   }
