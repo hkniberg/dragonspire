@@ -35,6 +35,12 @@ This is a board game design project, not a software application. Code in the sim
 - Keep the code as simple and clean as possible.
 - Performance doesn't matter. This is just for internal use, not a commercial product.
 
+### Code Reuse and Utilities
+
+- **Before implementing player, champion, or card-related functionality**, check `simulation/src/players/PlayerUtils.ts` first for existing utilities.
+- **Before implementing board navigation or game state manipulation**, check `simulation/src/game/GameState.ts` for existing methods.
+- Feel free to add new common utilities there when needed,
+
 ## Terminology
 
 - "knight" and "champion" mean the same thing. Knight is used in the game rules, while champion is the internal name in the code and UI. Keep it that way for now.
