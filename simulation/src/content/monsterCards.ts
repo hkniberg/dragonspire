@@ -11,6 +11,7 @@ export interface MonsterCard {
   resources: Record<string, number>;
   count: number; // How many cards of this monster to include in deck
   isBeast?: boolean; // Whether this monster is classified as a beast (default false)
+  disabled?: boolean; // If true, card is not added to deck but still shown in UI
 }
 
 export function getMonsterCardById(id: string): MonsterCard | undefined {

@@ -13,7 +13,7 @@ import { EVENT_CARDS } from "../content/eventCards";
 import { MONSTER_CARDS } from "../content/monsterCards";
 import { TRADER_ITEMS } from "../content/traderItems";
 import { TREASURE_CARDS } from "../content/treasureCards";
-import { Card, CARDS, CardType } from "../lib/cards";
+import { ALL_CARDS, ALL_TRADER_CARDS, Card, CardType } from "../lib/cards";
 
 // Extended card type that includes trader cards and the original card data for rendering
 type ExtendedCardType = CardType | "trader";
@@ -40,8 +40,8 @@ export default function CardsPage() {
 
   // Create extended card array by looking up original data
   const allCards: ExtendedCard[] = [
-    // Regular cards from CARDS array
-    ...CARDS.map((card, index) => {
+    // Regular cards from ALL_CARDS array (includes disabled cards)
+    ...ALL_CARDS.map((card, index) => {
       let originalData;
 
       switch (card.type) {
@@ -67,14 +67,17 @@ export default function CardsPage() {
         id: `${card.type}-${index}`,
       };
     }),
-    // Add trader items as cards
-    ...TRADER_ITEMS.map((trader, index) => ({
-      type: "trader" as const,
-      tier: 1, // Traders are always tier 1
-      biome: "trader" as const, // Special biome for traders
-      id: trader.id,
-      originalData: trader,
-    })),
+    // Add trader cards from ALL_TRADER_CARDS array (includes disabled cards)
+    ...ALL_TRADER_CARDS.map((card, index) => {
+      const originalData = TRADER_ITEMS.find((t) => t.id === card.id);
+      return {
+        ...card,
+        tier: 1, // Traders are always tier 1
+        biome: "trader" as const, // Special biome for traders
+        originalData,
+        id: `${card.type}-${index}`,
+      };
+    }),
   ];
 
   // Apply hide duplicates filter first, then other filters
@@ -126,9 +129,10 @@ export default function CardsPage() {
       borderColor: getBorderColor(card.type),
       name: card.originalData.name,
       compactMode,
+      disabled: card.originalData.disabled,
       title: `${card.type.charAt(0).toUpperCase() + card.type.slice(1)}: ${
         card.originalData.name
-      } (Tier ${card.tier}, ${card.biome})`,
+      } (Tier ${card.tier}, ${card.biome})${card.originalData.disabled ? " [DISABLED]" : ""}`,
     };
 
     if (isCardFlipped(card.id)) {
@@ -139,6 +143,7 @@ export default function CardsPage() {
           backsideImageUrl={`/cardBacksides/${card.type === "trader" ? "trader" : card.biome}.png`}
           backsideLabel={card.type === "trader" ? "TRADER" : "ADVENTURE"}
           showTier={card.type !== "trader"}
+          disabled={card.originalData.disabled}
         />
       );
     }
@@ -429,11 +434,31 @@ export default function CardsPage() {
           <div>
             <h3 style={{ color: "#555", fontSize: "16px" }}>By Type</h3>
             <div style={{ fontSize: "14px", color: "#666" }}>
-              <div>Monsters: {allCards.filter((c) => c.type === "monster").length} cards</div>
-              <div>Events: {allCards.filter((c) => c.type === "event").length} cards</div>
-              <div>Treasures: {allCards.filter((c) => c.type === "treasure").length} cards</div>
-              <div>Encounters: {allCards.filter((c) => c.type === "encounter").length} cards</div>
-              <div>Traders: {allCards.filter((c) => c.type === "trader").length} cards</div>
+              <div>
+                Monsters: {allCards.filter((c) => c.type === "monster").length} cards (
+                {allCards.filter((c) => c.type === "monster" && !c.originalData.disabled).length} enabled,{" "}
+                {allCards.filter((c) => c.type === "monster" && c.originalData.disabled).length} disabled)
+              </div>
+              <div>
+                Events: {allCards.filter((c) => c.type === "event").length} cards (
+                {allCards.filter((c) => c.type === "event" && !c.originalData.disabled).length} enabled,{" "}
+                {allCards.filter((c) => c.type === "event" && c.originalData.disabled).length} disabled)
+              </div>
+              <div>
+                Treasures: {allCards.filter((c) => c.type === "treasure").length} cards (
+                {allCards.filter((c) => c.type === "treasure" && !c.originalData.disabled).length} enabled,{" "}
+                {allCards.filter((c) => c.type === "treasure" && c.originalData.disabled).length} disabled)
+              </div>
+              <div>
+                Encounters: {allCards.filter((c) => c.type === "encounter").length} cards (
+                {allCards.filter((c) => c.type === "encounter" && !c.originalData.disabled).length} enabled,{" "}
+                {allCards.filter((c) => c.type === "encounter" && c.originalData.disabled).length} disabled)
+              </div>
+              <div>
+                Traders: {allCards.filter((c) => c.type === "trader").length} cards (
+                {allCards.filter((c) => c.type === "trader" && !c.originalData.disabled).length} enabled,{" "}
+                {allCards.filter((c) => c.type === "trader" && c.originalData.disabled).length} disabled)
+              </div>
             </div>
           </div>
           <div>
@@ -459,6 +484,8 @@ export default function CardsPage() {
             <h3 style={{ color: "#555", fontSize: "16px" }}>Deck Summary</h3>
             <div style={{ fontSize: "14px", color: "#666" }}>
               <div>Total cards: {allCards.length}</div>
+              <div>Enabled cards: {allCards.filter((c) => !c.originalData.disabled).length}</div>
+              <div>Disabled cards: {allCards.filter((c) => c.originalData.disabled).length}</div>
               <div>Unique cards: {new Set(allCards.map((c) => c.id)).size}</div>
               {hideDuplicates && (
                 <div

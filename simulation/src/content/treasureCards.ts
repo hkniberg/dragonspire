@@ -7,6 +7,7 @@ export interface TreasureCard {
   description: string;
   count: number; // How many cards of this treasure to include in deck
   carriable: boolean; // Whether this treasure can be carried as an item
+  disabled?: boolean; // If true, card is not added to deck but still shown in UI
 }
 
 export function getTreasureCardById(id: string): TreasureCard | undefined {

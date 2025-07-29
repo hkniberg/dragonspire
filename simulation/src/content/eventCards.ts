@@ -6,6 +6,7 @@ export interface EventCard {
   tier: TileTier;
   description: string;
   count: number; // How many cards of this event to include in deck
+  disabled?: boolean; // If true, card is not added to deck but still shown in UI
 }
 
 // Helper function to get event by ID
@@ -61,10 +62,11 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
 
   // Tier 2 Event Cards
   {
+    disabled: true,
     id: "hornet-swarm",
     name: "Hornet swarm",
     tier: 2,
-    description: "*NOT IMPLEMENTED YET* Roll `2D3` to flee the swarm. The player to your right chooses direction, you must then move in that direction. Any **champion** passed by or through must *repeat this*.",
+    description: "Roll `2D3` to flee the swarm. The player to your right chooses direction, you must then move in that direction. Any **champion** passed by or through must *repeat this*.",
     count: 1,
   },
   {

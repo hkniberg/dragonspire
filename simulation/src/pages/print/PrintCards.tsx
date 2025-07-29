@@ -14,7 +14,7 @@ import { EVENT_CARDS } from "../../content/eventCards";
 import { MONSTER_CARDS } from "../../content/monsterCards";
 import { TRADER_ITEMS } from "../../content/traderItems";
 import { TREASURE_CARDS } from "../../content/treasureCards";
-import { Card, CARDS, TRADER_CARDS, TraderCard } from "../../lib/cards";
+import { ALL_CARDS, ALL_TRADER_CARDS, Card, TraderCard } from "../../lib/cards";
 
 // Extended card type that includes the original data for rendering
 type ExtendedCard = (Card | TraderCard) & {
@@ -29,7 +29,7 @@ export default function PrintCards() {
   const CARD_HEIGHT = 240; // Grid row height - matches card height
 
   // Create extended card array by looking up original data
-  const adventureCards: ExtendedCard[] = CARDS.map((card, index) => {
+  const adventureCards: ExtendedCard[] = ALL_CARDS.map((card, index) => {
     let originalData;
 
     switch (card.type) {
@@ -57,10 +57,12 @@ export default function PrintCards() {
   });
 
   // Create trader cards array
-  const traderCards: ExtendedCard[] = TRADER_CARDS.map((card, index) => {
+  const traderCards: ExtendedCard[] = ALL_TRADER_CARDS.map((card, index) => {
     const originalData = TRADER_ITEMS.find((t) => t.id === card.id);
     return {
       ...card,
+      tier: 1, // Traders are always tier 1
+      biome: "trader" as const, // Special biome for traders
       originalData,
       id: `${card.type}-${index}`,
     };
@@ -82,6 +84,7 @@ export default function PrintCards() {
       borderColor: getBorderColor(card.type),
       name: card.originalData.name,
       compactMode: false,
+      disabled: card.originalData.disabled,
     };
 
     if (isBackside) {

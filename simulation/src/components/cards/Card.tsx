@@ -65,6 +65,7 @@ interface CardProps {
   title?: string; // for tooltip
   contentFontSize?: string; // font size for content text
   printMode?: boolean; // disable shadows for print
+  disabled?: boolean; // whether this card is disabled
 }
 
 export const CardComponent = ({
@@ -82,6 +83,7 @@ export const CardComponent = ({
   title,
   contentFontSize = "9px",
   printMode = false,
+  disabled = false,
 }: CardProps) => {
   const backgroundColor = getTierBackgroundColor(tier);
 
@@ -106,6 +108,7 @@ export const CardComponent = ({
           justifyContent: "center",
           padding: "4px",
           position: "relative",
+          opacity: disabled ? 0.5 : 1,
         }}
         title={title}
       >
@@ -117,10 +120,28 @@ export const CardComponent = ({
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: "rgba(255, 255, 255, 0.4)",
+            backgroundColor: disabled ? "rgba(255, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.4)",
             borderRadius: "4px",
           }}
         />
+        {disabled && (
+          <div
+            style={{
+              position: "absolute",
+              top: "4px",
+              right: "4px",
+              backgroundColor: "#dc3545",
+              color: "white",
+              fontSize: "10px",
+              fontWeight: "bold",
+              padding: "2px 6px",
+              borderRadius: "4px",
+              zIndex: 2,
+            }}
+          >
+            DISABLED
+          </div>
+        )}
         <div
           style={{
             fontSize: "20px",
@@ -193,9 +214,29 @@ export const CardComponent = ({
         justifyContent: "flex-start",
         padding: "4px 4px 2px 4px",
         gap: "0px",
+        position: "relative",
+        opacity: disabled ? 0.5 : 1,
       }}
       title={title}
     >
+      {disabled && (
+        <div
+          style={{
+            position: "absolute",
+            top: "4px",
+            right: "4px",
+            backgroundColor: "#dc3545",
+            color: "white",
+            fontSize: "10px",
+            fontWeight: "bold",
+            padding: "2px 6px",
+            borderRadius: "4px",
+            zIndex: 10,
+          }}
+        >
+          DISABLED
+        </div>
+      )}
       {/* Image */}
       <div
         style={{

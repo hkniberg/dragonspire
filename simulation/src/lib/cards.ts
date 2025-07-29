@@ -303,12 +303,12 @@ function getRandomBiome(): BiomeType {
 }
 
 // Build the card deck
-function buildCardDeck(): Card[] {
+function buildCardDeck(includeDisabled: boolean = false): Card[] {
   const deck = new CardDeck();
 
   // Auto-generate monster cards from MONSTERS array
   MONSTER_CARDS.forEach((monster) => {
-    if (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(monster.id)) {
+    if ((includeDisabled || !monster.disabled) && (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(monster.id))) {
       deck.addCard(monster.count, {
         type: "monster",
         tier: ONLY_INCLUDE_CARDS ? 1 : monster.tier,
@@ -320,7 +320,7 @@ function buildCardDeck(): Card[] {
 
   // Auto-generate treasure cards from TREASURES array with random biomes
   TREASURE_CARDS.forEach((treasure) => {
-    if (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(treasure.id)) {
+    if ((includeDisabled || !treasure.disabled) && (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(treasure.id))) {
       for (let i = 0; i < treasure.count; i++) {
         deck.addToTop({
           type: "treasure",
@@ -334,7 +334,7 @@ function buildCardDeck(): Card[] {
 
   // Auto-generate encounter cards from ENCOUNTERS array with random biomes
   ENCOUNTERS.forEach((encounter) => {
-    if (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(encounter.id)) {
+    if ((includeDisabled || !encounter.disabled) && (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(encounter.id))) {
       for (let i = 0; i < encounter.count; i++) {
         deck.addToTop({
           type: "encounter",
@@ -348,7 +348,7 @@ function buildCardDeck(): Card[] {
 
   // Auto-generate event cards from EVENTS array with random biomes
   EVENT_CARDS.forEach((event) => {
-    if (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(event.id)) {
+    if ((includeDisabled || !event.disabled) && (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(event.id))) {
       for (let i = 0; i < event.count; i++) {
         deck.addToTop({
           type: "event",
@@ -364,23 +364,27 @@ function buildCardDeck(): Card[] {
 }
 
 // Build the trader deck
-function buildTraderDeck(): TraderCard[] {
+function buildTraderDeck(includeDisabled: boolean = false): TraderCard[] {
   const deck = new TraderDeck();
 
   // Add the specified count of each trader item
   TRADER_ITEMS.forEach((trader) => {
-    deck.addCard(trader.count, {
-      type: "trader",
-      id: trader.id,
-    });
+    if (includeDisabled || !trader.disabled) {
+      deck.addCard(trader.count, {
+        type: "trader",
+        id: trader.id,
+      });
+    }
   });
 
   return deck.getCards();
 }
 
 // Export the card deck and deck class
-export const CARDS: Card[] = buildCardDeck();
-export const TRADER_CARDS: TraderCard[] = buildTraderDeck();
+export const CARDS: Card[] = buildCardDeck(false); // Enabled cards only for gameplay
+export const ALL_CARDS: Card[] = buildCardDeck(true); // All cards including disabled for UI
+export const TRADER_CARDS: TraderCard[] = buildTraderDeck(false); // Enabled trader cards only for gameplay
+export const ALL_TRADER_CARDS: TraderCard[] = buildTraderDeck(true); // All trader cards including disabled for UI
 export { CardDeck, TraderDeck };
 
 // Essential helper functions

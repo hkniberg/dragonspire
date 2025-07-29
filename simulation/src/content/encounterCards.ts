@@ -7,12 +7,14 @@ export interface Encounter {
   description: string;
   follower: boolean; // Whether this encounter can become a follower
   count: number; // How many cards of this encounter to include in deck
+  disabled?: boolean; // If true, card is not added to deck but still shown in UI
 }
 
 // All encounter cards in the game
 export const ENCOUNTERS: Encounter[] = [
   // Tier 1 Encounter Cards
   {
+    disabled: true,
     id: "angry-dog",
     name: "Angry dog",
     tier: 1,
@@ -21,6 +23,7 @@ export const ENCOUNTERS: Encounter[] = [
     count: 2,
   },
   {
+    disabled: true,
     id: "old-beggar",
     name: "Old beggar",
     tier: 1,
@@ -29,6 +32,7 @@ export const ENCOUNTERS: Encounter[] = [
     count: 2,
   },
   {
+    disabled: true,
     id: "priestess",
     name: "Priestess",
     tier: 1,
@@ -39,14 +43,16 @@ export const ENCOUNTERS: Encounter[] = [
 
   // Tier 2 Encounter Cards
   {
+    disabled: true,
     id: "proud-mercenary",
     name: "Proud Mercenary",
     tier: 2,
-    description: "Each **combat** you may pay `3x gold` and gain ten temporary `+2 might`.",
+    description: "Each **combat** you may pay `3x gold` and gain temporary `+2 might`.",
     follower: true,
     count: 1,
   },
   {
+    disabled: true,
     id: "brawler",
     name: "Brawler",
     tier: 2,
@@ -55,6 +61,7 @@ export const ENCOUNTERS: Encounter[] = [
     count: 1,
   },
   {
+    disabled: true,
     id: "witch",
     name: "Witch",
     tier: 2,
