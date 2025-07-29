@@ -45,21 +45,29 @@ Win immediately by successfully interacting with the Dragon at Doomspire tile (n
 
 ## Combat
 
-**Knight vs Monster**: Roll D3 + Might + adjacent support (+1 per knight/warship)
+**Knight vs Monster**: Knight rolls 1D3 + Might + support (+1 per adjacentknight/warship)
 
+- Monster doesn't roll dice, it has only the fixed might value.
 - Win (≥ monster might): Gain rewards
 - Lose: Return home, pay 1 resource or lose 1 fame
-- Flee: Return home, lose 1 fame
+- Simple combat calculation example:
+  - Knight has 1 Might
+  - Monster has 3 Might
+  - Knight rolls 1D3, which gives possible values of 1, 2, or 3.
+  - Adding the Knight's 1 might gives possible values of 2, 3, or 4.
+  - Knight must achieve 3 or higher to win (>= Monster's might), so odds are 67%
 
-**Knight vs Knight**: Both roll 2D3 + Might + support
+**Knight vs Knight**: Both roll 2D3 + Might + support (+1 per adjacent knight/warship)
 
+- Higher value wins. Reroll on tie.
 - Winner: +1 Fame, stays, may take 1 resource OR 1 item from loser
 - Loser: Returns home (no healing cost)
 - Tie: Reroll
 
-**Knight vs Dragon**: Roll D3 + Might + adjacent support (+1 per knight)
+**Knight vs Dragon**: Knight roll 1D3 + Might + support (+1 per adjacent knight/warship)
 
-- Dragon might = 8 + D3 Might
+- Dragon might = 8 + 1D3, determined when dragon is revealed
+- Knight's roll + might + support must be >= dragon might to win
 - Loss = knight removed from game
 - Win = win the game
 

@@ -104,6 +104,13 @@ export default function GameSimulation() {
 
   // Ref to hold the autoplay timeout
   const autoPlayTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Ref to always get current autoPlay state (avoids closure issues)
+  const autoPlayRef = useRef(autoPlay);
+
+  // Keep autoPlayRef in sync with autoPlay state
+  useEffect(() => {
+    autoPlayRef.current = autoPlay;
+  }, [autoPlay]);
 
   // Initialize component only on client side
   useEffect(() => {
@@ -124,7 +131,7 @@ export default function GameSimulation() {
     }
 
     // Start initial autoplay turn if enabled and ready
-    if (autoPlay && simulationState === "playing" && !isExecutingTurn) {
+    if (autoPlayRef.current && simulationState === "playing" && !isExecutingTurn) {
       autoPlayTimeout.current = setTimeout(() => {
         executeNextTurn();
       }, autoPlaySpeed);
@@ -193,7 +200,8 @@ export default function GameSimulation() {
       setIsExecutingTurn(false);
 
       // Schedule next autoplay turn if still enabled and game is still playing
-      if (autoPlay && simulationState === "playing" && gameSession?.getMasterState() !== "finished") {
+      // Use ref to get current autoPlay state (avoids closure issues)
+      if (autoPlayRef.current && simulationState === "playing" && gameSession?.getMasterState() !== "finished") {
         autoPlayTimeout.current = setTimeout(() => {
           executeNextTurn();
         }, autoPlaySpeed);

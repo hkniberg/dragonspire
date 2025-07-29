@@ -121,7 +121,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
 
             <button
               onClick={onToggleAutoPlay}
-              disabled={isExecutingTurn}
               style={{
                 padding: "10px 20px",
                 backgroundColor: autoPlay ? "#dc3545" : "#ffc107",
@@ -129,7 +128,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 border: "none",
                 borderRadius: "4px",
                 fontSize: "16px",
-                cursor: isExecutingTurn ? "not-allowed" : "pointer",
+                cursor: "pointer",
               }}
             >
               {autoPlay ? "⏸️ Pause Auto-Play" : "⏩ Auto-Play"}

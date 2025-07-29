@@ -523,7 +523,8 @@ export async function resolveImmediateCombat(
     };
   } else {
     // Champion lost - apply defeat effects immediately
-    logFn("combat", combatDetails);
+    // Remove redundant log here since applyChampionDefeat will log the complete outcome
+    // logFn("combat", combatDetails);
 
     // Remove items that break after combat (even if defeated)
     removeBrokenItems(champion, itemsToRemove, logFn);
@@ -591,7 +592,8 @@ export async function resolveChampionVsMonsterCombat(
     };
   } else {
     // Champion lost - monster stays on tile, apply defeat effects immediately
-    logFn("combat", combatDetails);
+    // Remove redundant log here since applyChampionDefeat will log the complete outcome
+    // logFn("combat", combatDetails);
 
     // Remove items that break after combat (even if defeated)
     removeBrokenItems(champion, itemsToRemove, logFn);
@@ -790,9 +792,14 @@ async function handleHealingCost(
   }
 
   if (availableResources.length === 0) {
-    // No resources available - lose 1 fame
+    // No resources available - lose 1 fame if possible
+    const hadFame = player.fame > 0;
     player.fame = Math.max(0, player.fame - 1);
-    logFn("combat", `${defeatContext}, had no resources to heal so lost 1 fame`);
+    if (hadFame) {
+      logFn("combat", `${defeatContext}, had no resources to heal so lost 1 fame`);
+    } else {
+      logFn("combat", `${defeatContext}, had no resources to heal and no fame to lose`);
+    }
     return;
   }
 

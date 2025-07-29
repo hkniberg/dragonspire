@@ -26,7 +26,6 @@ export const TRADER_ITEMS: TraderItem[] = [
     description: "Carry 1 extra **treasure**.",
     cost: 2,
     count: 1,
-    disabled: true,
   },
   {
     id: "padded-helmet",

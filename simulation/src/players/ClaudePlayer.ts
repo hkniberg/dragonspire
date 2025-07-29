@@ -42,7 +42,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         const userMessage = await this.prepareAssessmentMessage(gameState, gameLog, diceValues, turnNumber);
 
         // Get text response for strategic assessment
-        const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 2000, 4000, thinkingLogger);
+        const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 3000, 6000, thinkingLogger);
 
         return strategicAssessment.trim() || undefined;
     }

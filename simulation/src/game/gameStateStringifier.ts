@@ -160,6 +160,13 @@ export function stringifyPlayer(player: Player, gameState: GameState): string {
     lines.push(`- boat${boat.id} at (${boat.position})`);
   }
 
+  // Buildings
+  if (player.buildings && player.buildings.length > 0) {
+    lines.push(`- Buildings: ${player.buildings.join(", ")}`);
+  } else {
+    lines.push("- Buildings: none");
+  }
+
   // Claims
   const claimedTiles = gameState.getClaimedTiles(player.name);
   if (claimedTiles.length > 0) {
