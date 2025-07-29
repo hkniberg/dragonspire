@@ -202,11 +202,12 @@ export const decisionSchema = {
   type: "object",
   properties: {
     choice: {
-      description: "The chosen option from the available choices",
+      type: "string",
+      description: "The chosen option ID from the available choices",
     },
     reasoning: {
       type: "string",
-      description: "Brief explanation of why this choice was made",
+      description: "Single sentence explaining why this choice was made",
     },
   },
   required: ["choice", "reasoning"],

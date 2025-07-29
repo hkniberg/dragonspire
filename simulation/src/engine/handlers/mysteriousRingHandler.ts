@@ -173,17 +173,24 @@ async function handleRingSwap(
 
   // Present choice of champions to swap with
   const decisionContext: DecisionContext = {
-    type: "mysterious_ring_swap",
     description: `Champion${championId} can swap locations with any champion! Choose who to swap with:`,
     options: allChampions.map((target, index) => ({
       id: `swap_${index}`,
-      description: `Swap with ${target.playerName}'s Champion${target.championId} at (${target.position.row}, ${target.position.col})`,
-      targetChampion: target
+      description: `Swap with ${target.playerName}'s Champion${target.championId} at (${target.position.row}, ${target.position.col})`
     }))
   };
 
   const decision: Decision = await playerAgent.makeDecision(gameState, [], decisionContext, thinkingLogger);
-  const targetChampion = decision.choice.targetChampion;
+
+  // Parse the choice to get the target champion index
+  const choiceMatch = decision.choice.match(/^swap_(\d+)$/);
+  if (!choiceMatch) {
+    const errorMessage = `Invalid swap choice: ${decision.choice}`;
+    return { cardProcessed: false, errorMessage };
+  }
+
+  const targetIndex = parseInt(choiceMatch[1]);
+  const targetChampion = allChampions[targetIndex];
 
   if (!targetChampion) {
     const errorMessage = `Invalid swap target selected`;

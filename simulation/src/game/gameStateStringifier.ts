@@ -48,6 +48,9 @@ export function stringifyTile(tile: Tile, gameState: GameState, ignorePlayerName
         if (tile.claimedBy) {
           const player = gameState.getPlayer(tile.claimedBy);
           resourceDescription += ` owned by ${player?.name || "unknown"}`;
+          if (gameState.isClaimProtected(tile)) {
+            resourceDescription += " (protected)";
+          }
         }
         sentences.push(resourceDescription);
         break;
@@ -129,13 +132,13 @@ function formatPlayers(gameState: GameState): string {
   const sections: string[] = ["# Players"];
 
   for (const player of gameState.players) {
-    sections.push(formatPlayer(player, gameState));
+    sections.push(stringifyPlayer(player, gameState));
   }
 
   return sections.join("\n\n");
 }
 
-function formatPlayer(player: Player, gameState: GameState): string {
+export function stringifyPlayer(player: Player, gameState: GameState): string {
   const lines: string[] = [`## ${player.name}`];
 
   // Basic stats
@@ -191,6 +194,11 @@ function formatClaimedTile(tile: Tile, gameState: GameState): string {
     if (resourceStr) {
       line += ` providing ${resourceStr}`;
     }
+  }
+
+  // Check if protected
+  if (gameState.isClaimProtected(tile)) {
+    line += ` (protected)`;
   }
 
   // Check if blockaded (using game rules)
@@ -254,6 +262,9 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
         if (tile.claimedBy) {
           const player = gameState.getPlayer(tile.claimedBy);
           lines.push(`- Claimed by ${player?.name || "unknown"}`);
+          if (gameState.isClaimProtected(tile)) {
+            lines.push("- Protected");
+          }
         } else {
           lines.push("- Unclaimed");
         }

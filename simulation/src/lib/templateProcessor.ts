@@ -37,7 +37,7 @@ export class TemplateProcessor {
    * Load the game rules from the game-rules.md file
    */
   private async loadGameRules(): Promise<string> {
-    return this.fileLoader("/prompts/game-rules.md");
+    return this.fileLoader("/prompts/game-rules-for-ai.md");
   }
 
   /**

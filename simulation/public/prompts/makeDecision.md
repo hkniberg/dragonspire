@@ -1,8 +1,10 @@
-<player-context>
+<player-name>
 You are player {{playerName}}.
-</player-context>
+</player-name>
 
 <current-situation>
+You need to make a decision.
+
 {{description}}
 
 Available options:

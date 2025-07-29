@@ -1,6 +1,6 @@
 import { GameState } from "@/game/GameState";
 import { GameSettings } from "@/lib/GameSettings";
-import { CarriableItem, Champion, ChampionLootOption, Decision, DecisionContext, GameLogEntry, Monster, NON_COMBAT_TILES, Player, ResourceType, Tile } from "@/lib/types";
+import { CarriableItem, Champion, Decision, DecisionContext, DecisionOption, GameLogEntry, Monster, NON_COMBAT_TILES, Player, ResourceType, Tile } from "@/lib/types";
 import { formatResources } from "@/lib/utils";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { handleBackpackEffect } from "./backpackHandler";
@@ -110,8 +110,8 @@ function generateChampionLootOptions(
   defeatedPlayer: Player,
   defeatedChampion: Champion,
   winningChampion: Champion
-): ChampionLootOption[] {
-  const options: ChampionLootOption[] = [];
+): DecisionOption[] {
+  const options: DecisionOption[] = [];
 
   // Add resource options (only for resources the defeated player actually has)
   const resourceTypes: Array<{ type: "food" | "wood" | "ore" | "gold"; name: string }> = [
@@ -124,9 +124,8 @@ function generateChampionLootOptions(
   for (const { type, name } of resourceTypes) {
     if (defeatedPlayer.resources[type] > 0) {
       options.push({
-        type: "resource",
-        resourceType: type,
-        displayName: `1 ${name} (player has ${defeatedPlayer.resources[type]})`
+        id: `resource_${type}`,
+        description: `1 ${name} (player has ${defeatedPlayer.resources[type]})`
       });
     }
   }
@@ -147,9 +146,8 @@ function generateChampionLootOptions(
       }
 
       options.push({
-        type: "item",
-        itemIndex: index,
-        displayName: `${itemName} (item)`
+        id: `item_${index}`,
+        description: `${itemName} (item)`
       });
     });
   }
@@ -167,11 +165,10 @@ function applyChampionLootDecision(
   defeatedChampion: Champion,
   lootDecision: Decision
 ): string {
-  const selectedOption = lootDecision.choice;
+  const choice = lootDecision.choice;
 
-  if (selectedOption.type === "resource") {
-    // Transfer resource from defeated player to winning player
-    const resourceType: ResourceType = selectedOption.resourceType;
+  if (choice.startsWith("resource_")) {
+    const resourceType = choice.split("_")[1] as ResourceType;
     if (defeatedPlayer.resources[resourceType] > 0) {
       defeatedPlayer.resources[resourceType] -= 1;
       winningPlayer.resources[resourceType] += 1;
@@ -179,9 +176,8 @@ function applyChampionLootDecision(
     } else {
       return `failed to loot ${resourceType} (defeated player has none)`;
     }
-  } else if (selectedOption.type === "item") {
-    // Transfer item from defeated champion to winning champion
-    const itemIndex = selectedOption.itemIndex;
+  } else if (choice.startsWith("item_")) {
+    const itemIndex = parseInt(choice.split("_")[1]);
     if (itemIndex >= 0 && itemIndex < defeatedChampion.items.length) {
       const lootedItem = defeatedChampion.items[itemIndex];
 
@@ -194,7 +190,7 @@ function applyChampionLootDecision(
       const itemName = lootedItem.treasureCard?.name || lootedItem.traderItem?.name || "Unknown Item";
       return `looted ${itemName}`;
     } else {
-      return `failed to loot item (item not found)`;
+      return `failed to loot item (not found)`;
     }
   }
 
@@ -253,8 +249,8 @@ export async function resolveChampionVsChampionCombat(
   let defenderTotal: number;
 
   do {
-    attackerRoll = rollD3();
-    defenderRoll = rollD3();
+    attackerRoll = rollD3() + rollD3(); // Roll 2d3
+    defenderRoll = rollD3() + rollD3(); // Roll 2d3
     attackerTotal = attackingPlayer.might + attackerRoll + attackerSupport + attackerMightBonus;
     defenderTotal = defendingPlayer.might + defenderRoll + defenderSupport + defenderMightBonus;
   } while (attackerTotal === defenderTotal); // Keep rerolling on ties
@@ -313,7 +309,7 @@ export async function resolveChampionVsChampionCombat(
       } else if (lootOptions.length === 1) {
         // Only one option available, apply it automatically
         const automaticDecision: Decision = {
-          choice: lootOptions[0],
+          choice: lootOptions[0].id,
           reasoning: "Only one loot option available, applied automatically"
         };
         const lootResult = applyChampionLootDecision(attackingPlayer, attackingChampion, defendingPlayer, opposingChampion, automaticDecision);
@@ -321,7 +317,6 @@ export async function resolveChampionVsChampionCombat(
       } else {
         // Multiple options available, ask the attacking player to decide
         const decisionContext: DecisionContext = {
-          type: "champion_loot",
           description: `Choose what to take from the defeated champion:`,
           options: lootOptions
         };
@@ -398,7 +393,7 @@ export async function resolveChampionVsChampionCombat(
         if (lootOptions.length === 1) {
           // Only one option, apply it automatically
           const automaticDecision: Decision = {
-            choice: lootOptions[0],
+            choice: lootOptions[0].id,
             reasoning: "Only one loot option available, applied automatically"
           };
           const lootResult = applyChampionLootDecision(defendingPlayer, opposingChampion, attackingPlayer, attackingChampion, automaticDecision);
@@ -407,7 +402,7 @@ export async function resolveChampionVsChampionCombat(
           // Multiple options: for now, randomly choose (TODO: implement proper decision system)
           const randomIndex = Math.floor(Math.random() * lootOptions.length);
           const randomDecision: Decision = {
-            choice: lootOptions[randomIndex],
+            choice: lootOptions[randomIndex].id,
             reasoning: "Random choice by defending player (automatic)"
           };
           const lootResult = applyChampionLootDecision(defendingPlayer, opposingChampion, attackingPlayer, attackingChampion, randomDecision);
@@ -820,12 +815,10 @@ async function handleHealingCost(
 
   // Create decision context for resource choice
   const decisionContext: DecisionContext = {
-    type: "healing_cost",
     description: "Choose which resource to spend for healing:",
     options: availableResources.map(resource => ({
-      type: "resource",
-      resourceType: resource.type,
-      displayName: `1 ${resource.name} (you have ${resource.amount})`
+      id: `resource_${resource.type}`,
+      description: `1 ${resource.name} (you have ${resource.amount})`
     }))
   };
 
@@ -833,8 +826,8 @@ async function handleHealingCost(
     const decision = await playerAgent.makeDecision(gameState, gameLog, decisionContext, thinkingLogger);
     const chosenOption = decision.choice;
 
-    if (chosenOption.type === "resource" && chosenOption.resourceType) {
-      const resourceType = chosenOption.resourceType as ResourceType;
+    if (chosenOption.startsWith("resource_")) {
+      const resourceType = chosenOption.split("_")[1] as ResourceType;
       if (player.resources[resourceType] > 0) {
         player.resources[resourceType] -= 1;
         const resourceName = availableResources.find(r => r.type === resourceType)?.name || resourceType;

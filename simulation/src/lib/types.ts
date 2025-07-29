@@ -173,46 +173,30 @@ export interface TurnContext {
 }
 
 /**
+ * Option for a decision
+ */
+export interface DecisionOption {
+  id: string;
+  description: string;
+}
+
+/**
  * Context for runtime decisions that arise during action resolution
  */
 export interface DecisionContext {
-  type: string; // e.g., 'fight_or_flee', 'choose_card', 'choose_target'
   description: string; // Human readable description of the situation
-  options: any[]; // Available choices (type depends on decision type)
+  options: DecisionOption[]; // Available choices
 }
 
 /**
  * Generic decision made by a player
  */
 export interface Decision {
-  choice: any; // The chosen option from DecisionContext.options
+  choice: string; // The id from the chosen DecisionOption
   reasoning?: string; // Optional reasoning for debugging
 }
 
-/**
- * Champion loot decision types
- */
-export interface ChampionLootOption {
-  type: "resource" | "item";
-  resourceType?: ResourceType; // Only set if type is "resource"
-  itemIndex?: number; // Index in the defeated champion's items array, only set if type is "item"
-  displayName: string; // Human readable name for the option
-}
 
-export interface PaddedHelmetTileOption {
-  type: "tile";
-  position: Position;
-  displayName: string; // Human readable description of the tile
-}
-
-export interface ChampionLootContext {
-  type: "champion_loot";
-  description: string;
-  defeatedPlayerName: string;
-  defeatedChampionId: number;
-  winningChampionId: number;
-  options: ChampionLootOption[];
-}
 
 export type GameLogEntryType = "dice" | "movement" | "boat" | "exploration" | "combat" | "harvest" | "assessment" | "event" | "system" | "victory" | "thinking" | "error";
 

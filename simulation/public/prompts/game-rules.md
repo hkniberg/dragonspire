@@ -292,10 +292,10 @@ Additional bonuses can be gained from:
 
 ### Knight Inventory Cards
 
-- Each knight has an inventory card placed on the side of the board closest to the player
+- Each knight has an inventory sheet placed on the side of the board closest to the player
 - Items and followers are tracked on these cards
 - Each knight can carry at most **2 items** and have at most **2 followers**
-- When you recruit additional knights, each gets their own inventory card
+- When you recruit additional knights, each gets their own inventory sheet
 
 ### Managing Items
 
@@ -427,9 +427,18 @@ Special locations can be occupied by multiple knights, and no combat can happen 
 
 ## Adventure Cards
 
-Adventure cards are drawn when landing on adventure tiles or oasis tiles that have adventure tokens left. Each card is unique with specific instructions that must be followed immediately when drawn. Some cards have beneficial effects, while others present challenges or costs. Some can give your knight followers or items (see [Knight Inventory, Items & Followers](#knight-inventory-items--followers) for details on limits and management).
+Adventure cards are drawn when landing on adventure tiles or oasis tiles that have adventure tokens left. Cards can contain:
 
-When an event card is drawn, read and follow the instructions immediately before continuing with any other actions.
+- Monsters that you fight. Higher tier adventure cards have tougher monsters, but those monsters also drop more loot and give you more fame.
+- Treasures that you can pick up and carry, if you have space for it. Higher tier cards have more valuable treasures.
+- Followers that you can add to your knight's inventory.
+- Events that you can trigger - some positive, some negative.
+
+Adventure cards are divided into tiers:
+
+- Tier 1. Low risk, low reward. Found on the outer two layers of the board
+- Tier 2. Medium risk, medium reward. Found in the inner middle layer of the board
+- Tier 3. High risk, high reward. Found in the center of the board
 
 ---
 
@@ -440,18 +449,18 @@ Fame tracks your reputation and progress toward victory. Fame cannot go below 0.
 ### Gaining Fame
 
 - Exploring new tiles: +1
-- Defeating monsters: Varies per monster card
+- Defeating monsters found in adventure cards and on tiles
 - Winning knight combat: +1
 - Building Chapel: +3
 - Building Monastery: +5
-- Events and treasures: Varies
+- Events and treasures found in adventure cards: Varies
 
 ### Losing Fame
 
-- Fleeing combat: -1 (minimum 0)
-- Inciting revolt: -1 (minimum 0)
-- Cannot pay healing cost: -1 (minimum 0)
-- Certain events: Varies (minimum 0)
+- Fleeing combat: -1
+- Conquering another player's tile with treachery: -1 (minimum 0)
+- Cannot pay healing cost: -1
+- Certain events: Varies
 
 ---
 

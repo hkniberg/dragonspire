@@ -35,20 +35,19 @@ export async function handleSeaMonsters(
 
   // First decision: player who drew the card chooses which ocean tile to attack
   const oceanTileOptions = [
-    { choice: "nw", description: "Northwest ocean tile" },
-    { choice: "ne", description: "Northeast ocean tile" },
-    { choice: "sw", description: "Southwest ocean tile" },
-    { choice: "se", description: "Southeast ocean tile" }
+    { id: "nw", description: "Northwest ocean tile" },
+    { id: "ne", description: "Northeast ocean tile" },
+    { id: "sw", description: "Southwest ocean tile" },
+    { id: "se", description: "Southeast ocean tile" }
   ];
 
   const oceanChoiceContext: DecisionContext = {
-    type: "sea_monsters_ocean_choice",
     description: "Sea monsters are invading! Choose which ocean tile they attack:",
     options: oceanTileOptions
   };
 
   const oceanDecision = await playerAgent.makeDecision(gameState, [], oceanChoiceContext, thinkingLogger);
-  const targetOceanTile = (oceanDecision.choice as any).choice as OceanPosition;
+  const targetOceanTile = oceanDecision.choice as OceanPosition;
 
   logFn("event", `${player.name} chooses the ${targetOceanTile} ocean tile for the sea monster attack`);
 
@@ -118,7 +117,7 @@ export async function handleSeaMonsters(
 
     // Determine available options based on current fame
     const fightOption = {
-      choice: "fight",
+      id: "fight",
       description: "Captain fights to the end. Gain +2 fame, lose the boat."
     };
 
@@ -127,7 +126,7 @@ export async function handleSeaMonsters(
     // Only add flee option if player has fame to lose
     if (boatOwner.fame > 0) {
       const fleeOption = {
-        choice: "flee",
+        id: "flee",
         description: "Captain flees. Lose -1 fame, move the boat one step."
       };
       options.push(fleeOption);
@@ -135,14 +134,13 @@ export async function handleSeaMonsters(
 
     const boatIdentifier = boatOwner.boats.length > 1 ? ` ${boat.id}` : '';
     const combatChoiceContext: DecisionContext = {
-      type: "sea_monsters_boat_choice",
       description: `Sea monsters attack ${boatOwner.name}'s boat${boatIdentifier} in the ${targetOceanTile} ocean! Choose your captain's response:`,
       options
     };
 
     const combatDecision = await boatOwnerAgent.makeDecision(gameState, [], combatChoiceContext, thinkingLogger);
 
-    if ((combatDecision.choice as any).choice === "fight") {
+    if (combatDecision.choice === "fight") {
       // Captain fights: +2 fame, lose boat
       boatOwner.fame += 2;
       // Remove the boat
@@ -152,7 +150,7 @@ export async function handleSeaMonsters(
       }
       playersAffected.push(boatOwner.name);
       logFn("event", `${boatOwner.name}'s boat captain fights to the end! Gains +2 fame but loses the boat`);
-    } else if ((combatDecision.choice as any).choice === "flee") {
+    } else if (combatDecision.choice === "flee") {
       // Captain flees: -1 fame, move boat
       boatOwner.fame -= 1;
       const originalPosition = boat.position;

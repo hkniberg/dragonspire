@@ -16,12 +16,11 @@ export async function handleHungryPests(
 
   // Create decision context for choosing target player
   const availablePlayers = gameState.players.map(p => ({
-    name: p.name,
-    displayName: `${p.name} (${p.resources.food} food)`
+    id: p.name,
+    description: `${p.name} (${p.resources.food} food)`
   }));
 
   const decisionContext: DecisionContext = {
-    type: "choose_target_player",
     description: "Choose which player loses 1 food to the hungry pests",
     options: availablePlayers
   };
@@ -29,7 +28,7 @@ export async function handleHungryPests(
   try {
     // Ask current player to make the decision
     const decision = await currentPlayerAgent.makeDecision(gameState, [], decisionContext, thinkingLogger);
-    const targetPlayerName = decision.choice.name;
+    const targetPlayerName = decision.choice;
 
     // Apply the food loss to the chosen player
     const targetPlayer = gameState.getPlayer(targetPlayerName);

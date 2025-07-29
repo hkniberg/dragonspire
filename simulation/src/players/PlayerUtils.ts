@@ -1,5 +1,5 @@
 import { GameState } from "@/game/GameState";
-import { CarriableItem, Champion, Decision, DecisionContext, Player, Position, ResourceType, Tile } from "@/lib/types";
+import { CarriableItem, Champion, Decision, DecisionContext, DecisionOption, Player, Position, ResourceType, Tile } from "@/lib/types";
 
 export interface Direction {
   row: number;
@@ -349,7 +349,7 @@ export function createDropItemDecision(
   canRefuseNewItem: boolean = true,
   refuseActionText: string = `Leave the ${newItemName} on the ground`
 ): DropItemDecisionResult {
-  const droppableOptions: any[] = [];
+  const droppableOptions: DecisionOption[] = [];
 
   // Add options to drop existing items (only if not stuck)
   if (champion.items.length >= 1 && !champion.items[0].stuck) {
@@ -359,8 +359,7 @@ export function createDropItemDecision(
 
     droppableOptions.push({
       id: "drop_first",
-      description: dropText,
-      itemToDrop: champion.items[0]
+      description: dropText
     });
   }
 
@@ -371,8 +370,7 @@ export function createDropItemDecision(
 
     droppableOptions.push({
       id: "drop_second",
-      description: dropText,
-      itemToDrop: champion.items[1]
+      description: dropText
     });
   }
 
@@ -392,7 +390,6 @@ export function createDropItemDecision(
   description += ` Choose what to do with the ${newItemName}:`;
 
   const decisionContext: DecisionContext = {
-    type: "choose_item_to_drop",
     description,
     options: droppableOptions
   };
@@ -408,12 +405,12 @@ export function createDropItemDecision(
  * 
  * @param decision - The player's decision
  * @param champion - The champion whose inventory is being modified
- * @param newItem - The new item to add (if not refused)
- * @param tile - The tile to place dropped items on
- * @param championId - ID of the champion (for logging)
- * @param newItemName - Name of the new item (for logging)
+ * @param newItem - The new item being offered (null if just dropping)
+ * @param tile - The tile where dropped items should be placed
+ * @param championId - ID of the champion for logging
+ * @param newItemName - Name of the new item for logging
  * @param logFn - Logging function
- * @returns Whether the new item was acquired
+ * @returns true if the new item was taken, false if refused
  */
 export function handleDropItemDecision(
   decision: Decision,
@@ -424,7 +421,7 @@ export function handleDropItemDecision(
   newItemName: string,
   logFn: (type: string, content: string) => void
 ): boolean {
-  if (decision.choice.id === "refuse_item") {
+  if (decision.choice === "refuse_item") {
     // Player refused the new item
     if (newItem) {
       // Place the refused item on the tile
@@ -435,15 +432,12 @@ export function handleDropItemDecision(
     }
     logFn("event", `Champion${championId} left the ${newItemName} on the ground.`);
     return false;
-  } else {
-    // Player chose to drop an existing item
-    const itemToDrop = decision.choice.itemToDrop;
+  } else if (decision.choice === "drop_first") {
+    // Player chose to drop the first item
+    const itemToDrop = champion.items[0];
 
     // Remove the item from champion's inventory
-    const itemIndex = champion.items.indexOf(itemToDrop);
-    if (itemIndex > -1) {
-      champion.items.splice(itemIndex, 1);
-    }
+    champion.items.splice(0, 1);
 
     // Add dropped item to tile
     if (!tile.items) {
@@ -451,12 +445,37 @@ export function handleDropItemDecision(
     }
     tile.items.push(itemToDrop);
 
-    // Add new item to champion (if provided)
+    // Add new item to champion's inventory
     if (newItem) {
       champion.items.push(newItem);
     }
 
-    logFn("event", `Champion${championId} dropped ${getItemName(itemToDrop)} and took the ${newItemName}!`);
+    const droppedItemName = getItemName(itemToDrop);
+    logFn("event", `Champion${championId} dropped ${droppedItemName} and took the ${newItemName}.`);
     return true;
+  } else if (decision.choice === "drop_second") {
+    // Player chose to drop the second item
+    const itemToDrop = champion.items[1];
+
+    // Remove the item from champion's inventory
+    champion.items.splice(1, 1);
+
+    // Add dropped item to tile
+    if (!tile.items) {
+      tile.items = [];
+    }
+    tile.items.push(itemToDrop);
+
+    // Add new item to champion's inventory
+    if (newItem) {
+      champion.items.push(newItem);
+    }
+
+    const droppedItemName = getItemName(itemToDrop);
+    logFn("event", `Champion${championId} dropped ${droppedItemName} and took the ${newItemName}.`);
+    return true;
+  } else {
+    logFn("event", `Unknown drop decision: ${decision.choice}`);
+    return false;
   }
 }

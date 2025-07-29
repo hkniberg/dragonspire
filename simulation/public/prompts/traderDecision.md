@@ -1,14 +1,14 @@
-<player-context>
+<player-name>
 You are player {{playerName}}.
-</player-context>
-
-<current-board-state>
-{{boardState}}
-</current-board-state>
+</player-name>
 
 <game-log>
 {{gameLog}}
 </game-log>
+
+<player-status>
+{{playerStatus}}
+</player-status>
 
 <trader-context>
 {{description}}

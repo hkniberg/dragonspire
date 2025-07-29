@@ -1,7 +1,7 @@
 // Lords of Doomspire Claude AI Player
 
 import { getTraderItemById } from "@/content/traderItems";
-import { stringifyGameState } from "@/game/gameStateStringifier";
+import { stringifyGameState, stringifyPlayer } from "@/game/gameStateStringifier";
 import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, Player, PlayerType, TurnContext } from "@/lib/types";
@@ -73,7 +73,13 @@ export class ClaudePlayerAgent implements PlayerAgent {
         const userMessage = await this.prepareDecisionMessage(gameState, gameLog, decisionContext);
 
         // Get structured JSON response for decision
-        const response = await this.claude.useClaude(userMessage, decisionSchema, 0, 200, thinkingLogger);
+        const response = await this.claude.useClaude(userMessage, decisionSchema, 0, 400, thinkingLogger);
+
+        // Validate that the chosen option is valid
+        const validChoices = decisionContext.options.map(opt => opt.id);
+        if (!validChoices.includes(response.choice)) {
+            throw new Error(`Invalid choice: ${response.choice}. Valid options: ${validChoices.join(', ')}`);
+        }
 
         return response as Decision;
     }
@@ -127,7 +133,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         turnNumber: number,
     ): Promise<string> {
         const boardState = stringifyGameState(gameState);
-        const gameLogText = this.formatGameLogForPrompt(gameLog);
+        const gameLogText = this.formatGameLogForPrompt(gameLog, false, false);
 
         const variables: TemplateVariables = {
             playerName: this.name,
@@ -151,7 +157,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         const boardState = stringifyGameState(gameState);
 
         // Format the game log into readable text
-        const gameLogText = this.formatGameLogForPrompt(gameLog);
+        const gameLogText = this.formatGameLogForPrompt(gameLog, true, true);
 
         const variables: TemplateVariables = {
             playerName: this.name,
@@ -172,10 +178,10 @@ export class ClaudePlayerAgent implements PlayerAgent {
         decisionContext: DecisionContext,
     ): Promise<string> {
         const player = gameState.getCurrentPlayer();
-        const gameLogText = this.formatGameLogForPrompt(gameLog);
+        const gameLogText = this.formatGameLogForPrompt(gameLog, true, true);
         const boardState = stringifyGameState(gameState);
 
-        const optionsText = decisionContext.options.map((option, i) => `${i + 1}. ${JSON.stringify(option)}`).join("\n");
+        const optionsText = decisionContext.options.map((option, i) => `${i + 1}. ${option.id} - ${option.description}`).join("\n");
 
         const variables: TemplateVariables = {
             playerName: player.name,
@@ -183,6 +189,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             options: optionsText,
             boardState: boardState,
             gameLog: gameLogText,
+            extraInstructions: this.getExtraInstructionsSection(gameState),
         };
 
         return await this.templateProcessor.processTemplate("makeDecision", variables);
@@ -194,8 +201,8 @@ export class ClaudePlayerAgent implements PlayerAgent {
         traderContext: TraderContext,
     ): Promise<string> {
         const player = gameState.getCurrentPlayer();
-        const gameLogText = this.formatGameLogForPrompt(gameLog);
-        const boardState = stringifyGameState(gameState);
+        const gameLogText = this.formatGameLogForPrompt(gameLog, true, true);
+        const playerStatus = stringifyPlayer(player, gameState);
 
         // Format player resources
         const resourcesText = Object.entries(traderContext.playerResources)
@@ -224,7 +231,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             description: traderContext.description,
             playerResources: resourcesText,
             availableItems: itemsText,
-            boardState: boardState,
+            playerStatus: playerStatus,
             gameLog: gameLogText,
             extraInstructions: this.getExtraInstructionsSection(gameState),
         };
@@ -244,7 +251,8 @@ export class ClaudePlayerAgent implements PlayerAgent {
         }
 
         const boardState = stringifyGameState(gameState);
-        const gameLogText = this.formatGameLogForPrompt(gameLog);
+        const gameLogText = this.formatGameLogForPrompt(gameLog, true, true);
+        const playerStatus = stringifyPlayer(player, gameState);
 
         // Build available buildings summary
         const availableBuildings = this.buildAvailableBuildingsSummary(player, usableBuildings);
@@ -253,6 +261,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             playerName: player.name,
             boardState: boardState,
             gameLog: gameLogText,
+            playerStatus: playerStatus,
             availableBuildings: availableBuildings,
             extraInstructions: this.getExtraInstructionsSection(gameState),
         };
@@ -355,7 +364,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
     }
 
 
-    private formatGameLogForPrompt(gameLog: readonly GameLogEntry[]): string {
+    private formatGameLogForPrompt(gameLog: readonly GameLogEntry[], onlyThisRound: boolean = false, onlyMe: boolean = false): string {
         if (gameLog.length === 0) {
             return "No game events yet.";
         }
@@ -364,23 +373,40 @@ export class ClaudePlayerAgent implements PlayerAgent {
         const currentRound = Math.max(...gameLog.map(entry => entry.round));
         const previousRound = currentRound - 1;
 
-        // Filter entries based on the rules:
-        // - For previous round and current round: include all entries except other players' assessments and thinking entries
-        // - For earlier rounds: only include this player's entries
-        // - Always exclude thinking entries as they are too detailed for the LLM to process
+        // Filter entries based on the rules and new parameters:
         const filteredEntries = gameLog.filter(entry => {
             // Always exclude thinking entries
             if (entry.type === "thinking") {
                 return false;
             }
 
-            if (entry.round >= previousRound) {
-                // Recent rounds: exclude other players' assessments (keep own assessments and all other types)
-                return entry.playerName === this.name || entry.type !== "assessment";
-            } else {
-                // Earlier rounds: only include this player's entries
-                return entry.playerName === this.name;
+            // Always exclude other players' assessments
+            if (entry.type === "assessment" && entry.playerName !== this.name) {
+                return false;
             }
+
+            // If onlyMe is true, only include this player's entries
+            if (onlyMe && entry.playerName !== this.name) {
+                return false;
+            }
+
+            // If onlyThisRound is true, only include current round
+            if (onlyThisRound && entry.round !== currentRound) {
+                return false;
+            }
+
+            // Original filtering logic (when not overridden by new parameters)
+            if (!onlyThisRound) {
+                if (entry.round >= previousRound) {
+                    // Recent rounds: include all entries (assessments already filtered above)
+                    return true;
+                } else {
+                    // Earlier rounds: only include this player's entries
+                    return entry.playerName === this.name;
+                }
+            }
+
+            return true;
         });
 
         // Group by round and format readably
@@ -401,8 +427,8 @@ export class ClaudePlayerAgent implements PlayerAgent {
                 const roundNumber = parseInt(round);
                 const roundEntries = entries.map((entry) => `  ${entry.playerName}: ${entry.content}`).join("\n");
 
-                // Add clarification when we're only showing this player's entries (earlier rounds)
-                const isFilteredRound = roundNumber < previousRound;
+                // Add clarification when we're only showing this player's entries (earlier rounds or onlyMe mode)
+                const isFilteredRound = roundNumber < previousRound || onlyMe;
                 const roundHeader = isFilteredRound
                     ? `Round ${round} (only showing ${this.name}):`
                     : `Round ${round}:`;

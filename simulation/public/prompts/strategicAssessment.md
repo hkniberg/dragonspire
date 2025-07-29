@@ -1,6 +1,6 @@
-<player-context>
+<player-name>
 You are player {{playerName}}.
-</player-context>
+</player-name>
 
 <current-board-state>
 {{boardState}}

@@ -1,5 +1,5 @@
 import { GameState } from "@/game/GameState";
-import { DecisionContext, EventCardResult, Player } from "@/lib/types";
+import { DecisionContext, DecisionOption, EventCardResult, Player } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
 
 /**
@@ -17,18 +17,17 @@ export async function handleMarketDay(
 
   // First decision: Is today Market Day?
   const marketDayDecision: DecisionContext = {
-    type: "yes_no",
     description: "Do you declare today to be Market Day? If so, every player must send 1 champion to the trader or pay 1 gold in tax.",
     options: [
-      { name: "yes", displayName: "Yes, today is Market Day" },
-      { name: "no", displayName: "No, not today" }
+      { id: "yes", description: "Yes, today is Market Day" },
+      { id: "no", description: "No, not today" }
     ]
   };
 
   try {
     const decision = await currentPlayerAgent.makeDecision(gameState, [], marketDayDecision, thinkingLogger);
 
-    if (decision.choice.name === "no") {
+    if (decision.choice === "no") {
       logFn("event", `${currentPlayer.name} decided today is not Market Day. Event ends.`);
       return {
         eventProcessed: true
@@ -67,21 +66,21 @@ export async function handleMarketDay(
       }
 
       // Build decision options
-      const options = [];
+      const options: DecisionOption[] = [];
 
       // Add champion options
       for (const champion of availableChampions) {
         options.push({
-          name: `champion-${champion.id}`,
-          displayName: `Send Champion ${champion.id} to trader`
+          id: `champion-${champion.id}`,
+          description: `Send Champion ${champion.id} to trader`
         });
       }
 
       // Add pay gold option if player has gold
       if (player.resources.gold >= 1) {
         options.push({
-          name: "pay-gold",
-          displayName: "Pay 1 gold in tax"
+          id: "pay-gold",
+          description: "Pay 1 gold in tax"
         });
       }
 
@@ -92,13 +91,13 @@ export async function handleMarketDay(
       } else if (options.length === 1) {
         // Auto-choose the only option
         const onlyOption = options[0];
-        if (onlyOption.name === "pay-gold") {
+        if (onlyOption.id === "pay-gold") {
           player.resources.gold = Math.max(0, player.resources.gold - 1);
           logFn("event", `${player.name} automatically pays 1 gold in tax (only option available)`);
           playersAffected.push(player.name);
           resourcesChanged[player.name] = { gold: -1 };
         } else {
-          const championId = parseInt(onlyOption.name.split('-')[1]);
+          const championId = parseInt(onlyOption.id.split('-')[1]);
           const champion = player.champions.find(c => c.id === championId);
           if (champion) {
             // Move champion to the nearest trader
@@ -121,7 +120,6 @@ export async function handleMarketDay(
         const playerDecisionPromise = (async () => {
           // Ask the player to choose for themselves
           const playerDecision: DecisionContext = {
-            type: "market_day_choice",
             description: `Market Day: You must send 1 champion to a trader or pay 1 gold in tax.`,
             options: options
           };
@@ -129,13 +127,13 @@ export async function handleMarketDay(
           try {
             const decision = await playerAgent.makeDecision(gameState, [], playerDecision, thinkingLogger);
 
-            if (decision.choice.name === "pay-gold") {
+            if (decision.choice === "pay-gold") {
               player.resources.gold = Math.max(0, player.resources.gold - 1);
               logFn("event", `${player.name} pays 1 gold in tax`);
               playersAffected.push(player.name);
               resourcesChanged[player.name] = { gold: -1 };
-            } else if (decision.choice.name.startsWith("champion-")) {
-              const championId = parseInt(decision.choice.name.split('-')[1]);
+            } else if (decision.choice.startsWith("champion-")) {
+              const championId = parseInt(decision.choice.split('-')[1]);
               const champion = player.champions.find(c => c.id === championId);
               if (champion) {
                 // Move champion to the nearest trader tile
@@ -146,7 +144,7 @@ export async function handleMarketDay(
               }
             }
           } catch (error) {
-            logFn("event", `Error getting Market Day decision from ${player.name}: ${error}`);
+            logFn("event", `Error handling Market Day decision for ${player.name}: ${error}`);
           }
         })();
 

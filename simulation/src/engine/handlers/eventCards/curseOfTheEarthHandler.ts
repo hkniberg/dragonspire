@@ -22,11 +22,10 @@ export async function handleCurseOfTheEarth(
 
   // Ask the player if they want to pay 2 gold to curse the lands
   const decisionContext: DecisionContext = {
-    type: "curse_of_the_earth",
     description: `The Bogwitch offers to curse the lands for 2 gold. If you pay, ALL players (including you) will lose 2 might as their weapons rust and crumble. Do you want to pay?`,
     options: [
-      { choice: "yes", description: "Pay 2 gold to curse all players (-2 might to everyone)" },
-      { choice: "no", description: "Refuse the Bogwitch's offer" }
+      { id: "yes", description: "Pay 2 gold to curse all players (-2 might to everyone)" },
+      { id: "no", description: "Refuse the Bogwitch's offer" }
     ]
   };
 

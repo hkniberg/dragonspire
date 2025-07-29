@@ -159,7 +159,7 @@ export async function handleEventCardFromAdventure(
     } else if (cardId === "curse-of-the-earth") {
       eventResult = await handleCurseOfTheEarth(gameState, player, playerAgent, logFn, thinkingLogger);
     } else if (cardId === "thieving-crows") {
-      eventResult = handleThievingCrows(gameState, logFn);
+      eventResult = await handleThievingCrows(gameState, player, playerAgent, logFn, thinkingLogger);
     } else if (cardId === "dragon-raid") {
       eventResult = handleDragonRaid(gameState, logFn);
     } else if (cardId === "sea-monsters") {

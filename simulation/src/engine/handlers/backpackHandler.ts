@@ -1,5 +1,5 @@
 import { GameState } from "@/game/GameState";
-import { Champion, ChampionLootOption, Decision, DecisionContext, GameLogEntry, Player, ResourceType } from "@/lib/types";
+import { Champion, Decision, DecisionContext, DecisionOption, GameLogEntry, Player, ResourceType } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
 
 /**
@@ -19,8 +19,8 @@ function generateChampionLootOptions(
   defeatedPlayer: Player,
   defeatedChampion: Champion,
   winningChampion: Champion
-): ChampionLootOption[] {
-  const options: ChampionLootOption[] = [];
+): DecisionOption[] {
+  const options: DecisionOption[] = [];
 
   // Add resource options (only for resources the defeated player actually has)
   const resourceTypes: Array<{ type: "food" | "wood" | "ore" | "gold"; name: string }> = [
@@ -33,9 +33,8 @@ function generateChampionLootOptions(
   for (const { type, name } of resourceTypes) {
     if (defeatedPlayer.resources[type] > 0) {
       options.push({
-        type: "resource",
-        resourceType: type,
-        displayName: `1 ${name} (you have ${defeatedPlayer.resources[type]})`
+        id: `resource_${type}`,
+        description: `1 ${name} (you have ${defeatedPlayer.resources[type]})`
       });
     }
   }
@@ -51,9 +50,8 @@ function generateChampionLootOptions(
       }
 
       options.push({
-        type: "item",
-        itemIndex: index,
-        displayName: `${itemName} (give item)`
+        id: `item_${index}`,
+        description: `${itemName} (give item)`
       });
     });
   }
@@ -70,40 +68,37 @@ function applyChampionLootDecision(
   winningChampion: Champion,
   defeatedPlayer: Player,
   defeatedChampion: Champion,
-  lootDecision: Decision
+  decision: Decision
 ): string {
-  const selectedOption = lootDecision.choice;
+  const choice = decision.choice;
 
-  if (selectedOption.type === "resource") {
-    // Transfer resource from defeated player to winning player
-    const resourceType: ResourceType = selectedOption.resourceType;
+  if (choice.startsWith("resource_")) {
+    const resourceType = choice.split("_")[1] as ResourceType;
+
+    // Transfer 1 resource from defeated player to winning player
     if (defeatedPlayer.resources[resourceType] > 0) {
       defeatedPlayer.resources[resourceType] -= 1;
       winningPlayer.resources[resourceType] += 1;
-      return `looted 1 ${resourceType}`;
-    } else {
-      return `failed to loot ${resourceType} (defeated player has none)`;
+      return `steals 1 ${resourceType} from defeated ${defeatedPlayer.name}`;
     }
-  } else if (selectedOption.type === "item") {
+  } else if (choice.startsWith("item_")) {
+    const itemIndex = parseInt(choice.split("_")[1]);
+
     // Transfer item from defeated champion to winning champion
-    const itemIndex = selectedOption.itemIndex;
-    if (itemIndex >= 0 && itemIndex < defeatedChampion.items.length) {
-      const lootedItem = defeatedChampion.items[itemIndex];
-
-      // Remove item from defeated champion
-      defeatedChampion.items.splice(itemIndex, 1);
-
-      // Add item to winning champion
-      winningChampion.items.push(lootedItem);
-
-      const itemName = lootedItem.treasureCard?.name || lootedItem.traderItem?.name || "Unknown Item";
-      return `looted ${itemName}`;
-    } else {
-      return `failed to loot item (not found)`;
+    if (itemIndex >= 0 && itemIndex < defeatedChampion.items.length && winningChampion.items.length < 2) {
+      const item = defeatedChampion.items.splice(itemIndex, 1)[0];
+      winningChampion.items.push(item);
+      let itemName = "Unknown Item";
+      if (item.treasureCard) {
+        itemName = item.treasureCard.name;
+      } else if (item.traderItem) {
+        itemName = item.traderItem.name;
+      }
+      return `steals ${itemName} from defeated ${defeatedPlayer.name}`;
     }
   }
 
-  return "no loot applied";
+  return "could not loot anything";
 }
 
 export interface BackpackEffectResult {
@@ -154,7 +149,7 @@ export async function handleBackpackEffect(
   if (lootOptions.length === 1) {
     // Only one option available, apply it automatically
     const automaticDecision: Decision = {
-      choice: lootOptions[0],
+      choice: lootOptions[0].id,
       reasoning: "Only one loot option available, applied automatically (backpack effect)"
     };
     const lootResult = applyChampionLootDecision(winningPlayer, winningChampion, defeatedPlayer, defeatedChampion, automaticDecision);
@@ -164,7 +159,6 @@ export async function handleBackpackEffect(
   if (isDefeatedPlayerMakingChoice && playerAgent && gameLog) {
     // Defeated player chooses what to give
     const decisionContext: DecisionContext = {
-      type: "backpack_resource_choice",
       description: `You lost the battle but have a backpack. Choose what to give to ${winningPlayer.name}:`,
       options: lootOptions
     };
@@ -179,7 +173,7 @@ export async function handleBackpackEffect(
     // Fallback: randomly select what to give (when we don't have the defeated player's agent)
     const randomIndex = Math.floor(Math.random() * lootOptions.length);
     const randomLootDecision: Decision = {
-      choice: lootOptions[randomIndex],
+      choice: lootOptions[randomIndex].id,
       reasoning: "Backpack effect - defeated player choice (simulated randomly)"
     };
 

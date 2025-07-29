@@ -10,6 +10,7 @@ export class GameState {
   public board: Board;
   public players: Player[];
   public currentPlayerIndex: number;
+  public startPlayerIndex: number; // Tracks which player starts each round
   public currentRound: number;
   public gameEnded: boolean;
   public winner?: number;
@@ -21,10 +22,12 @@ export class GameState {
     currentRound: number = 1,
     gameEnded: boolean = false,
     winner?: number,
+    startPlayerIndex: number = 0, // Default first player starts
   ) {
     this.board = board;
     this.players = players;
     this.currentPlayerIndex = currentPlayerIndex;
+    this.startPlayerIndex = startPlayerIndex;
     this.currentRound = currentRound;
     this.gameEnded = gameEnded;
     this.winner = winner;
@@ -155,6 +158,10 @@ export class GameState {
     return this.players[this.currentPlayerIndex];
   }
 
+  public getStartingPlayer(): Player {
+    return this.players[this.startPlayerIndex];
+  }
+
   public getPlayer(playerName: string): Player | undefined {
     return this.players.find((p) => p.name === playerName);
   }
@@ -207,13 +214,24 @@ export class GameState {
 
   /**
    * Advances to the next player's turn
+   * When all players have had their turn in a round, advances the starting player token
    */
   public advanceToNextPlayer(): GameState {
     const nextPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
-    const nextRound = nextPlayerIndex === 0 ? this.currentRound + 1 : this.currentRound;
 
-    this.currentPlayerIndex = nextPlayerIndex;
-    this.currentRound = nextRound;
+    // Check if completing this round (next player would be the current round's starting player)
+    const isRoundComplete = nextPlayerIndex === this.startPlayerIndex;
+
+    if (isRoundComplete) {
+      // Round is complete - advance the starting player token and start new round
+      this.startPlayerIndex = (this.startPlayerIndex + 1) % this.players.length;
+      this.currentPlayerIndex = this.startPlayerIndex;
+      this.currentRound = this.currentRound + 1;
+    } else {
+      // Continue with next player in current round
+      this.currentPlayerIndex = nextPlayerIndex;
+    }
+
     return this;
   }
 
@@ -264,6 +282,7 @@ export class GameState {
       board: this.board.getTilesGrid(),
       players: this.players,
       currentPlayerIndex: this.currentPlayerIndex,
+      startPlayerIndex: this.startPlayerIndex,
       currentRound: this.currentRound,
       gameEnded: this.gameEnded,
       winner: this.winner,
@@ -303,6 +322,7 @@ export class GameState {
       board: filteredBoard,
       players: this.players,
       currentPlayerIndex: this.currentPlayerIndex,
+      startPlayerIndex: this.startPlayerIndex,
       currentRound: this.currentRound,
       gameEnded: this.gameEnded,
       winner: this.winner,

@@ -242,7 +242,17 @@ export class GameMaster {
     this.statisticsCollector.captureTurnStatistics(this.gameState);
 
     // Step 7: Advance to next player
+    const previousRound = this.gameState.currentRound;
+    const previousStartPlayer = this.gameState.getStartingPlayer().name;
     this.gameState = this.gameState.advanceToNextPlayer();
+
+    // Log starting player token rotation
+    if (this.gameState.currentRound > previousRound) {
+      const newStartPlayer = this.gameState.getStartingPlayer().name;
+      if (newStartPlayer !== previousStartPlayer) {
+        this.addGameLogEntry("system", `Starting player token passes to ${newStartPlayer} for Round ${this.gameState.currentRound}`);
+      }
+    }
   }
 
 

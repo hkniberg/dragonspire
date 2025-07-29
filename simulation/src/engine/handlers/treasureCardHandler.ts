@@ -83,7 +83,6 @@ async function handleBrokenShield(
 
   // Player has enough ore, present the choice
   const decisionContext: DecisionContext = {
-    type: "broken_shield_choice",
     description: `Champion${championId} found a Broken Shield! Choose one:`,
     options: [
       {
@@ -100,23 +99,35 @@ async function handleBrokenShield(
   // Ask the player to make a decision
   const decision: Decision = await playerAgent.makeDecision(gameState, [], decisionContext, thinkingLogger);
 
-  if (decision.choice.id === "gain_ore") {
+  if (decision.choice === "gain_ore") {
     player.resources.ore += 1;
     logFn("event", `Champion${championId} chose to gain +1 ore from the Broken Shield.`);
+
     return {
       cardProcessed: true,
       cardId: "broken-shield"
     };
-  } else if (decision.choice.id === "gain_might") {
-    player.resources.ore -= 2;
-    player.might += 1;
-    logFn("event", `Champion${championId} spent 2 ore to gain +1 might from the Broken Shield.`);
-    return {
-      cardProcessed: true,
-      cardId: "broken-shield"
-    };
+  } else if (decision.choice === "gain_might") {
+    if (player.resources.ore >= 2) {
+      player.resources.ore -= 2;
+      player.might += 1;
+      logFn("event", `Champion${championId} spent 2 ore to gain +1 might from the Broken Shield.`);
+
+      return {
+        cardProcessed: true,
+        cardId: "broken-shield"
+      };
+    } else {
+      logFn("event", `Champion${championId} doesn't have enough ore (need 2, have ${player.resources.ore}). Gained +1 ore instead.`);
+      player.resources.ore += 1;
+
+      return {
+        cardProcessed: true,
+        cardId: "broken-shield"
+      };
+    }
   } else {
-    const errorMessage = `Invalid choice for broken shield: ${decision.choice.id}`;
+    const errorMessage = `Invalid choice for broken shield: ${decision.choice}`;
     logFn("event", errorMessage);
     return {
       cardProcessed: false,

@@ -93,15 +93,15 @@ export class RandomPlayerAgent implements PlayerAgent {
     thinkingLogger?: (content: string) => void,
   ): Promise<Decision> {
     if (decisionContext.options.length === 0) {
-      return { choice: null, reasoning: "No options available" };
+      return { choice: "", reasoning: "No options available" };
     }
 
     // Make random choice
     const randomIndex = Math.floor(Math.random() * decisionContext.options.length);
-    const choice = decisionContext.options[randomIndex];
+    const selectedOption = decisionContext.options[randomIndex];
 
     return {
-      choice: choice,
+      choice: selectedOption.id,
       reasoning: `RandomPlayer chose option ${randomIndex + 1} of ${decisionContext.options.length}`,
     };
   }

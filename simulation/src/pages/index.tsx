@@ -12,6 +12,7 @@ import { StatisticsView } from "../components/StatisticsView";
 import { TokenUsage } from "../components/TokenUsage";
 import { GameMaster, GameMasterConfig } from "../engine/GameMaster";
 import { GameState } from "../game/GameState";
+import { stringifyGameState } from "../game/gameStateStringifier";
 import { TurnStatistics } from "../lib/types";
 import { ClaudePlayerAgent } from "../players/ClaudePlayer";
 import { PlayerAgent } from "../players/PlayerAgent";
@@ -99,6 +100,7 @@ export default function GameSimulation() {
   const [isStartingGame, setIsStartingGame] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [forceRender, setForceRender] = useState(0);
+  const [copyGamestateSuccess, setCopyGamestateSuccess] = useState(false);
 
   // Ref to hold the autoplay timeout
   const autoPlayTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -327,6 +329,23 @@ export default function GameSimulation() {
     }
   };
 
+  const handleCopyGamestate = async () => {
+    if (!gameState) {
+      alert("No game state available to copy");
+      return;
+    }
+
+    try {
+      const gamestateText = stringifyGameState(gameState);
+      await navigator.clipboard.writeText(gamestateText);
+      setCopyGamestateSuccess(true);
+      setTimeout(() => setCopyGamestateSuccess(false), 2000); // Hide success message after 2 seconds
+    } catch (error) {
+      console.error("Failed to copy to clipboard:", error);
+      alert("Failed to copy game state to clipboard");
+    }
+  };
+
   const hasClaudePlayers = playerConfigs.some((config) => config.type === "claude");
 
   // Show loading state until client-side rendering is ready
@@ -458,6 +477,42 @@ export default function GameSimulation() {
 
             {/* Token Usage Widget */}
             {gameSession && <TokenUsage tokenUsageTracker={gameSession.getTokenUsageTracker()} />}
+
+            {/* Copy Gamestate Button */}
+            {gameState && (
+              <button
+                onClick={handleCopyGamestate}
+                style={{
+                  padding: "10px 20px",
+                  backgroundColor: copyGamestateSuccess ? "#28a745" : "#6f42c1",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "6px",
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+                  transition: "all 0.2s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+                onMouseOver={(e) => {
+                  if (!copyGamestateSuccess) {
+                    e.currentTarget.style.backgroundColor = "#8a5cf5";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!copyGamestateSuccess) {
+                    e.currentTarget.style.backgroundColor = "#6f42c1";
+                    e.currentTarget.style.transform = "translateY(0)";
+                  }
+                }}
+              >
+                {copyGamestateSuccess ? "✅ Copied!" : "📋 Copy Gamestate"}
+              </button>
+            )}
           </div>
         </div>
 

@@ -95,7 +95,7 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
     id: "thieving-crows",
     name: "Thieving crows",
     tier: 3,
-    description: "All players lose **all** of whichever *stockpiled resource* they have the most of.",
+    description: "Choose which resource gets stolen: food, wood, or ore. All players lose all of that resource. The crows are not interested in gold.",
     count: 1,
   },
   {

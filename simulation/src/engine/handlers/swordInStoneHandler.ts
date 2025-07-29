@@ -78,7 +78,6 @@ export async function handleSwordInStone(
 
   // Present the decision to attempt pulling the sword
   const decisionContext: DecisionContext = {
-    type: "sword_in_stone_attempt",
     description: `Champion${championId} found a Sword in a Stone! Attempt to pull it out?`,
     options: [
       {
@@ -94,13 +93,11 @@ export async function handleSwordInStone(
 
   const decision: Decision = await playerAgent.makeDecision(gameState, [], decisionContext, thinkingLogger);
 
-  if (decision.choice.id === "leave_sword") {
+  if (decision.choice === "leave_sword") {
     logFn("event", `Champion${championId} decided not to attempt pulling the sword.`);
     return {
       cardProcessed: true,
-      cardId: "sword-in-stone",
-      treasureName: "Sword in a Stone",
-      effectApplied: "Left sword untouched"
+      cardId: "sword-in-stone"
     };
   }
 

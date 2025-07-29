@@ -1,5 +1,5 @@
 import { GameState } from "@/game/GameState";
-import { DecisionContext, GameLogEntry, PaddedHelmetTileOption, Player } from "@/lib/types";
+import { DecisionContext, GameLogEntry, Player } from "@/lib/types";
 import { getManhattanDistance } from "@/lib/utils";
 import { PlayerAgent } from "@/players/PlayerAgent";
 
@@ -59,28 +59,26 @@ export async function handlePaddedHelmetRespawn(
 
   if (playerAgent && gameLog) {
     // Multiple options, ask player to choose
-    const tileOptions: PaddedHelmetTileOption[] = claimedTiles.map(tile => ({
-      type: "tile",
-      position: tile.position,
-      displayName: `Tile at (${tile.position.row}, ${tile.position.col}) - ${getManhattanDistance(tile.position, player.homePosition)} steps from home`
+    const tileOptions: { id: string; description: string }[] = claimedTiles.map(tile => ({
+      id: `${tile.position.row},${tile.position.col}`,
+      description: `Tile at (${tile.position.row}, ${tile.position.col}) - ${tile.tileType || "empty"}`
     }));
 
     const decisionContext: DecisionContext = {
-      type: "padded_helmet_respawn",
-      description: "Your padded helmet allows you to respawn at one of your claimed tiles within 1-3 steps of home. Choose where to respawn:",
+      description: `Your champion was defeated but has a padded helmet! Choose where to respawn on the board:`,
       options: tileOptions
     };
 
     const decision = await playerAgent.makeDecision(gameState, gameLog, decisionContext, thinkingLogger);
-    const chosenTile = claimedTiles.find(tile =>
-      tile.position.row === decision.choice.position.row &&
-      tile.position.col === decision.choice.position.col
-    )!;
+
+    // Parse the position from the chosen ID
+    const [row, col] = decision.choice.split(',').map(Number);
+    const chosenTile = gameState.getTile({ row, col });
 
     if (logFn) {
-      logFn("combat", `Padded helmet allows respawn at chosen tile (${chosenTile.position.row}, ${chosenTile.position.col})`);
+      logFn("combat", `Padded helmet allows respawn at chosen tile (${chosenTile?.position.row}, ${chosenTile?.position.col})`);
     }
-    return chosenTile.position;
+    return chosenTile?.position;
   } else {
     // Fallback: if no playerAgent available, choose randomly
     const randomIndex = Math.floor(Math.random() * claimedTiles.length);

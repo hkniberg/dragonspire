@@ -12,6 +12,7 @@ import { BiomeType, TileTier } from "./types";
  * Set to undefined to include all cards as usual.
  *
  * Example: const ONLY_INCLUDE_CARDS = ['wolf', 'bear', 'landslide'];
+ * Doing this also sets those cards to tier 1.
  *
  * This is useful for testing specific cards or gameplay situations.
  */
@@ -310,7 +311,7 @@ function buildCardDeck(): Card[] {
     if (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(monster.id)) {
       deck.addCard(monster.count, {
         type: "monster",
-        tier: monster.tier,
+        tier: ONLY_INCLUDE_CARDS ? 1 : monster.tier,
         biome: monster.biome,
         id: monster.id,
       });
@@ -323,7 +324,7 @@ function buildCardDeck(): Card[] {
       for (let i = 0; i < treasure.count; i++) {
         deck.addToTop({
           type: "treasure",
-          tier: treasure.tier,
+          tier: ONLY_INCLUDE_CARDS ? 1 : treasure.tier,
           biome: getRandomBiome(), // Random biome assignment
           id: treasure.id,
         });
@@ -337,7 +338,7 @@ function buildCardDeck(): Card[] {
       for (let i = 0; i < encounter.count; i++) {
         deck.addToTop({
           type: "encounter",
-          tier: encounter.tier,
+          tier: ONLY_INCLUDE_CARDS ? 1 : encounter.tier,
           biome: getRandomBiome(), // Random biome assignment
           id: encounter.id,
         });
@@ -351,7 +352,7 @@ function buildCardDeck(): Card[] {
       for (let i = 0; i < event.count; i++) {
         deck.addToTop({
           type: "event",
-          tier: event.tier,
+          tier: ONLY_INCLUDE_CARDS ? 1 : event.tier,
           biome: getRandomBiome(), // Random biome assignment
           id: event.id,
         });

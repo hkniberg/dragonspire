@@ -1,10 +1,14 @@
-<player-context>
+<player-name>
 You are player {{playerName}}.
-</player-context>
+</player-name>
 
 <game-log>
 {{gameLog}}
 </game-log>
+
+<player-status>
+{{playerStatus}}
+</player-status>
 
 <building-usage-decision-request>
 You have finished using all your dice for this turn. Now you can use buildings if you like.
