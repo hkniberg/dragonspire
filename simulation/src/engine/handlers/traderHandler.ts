@@ -124,7 +124,9 @@ export function handleTraderInteraction(
     logFn("event", summary);
 
     // Track statistics
-    player.statistics.traderInteractions += 1;
+    if (player.statistics) {
+      player.statistics.traderInteractions += 1;
+    }
   }
 
   return result;

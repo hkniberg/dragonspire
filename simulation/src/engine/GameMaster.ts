@@ -5,7 +5,7 @@ import { TokenUsageTracker } from "@/lib/TokenUsageTracker";
 import { GameLogEntry, GameLogEntryType, Player, Tile, TurnContext } from "@/lib/types";
 import { formatPosition, formatResources } from "@/lib/utils";
 import { GameState } from "../game/GameState";
-import { stringifyTile } from "../game/gameStateStringifier";
+import { stringifyTileForGameLog } from "../game/gameStateStringifier";
 import { CARDS, GameDecks } from "../lib/cards";
 import { PlayerAgent } from "../players/PlayerAgent";
 import { calculateHarvest } from "./actions/harvestCalculator";
@@ -169,25 +169,33 @@ export class GameMaster {
           diceRolls.consumeDiceRoll(championAction.diceValueUsed);
           await this.executeChampionAction(currentPlayer, championAction, diceAction.reasoning);
           // Track statistics
-          currentPlayer.statistics.championActions += 1;
+          if (currentPlayer.statistics) {
+            currentPlayer.statistics.championActions += 1;
+          }
         } else if (actionType === "boatAction") {
           const boatAction = diceAction.boatAction!;
           diceRolls.consumeDiceRoll(boatAction.diceValueUsed);
           await this.executeBoatAction(currentPlayer, boatAction, diceAction.reasoning);
           // Track statistics
-          currentPlayer.statistics.boatActions += 1;
+          if (currentPlayer.statistics) {
+            currentPlayer.statistics.boatActions += 1;
+          }
         } else if (actionType === "harvestAction") {
           const harvestAction = diceAction.harvestAction!;
           diceRolls.consumeMultipleDiceRolls(harvestAction.diceValuesUsed);
           await this.executeHarvestAction(currentPlayer, harvestAction, diceAction.reasoning);
           // Track statistics
-          currentPlayer.statistics.harvestActions += 1;
+          if (currentPlayer.statistics) {
+            currentPlayer.statistics.harvestActions += 1;
+          }
         } else if (actionType === "buildAction") {
           const buildAction = diceAction.buildAction!;
           diceRolls.consumeDiceRoll(buildAction.diceValueUsed);
           await this.executeBuildAction(currentPlayer, buildAction, diceAction.reasoning);
           // Track statistics
-          currentPlayer.statistics.buildActions += 1;
+          if (currentPlayer.statistics) {
+            currentPlayer.statistics.buildActions += 1;
+          }
         } else {
           throw new Error(`Unknown action type: ${actionType}`);
         }
@@ -285,7 +293,7 @@ export class GameMaster {
       const actuallyMoved = startPosition.row !== moveResult.endPosition.row || startPosition.col !== moveResult.endPosition.col;
 
       // Create log message with reasoning first, then detailed tile description
-      const tileDescription = stringifyTile(tile, this.gameState, player.name);
+      const tileDescription = stringifyTileForGameLog(tile, this.gameState, player.name);
       const reasoningText = reasoning ? ` Reason: ${reasoning}.` : "";
 
       if (actuallyMoved) {
@@ -297,7 +305,7 @@ export class GameMaster {
     } else {
       // Champion is staying in place, just log the action
       const tile = this.gameState.getTile(startPosition);
-      const tileDescription = tile ? stringifyTile(tile, this.gameState, player.name) : "This is an unknown tile.";
+      const tileDescription = tile ? stringifyTileForGameLog(tile, this.gameState, player.name) : "This is an unknown tile.";
       const reasoningText = reasoning ? ` Reason: ${reasoning}.` : "";
       this.addGameLogEntry("movement", `Champion${action.championId} stayed in ${formatPosition(startPosition)}, using dice value [${action.diceValueUsed}].${reasoningText} ${tileDescription}`);
     }
@@ -326,7 +334,7 @@ export class GameMaster {
 
       if (boatMoveResult.championMoveResult === "championMoved") {
         const tile = this.gameState.updateChampionPosition(player.name, championId!, action.championDropPosition!);
-        const tileDescription = stringifyTile(tile, this.gameState, player.name);
+        const tileDescription = stringifyTileForGameLog(tile, this.gameState, player.name);
         this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition}, transporting champion ${championId} from ${formatPosition(championStartPosition!)} to ${formatPosition(action.championDropPosition!)}, using dice value [${action.diceValueUsed}]. Champion arrived: ${tileDescription}.${reasoningText}`);
         await this.executeChampionArrivalAtTile(player, tile, championId!, action.championTileAction);
       } else if (boatMoveResult.championMoveResult === "championNotReachableByBoat") {
@@ -343,7 +351,7 @@ export class GameMaster {
       // If there's a champion to pick up and drop off without moving the boat
       if (championId && action.championDropPosition) {
         const tile = this.gameState.updateChampionPosition(player.name, championId, action.championDropPosition);
-        const tileDescription = stringifyTile(tile, this.gameState, player.name);
+        const tileDescription = stringifyTileForGameLog(tile, this.gameState, player.name);
         this.addGameLogEntry("boat", `Champion ${championId} transported from ${formatPosition(championStartPosition!)} to ${formatPosition(action.championDropPosition)} without moving boat. Champion arrived: ${tileDescription}`);
         await this.executeChampionArrivalAtTile(player, tile, championId, action.championTileAction);
       }
@@ -379,7 +387,7 @@ export class GameMaster {
       // Draw and handle adventure card
       const adventureCard = this.gameDecks.drawCard(tile.tier!, 1);
       // Track statistics
-      player.statistics.adventureCards += 1;
+      player.statistics!.adventureCards += 1;
 
       if (!adventureCard) {
         console.log(`No adventure card found for tier ${tile.tier}`);

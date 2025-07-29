@@ -109,7 +109,7 @@ export interface Player {
   buildings: BuildingType[]; // Buildings constructed in the player's castle
   homePosition: Position;
   extraInstructions?: string; // Optional extra instructions for AI players
-  statistics: PlayerStatistics; // Match statistics tracking
+  statistics?: PlayerStatistics; // Match statistics tracking
 }
 
 

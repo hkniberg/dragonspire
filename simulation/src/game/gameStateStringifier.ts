@@ -1,5 +1,5 @@
 import { GameState } from "../game/GameState";
-import type { CarriableItem, Champion, Player, ResourceType, Tile } from "../lib/types";
+import type { CarriableItem, Champion, Monster, Player, ResourceType, Tile } from "../lib/types";
 
 /**
  * Converts a GameState to a readable markdown string
@@ -20,9 +20,9 @@ export function stringifyGameState(gameState: GameState): string {
 }
 
 /**
- * Converts a single tile to a readable string with full details
+ * Converts a single tile to a single line, readable string with more info, optimized for use in game log.
  */
-export function stringifyTile(tile: Tile, gameState: GameState, ignorePlayerName?: string): string {
+export function stringifyTileForGameLog(tile: Tile, gameState: GameState, ignorePlayerName?: string): string {
   const sentences: string[] = [];
 
   if (!tile.explored) {
@@ -55,21 +55,19 @@ export function stringifyTile(tile: Tile, gameState: GameState, ignorePlayerName
         sentences.push(resourceDescription);
         break;
       case "adventure":
-        let adventureDescription = "This is an adventure tile";
-        if (tile.adventureTokens !== undefined) {
-          const tokenText = tile.adventureTokens === 1 ? "token" : "tokens";
-          adventureDescription += ` (${tile.adventureTokens} remaining ${tokenText})`;
+        sentences.push("This is an adventure tile");
+        if (tile.adventureTokens === 0) {
+          sentences.push("No adventure cards left");
         }
-        sentences.push(adventureDescription);
         break;
       case "temple":
-        sentences.push("This is a chapel");
+        sentences.push("This is a chapel (no combat). Buy 3 fame for 1 might");
         break;
       case "trader":
-        sentences.push("This is a trader");
+        sentences.push("This is a trader (no combat). Exchange 2 of any resource (food/wood/ore/gold) for 1 of any resource. Buy weapons/tools/items for gold");
         break;
       case "mercenary":
-        sentences.push("This is a mercenary camp");
+        sentences.push("This is a mercenary camp (no combat). Buy 1 might for 3 gold");
         break;
       case "doomspire":
         sentences.push("This is the Doomspire");
@@ -95,9 +93,9 @@ export function stringifyTile(tile: Tile, gameState: GameState, ignorePlayerName
 
   // Add monster information as a separate sentence
   if (tile.monster) {
-    const monsterName = tile.monster.name;
-    const article = ['a', 'e', 'i', 'o', 'u'].includes(monsterName.toLowerCase().charAt(0)) ? 'an' : 'a';
-    sentences.push(`There is ${article} ${monsterName} here (might ${tile.monster.might})`);
+    const monsterId = tile.monster.id;
+    const article = ['a', 'e', 'i', 'o', 'u'].includes(monsterId.toLowerCase().charAt(0)) ? 'an' : 'a';
+    sentences.push(`There is ${article} ${formatMonsterInfo(tile.monster)} here`);
   }
 
   // Add champions on this tile, but exclude the specified player if ignorePlayerName is provided
@@ -113,8 +111,8 @@ export function stringifyTile(tile: Tile, gameState: GameState, ignorePlayerName
   // Add items on this tile as separate sentences
   if (tile.items && tile.items.length > 0) {
     for (const item of tile.items) {
-      const itemDetails = getCarriableItemDetails(item);
-      sentences.push(`There is a ${itemDetails} here`);
+      const itemId = getCarriableItemId(item);
+      sentences.push(`There is a ${itemId} here`);
     }
   }
 
@@ -162,7 +160,10 @@ export function stringifyPlayer(player: Player, gameState: GameState): string {
 
   // Buildings
   if (player.buildings && player.buildings.length > 0) {
-    lines.push(`- Buildings: ${player.buildings.join(", ")}`);
+    lines.push("- Buildings:");
+    for (const building of player.buildings) {
+      lines.push(`  - ${formatBuildingInfo(building)}`);
+    }
   } else {
     lines.push("- Buildings: none");
   }
@@ -260,42 +261,44 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
         if (tile.resources) {
           const resourceStr = formatResources(tile.resources);
           if (resourceStr) {
-            lines.push(`- Resource tile providing ${resourceStr}`);
+            const starredPrefix = tile.isStarred ? "Starred " : "";
+            lines.push(`- ${starredPrefix}Resource tile providing ${resourceStr}`);
           }
-        }
-        if (tile.isStarred) {
-          lines.push("- Starred");
         }
         if (tile.claimedBy) {
           const player = gameState.getPlayer(tile.claimedBy);
           lines.push(`- Claimed by ${player?.name || "unknown"}`);
-          if (gameState.isClaimProtected(tile)) {
-            lines.push("- Protected");
+
+          // Check protection status (blockade info will be shown with champion details)
+          const isProtected = gameState.isClaimProtected(tile);
+
+          if (isProtected) {
+            lines.push("- Protected by unit in neighbouring tile");
           }
         } else {
           lines.push("- Unclaimed");
         }
         if (tile.monster) {
-          lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
+          lines.push(`- Monster: ${formatMonsterInfo(tile.monster)}`);
         }
         break;
       case "adventure":
         lines.push(`- Tier ${tile.tier} adventure tile`);
-        if (tile.adventureTokens !== undefined) {
-          lines.push(`- Remaining adventure tokens: ${tile.adventureTokens}`);
+        if (tile.adventureTokens === 0) {
+          lines.push(`- No adventure cards left`);
         }
         if (tile.monster) {
-          lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
+          lines.push(`- Monster: ${formatMonsterInfo(tile.monster)}`);
         }
         break;
       case "temple":
-        lines.push("- Chapel");
+        lines.push("- Chapel (no combat). Buy 3 fame for 1 might");
         break;
       case "trader":
-        lines.push("- Trader");
+        lines.push("- Trader (no combat). Exchange 2 of any resource (food/wood/ore/gold) for 1 of any resource. Buy weapons/tools/items for gold");
         break;
       case "mercenary":
-        lines.push("- Mercenary camp");
+        lines.push("- Mercenary camp (no combat). Buy 1 might for 3 gold");
         break;
       case "doomspire":
         lines.push("- Doomspire Dragon (might 13)");
@@ -306,13 +309,13 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
       case "wolfDen":
         lines.push("- Wolf Den");
         if (tile.monster) {
-          lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
+          lines.push(`- Monster: ${formatMonsterInfo(tile.monster)}`);
         }
         break;
       case "bearCave":
         lines.push("- Bear Cave");
         if (tile.monster) {
-          lines.push(`- Monster: ${tile.monster.name} (might ${tile.monster.might})`);
+          lines.push(`- Monster: ${formatMonsterInfo(tile.monster)}`);
         }
         break;
       default:
@@ -324,14 +327,26 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
   const championsOnTile = getChampionsOnTile(tile.position, gameState);
   for (const champion of championsOnTile) {
     const player = gameState.getPlayer(champion.playerName);
-    lines.push(`- ${player?.name || "unknown"} champion${champion.id} is here`);
+    let championLine = `- ${player?.name || "unknown"} champion${champion.id} is here`;
+
+    // For resource tiles, check if this champion is blockading
+    if (tile.tileType === "resource" && tile.claimedBy && tile.claimedBy !== champion.playerName) {
+      const blockaderPlayerName = gameState.getClaimBlockader(tile);
+      if (blockaderPlayerName === champion.playerName) {
+        championLine += ", blockading";
+      } else {
+        championLine += " (not blockading)";
+      }
+    }
+
+    lines.push(championLine);
   }
 
-  // Add items on this tile with full details
+  // Add items on this tile
   if (tile.items && tile.items.length > 0) {
     for (const item of tile.items) {
-      const itemDetails = getCarriableItemDetails(item);
-      lines.push(`- Item: ${itemDetails} (dropped on ground)`);
+      const itemId = getCarriableItemId(item);
+      lines.push(`- Item: ${itemId} (dropped on ground)`);
     }
   }
 
@@ -414,6 +429,74 @@ function getCarriableItemDetails(item: CarriableItem): string {
     return `${item.traderItem.name} (${item.traderItem.id}) - ${item.traderItem.description}`;
   }
   return 'Unknown Item';
+}
+
+// Helper function to format building information with descriptions
+export function formatBuildingInfo(buildingType: string): string {
+  switch (buildingType) {
+    case "market":
+      return "market (sell food/wood/ore for gold, 2 resources = 1 gold)";
+    case "blacksmith":
+      return "blacksmith (buy 1 might for 1 gold + 2 ore)";
+    case "chapel":
+      return "chapel (buy 3 fame for 1 might)";
+    case "monastery":
+      return "monastery (buy 1 fame for 1 gold)";
+    case "warshipUpgrade":
+      return "warship upgrade (boats provide combat support to adjacent tiles)";
+    default:
+      return buildingType;
+  }
+}
+
+// Helper function to format monster information with full details
+function formatMonsterInfo(monster: Monster): string {
+  let monsterInfo = monster.id;
+
+  // Add beast designation if applicable
+  if (monster.isBeast) {
+    monsterInfo += " (beast)";
+  }
+
+  // Add might
+  monsterInfo += ` (might ${monster.might})`;
+
+  // Add reward information
+  const rewards: string[] = [];
+  if (monster.fame > 0) {
+    rewards.push(`${monster.fame} fame`);
+  }
+
+  // Add non-zero resources
+  if (monster.resources.food > 0) {
+    rewards.push(`${monster.resources.food} food`);
+  }
+  if (monster.resources.wood > 0) {
+    rewards.push(`${monster.resources.wood} wood`);
+  }
+  if (monster.resources.ore > 0) {
+    rewards.push(`${monster.resources.ore} ore`);
+  }
+  if (monster.resources.gold > 0) {
+    rewards.push(`${monster.resources.gold} gold`);
+  }
+
+  if (rewards.length > 0) {
+    monsterInfo += ` (reward ${rewards.join(", ")})`;
+  }
+
+  return monsterInfo;
+}
+
+// Helper function to get the ID of a CarriableItem
+function getCarriableItemId(item: CarriableItem): string {
+  if (item.treasureCard) {
+    return item.treasureCard.id;
+  }
+  if (item.traderItem) {
+    return item.traderItem.id;
+  }
+  return 'unknown-item';
 }
 
 // Helper function to get the name of a CarriableItem (kept for backward compatibility)

@@ -1,7 +1,7 @@
 // Lords of Doomspire Claude AI Player
 
 import { getTraderItemById } from "@/content/traderItems";
-import { stringifyGameState, stringifyPlayer } from "@/game/gameStateStringifier";
+import { formatBuildingInfo, stringifyGameState, stringifyPlayer } from "@/game/gameStateStringifier";
 import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, Player, PlayerType, TurnContext } from "@/lib/types";
@@ -273,19 +273,17 @@ export class ClaudePlayerAgent implements PlayerAgent {
         const buildingSummaries: string[] = [];
 
         // Check for Blacksmith
-        const hasBlacksmith = player.buildings.some((building: any) => building.type === "blacksmith");
-        if (hasBlacksmith) {
+        if (player.buildings.includes("blacksmith")) {
             const canUseBlacksmith = usableBuildings.includes("blacksmith");
             const status = canUseBlacksmith ? "Available" : "Cannot use (need 1 Gold + 2 Ore)";
-            buildingSummaries.push(`- Blacksmith: ${status} - Buy 1 Might for 1 Gold + 2 Ore`);
+            buildingSummaries.push(`- ${formatBuildingInfo("blacksmith")}: ${status}`);
         }
 
         // Check for Market
-        const hasMarket = player.buildings.some((building: any) => building.type === "market");
-        if (hasMarket) {
+        if (player.buildings.includes("market")) {
             const canUseMarket = usableBuildings.includes("market");
             const status = canUseMarket ? "Available" : "Cannot use (no resources to sell)";
-            buildingSummaries.push(`- Market: ${status} - Sell resources for Gold (earn 1 gold for every 2 resources)`);
+            buildingSummaries.push(`- ${formatBuildingInfo("market")}: ${status}`);
         }
 
         if (buildingSummaries.length === 0) {

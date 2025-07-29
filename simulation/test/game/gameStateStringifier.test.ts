@@ -1,7 +1,7 @@
 import { getTraderItemById } from "@/content/traderItems";
 import { getTreasureCardById } from "@/content/treasureCards";
 import { GameState } from "../../src/game/GameState";
-import { stringifyGameState } from "../../src/game/gameStateStringifier";
+import { stringifyGameState, stringifyTileForGameLog } from "../../src/game/gameStateStringifier";
 import { Board } from "../../src/lib/Board";
 import type { Player, Position, Tile } from "../../src/lib/types";
 
@@ -29,6 +29,7 @@ Spend \`2 ore\` to gain \`+1 might\`
 - champion2 at (3,5)
 - champion1 at (2,5)
 - boat1 at (sw)
+- Buildings: none
 - claims (2 tiles of max 10):
   - Tile (0,5) providing 2 food, 1 gold (blockaded by Bob champion1)
   - Tile (0,7) providing 1 ore
@@ -41,6 +42,7 @@ Spend \`2 ore\` to gain \`+1 might\`
 - champion1 at (0,5)
 - boat1 at (ne)
 - boat2 at (se)
+- Buildings: none
 - no claims
 
 ## Alice
@@ -50,6 +52,9 @@ Spend \`2 ore\` to gain \`+1 might\`
 - Resource stockpile: 1 food, 1 wood
 - champion1 at (7,0)
 - boat1 at (sw)
+- Buildings:
+  - market (sell food/wood/ore for gold, 2 resources = 1 gold)
+  - blacksmith (buy 1 might for 1 gold + 2 ore)
 - no claims
 
 ## David
@@ -59,6 +64,7 @@ Spend \`2 ore\` to gain \`+1 might\`
 - Resource stockpile: 1 food, 1 wood
 - champion1 at (7,7)
 - boat1 at (se)
+- Buildings: none
 - no claims
 
 # Board
@@ -67,10 +73,9 @@ Tile (0,0)
 - Home tile for Bob (can ONLY be entered by Bob's champions)
 
 Tile (0,5)
-- Resource tile providing 2 food, 1 gold
-- Starred
+- Starred Resource tile providing 2 food, 1 gold
 - Claimed by Jim
-- Bob champion1 is here
+- Bob champion1 is here, blockading
 
 Tile (0,7)
 - Resource tile providing 1 ore
@@ -78,33 +83,32 @@ Tile (0,7)
 
 Tile (1,6)
 - Tier 1 adventure tile
-- Remaining adventure tokens: 0
-- Monster: bandit (might 3)
+- No adventure cards left
+- Monster: bandit (might 3) (reward 1 fame, 3 gold)
 
 Tile (2,5)
 - Tier 2 adventure tile
-- Remaining adventure tokens: 2
 - Jim champion1 is here
 
 Tile (2,6)
 - Resource tile providing 1 wood
 - Unclaimed
-- Monster: wolf (might 6)
+- Monster: wolf (beast) (might 6) (reward 1 fame, 2 food)
 
 Tile (3,3)
 - Unexplored tile
 - Jim champion1 is here
 
 Tile (3,5)
-- Chapel
+- Chapel (no combat). Buy 3 fame for 1 might
 - Jim champion2 is here
 
 Tile (3,6)
-- Trader
-- Item: Spear (spear) - Gain \`+1 might\` when fighting **beasts**. (dropped on ground)
+- Trader (no combat). Exchange 2 of any resource (food/wood/ore/gold) for 1 of any resource. Buy weapons/tools/items for gold
+- Item: spear (dropped on ground)
 
 Tile (3,7)
-- Mercenary camp
+- Mercenary camp (no combat). Buy 1 might for 3 gold
 
 Tile (4,4)
 - Doomspire Dragon (might 13)
@@ -118,6 +122,55 @@ Tile (7,7)
 - David champion1 is here`;
 
     expect(result).toBe(expected);
+  });
+
+  test("should stringify individual tiles for game log with complex scenarios", () => {
+    const sampleGameState = createSampleGameState();
+
+    // Test 1: Blockaded starred resource tile with opposing champion
+    const blockadedTile = sampleGameState.getTile({ row: 0, col: 5 })!;
+    const blockadedResult = stringifyTileForGameLog(blockadedTile, sampleGameState);
+    expect(blockadedResult).toBe("This is a resource tile (2 food, 1 gold) (starred) owned by Jim. Bob champion1 is here.");
+
+    // Test 2: Resource tile with monster, unclaimed
+    const monsterTile = sampleGameState.getTile({ row: 2, col: 6 })!;
+    const monsterResult = stringifyTileForGameLog(monsterTile, sampleGameState);
+    expect(monsterResult).toBe("This is a resource tile (1 wood). There is a wolf (beast) (might 6) (reward 1 fame, 2 food) here.");
+
+    // Test 3: Trader tile with dropped item
+    const traderTile = sampleGameState.getTile({ row: 3, col: 6 })!;
+    const traderResult = stringifyTileForGameLog(traderTile, sampleGameState);
+    expect(traderResult).toBe("This is a trader (no combat). Exchange 2 of any resource (food/wood/ore/gold) for 1 of any resource. Buy weapons/tools/items for gold. There is a spear here.");
+
+    // Test 4: Adventure tile with monster and no tokens
+    const adventureTile = sampleGameState.getTile({ row: 1, col: 6 })!;
+    const adventureResult = stringifyTileForGameLog(adventureTile, sampleGameState);
+    expect(adventureResult).toBe("This is an adventure tile. No adventure cards left. There is a bandit (might 3) (reward 1 fame, 3 gold) here.");
+
+    // Test 4b: Adventure tile with tokens (should not mention tokens)
+    const adventureTileWithTokens = sampleGameState.getTile({ row: 2, col: 5 })!;
+    const adventureWithTokensResult = stringifyTileForGameLog(adventureTileWithTokens, sampleGameState, "Jim");
+    expect(adventureWithTokensResult).toBe("This is an adventure tile.");
+
+    // Test 5: Chapel with champion
+    const chapelTile = sampleGameState.getTile({ row: 3, col: 5 })!;
+    const chapelResult = stringifyTileForGameLog(chapelTile, sampleGameState, "Jim"); // Ignore Jim's champion
+    expect(chapelResult).toBe("This is a chapel (no combat). Buy 3 fame for 1 might.");
+
+    // Test 6: Protected resource tile (protected by adjacent champion)
+    // Add a Jim champion adjacent to his claimed tile at (0,7) to protect it
+    const jimPlayer = sampleGameState.getPlayer("Jim")!;
+    jimPlayer.champions.push({
+      id: 3,
+      position: { row: 0, col: 6 }, // Adjacent to (0,7) to protect it
+      playerName: "Jim",
+      items: [],
+      followers: [],
+    });
+
+    const protectedTile = sampleGameState.getTile({ row: 0, col: 7 })!;
+    const protectedResult = stringifyTileForGameLog(protectedTile, sampleGameState);
+    expect(protectedResult).toBe("This is a resource tile (1 ore) owned by Jim (protected).");
   });
 });
 
@@ -172,8 +225,9 @@ function createSampleGameState(): GameState {
       tier: 1,
       icon: "🐺",
       might: 6,
-      fame: 2,
-      resources: { food: 1, wood: 0, ore: 0, gold: 0 },
+      fame: 1,
+      resources: { food: 2, wood: 0, ore: 0, gold: 0 },
+      isBeast: true,
     },
   });
 
@@ -207,7 +261,7 @@ function createSampleGameState(): GameState {
       icon: "🗡️",
       might: 3,
       fame: 1,
-      resources: { food: 0, wood: 0, ore: 0, gold: 1 },
+      resources: { food: 0, wood: 0, ore: 0, gold: 3 },
     },
   });
 
@@ -289,23 +343,6 @@ function createSampleGameState(): GameState {
         },
       ],
       buildings: [],
-      statistics: {
-        championVsChampionWins: 0,
-        championVsChampionLosses: 0,
-        championVsMonsterWins: 0,
-        championVsMonsterLosses: 0,
-        dragonEncounters: 0,
-        marketInteractions: 0,
-        blacksmithInteractions: 0,
-        traderInteractions: 0,
-        templeInteractions: 0,
-        mercenaryInteractions: 0,
-        championActions: 0,
-        boatActions: 0,
-        harvestActions: 0,
-        buildActions: 0,
-        adventureCards: 0,
-      },
     },
     {
       name: "Bob",
@@ -337,23 +374,6 @@ function createSampleGameState(): GameState {
         },
       ],
       buildings: [],
-      statistics: {
-        championVsChampionWins: 0,
-        championVsChampionLosses: 0,
-        championVsMonsterWins: 0,
-        championVsMonsterLosses: 0,
-        dragonEncounters: 0,
-        marketInteractions: 0,
-        blacksmithInteractions: 0,
-        traderInteractions: 0,
-        templeInteractions: 0,
-        mercenaryInteractions: 0,
-        championActions: 0,
-        boatActions: 0,
-        harvestActions: 0,
-        buildActions: 0,
-        adventureCards: 0,
-      },
     },
     {
       name: "Alice",
@@ -379,24 +399,8 @@ function createSampleGameState(): GameState {
           position: "sw",
         },
       ],
-      buildings: [],
-      statistics: {
-        championVsChampionWins: 0,
-        championVsChampionLosses: 0,
-        championVsMonsterWins: 0,
-        championVsMonsterLosses: 0,
-        dragonEncounters: 0,
-        marketInteractions: 0,
-        blacksmithInteractions: 0,
-        traderInteractions: 0,
-        templeInteractions: 0,
-        mercenaryInteractions: 0,
-        championActions: 0,
-        boatActions: 0,
-        harvestActions: 0,
-        buildActions: 0,
-        adventureCards: 0,
-      },
+      buildings: ["market", "blacksmith"],
+
     },
     {
       name: "David",
@@ -423,23 +427,7 @@ function createSampleGameState(): GameState {
         },
       ],
       buildings: [],
-      statistics: {
-        championVsChampionWins: 0,
-        championVsChampionLosses: 0,
-        championVsMonsterWins: 0,
-        championVsMonsterLosses: 0,
-        dragonEncounters: 0,
-        marketInteractions: 0,
-        blacksmithInteractions: 0,
-        traderInteractions: 0,
-        templeInteractions: 0,
-        mercenaryInteractions: 0,
-        championActions: 0,
-        boatActions: 0,
-        harvestActions: 0,
-        buildActions: 0,
-        adventureCards: 0,
-      },
+
     },
   ];
 

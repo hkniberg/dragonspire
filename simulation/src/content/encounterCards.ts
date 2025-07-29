@@ -8,6 +8,7 @@ export interface Encounter {
   follower: boolean; // Whether this encounter can become a follower
   count: number; // How many cards of this encounter to include in deck
   disabled?: boolean; // If true, card is not added to deck but still shown in UI
+  imagePromptGuidance?: string; // If provided, this will be used to generate the image for the card
 }
 
 // All encounter cards in the game
@@ -70,6 +71,18 @@ export const ENCOUNTERS: Encounter[] = [
 **(2)** *Run away* for free  
 **(3)** \`+2 might\``,
     follower: true,
+    count: 1,
+  },
+
+  // Tier 3 Encounter Cards
+  {
+    disabled: true,
+    id: "wandering-monk",
+    name: "Wandering monk",
+    tier: 3,
+    description: "Wololoo! You may take over another player's **resource tile** (not home tile).",
+    follower: false,
+    imagePromptGuidance: "White robe, blue stripe, and cane, like an Age of Empires monk",
     count: 1,
   },
 ];

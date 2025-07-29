@@ -343,8 +343,12 @@ export async function resolveChampionVsChampionCombat(
     removeBrokenItems(opposingChampion, defenderItemsToRemove, logFn, "defender's");
 
     // Track combat statistics
-    attackingPlayer.statistics.championVsChampionWins += 1;
-    defendingPlayer.statistics.championVsChampionLosses += 1;
+    if (attackingPlayer.statistics) {
+      attackingPlayer.statistics.championVsChampionWins += 1;
+    }
+    if (defendingPlayer.statistics) {
+      defendingPlayer.statistics.championVsChampionLosses += 1;
+    }
 
     return {
       combatOccurred: true,
@@ -423,8 +427,12 @@ export async function resolveChampionVsChampionCombat(
     await applyChampionDefeatInChampionCombat(gameState, attackingPlayer, attackingChampionId, fullCombatDetails, logFn, playerAgent, gameLog, thinkingLogger);
 
     // Track combat statistics
-    defendingPlayer.statistics.championVsChampionWins += 1;
-    attackingPlayer.statistics.championVsChampionLosses += 1;
+    if (defendingPlayer.statistics) {
+      defendingPlayer.statistics.championVsChampionWins += 1;
+    }
+    if (attackingPlayer.statistics) {
+      attackingPlayer.statistics.championVsChampionLosses += 1;
+    }
 
     return {
       combatOccurred: true,
@@ -514,7 +522,9 @@ export async function resolveImmediateCombat(
     removeBrokenItems(champion, itemsToRemove, logFn);
 
     // Track combat statistics
-    player.statistics.championVsMonsterWins += 1;
+    if (player.statistics) {
+      player.statistics.championVsMonsterWins += 1;
+    }
 
     return {
       combatOccurred: true,
@@ -533,7 +543,9 @@ export async function resolveImmediateCombat(
     await applyChampionDefeat(gameState, player, championId, combatDetails, logFn);
 
     // Track combat statistics
-    player.statistics.championVsMonsterLosses += 1;
+    if (player.statistics) {
+      player.statistics.championVsMonsterLosses += 1;
+    }
 
     return {
       combatOccurred: true,
@@ -583,7 +595,9 @@ export async function resolveChampionVsMonsterCombat(
     removeBrokenItems(champion, itemsToRemove, logFn);
 
     // Track combat statistics
-    player.statistics.championVsMonsterWins += 1;
+    if (player.statistics) {
+      player.statistics.championVsMonsterWins += 1;
+    }
 
     return {
       combatOccurred: true,
@@ -602,7 +616,9 @@ export async function resolveChampionVsMonsterCombat(
     await applyChampionDefeat(gameState, player, championId, combatDetails, logFn);
 
     // Track combat statistics
-    player.statistics.championVsMonsterLosses += 1;
+    if (player.statistics) {
+      player.statistics.championVsMonsterLosses += 1;
+    }
 
     return {
       combatOccurred: true,
@@ -663,7 +679,9 @@ export async function resolveChampionVsDragonEncounter(
 
   // Must fight the dragon - roll dice for champion vs dragon battle
   // Track dragon encounter statistics
-  player.statistics.dragonEncounters += 1;
+  if (player.statistics) {
+    player.statistics.dragonEncounters += 1;
+  }
 
   const dragonMight = GameSettings.DRAGON_BASE_MIGHT + rollD3();
 
