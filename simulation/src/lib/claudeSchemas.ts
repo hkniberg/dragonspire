@@ -21,7 +21,7 @@ export const tileActionSchema = {
     },
     useTemple: {
       type: "boolean",
-      description: "Whether to sacrifice 3 fame to gain 1 might at the temple (only at temple tile, only if you have 3 fame)",
+      description: "Whether to sacrifice 2 fame to gain 1 might at the temple (only at temple tile, only if you have 2 fame)",
     },
     pickUpItems: {
       type: "array",

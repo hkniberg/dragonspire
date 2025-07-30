@@ -501,18 +501,18 @@ export function handleTempleAction(
     };
   }
 
-  if (player.fame < 3) {
+  if (player.fame < 2) {
     return {
       actionSuccessful: false,
-      reason: "Not enough fame (need 3 fame)"
+      reason: "Not enough fame (need 2 fame)"
     };
   }
 
   // Successful temple sacrifice
-  player.fame -= 3;
+  player.fame -= 2;
   player.might += 1;
 
-  logFn("event", `Champion ${championId} sacrificed 3 fame at the temple, gaining 1 might`);
+  logFn("event", `Champion ${championId} sacrificed 2 fame at the temple, gaining 1 might`);
 
   // Track statistics
   if (player.statistics) {

@@ -69,7 +69,7 @@ class TreasureImageGenerator {
 
   // Helper function to convert treasure id to filename
   treasureIdToFilename(treasureId) {
-    return treasureId + ".png";
+    return treasureId.toLowerCase() + ".png";
   }
 
   // Load all treasures from treasureCards.ts
@@ -98,49 +98,39 @@ class TreasureImageGenerator {
       // Parse the treasures array content to extract treasure objects
       const treasuresArrayContent = treasuresMatch[1];
 
-      // Extract individual treasure objects
-      const treasureMatches = treasuresArrayContent.match(/\{[\s\S]*?\}/g);
+      // Extract individual treasure objects - need to handle nested braces properly
+      const treasures = [];
+      let braceCount = 0;
+      let currentTreasure = "";
+      let inTreasure = false;
 
-      if (!treasureMatches) {
-        throw new Error(
-          "Could not extract treasure objects from TREASURE_CARDS array"
-        );
-      }
+      for (let i = 0; i < treasuresArrayContent.length; i++) {
+        const char = treasuresArrayContent[i];
 
-      const treasures = treasureMatches
-        .map((treasureString) => {
-          // Handle both single and double quotes for id
-          const idMatch = treasureString.match(/id:\s*["']([^"']+)["']/);
-
-          const nameMatch = treasureString.match(/name:\s*["']([^"']+)["']/);
-
-          // Handle description with template literals (backticks) and regular quotes
-          const descriptionMatch = treasureString.match(
-            /description:\s*[`"']([\s\S]*?)[`"']\s*,/
-          );
-
-          const tierMatch = treasureString.match(/tier:\s*(\d+)/);
-
-          if (!idMatch || !nameMatch || !descriptionMatch || !tierMatch) {
-            console.warn("Could not parse treasure:", treasureString);
-            return null;
+        if (char === "{") {
+          if (!inTreasure) {
+            inTreasure = true;
+            currentTreasure = "";
           }
+          braceCount++;
+          currentTreasure += char;
+        } else if (char === "}") {
+          braceCount--;
+          currentTreasure += char;
 
-          // Clean up the description - remove extra whitespace and newlines
-          let description = descriptionMatch[1]
-            .replace(/\\n/g, "\n") // Convert escaped newlines
-            .replace(/\\`/g, "`") // Convert escaped backticks
-            .replace(/\\"/g, '"') // Convert escaped quotes
-            .trim();
-
-          return {
-            id: idMatch[1],
-            name: nameMatch[1],
-            description: description,
-            tier: parseInt(tierMatch[1]),
-          };
-        })
-        .filter((treasure) => treasure !== null);
+          if (braceCount === 0 && inTreasure) {
+            // We've found a complete treasure object
+            const treasure = this.parseTreasureObject(currentTreasure);
+            if (treasure) {
+              treasures.push(treasure);
+            }
+            inTreasure = false;
+            currentTreasure = "";
+          }
+        } else if (inTreasure) {
+          currentTreasure += char;
+        }
+      }
 
       return treasures;
     } catch (error) {
@@ -149,6 +139,53 @@ class TreasureImageGenerator {
         error.message
       );
       throw error;
+    }
+  }
+
+  // Helper method to parse a single treasure object string
+  parseTreasureObject(treasureString) {
+    try {
+      // Handle both single and double quotes for id
+      const idMatch = treasureString.match(/id:\s*["']([^"']+)["']/);
+      const nameMatch = treasureString.match(/name:\s*["']([^"']+)["']/);
+
+      // Handle description with template literals (backticks) and regular quotes
+      const descriptionMatch = treasureString.match(
+        /description:\s*[`"']([\s\S]*?)[`"']\s*,/
+      );
+
+      const tierMatch = treasureString.match(/tier:\s*(\d+)/);
+
+      // Extract imagePromptGuidance if present
+      const guidanceMatch = treasureString.match(
+        /imagePromptGuidance:\s*["']([^"']+)["']/
+      );
+
+      if (!idMatch || !nameMatch || !descriptionMatch || !tierMatch) {
+        console.warn(
+          "Could not parse treasure:",
+          treasureString.substring(0, 100) + "..."
+        );
+        return null;
+      }
+
+      // Clean up the description - remove extra whitespace and newlines
+      let description = descriptionMatch[1]
+        .replace(/\\n/g, "\n") // Convert escaped newlines
+        .replace(/\\`/g, "`") // Convert escaped backticks
+        .replace(/\\"/g, '"') // Convert escaped quotes
+        .trim();
+
+      return {
+        id: idMatch[1],
+        name: nameMatch[1],
+        description: description,
+        tier: parseInt(tierMatch[1]),
+        imagePromptGuidance: guidanceMatch ? guidanceMatch[1] : undefined,
+      };
+    } catch (error) {
+      console.error("Error parsing treasure object:", error.message);
+      return null;
     }
   }
 
@@ -195,9 +232,28 @@ class TreasureImageGenerator {
 
   async generatePromptWithClaude(treasure) {
     // Create card info section
-    const cardInfo = `Name: ${treasure.name}
+    let cardInfo = `Name: ${treasure.name}
 Description: ${treasure.description}
 Tier: ${treasure.tier}`;
+
+    // Add imagePromptGuidance if available
+    if (treasure.imagePromptGuidance) {
+      cardInfo += `
+Image Guidance: ${treasure.imagePromptGuidance}`;
+      console.log(
+        `✨ Using imagePromptGuidance for ${treasure.name}: "${treasure.imagePromptGuidance}"`
+      );
+    } else {
+      console.log(
+        `📝 No imagePromptGuidance found for ${treasure.name}, using generic template`
+      );
+    }
+
+    // Log the complete card info being used
+    console.log(`📋 Card info for ${treasure.name}:`);
+    console.log("─".repeat(40));
+    console.log(cardInfo);
+    console.log("─".repeat(40));
 
     // Substitute placeholders in the template (using regex to handle any whitespace variations)
     let templatePrompt = this.treasurePromptTemplate
@@ -359,14 +415,14 @@ Tier: ${treasure.tier}`;
         try {
           console.log(`🤖 Creating prompt for "${treasure.name}"...`);
           const prompt = await this.generatePromptWithClaude(treasure);
-          return { treasure: treasure.name, prompt, success: true };
+          return { treasure: treasure.id, prompt, success: true };
         } catch (error) {
           console.error(
             `❌ Failed to generate prompt for ${treasure.name}:`,
             error.message
           );
           return {
-            treasure: treasure.name,
+            treasure: treasure.id,
             success: false,
             error: error.message,
           };

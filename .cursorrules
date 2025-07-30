@@ -9,6 +9,7 @@ This repository represents the design and development of **Lords of Doomspire**,
   - `docs/game-rules.md` = the canonical version, for the printed board game and human players. The code should reflect these rules. The rules are the source of truth. If you see anything that seems incorrect or inconsistent with the rules, please point this out.
   - `simulation/pages/cheat-sheet.tsx` = the shorter cheat sheet version, packaged as a web page.
   - `simulation/public/prompts/game-rules-for-ai.md` = AI-adapted rules of the game, with minor changes to make it work better in the simulator context.
+  - If you update any of these, then update the other versions as well to keep them in sync. Or at least warn the user.
 - **Simulation**: All simulation code is in the `simulation/` directory, which is structured as a single-page Next.js frontend app, but should also be able to run as a headless script to run a simulated match or turn. Tests are in the simulation/test directory.
 - **Documentation**: Additional design documents in the `docs/` folder
 

@@ -228,8 +228,8 @@ export class RandomPlayerAgent implements PlayerAgent {
       tileAction.useMercenary = true;
     }
 
-    // Check if we should use temple (if we have 3+ fame)
-    if (destinationTile?.tileType === "temple" && player.fame >= 3) {
+    // Check if we should use temple (if we have 2+ fame)
+    if (destinationTile?.tileType === "temple" && player.fame >= 2) {
       tileAction.useTemple = true;
     }
 

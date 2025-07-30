@@ -8,6 +8,7 @@ export interface TreasureCard {
   count: number; // How many cards of this treasure to include in deck
   carriable: boolean; // Whether this treasure can be carried as an item
   disabled?: boolean; // If true, card is not added to deck but still shown in UI
+  imagePromptGuidance?: string; // If provided, this will be used to generate the image for the card
 }
 
 export function getTreasureCardById(id: string): TreasureCard | undefined {
@@ -55,6 +56,7 @@ Spend \`2 ore\` to gain \`+1 might\``,
     description: "It's a **löng swörd**. Gain `+2 might`.",
     count: 1,
     carriable: true,
+    imagePromptGuidance: "Make it long, to distinguish it from a short sword.",
   },
   {
     id: "porcupine",
@@ -63,6 +65,7 @@ Spend \`2 ore\` to gain \`+1 might\``,
     description: "If the opponent has **more might**, this *shield* grants `+2 might`.",
     count: 1,
     carriable: true,
+    imagePromptGuidance: "A spiky shield, not the animal",
   },
   {
     id: "sword-in-stone",

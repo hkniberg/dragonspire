@@ -5,6 +5,7 @@ export interface TraderItem {
   cost: number; // Cost in gold to purchase from trader
   count: number; // How many cards of this trader item to include in deck
   disabled?: boolean; // If true, card is not added to deck but still shown in UI
+  imagePromptGuidance?: string; // If provided, this will be used to generate the image for the card
 }
 
 export function getTraderItemById(id: string): TraderItem | undefined {
@@ -25,7 +26,7 @@ export const TRADER_ITEMS: TraderItem[] = [
     name: "Backpack",
     description: "Carry 1 extra **treasure**.",
     cost: 2,
-    count: 1,
+    count: 2,
   },
   {
     id: "padded-helmet",
@@ -33,5 +34,6 @@ export const TRADER_ITEMS: TraderItem[] = [
     description: "When you lose a battle, you no longer get completely knocked out and may start at a claimed tile 1-3 steps away from your home tile.",
     cost: 2,
     count: 2,
+    imagePromptGuidance: "Simple medieval leather helmet",
   },
 ]; 

@@ -67,7 +67,7 @@ class EventImageGenerator {
 
   // Helper function to convert event name to filename
   eventIdToFilename(eventId) {
-    return eventId + ".png";
+    return eventId.toLowerCase() + ".png";
   }
 
   // Load all events from eventCards.ts
@@ -94,50 +94,39 @@ class EventImageGenerator {
       // Parse the events array content to extract event objects
       const eventsArrayContent = eventsMatch[1];
 
-      // Extract individual event objects
-      const eventMatches = eventsArrayContent.match(/\{[\s\S]*?\}/g);
+      // Extract individual event objects - need to handle nested braces properly
+      const events = [];
+      let braceCount = 0;
+      let currentEvent = "";
+      let inEvent = false;
 
-      if (!eventMatches) {
-        throw new Error(
-          "Could not extract event objects from EVENT_CARDS array"
-        );
-      }
+      for (let i = 0; i < eventsArrayContent.length; i++) {
+        const char = eventsArrayContent[i];
 
-      const events = eventMatches
-        .map((eventString) => {
-          // Handle both single and double quotes for id
-          const idMatch = eventString.match(/id:\s*["']([^"']+)["']/);
-
-          // Handle both single and double quotes for name
-          const nameMatch = eventString.match(/name:\s*["']([^"']+)["']/);
-
-          // Handle description with template literals (backticks) and regular quotes
-          const descriptionMatch = eventString.match(
-            /description:\s*[`"']([\s\S]*?)[`"']\s*,/
-          );
-
-          const tierMatch = eventString.match(/tier:\s*(\d+)/);
-
-          if (!idMatch || !nameMatch || !descriptionMatch || !tierMatch) {
-            console.warn("Could not parse event:", eventString);
-            return null;
+        if (char === "{") {
+          if (!inEvent) {
+            inEvent = true;
+            currentEvent = "";
           }
+          braceCount++;
+          currentEvent += char;
+        } else if (char === "}") {
+          braceCount--;
+          currentEvent += char;
 
-          // Clean up the description - remove extra whitespace and newlines
-          let description = descriptionMatch[1]
-            .replace(/\\n/g, "\n") // Convert escaped newlines
-            .replace(/\\`/g, "`") // Convert escaped backticks
-            .replace(/\\"/g, '"') // Convert escaped quotes
-            .trim();
-
-          return {
-            id: idMatch[1],
-            name: nameMatch[1],
-            description: description,
-            tier: parseInt(tierMatch[1]),
-          };
-        })
-        .filter((event) => event !== null);
+          if (braceCount === 0 && inEvent) {
+            // We've found a complete event object
+            const event = this.parseEventObject(currentEvent);
+            if (event) {
+              events.push(event);
+            }
+            inEvent = false;
+            currentEvent = "";
+          }
+        } else if (inEvent) {
+          currentEvent += char;
+        }
+      }
 
       return events;
     } catch (error) {
@@ -146,6 +135,53 @@ class EventImageGenerator {
         error.message
       );
       throw error;
+    }
+  }
+
+  // Helper method to parse a single event object string
+  parseEventObject(eventString) {
+    try {
+      // Handle both single and double quotes for id
+      const idMatch = eventString.match(/id:\s*["']([^"']+)["']/);
+      const nameMatch = eventString.match(/name:\s*["']([^"']+)["']/);
+
+      // Handle description with template literals (backticks) and regular quotes
+      const descriptionMatch = eventString.match(
+        /description:\s*[`"']([\s\S]*?)[`"']\s*,/
+      );
+
+      const tierMatch = eventString.match(/tier:\s*(\d+)/);
+
+      // Extract imagePromptGuidance if present
+      const guidanceMatch = eventString.match(
+        /imagePromptGuidance:\s*["']([^"']+)["']/
+      );
+
+      if (!idMatch || !nameMatch || !descriptionMatch || !tierMatch) {
+        console.warn(
+          "Could not parse event:",
+          eventString.substring(0, 100) + "..."
+        );
+        return null;
+      }
+
+      // Clean up the description - remove extra whitespace and newlines
+      let description = descriptionMatch[1]
+        .replace(/\\n/g, "\n") // Convert escaped newlines
+        .replace(/\\`/g, "`") // Convert escaped backticks
+        .replace(/\\"/g, '"') // Convert escaped quotes
+        .trim();
+
+      return {
+        id: idMatch[1],
+        name: nameMatch[1],
+        description: description,
+        tier: parseInt(tierMatch[1]),
+        imagePromptGuidance: guidanceMatch ? guidanceMatch[1] : undefined,
+      };
+    } catch (error) {
+      console.error("Error parsing event object:", error.message);
+      return null;
     }
   }
 
@@ -186,8 +222,27 @@ class EventImageGenerator {
 
   async generatePromptWithClaude(event) {
     // Create card info section
-    const cardInfo = `Name: ${event.name}
+    let cardInfo = `Name: ${event.name}
 Description: ${event.description}`;
+
+    // Add imagePromptGuidance if available
+    if (event.imagePromptGuidance) {
+      cardInfo += `
+Image Guidance: ${event.imagePromptGuidance}`;
+      console.log(
+        `✨ Using imagePromptGuidance for ${event.name}: "${event.imagePromptGuidance}"`
+      );
+    } else {
+      console.log(
+        `📝 No imagePromptGuidance found for ${event.name}, using generic template`
+      );
+    }
+
+    // Log the complete card info being used
+    console.log(`📋 Card info for ${event.name}:`);
+    console.log("─".repeat(40));
+    console.log(cardInfo);
+    console.log("─".repeat(40));
 
     // Substitute placeholders in the template (using regex to handle any whitespace variations)
     let templatePrompt = this.eventPromptTemplate

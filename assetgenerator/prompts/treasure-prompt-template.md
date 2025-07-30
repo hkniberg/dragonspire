@@ -8,4 +8,6 @@ The following information is printed on the card. Use that as guidance.
 
 # Visual style
 
+Use this visual style but skip the mushrooms.
+
 {{ visual-style }}

@@ -66,9 +66,9 @@ export const ENCOUNTERS: Encounter[] = [
     id: "witch",
     name: "Witch",
     tier: 2,
-    description: `Each **combat** you may roll \`1xD3\`:  
-**(1-2)** \`+1 might\`  
-**(2)** *Run away* for free  
+    description: `The witch will always attempt to aid you in combat with her magic. Roll 1D3 after your dice.
+**(1)** \`-1 might\`  
+**(2)** \`+1 might\`  
 **(3)** \`+2 might\``,
     follower: true,
     count: 1,

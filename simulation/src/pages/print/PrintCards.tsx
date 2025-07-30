@@ -71,7 +71,7 @@ export default function PrintCards() {
   // Combine all cards
   const allCards = [...adventureCards, ...traderCards];
 
-  // Filter out cards without original data
+  // Filter out cards without original data (include disabled cards for printing)
   const validCards = allCards.filter((card) => card.originalData);
 
   const renderCard = (card: ExtendedCard, isBackside: boolean = false) => {
@@ -84,7 +84,7 @@ export default function PrintCards() {
       borderColor: getBorderColor(card.type),
       name: card.originalData.name,
       compactMode: false,
-      disabled: card.originalData.disabled,
+      disabled: false, // Always show cards as enabled for printing
     };
 
     if (isBackside) {

@@ -7,6 +7,7 @@ export interface EventCard {
   description: string;
   count: number; // How many cards of this event to include in deck
   disabled?: boolean; // If true, card is not added to deck but still shown in UI
+  imagePromptGuidance?: string; // If provided, this will be used to generate the image for the card
 }
 
 // Helper function to get event by ID

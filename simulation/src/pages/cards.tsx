@@ -85,7 +85,8 @@ export default function CardsPage() {
   if (hideDuplicates) {
     const seenCards = new Set<string>();
     cardsToShow = allCards.filter((card) => {
-      const key = `${card.type}-${card.id}`;
+      // Use the original card ID for duplicate detection, not the synthetic React key ID
+      const key = `${card.type}-${card.originalData?.id || "unknown"}`;
       if (seenCards.has(key)) {
         return false;
       }

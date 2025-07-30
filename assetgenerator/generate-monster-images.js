@@ -61,7 +61,7 @@ class MonsterImageGenerator {
 
   // Helper function to convert monster id to filename
   monsterIdToFilename(monsterId) {
-    return monsterId + ".png";
+    return monsterId.toLowerCase() + ".png";
   }
 
   // Load all monsters from monsterCards.ts
@@ -90,36 +90,39 @@ class MonsterImageGenerator {
       // Parse the monsters array content to extract monster objects
       const monstersArrayContent = monstersMatch[1];
 
-      // Extract individual monster objects
-      const monsterMatches = monstersArrayContent.match(/\{[\s\S]*?\}/g);
+      // Extract individual monster objects - need to handle nested braces properly
+      const monsters = [];
+      let braceCount = 0;
+      let currentMonster = "";
+      let inMonster = false;
 
-      if (!monsterMatches) {
-        throw new Error(
-          "Could not extract monster objects from MONSTER_CARDS array"
-        );
-      }
+      for (let i = 0; i < monstersArrayContent.length; i++) {
+        const char = monstersArrayContent[i];
 
-      const monsters = monsterMatches
-        .map((monsterString) => {
-          // Handle both single and double quotes for id
-          const idMatch = monsterString.match(/id:\s*["']([^"']+)["']/);
-
-          const nameMatch = monsterString.match(/name:\s*["']([^"']+)["']/);
-
-          const tierMatch = monsterString.match(/tier:\s*(\d+)/);
-
-          if (!idMatch || !nameMatch || !tierMatch) {
-            console.warn("Could not parse monster:", monsterString);
-            return null;
+        if (char === "{") {
+          if (!inMonster) {
+            inMonster = true;
+            currentMonster = "";
           }
+          braceCount++;
+          currentMonster += char;
+        } else if (char === "}") {
+          braceCount--;
+          currentMonster += char;
 
-          return {
-            id: idMatch[1],
-            name: nameMatch[1],
-            tier: parseInt(tierMatch[1]),
-          };
-        })
-        .filter((monster) => monster !== null);
+          if (braceCount === 0 && inMonster) {
+            // We've found a complete monster object
+            const monster = this.parseMonsterObject(currentMonster);
+            if (monster) {
+              monsters.push(monster);
+            }
+            inMonster = false;
+            currentMonster = "";
+          }
+        } else if (inMonster) {
+          currentMonster += char;
+        }
+      }
 
       return monsters;
     } catch (error) {
@@ -128,6 +131,42 @@ class MonsterImageGenerator {
         error.message
       );
       throw error;
+    }
+  }
+
+  // Helper method to parse a single monster object string
+  parseMonsterObject(monsterString) {
+    try {
+      // Handle both single and double quotes for id
+      const idMatch = monsterString.match(/id:\s*["']([^"']+)["']/);
+      const nameMatch = monsterString.match(/name:\s*["']([^"']+)["']/);
+      const tierMatch = monsterString.match(/tier:\s*(\d+)/);
+
+      // Extract imagePromptGuidance if present
+      const guidanceMatch = monsterString.match(
+        /imagePromptGuidance:\s*["']([^"']+)["']/
+      );
+
+      if (!idMatch || !nameMatch || !tierMatch) {
+        console.warn(
+          "Could not parse monster:",
+          monsterString.substring(0, 100) + "..."
+        );
+        return null;
+      }
+
+      const monsterId = idMatch[1];
+      const monsterName = nameMatch[1];
+
+      return {
+        id: monsterId,
+        name: monsterName,
+        tier: parseInt(tierMatch[1]),
+        imagePromptGuidance: guidanceMatch ? guidanceMatch[1] : undefined,
+      };
+    } catch (error) {
+      console.error("Error parsing monster object:", error.message);
+      return null;
     }
   }
 
@@ -174,8 +213,27 @@ class MonsterImageGenerator {
 
   async generatePromptWithClaude(monster) {
     // Create card info section
-    const cardInfo = `Name: ${monster.name}
-Description: ${monster.description}`;
+    let cardInfo = `Name: ${monster.name}
+Description: ${monster.description || "No description available"}`;
+
+    // Add imagePromptGuidance if available
+    if (monster.imagePromptGuidance) {
+      cardInfo += `
+Image Guidance: ${monster.imagePromptGuidance}`;
+      console.log(
+        `✨ Using imagePromptGuidance for ${monster.name}: "${monster.imagePromptGuidance}"`
+      );
+    } else {
+      console.log(
+        `📝 No imagePromptGuidance found for ${monster.name}, using generic template`
+      );
+    }
+
+    // Log the complete card info being used
+    console.log(`📋 Card info for ${monster.name}:`);
+    console.log("─".repeat(40));
+    console.log(cardInfo);
+    console.log("─".repeat(40));
 
     // Substitute placeholders in the template (using regex to handle any whitespace variations)
     let templatePrompt = this.monsterPromptTemplate
@@ -275,7 +333,10 @@ Description: ${monster.description}`;
       }
 
       // Step 1: Generate specific prompt with Claude
-      console.log("🤖 Creating detailed prompt with Claude...");
+      const guidanceText = monster.imagePromptGuidance
+        ? " (using image guidance)"
+        : "";
+      console.log(`🤖 Creating detailed prompt with Claude${guidanceText}...`);
       const detailedPrompt = await this.generatePromptWithClaude(monster);
 
       console.log("\n📝 Generated prompt:");
@@ -329,16 +390,21 @@ Description: ${monster.description}`;
 
       const promptPromises = monstersToGenerate.map(async (monster) => {
         try {
-          console.log(`🤖 Creating prompt for "${monster.name}"...`);
+          const guidanceText = monster.imagePromptGuidance
+            ? " (with image guidance)"
+            : "";
+          console.log(
+            `🤖 Creating prompt for "${monster.name}"${guidanceText}...`
+          );
           const prompt = await this.generatePromptWithClaude(monster);
-          return { monster: monster.name, prompt, success: true };
+          return { monster: monster.id, prompt, success: true };
         } catch (error) {
           console.error(
             `❌ Failed to generate prompt for ${monster.name}:`,
             error.message
           );
           return {
-            monster: monster.name,
+            monster: monster.id,
             success: false,
             error: error.message,
           };
@@ -437,6 +503,12 @@ The --all option will:
 2. Check existing images in simulation/public/monsters/
 3. Generate missing monster images in parallel (limited by MAX_MONSTERS = ${MAX_MONSTERS})
 4. Save images with format: <monster-name>.png
+5. Use imagePromptGuidance field from monster cards when available for better image generation
+
+Features:
+- Automatically uses imagePromptGuidance from monster cards for more specific image generation
+- Falls back to generic template when no guidance is provided
+- Shows guidance status in console output
 
 Requirements:
 - OPENAI_API_KEY and ANTHROPIC_API_KEY in .env file

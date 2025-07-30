@@ -120,7 +120,11 @@ export const CardComponent = ({
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: disabled ? "rgba(255, 0, 0, 0.2)" : "rgba(255, 255, 255, 0.4)",
+            backgroundColor: disabled
+              ? "rgba(255, 0, 0, 0.2)"
+              : printMode
+                ? "rgba(255, 255, 255, 0.1)" // Much lighter overlay for print
+                : "rgba(255, 255, 255, 0.4)",
             borderRadius: "4px",
           }}
         />
@@ -146,14 +150,17 @@ export const CardComponent = ({
           style={{
             fontSize: "20px",
             fontWeight: "bold",
-            color: "#333",
+            color: printMode ? "#333" : "#333",
             textAlign: "center",
             lineHeight: "1.2",
             textTransform: "uppercase",
             letterSpacing: "1px",
             position: "relative",
             zIndex: 1,
-            textShadow: "1px 1px 2px rgba(255, 255, 255, 0.8)",
+            textShadow: printMode ? "none" : "1px 1px 2px rgba(255, 255, 255, 0.8)",
+            backgroundColor: printMode ? "rgba(255, 255, 255, 0.5)" : "transparent",
+            padding: printMode ? "2px 6px" : "0",
+            borderRadius: printMode ? "3px" : "0",
           }}
         >
           {backsideLabel}

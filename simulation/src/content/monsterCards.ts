@@ -12,6 +12,7 @@ export interface MonsterCard {
   count: number; // How many cards of this monster to include in deck
   isBeast?: boolean; // Whether this monster is classified as a beast (default false)
   disabled?: boolean; // If true, card is not added to deck but still shown in UI
+  imagePromptGuidance?: string; // If provided, this will be used to generate the image for the card
 }
 
 export function getMonsterCardById(id: string): MonsterCard | undefined {
@@ -103,6 +104,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     fame: 1,
     resources: { food: 0, wood: 2, ore: 0, gold: 0 },
     count: 2,
+    imagePromptGuidance: "A mischevious plant spirit",
   },
   {
     id: "fairy",
@@ -114,6 +116,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     fame: 1,
     resources: { food: 0, wood: 2, ore: 0, gold: 0 },
     count: 2,
+    imagePromptGuidance: "A scary but beautiful fairy",
   },
   {
     id: "entling",
@@ -125,6 +128,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     fame: 1,
     resources: { food: 0, wood: 3, ore: 0, gold: 0 },
     count: 1,
+    imagePromptGuidance: "The young gangly version of an ent, dangerous and intelligent.",
   },
 
   // TIER 2 MONSTERS
@@ -188,6 +192,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     fame: 1,
     resources: { food: 0, wood: 3, ore: 0, gold: 0 },
     count: 2,
+    imagePromptGuidance: "A battle-hardened cold-blooded female elven warrior",
   },
   {
     id: "ent",

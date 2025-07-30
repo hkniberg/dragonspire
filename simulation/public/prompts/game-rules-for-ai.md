@@ -78,7 +78,7 @@ Win immediately by successfully interacting with the Dragon at Doomspire tile (n
 - **Oasis**: Like adventure but can be restocked via events
 - **Home**: Starting tile, permanent ownership, non-combat zone
 - **Special Locations** (non-combat zones):
-  - Temple: Can pay 3 Fame to gain 1 Might, once per turn.
+  - Temple: Can pay 2 Fame to gain 1 Might, once per turn.
   - Trader: Exchange any resource for any other resource at 2:1 rate (pay 2 of one resource, get 1 of any other resource: Food, Wood, Ore, or Gold). Can execute multiple trades. Can also buy items for gold - weapons, shield, backpack, etc.
   - Mercenary Camp: Can pay 3 Gold to gain 1 Might, once per turn.
   - Doomspire: Dragon lives here. Victory location. Located in one of the 4 center tiles (4, 4), (4, 5), (5, 4), (5, 5).

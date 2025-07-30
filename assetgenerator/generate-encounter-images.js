@@ -96,59 +96,39 @@ class EncounterImageGenerator {
       // Parse the encounters array content to extract encounter objects
       const encountersArrayContent = encountersMatch[1];
 
-      // Extract individual encounter objects
-      const encounterMatches = encountersArrayContent.match(/\{[\s\S]*?\}/g);
+      // Extract individual encounter objects - need to handle nested braces properly
+      const encounters = [];
+      let braceCount = 0;
+      let currentEncounter = "";
+      let inEncounter = false;
 
-      if (!encounterMatches) {
-        throw new Error(
-          "Could not extract encounter objects from ENCOUNTERS array"
-        );
-      }
+      for (let i = 0; i < encountersArrayContent.length; i++) {
+        const char = encountersArrayContent[i];
 
-      const encounters = encounterMatches
-        .map((encounterString) => {
-          // Handle both single and double quotes for id
-          const idMatch = encounterString.match(/id:\s*["']([^"']+)["']/);
-
-          const nameMatch = encounterString.match(/name:\s*["']([^"']+)["']/);
-
-          // Handle description with template literals (backticks) and regular quotes
-          const descriptionMatch = encounterString.match(
-            /description:\s*[`"']([\s\S]*?)[`"']\s*,/
-          );
-
-          const tierMatch = encounterString.match(/tier:\s*(\d+)/);
-          const followerMatch = encounterString.match(
-            /follower:\s*(true|false)/
-          );
-
-          if (
-            !idMatch ||
-            !nameMatch ||
-            !descriptionMatch ||
-            !tierMatch ||
-            !followerMatch
-          ) {
-            console.warn("Could not parse encounter:", encounterString);
-            return null;
+        if (char === "{") {
+          if (!inEncounter) {
+            inEncounter = true;
+            currentEncounter = "";
           }
+          braceCount++;
+          currentEncounter += char;
+        } else if (char === "}") {
+          braceCount--;
+          currentEncounter += char;
 
-          // Clean up the description - remove extra whitespace and newlines
-          let description = descriptionMatch[1]
-            .replace(/\\n/g, "\n") // Convert escaped newlines
-            .replace(/\\`/g, "`") // Convert escaped backticks
-            .replace(/\\"/g, '"') // Convert escaped quotes
-            .trim();
-
-          return {
-            id: idMatch[1],
-            name: nameMatch[1],
-            description: description,
-            tier: parseInt(tierMatch[1]),
-            follower: followerMatch[1] === "true",
-          };
-        })
-        .filter((encounter) => encounter !== null);
+          if (braceCount === 0 && inEncounter) {
+            // We've found a complete encounter object
+            const encounter = this.parseEncounterObject(currentEncounter);
+            if (encounter) {
+              encounters.push(encounter);
+            }
+            inEncounter = false;
+            currentEncounter = "";
+          }
+        } else if (inEncounter) {
+          currentEncounter += char;
+        }
+      }
 
       return encounters;
     } catch (error) {
@@ -157,6 +137,61 @@ class EncounterImageGenerator {
         error.message
       );
       throw error;
+    }
+  }
+
+  // Helper method to parse a single encounter object string
+  parseEncounterObject(encounterString) {
+    try {
+      // Handle both single and double quotes for id
+      const idMatch = encounterString.match(/id:\s*["']([^"']+)["']/);
+      const nameMatch = encounterString.match(/name:\s*["']([^"']+)["']/);
+
+      // Handle description with template literals (backticks) and regular quotes
+      const descriptionMatch = encounterString.match(
+        /description:\s*[`"']([\s\S]*?)[`"']\s*,/
+      );
+
+      const tierMatch = encounterString.match(/tier:\s*(\d+)/);
+      const followerMatch = encounterString.match(/follower:\s*(true|false)/);
+
+      // Extract imagePromptGuidance if present
+      const guidanceMatch = encounterString.match(
+        /imagePromptGuidance:\s*["']([^"']+)["']/
+      );
+
+      if (
+        !idMatch ||
+        !nameMatch ||
+        !descriptionMatch ||
+        !tierMatch ||
+        !followerMatch
+      ) {
+        console.warn(
+          "Could not parse encounter:",
+          encounterString.substring(0, 100) + "..."
+        );
+        return null;
+      }
+
+      // Clean up the description - remove extra whitespace and newlines
+      let description = descriptionMatch[1]
+        .replace(/\\n/g, "\n") // Convert escaped newlines
+        .replace(/\\`/g, "`") // Convert escaped backticks
+        .replace(/\\"/g, '"') // Convert escaped quotes
+        .trim();
+
+      return {
+        id: idMatch[1],
+        name: nameMatch[1],
+        description: description,
+        tier: parseInt(tierMatch[1]),
+        follower: followerMatch[1] === "true",
+        imagePromptGuidance: guidanceMatch ? guidanceMatch[1] : undefined,
+      };
+    } catch (error) {
+      console.error("Error parsing encounter object:", error.message);
+      return null;
     }
   }
 
@@ -203,8 +238,27 @@ class EncounterImageGenerator {
 
   async generatePromptWithClaude(encounter) {
     // Create card info section
-    const cardInfo = `Name: ${encounter.name}
+    let cardInfo = `Name: ${encounter.name}
 Description: ${encounter.description}`;
+
+    // Add imagePromptGuidance if available
+    if (encounter.imagePromptGuidance) {
+      cardInfo += `
+Image Guidance: ${encounter.imagePromptGuidance}`;
+      console.log(
+        `✨ Using imagePromptGuidance for ${encounter.name}: "${encounter.imagePromptGuidance}"`
+      );
+    } else {
+      console.log(
+        `📝 No imagePromptGuidance found for ${encounter.name}, using generic template`
+      );
+    }
+
+    // Log the complete card info being used
+    console.log(`📋 Card info for ${encounter.name}:`);
+    console.log("─".repeat(40));
+    console.log(cardInfo);
+    console.log("─".repeat(40));
 
     // Substitute placeholders in the template (using regex to handle any whitespace variations)
     let templatePrompt = this.encounterPromptTemplate

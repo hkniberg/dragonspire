@@ -79,7 +79,7 @@ class TraderItemImageGenerator {
 
   // Helper function to convert trader item id to filename
   traderItemIdToFilename(traderItemId) {
-    return traderItemId + ".png";
+    return traderItemId.toLowerCase() + ".png";
   }
 
   // Load all trader items from traderItems.ts
@@ -106,47 +106,39 @@ class TraderItemImageGenerator {
       // Parse the trader items array content to extract trader item objects
       const traderItemsArrayContent = traderItemsMatch[1];
 
-      // Extract individual trader item objects
-      const traderItemMatches = traderItemsArrayContent.match(/\{[\s\S]*?\}/g);
+      // Extract individual trader item objects - need to handle nested braces properly
+      const traderItems = [];
+      let braceCount = 0;
+      let currentTraderItem = "";
+      let inTraderItem = false;
 
-      if (!traderItemMatches) {
-        throw new Error(
-          "Could not extract trader item objects from TRADER_ITEMS array"
-        );
-      }
+      for (let i = 0; i < traderItemsArrayContent.length; i++) {
+        const char = traderItemsArrayContent[i];
 
-      const traderItems = traderItemMatches
-        .map((traderItemString) => {
-          const idMatch = traderItemString.match(/id:\s*["']([^"']+)["']/);
-          const nameMatch = traderItemString.match(/name:\s*["']([^"']+)["']/);
-
-          // Handle description with template literals (backticks) and regular quotes
-          const descriptionMatch = traderItemString.match(
-            /description:\s*[`"']([\s\S]*?)[`"']\s*,/
-          );
-
-          const costMatch = traderItemString.match(/cost:\s*(\d+)/);
-
-          if (!idMatch || !nameMatch || !descriptionMatch || !costMatch) {
-            console.warn("Could not parse trader item:", traderItemString);
-            return null;
+        if (char === "{") {
+          if (!inTraderItem) {
+            inTraderItem = true;
+            currentTraderItem = "";
           }
+          braceCount++;
+          currentTraderItem += char;
+        } else if (char === "}") {
+          braceCount--;
+          currentTraderItem += char;
 
-          // Clean up the description - remove extra whitespace and newlines
-          let description = descriptionMatch[1]
-            .replace(/\\n/g, "\n") // Convert escaped newlines
-            .replace(/\\`/g, "`") // Convert escaped backticks
-            .replace(/\\"/g, '"') // Convert escaped quotes
-            .trim();
-
-          return {
-            id: idMatch[1],
-            name: nameMatch[1],
-            description: description,
-            cost: parseInt(costMatch[1]),
-          };
-        })
-        .filter((traderItem) => traderItem !== null);
+          if (braceCount === 0 && inTraderItem) {
+            // We've found a complete trader item object
+            const traderItem = this.parseTraderItemObject(currentTraderItem);
+            if (traderItem) {
+              traderItems.push(traderItem);
+            }
+            inTraderItem = false;
+            currentTraderItem = "";
+          }
+        } else if (inTraderItem) {
+          currentTraderItem += char;
+        }
+      }
 
       return traderItems;
     } catch (error) {
@@ -155,6 +147,52 @@ class TraderItemImageGenerator {
         error.message
       );
       throw error;
+    }
+  }
+
+  // Helper method to parse a single trader item object string
+  parseTraderItemObject(traderItemString) {
+    try {
+      const idMatch = traderItemString.match(/id:\s*["']([^"']+)["']/);
+      const nameMatch = traderItemString.match(/name:\s*["']([^"']+)["']/);
+
+      // Handle description with template literals (backticks) and regular quotes
+      const descriptionMatch = traderItemString.match(
+        /description:\s*[`"']([\s\S]*?)[`"']\s*,/
+      );
+
+      const costMatch = traderItemString.match(/cost:\s*(\d+)/);
+
+      // Extract imagePromptGuidance if present
+      const guidanceMatch = traderItemString.match(
+        /imagePromptGuidance:\s*["']([^"']+)["']/
+      );
+
+      if (!idMatch || !nameMatch || !descriptionMatch || !costMatch) {
+        console.warn(
+          "Could not parse trader item:",
+          traderItemString.substring(0, 100) + "..."
+        );
+        return null;
+      }
+
+      // Clean up the description - remove extra whitespace and newlines
+      let description = descriptionMatch[1]
+        .replace(/\\n/g, "\n") // Convert escaped newlines
+        .replace(/\\`/g, "`") // Convert escaped backticks
+        .replace(/\\"/g, '"') // Convert escaped quotes
+        .trim();
+
+      return {
+        id: idMatch[1],
+        name: nameMatch[1],
+        description: description,
+        cost: parseInt(costMatch[1]),
+        imagePromptGuidance: guidanceMatch ? guidanceMatch[1] : undefined,
+      };
+    } catch (error) {
+      console.error("Error parsing trader item object:", error.message);
+      return null;
     }
   }
 
@@ -200,9 +238,28 @@ class TraderItemImageGenerator {
 
   async generatePromptWithClaude(traderItem) {
     // Create card info section
-    const cardInfo = `Name: ${traderItem.name}
+    let cardInfo = `Name: ${traderItem.name}
 Description: ${traderItem.description}
 Cost: ${traderItem.cost} gold`;
+
+    // Add imagePromptGuidance if available
+    if (traderItem.imagePromptGuidance) {
+      cardInfo += `
+Image Guidance: ${traderItem.imagePromptGuidance}`;
+      console.log(
+        `✨ Using imagePromptGuidance for ${traderItem.name}: "${traderItem.imagePromptGuidance}"`
+      );
+    } else {
+      console.log(
+        `📝 No imagePromptGuidance found for ${traderItem.name}, using generic template`
+      );
+    }
+
+    // Log the complete card info being used
+    console.log(`📋 Card info for ${traderItem.name}:`);
+    console.log("─".repeat(40));
+    console.log(cardInfo);
+    console.log("─".repeat(40));
 
     // Substitute placeholders in the template (using regex to handle any whitespace variations)
     let templatePrompt = this.traderItemPromptTemplate
@@ -369,14 +426,14 @@ Cost: ${traderItem.cost} gold`;
         try {
           console.log(`🤖 Creating prompt for "${traderItem.name}"...`);
           const prompt = await this.generatePromptWithClaude(traderItem);
-          return { traderItem: traderItem.name, prompt, success: true };
+          return { traderItem: traderItem.id, prompt, success: true };
         } catch (error) {
           console.error(
             `❌ Failed to generate prompt for ${traderItem.name}:`,
             error.message
           );
           return {
-            traderItem: traderItem.name,
+            traderItem: traderItem.id,
             success: false,
             error: error.message,
           };
