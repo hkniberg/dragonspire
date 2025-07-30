@@ -28,6 +28,7 @@ export default function CheatSheet1() {
                   <div>
                     <strong>Roll Dice Phase</strong> <em>(Parallel)</em>
                     <ul className={styles.bulletList}>
+                      <li>Rotate starting player token to next player</li>
                       <li>Roll 1 die for castle + 1 per knight</li>
                       <li>
                         <strong>Dice Tax</strong>: Pay 2 Food per die after first 2
