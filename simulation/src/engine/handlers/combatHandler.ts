@@ -4,9 +4,8 @@ import { CarriableItem, Champion, Decision, DecisionContext, DecisionOption, Gam
 import { formatResources } from "@/lib/utils";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { canChampionCarryMoreItems } from "@/players/PlayerUtils";
-import { handleBackpackEffect } from "./backpackHandler";
 import { FleeContext, handleFleeDecision } from "./fleeHandler";
-import { handlePaddedHelmetRespawn } from "./paddedHelmetHandler";
+import { handlePaddedHelmetLootChoice } from "./paddedHelmetHandler";
 
 /**
  * Roll a D3 (returns 1, 2, or 3 with equal probability like the game rules)
@@ -494,17 +493,17 @@ export async function resolveChampionVsChampionCombat(
     // Track loot information for the final message
     let lootInfo = "";
 
-    // Check if the defending player has a backpack and any resources to steal
-    const defendingPlayerHasBackpack = hasTraderItem(defendingPlayer, "backpack");
+    // Check if the defending player has a padded helmet and any resources/items to steal
+    const defendingPlayerHasPaddedHelmet = hasTraderItem(defendingPlayer, "padded-helmet");
     const defendingPlayerHasResources = Object.values(defendingPlayer.resources).some(amount => amount > 0);
     const defendingPlayerHasItems = opposingChampion.items.length > 0;
 
-    if (defendingPlayerHasBackpack && defendingPlayerHasResources) {
-      // Backpack effect: defeated player (defender) chooses what resource to give
+    if (defendingPlayerHasPaddedHelmet && (defendingPlayerHasResources || defendingPlayerHasItems)) {
+      // Padded helmet effect: defeated player (defender) chooses what to give
       // Get the defending player's agent if available
       const defendingPlayerAgent = getPlayerAgent ? getPlayerAgent(defendingPlayer.name) : undefined;
 
-      const backpackResult = await handleBackpackEffect(
+      const paddedHelmetResult = await handlePaddedHelmetLootChoice(
         gameState,
         attackingPlayer,
         attackingChampion,
@@ -517,8 +516,8 @@ export async function resolveChampionVsChampionCombat(
         defendingPlayerAgent !== undefined // Use player choice if we have their agent, otherwise random
       );
 
-      if (backpackResult.lootApplied && backpackResult.lootDescription) {
-        lootInfo = `, ${attackingPlayer.name} ${backpackResult.lootDescription} (backpack effect)`;
+      if (paddedHelmetResult.lootApplied && paddedHelmetResult.lootDescription) {
+        lootInfo = `, ${attackingPlayer.name} ${paddedHelmetResult.lootDescription} (padded helmet effect)`;
       } else {
         lootInfo = ", nothing to loot";
       }
@@ -582,19 +581,19 @@ export async function resolveChampionVsChampionCombat(
     // Attacker lost - apply defeat effects immediately
     let lootInfo = "";
 
-    // Check if the attacking player has a backpack and any resources to steal
-    const attackingPlayerHasBackpack = hasTraderItem(attackingPlayer, "backpack");
+    // Check if the attacking player has a padded helmet and any resources/items to steal
+    const attackingPlayerHasPaddedHelmet = hasTraderItem(attackingPlayer, "padded-helmet");
     const attackingPlayerHasResources = Object.values(attackingPlayer.resources).some(amount => amount > 0);
     const attackingPlayerHasItems = (gameState.getChampion(attackingPlayer.name, attackingChampionId)?.items.length ?? 0) > 0;
 
-    if (attackingPlayerHasBackpack && attackingPlayerHasResources) {
-      // Backpack effect: defeated player chooses what resource to give
+    if (attackingPlayerHasPaddedHelmet && (attackingPlayerHasResources || attackingPlayerHasItems)) {
+      // Padded helmet effect: defeated player chooses what to give
       const attackingChampion = gameState.getChampion(attackingPlayer.name, attackingChampionId);
       if (!attackingChampion) {
         throw new Error(`Attacking champion ${attackingChampionId} not found`);
       }
 
-      const backpackResult = await handleBackpackEffect(
+      const paddedHelmetResult = await handlePaddedHelmetLootChoice(
         gameState,
         defendingPlayer,
         opposingChampion,
@@ -607,8 +606,8 @@ export async function resolveChampionVsChampionCombat(
         true // Defeated player (attacker) makes the choice
       );
 
-      if (backpackResult.lootApplied && backpackResult.lootDescription) {
-        lootInfo = `, ${defendingPlayer.name} ${backpackResult.lootDescription} (backpack effect)`;
+      if (paddedHelmetResult.lootApplied && paddedHelmetResult.lootDescription) {
+        lootInfo = `, ${defendingPlayer.name} ${paddedHelmetResult.lootDescription} (padded helmet effect)`;
       }
     } else if (attackingPlayerHasResources || attackingPlayerHasItems) {
       // Normal combat loss: defending player gets to choose what to steal (simulated by random choice for now)
@@ -1087,30 +1086,7 @@ export async function applyChampionDefeat(
   gameLog?: readonly GameLogEntry[],
   thinkingLogger?: (content: string) => void
 ): Promise<void> {
-  // Check for padded helmet respawn
-  const respawnPosition = await handlePaddedHelmetRespawn(
-    gameState,
-    player,
-    championId,
-    playerAgent,
-    gameLog,
-    logFn,
-    thinkingLogger
-  );
-
-  if (respawnPosition) {
-    // Padded helmet respawn - move champion to chosen tile
-    const champion = gameState.getChampion(player.name, championId);
-    if (champion) {
-      champion.position = respawnPosition;
-    }
-
-    // Still pay healing cost
-    await handleHealingCost(player, defeatContext, logFn, playerAgent, gameState, gameLog, thinkingLogger);
-    return;
-  }
-
-  // Default behavior: send champion home
+  // Send champion home
   gameState.moveChampionToHome(player.name, championId);
 
   // Pay healing cost
@@ -1226,29 +1202,7 @@ async function applyChampionDefeatInChampionCombat(
   gameLog?: readonly GameLogEntry[],
   thinkingLogger?: (content: string) => void
 ): Promise<void> {
-  // Check for padded helmet respawn
-  const respawnPosition = await handlePaddedHelmetRespawn(
-    gameState,
-    player,
-    championId,
-    playerAgent,
-    gameLog,
-    logFn,
-    thinkingLogger
-  );
-
-  if (respawnPosition) {
-    // Padded helmet respawn - move champion to chosen tile
-    const champion = gameState.getChampion(player.name, championId);
-    if (champion) {
-      champion.position = respawnPosition;
-    }
-    // No healing cost for champion vs champion combat
-    logFn("combat", `${defeatContext}, used padded helmet to respawn`);
-    return;
-  }
-
-  // Default behavior: send champion home (no healing cost for champion vs champion combat)
+  // Send champion home (no healing cost for champion vs champion combat)
   gameState.moveChampionToHome(player.name, championId);
   logFn("combat", `${defeatContext}, went home`);
 }

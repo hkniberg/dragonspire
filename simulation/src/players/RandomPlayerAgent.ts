@@ -1,5 +1,6 @@
 // Lords of Doomspire Random Player
 
+import { getTraderItemById } from "@/content/traderItems";
 import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
 import { TraderCard } from "@/lib/cards";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
@@ -114,10 +115,32 @@ export class RandomPlayerAgent implements PlayerAgent {
     traderContext: TraderContext,
     thinkingLogger?: (content: string) => void,
   ): Promise<TraderDecision> {
-    // RandomPlayer doesn't interact with traders for now
+    const { availableItems, playerResources } = traderContext;
+
+    // Filter items that the player can afford (cost in gold)
+    const affordableItems = availableItems.filter(item => {
+      const traderItem = getTraderItemById(item.id);
+      return traderItem && playerResources.gold >= traderItem.cost;
+    });
+
+    // If no affordable items, return empty actions
+    if (affordableItems.length === 0) {
+      return {
+        actions: [],
+        reasoning: "RandomPlayer has no affordable items available",
+      };
+    }
+
+    // Pick a random affordable item
+    const randomIndex = Math.floor(Math.random() * affordableItems.length);
+    const selectedItem = affordableItems[randomIndex];
+
     return {
-      actions: [],
-      reasoning: "RandomPlayer doesn't make trader decisions yet",
+      actions: [{
+        type: "buyItem",
+        itemId: selectedItem.id,
+      }],
+      reasoning: `RandomPlayer randomly chose to buy ${selectedItem.id} from ${affordableItems.length} affordable options`,
     };
   }
 
@@ -220,20 +243,13 @@ export class RandomPlayerAgent implements PlayerAgent {
     const targetPosition = selectedPath[selectedPath.length - 1];
     const destinationTile = gameState.board.getTileAt(targetPosition);
 
-    // Prepare tile action
+    // Always set these tile actions to true
     const tileAction: any = {
       claimTile: true,
+      useTrader: true,
+      useMercenary: true,
+      useTemple: true,
     };
-
-    // Check if we should use mercenary camp (if we have 3+ gold)
-    if (destinationTile?.tileType === "mercenary" && player.resources.gold >= 3) {
-      tileAction.useMercenary = true;
-    }
-
-    // Check if we should use temple (if we have 2+ fame)
-    if (destinationTile?.tileType === "temple" && player.fame >= 2) {
-      tileAction.useTemple = true;
-    }
 
     // Check if we should conquer the tile (if it's claimed by another player and we have might or fame)
     if (destinationTile?.tileType === "resource" && destinationTile.claimedBy && destinationTile.claimedBy !== playerName) {

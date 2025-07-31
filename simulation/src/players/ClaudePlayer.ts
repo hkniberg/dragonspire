@@ -71,6 +71,11 @@ export class ClaudePlayerAgent implements PlayerAgent {
         decisionContext: DecisionContext,
         thinkingLogger?: (content: string) => void,
     ): Promise<Decision> {
+        // If there's only one option, choose it automatically without AI
+        if (decisionContext.options.length === 1) {
+            return { choice: decisionContext.options[0].id };
+        }
+
         // Prepare decision context message
         const userMessage = await this.prepareDecisionMessage(gameState, gameLog, decisionContext);
 
