@@ -1,4 +1,4 @@
-import { MarketResourceType, OceanPosition, Position } from './types';
+import { BiomeType, MarketResourceType, OceanPosition, Position } from './types';
 
 export interface ChampionAction {
   diceValueUsed: number;
@@ -16,6 +16,7 @@ export interface TileAction {
   dropItems?: string[]; // Array of item IDs to drop on the tile
   conquerWithMight?: boolean; // Conquer tile using military might (costs 1 might)
   conquerWithFame?: boolean; // Conquer tile using treachery (costs 1 fame)
+  preferredAdventureBiome?: BiomeType; // Preferred biome when drawing adventure cards
 }
 
 export interface BoatAction {

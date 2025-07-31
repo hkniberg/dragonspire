@@ -384,8 +384,22 @@ export class GameMaster {
     // Step 4: Handle special tiles (adventure/oasis) - moved before monster combat
     const specialTileResult = handleSpecialTiles(tile, championId, logFn);
     if (specialTileResult.interactionOccurred && specialTileResult.adventureCardDrawn) {
-      // Draw and handle adventure card
-      const adventureCard = this.gameDecks.drawCard(tile.tier!, 1);
+      // Use player's preferred biome from TileAction to choose deck
+      const preferredBiome = tileAction?.preferredAdventureBiome;
+
+      // Draw adventure card using simplified API
+      const drawResult = this.gameDecks.drawCard(tile.tier!, preferredBiome);
+
+      // Log the card draw with simplified format
+      if (drawResult.card) {
+        const biomeDisplayName = drawResult.card.biome.charAt(0).toUpperCase() + drawResult.card.biome.slice(1);
+        logFn("event", `${player.name} drew from tier ${tile.tier}, deck ${drawResult.selectedDeckNumber} (a ${biomeDisplayName} card)`);
+      } else {
+        logFn("event", `${player.name} drew from tier ${tile.tier}, deck ${drawResult.selectedDeckNumber} (no card available)`);
+      }
+
+      // Handle the adventure card
+      const adventureCard = drawResult.card;
       // Track statistics
       player.statistics!.adventureCards += 1;
 
@@ -408,7 +422,7 @@ export class GameMaster {
 
         // If the card should be returned to the deck (e.g., sword-in-stone resisted pull)
         if (adventureResult.cardReturnedToDeck && adventureCard) {
-          this.gameDecks.returnCardToTop(tile.tier!, 1, adventureCard);
+          this.gameDecks.returnCardToTop(tile.tier!, drawResult.selectedDeckNumber, adventureCard);
           logFn("event", `The card returned to the top of the adventure deck.`);
         }
 

@@ -1,10 +1,4 @@
-# LORDS OF DOOMSPIRE
-
-## Player Rulebook
-
----
-
-## Overview
+# LORDS OF DOOMSPIRE - Rulebook
 
 You are a lord commanding knights from your island castle to explore a dangerous neighboring island. Compete with other players to accumulate fame, might, and resources while seeking to reach the dragon at **Doomspire**.
 

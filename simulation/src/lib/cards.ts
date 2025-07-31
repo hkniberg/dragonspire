@@ -32,6 +32,11 @@ export interface TraderCard {
   id: string;
 }
 
+export interface CardDrawResult {
+  card: Card | undefined;
+  selectedDeckNumber: 1 | 2;
+}
+
 class CardDeck {
   private cards: Card[] = [];
 
@@ -146,14 +151,14 @@ class TraderDeck {
 }
 
 export class GameDecks {
-  private decks: Record<TileTier, [CardDeck, CardDeck, CardDeck]>;
+  private decks: Record<TileTier, [CardDeck, CardDeck]>;
   private traderDeck: TraderDeck;
 
   constructor(allCards: Card[]) {
     this.decks = {
-      1: [new CardDeck(), new CardDeck(), new CardDeck()],
-      2: [new CardDeck(), new CardDeck(), new CardDeck()],
-      3: [new CardDeck(), new CardDeck(), new CardDeck()],
+      1: [new CardDeck(), new CardDeck()],
+      2: [new CardDeck(), new CardDeck()],
+      3: [new CardDeck(), new CardDeck()],
     };
 
     this.traderDeck = new TraderDeck();
@@ -163,19 +168,19 @@ export class GameDecks {
   }
 
   private initializeDecks(allCards: Card[]): void {
-    // For each tier, collect cards, shuffle, and distribute into 3 decks
+    // For each tier, collect cards, shuffle, and distribute into 2 decks
     for (const tier of [1, 2, 3] as TileTier[]) {
       const tierCards = allCards.filter((card) => card.tier === tier);
 
       // Shuffle the tier cards
       this.shuffleArray(tierCards);
 
-      // Distribute into 3 roughly even decks
-      const deckSize = Math.floor(tierCards.length / 3);
-      const remainder = tierCards.length % 3;
+      // Distribute into 2 roughly even decks
+      const deckSize = Math.floor(tierCards.length / 2);
+      const remainder = tierCards.length % 2;
 
       let cardIndex = 0;
-      for (let deckNum = 0; deckNum < 3; deckNum++) {
+      for (let deckNum = 0; deckNum < 2; deckNum++) {
         const cardsForThisDeck = deckSize + (deckNum < remainder ? 1 : 0);
         const deckCards = tierCards.slice(cardIndex, cardIndex + cardsForThisDeck);
         this.decks[tier][deckNum].addCards(deckCards);
@@ -203,14 +208,14 @@ export class GameDecks {
     this.shuffleArray(allTierCards);
 
     // Clear existing decks
-    this.decks[tier] = [new CardDeck(), new CardDeck(), new CardDeck()];
+    this.decks[tier] = [new CardDeck(), new CardDeck()];
 
     // Redistribute
-    const deckSize = Math.floor(allTierCards.length / 3);
-    const remainder = allTierCards.length % 3;
+    const deckSize = Math.floor(allTierCards.length / 2);
+    const remainder = allTierCards.length % 2;
 
     let cardIndex = 0;
-    for (let deckNum = 0; deckNum < 3; deckNum++) {
+    for (let deckNum = 0; deckNum < 2; deckNum++) {
       const cardsForThisDeck = deckSize + (deckNum < remainder ? 1 : 0);
       const deckCards = allTierCards.slice(cardIndex, cardIndex + cardsForThisDeck);
       this.decks[tier][deckNum].addCards(deckCards);
@@ -218,21 +223,76 @@ export class GameDecks {
     }
   }
 
-  drawCard(tier: TileTier, deckNumber: 1 | 2 | 3): Card | undefined {
-    const deckIndex = deckNumber - 1; // Convert 1,2,3 to 0,1,2
-    return this.decks[tier][deckIndex].drawFromTop();
+  drawCard(tier: TileTier, deckNumber: 1 | 2): Card | undefined;
+  drawCard(tier: TileTier, preferredBiome?: BiomeType): CardDrawResult;
+  drawCard(tier: TileTier, deckNumberOrPreferredBiome?: 1 | 2 | BiomeType): Card | undefined | CardDrawResult {
+    // Check if this is the old API (deckNumber passed)
+    if (typeof deckNumberOrPreferredBiome === 'number') {
+      const deckIndex = deckNumberOrPreferredBiome - 1; // Convert 1,2 to 0,1
+      return this.decks[tier][deckIndex].drawFromTop();
+    }
+
+    // New API: handle biome preference and deck selection
+    const preferredBiome = deckNumberOrPreferredBiome;
+    const biomes = this.getTopCardBiomes(tier);
+    const deckSizes = this.getDeckSizes(tier);
+
+    let selectedDeckNumber: 1 | 2 = 1; // Default to deck 1
+
+    // Find a deck with the preferred biome if specified
+    if (preferredBiome) {
+      for (let i = 0; i < 2; i++) {
+        const deckNumber = (i + 1) as 1 | 2;
+        const biome = biomes[i];
+        const size = deckSizes[i];
+        if (biome === preferredBiome && size > 0) {
+          selectedDeckNumber = deckNumber;
+          break;
+        }
+      }
+      // If preferred biome not available, fallback to any available deck
+      if (biomes[selectedDeckNumber - 1] !== preferredBiome) {
+        for (let i = 0; i < 2; i++) {
+          const deckNumber = (i + 1) as 1 | 2;
+          const size = deckSizes[i];
+          if (size > 0) {
+            selectedDeckNumber = deckNumber;
+            break;
+          }
+        }
+      }
+    } else {
+      // No preference specified, use first available deck
+      for (let i = 0; i < 2; i++) {
+        const deckNumber = (i + 1) as 1 | 2;
+        const size = deckSizes[i];
+        if (size > 0) {
+          selectedDeckNumber = deckNumber;
+          break;
+        }
+      }
+    }
+
+    // Draw the card from the selected deck
+    const deckIndex = selectedDeckNumber - 1;
+    const card = this.decks[tier][deckIndex].drawFromTop();
+
+    return {
+      card,
+      selectedDeckNumber
+    };
   }
 
-  returnCardToTop(tier: TileTier, deckNumber: 1 | 2 | 3, card: Card): void {
-    const deckIndex = deckNumber - 1; // Convert 1,2,3 to 0,1,2
+  returnCardToTop(tier: TileTier, deckNumber: 1 | 2, card: Card): void {
+    const deckIndex = deckNumber - 1; // Convert 1,2 to 0,1
     this.decks[tier][deckIndex].addToTop(card);
   }
 
-  getTopCardBiomes(tier: TileTier): [BiomeType | null, BiomeType | null, BiomeType | null] {
+  getTopCardBiomes(tier: TileTier): [BiomeType | null, BiomeType | null] {
     const biomes: (BiomeType | null)[] = [];
     let allEmpty = true;
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 2; i++) {
       const topCard = this.decks[tier][i].peekTop();
       if (topCard) {
         biomes.push(topCard.biome);
@@ -249,19 +309,18 @@ export class GameDecks {
       return this.getTopCardBiomes(tier);
     }
 
-    return biomes as [BiomeType | null, BiomeType | null, BiomeType | null];
+    return biomes as [BiomeType | null, BiomeType | null];
   }
 
-  peekTopCard(tier: TileTier, deckNumber: 1 | 2 | 3): Card | undefined {
-    const deckIndex = deckNumber - 1; // Convert 1,2,3 to 0,1,2
+  peekTopCard(tier: TileTier, deckNumber: 1 | 2): Card | undefined {
+    const deckIndex = deckNumber - 1; // Convert 1,2 to 0,1
     return this.decks[tier][deckIndex].peekTop();
   }
 
-  getDeckSizes(tier: TileTier): [number, number, number] {
+  getDeckSizes(tier: TileTier): [number, number] {
     return [
       this.decks[tier][0].size(),
-      this.decks[tier][1].size(),
-      this.decks[tier][2].size()
+      this.decks[tier][1].size()
     ];
   }
 

@@ -83,7 +83,7 @@ export class GameState {
     const startingFood = startingValues?.food ?? 0;
     const startingWood = startingValues?.wood ?? 0;
     const startingOre = startingValues?.ore ?? 0;
-    const startingGold = startingValues?.gold ?? 0;
+    const startingGold = startingValues?.gold ?? 2;
 
     for (let i = 0; i < 4; i++) {
       const playerName = playerNames[i];

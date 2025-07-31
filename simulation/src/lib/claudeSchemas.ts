@@ -45,6 +45,11 @@ export const tileActionSchema = {
       type: "boolean",
       description: "Whether to conquer the tile using treachery (costs 1 fame, only for resource tiles claimed by other players)",
     },
+    preferredAdventureBiome: {
+      type: "string",
+      description: "Preferred biome theme when drawing adventure cards from adventure or unexplored tiles. Options: 'plains', 'mountains', 'woodlands'",
+      enum: ["plains", "mountains", "woodlands"]
+    },
   },
 };
 

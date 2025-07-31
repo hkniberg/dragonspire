@@ -85,7 +85,7 @@ export default function GameSimulation() {
     startFood: 0,
     startWood: 0,
     startOre: 0,
-    startGold: 0,
+    startGold: 2,
     seed: 0,
   });
   const [apiKey, setApiKey] = useState("");

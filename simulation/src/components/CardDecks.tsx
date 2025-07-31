@@ -22,7 +22,7 @@ interface CardDecksProps {
 
 interface ModalCardData {
   tier: TileTier;
-  deckNumber: 1 | 2 | 3;
+  deckNumber: 1 | 2;
   cardData: any;
   originalData: any;
   imageUrl: string;
@@ -72,7 +72,7 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
     );
   }
 
-  const handleCardClick = (tier: TileTier, deckNumber: 1 | 2 | 3) => {
+  const handleCardClick = (tier: TileTier, deckNumber: 1 | 2) => {
     const gameDecks = gameSession.getGameDecks();
     const topCard = gameDecks.peekTopCard(tier, deckNumber);
     const deckSizes = gameDecks.getDeckSizes(tier);
@@ -145,7 +145,7 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
     setTraderModal(null);
   };
 
-  const renderCard = (tier: TileTier, deckNumber: 1 | 2 | 3) => {
+  const renderCard = (tier: TileTier, deckNumber: 1 | 2) => {
     const cardKey = `tier-${tier}-deck-${deckNumber}`;
     const gameDecks = gameSession.getGameDecks();
     const topCard = gameDecks.peekTopCard(tier, deckNumber);
@@ -282,12 +282,12 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
                   alignItems: "center",
                 }}
               >
-                {[1, 2, 3].map((deckNumber) => {
+                {[1, 2].map((deckNumber) => {
                   const deckSize = deckSizes[deckNumber - 1];
                   // Only render deck if it has cards
                   if (deckSize === 0) return null;
 
-                  return <div key={deckNumber}>{renderCard(tier as TileTier, deckNumber as 1 | 2 | 3)}</div>;
+                  return <div key={deckNumber}>{renderCard(tier as TileTier, deckNumber as 1 | 2)}</div>;
                 })}
               </div>
             );
