@@ -1,7 +1,7 @@
 import { GameState } from "@/game/GameState";
 import { CarriableItem, Decision, DecisionContext, Player, Tile, TileTier } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
-import { createDropItemDecision, handleDropItemDecision } from "@/players/PlayerUtils";
+import { canChampionCarryMoreItems, createDropItemDecision, handleDropItemDecision } from "@/players/PlayerUtils";
 
 /**
  * Roll a D3 (returns 1, 2, or 3 with equal probability like the game rules)
@@ -115,7 +115,7 @@ async function handleStuckRingOutcome(
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void
 ): Promise<MysteriousRingResult> {
-  if (champion.items.length < 2) {
+  if (canChampionCarryMoreItems(champion)) {
     // Add the ring directly (marked as "stuck")
     const stuckRing = createStuckRing();
     champion.items.push(stuckRing);
@@ -234,7 +234,7 @@ async function handleDragonsbaneRingOutcome(
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void
 ): Promise<MysteriousRingResult> {
-  if (champion.items.length < 2) {
+  if (canChampionCarryMoreItems(champion)) {
     // Add the ring with dragon bonus
     const dragonRing = createDragonsbaneRing();
     champion.items.push(dragonRing);

@@ -4,6 +4,7 @@ You are player {{playerName}}.
 
 <current-board-state>
 {{boardState}}
+{{traderItems}}
 </current-board-state>
 
 <game-log>

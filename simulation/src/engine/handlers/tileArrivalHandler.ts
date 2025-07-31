@@ -8,6 +8,7 @@ import {
   resolveChampionVsDragonEncounter,
   resolveChampionVsMonsterCombat
 } from "./combatHandler";
+import { canChampionCarryMoreItems } from "@/players/PlayerUtils";
 
 export interface ChampionCombatResult {
   combatOccurred: boolean;
@@ -463,11 +464,11 @@ export function handleItemManagement(
       continue;
     }
 
-    // Check inventory space (max 2 items)
-    if (champion.items.length >= 2) {
+    // Check inventory space
+    if (!canChampionCarryMoreItems(champion)) {
       result.failedPickups.push({
         itemId,
-        reason: "Champion inventory is full (max 2 items)"
+        reason: "Champion inventory is full"
       });
       continue;
     }

@@ -3,6 +3,7 @@
 import { getTraderItemById } from "@/content/traderItems";
 import { formatBuildingInfo, stringifyGameState, stringifyPlayer } from "@/game/gameStateStringifier";
 import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
+import { TraderCard } from "@/lib/cards";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, Player, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
@@ -37,9 +38,10 @@ export class ClaudePlayerAgent implements PlayerAgent {
         gameLog: readonly GameLogEntry[],
         diceValues: number[],
         turnNumber: number,
+        traderItems: readonly TraderCard[],
         thinkingLogger?: (content: string) => void,
     ): Promise<string | undefined> {
-        const userMessage = await this.prepareAssessmentMessage(gameState, gameLog, diceValues, turnNumber);
+        const userMessage = await this.prepareAssessmentMessage(gameState, gameLog, diceValues, turnNumber, traderItems);
 
         // Get text response for strategic assessment
         const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 3000, 6000, thinkingLogger);
@@ -131,9 +133,30 @@ export class ClaudePlayerAgent implements PlayerAgent {
         gameLog: readonly GameLogEntry[],
         diceRolls: number[],
         turnNumber: number,
+        traderItems: readonly TraderCard[],
     ): Promise<string> {
         const boardState = stringifyGameState(gameState);
         const gameLogText = this.formatGameLogForPrompt(gameLog, false, false);
+
+        // Format trader items for the template
+        const itemCounts = traderItems.reduce((acc, traderCard) => {
+            acc[traderCard.id] = (acc[traderCard.id] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+        const traderItemsText = Object.entries(itemCounts)
+            .map(([itemId, quantity], i) => {
+                const item = getTraderItemById(itemId);
+                if (!item) {
+                    return `${i + 1}. Unknown item (ID: ${itemId}) - Quantity: ${quantity}`;
+                }
+                return `${i + 1}. ${item.name} (${item.cost} gold) - ${item.description}`;
+            })
+            .join("\n");
+
+        const traderItemsSection = traderItemsText
+            ? `\nTrader Items Available:\n${traderItemsText}`
+            : "\nTrader Items Available: None";
 
         const variables: TemplateVariables = {
             playerName: this.name,
@@ -142,6 +165,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             diceValues: diceRolls.join(", "),
             turnNumber: turnNumber,
             extraInstructions: this.getExtraInstructionsSection(gameState),
+            traderItems: traderItemsSection,
         };
 
         return await this.templateProcessor.processTemplate("strategicAssessment", variables);

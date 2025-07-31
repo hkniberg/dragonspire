@@ -132,7 +132,7 @@ export class GameMaster {
     const thinkingLogger = (content: string) => this.addGameLogEntry("thinking", content);
 
     try {
-      const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues, this.gameState.currentRound, thinkingLogger);
+      const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues, this.gameState.currentRound, this.gameDecks.getAvailableTraderCards(), thinkingLogger);
       if (strategicAssessment) {
         this.addGameLogEntry("assessment", strategicAssessment);
       }

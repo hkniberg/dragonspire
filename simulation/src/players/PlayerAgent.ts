@@ -1,6 +1,7 @@
 // Lords of Doomspire Player Interface
 
 import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
+import { TraderCard } from "@/lib/cards";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
@@ -30,6 +31,7 @@ export interface PlayerAgent {
     gameLog: readonly GameLogEntry[],
     diceRolls: number[],
     turnNumber: number,
+    traderItems: readonly TraderCard[],
     thinkingLogger?: (content: string) => void,
   ): Promise<string | undefined>;
 

@@ -351,28 +351,19 @@ export function createDropItemDecision(
 ): DropItemDecisionResult {
   const droppableOptions: DecisionOption[] = [];
 
-  // Add options to drop existing items (only if not stuck)
-  if (champion.items.length >= 1 && !champion.items[0].stuck) {
-    const dropText = canRefuseNewItem
-      ? `Drop ${getItemName(champion.items[0])} and take the ${newItemName}`
-      : `Drop ${getItemName(champion.items[0])} for the ${newItemName}`;
+  // Add options to drop existing items (only if not stuck or unstealable)
+  champion.items.forEach((item, index) => {
+    if (!item.stuck) {
+      const dropText = canRefuseNewItem
+        ? `Drop ${getItemName(item)} and take the ${newItemName}`
+        : `Drop ${getItemName(item)} for the ${newItemName}`;
 
-    droppableOptions.push({
-      id: "drop_first",
-      description: dropText
-    });
-  }
-
-  if (champion.items.length >= 2 && !champion.items[1].stuck) {
-    const dropText = canRefuseNewItem
-      ? `Drop ${getItemName(champion.items[1])} and take the ${newItemName}`
-      : `Drop ${getItemName(champion.items[1])} for the ${newItemName}`;
-
-    droppableOptions.push({
-      id: "drop_second",
-      description: dropText
-    });
-  }
+      droppableOptions.push({
+        id: `drop_${index}`,
+        description: dropText
+      });
+    }
+  });
 
   // Add refuse option if allowed
   if (canRefuseNewItem) {
@@ -432,50 +423,74 @@ export function handleDropItemDecision(
     }
     logFn("event", `Champion${championId} left the ${newItemName} on the ground.`);
     return false;
-  } else if (decision.choice === "drop_first") {
-    // Player chose to drop the first item
-    const itemToDrop = champion.items[0];
-
-    // Remove the item from champion's inventory
-    champion.items.splice(0, 1);
-
-    // Add dropped item to tile
-    if (!tile.items) {
-      tile.items = [];
-    }
-    tile.items.push(itemToDrop);
-
-    // Add new item to champion's inventory
-    if (newItem) {
-      champion.items.push(newItem);
-    }
-
-    const droppedItemName = getItemName(itemToDrop);
-    logFn("event", `Champion${championId} dropped ${droppedItemName} and took the ${newItemName}.`);
-    return true;
-  } else if (decision.choice === "drop_second") {
-    // Player chose to drop the second item
-    const itemToDrop = champion.items[1];
-
-    // Remove the item from champion's inventory
-    champion.items.splice(1, 1);
-
-    // Add dropped item to tile
-    if (!tile.items) {
-      tile.items = [];
-    }
-    tile.items.push(itemToDrop);
-
-    // Add new item to champion's inventory
-    if (newItem) {
-      champion.items.push(newItem);
-    }
-
-    const droppedItemName = getItemName(itemToDrop);
-    logFn("event", `Champion${championId} dropped ${droppedItemName} and took the ${newItemName}.`);
-    return true;
   } else {
-    logFn("event", `Unknown drop decision: ${decision.choice}`);
-    return false;
+    // Handle dropping an item based on the decision choice
+    const itemIndex = parseInt(decision.choice.replace('drop_', ''), 10);
+    if (itemIndex >= 0 && itemIndex < champion.items.length) {
+      const itemToDrop = champion.items[itemIndex];
+
+      // Remove the item from champion's inventory
+      champion.items.splice(itemIndex, 1);
+
+      // Add dropped item to tile
+      if (!tile.items) {
+        tile.items = [];
+      }
+      tile.items.push(itemToDrop);
+
+      // Add new item to champion's inventory
+      if (newItem) {
+        champion.items.push(newItem);
+      }
+
+      const droppedItemName = getItemName(itemToDrop);
+      logFn("event", `Champion${championId} dropped ${droppedItemName} and took the ${newItemName}.`);
+      return true;
+    } else {
+      logFn("event", `Unknown drop decision: ${decision.choice}`);
+      return false;
+    }
   }
+}
+
+/**
+ * Check if a player has a specific trader item among any of their champions
+ */
+export function hasTraderItem(player: Player, itemId: string): boolean {
+  return player.champions.some(champion =>
+    champion.items.some(item => item.traderItem?.id === itemId)
+  );
+}
+
+/**
+ * Check if a specific champion has a trader item
+ */
+export function championHasTraderItem(champion: Champion, itemId: string): boolean {
+  return champion.items.some(item => item.traderItem?.id === itemId);
+}
+
+/**
+ * Calculate the item carrying capacity for a champion
+ * Base capacity is 2, backpack adds 2 more (total 4 including the backpack itself)
+ */
+export function getChampionItemCapacity(champion: Champion): number {
+  const baseCapacity = 2;
+  const hasBackpack = championHasTraderItem(champion, "backpack");
+  return hasBackpack ? baseCapacity + 2 : baseCapacity;
+}
+
+/**
+ * Check if a champion can carry more items
+ */
+export function canChampionCarryMoreItems(champion: Champion): boolean {
+  const capacity = getChampionItemCapacity(champion);
+  return champion.items.length < capacity;
+}
+
+/**
+ * Get available item slots for a champion
+ */
+export function getChampionAvailableItemSlots(champion: Champion): number {
+  const capacity = getChampionItemCapacity(champion);
+  return Math.max(0, capacity - champion.items.length);
 }

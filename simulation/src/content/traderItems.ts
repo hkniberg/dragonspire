@@ -24,7 +24,7 @@ export const TRADER_ITEMS: TraderItem[] = [
   {
     id: "backpack",
     name: "Backpack",
-    description: "Carry 1 extra **treasure**.",
+    description: "Gives you 2 extra item slots (although this backpack occupies one of them). The backpack cannot be stolen.",
     cost: 2,
     count: 2,
   },

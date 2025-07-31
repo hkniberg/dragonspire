@@ -3,6 +3,7 @@ import { GameSettings } from "@/lib/GameSettings";
 import { CarriableItem, Champion, Decision, DecisionContext, DecisionOption, GameLogEntry, Monster, NON_COMBAT_TILES, Player, ResourceType, Tile } from "@/lib/types";
 import { formatResources } from "@/lib/utils";
 import { PlayerAgent } from "@/players/PlayerAgent";
+import { canChampionCarryMoreItems } from "@/players/PlayerUtils";
 import { handleBackpackEffect } from "./backpackHandler";
 import { FleeContext, handleFleeDecision } from "./fleeHandler";
 import { handlePaddedHelmetRespawn } from "./paddedHelmetHandler";
@@ -275,11 +276,12 @@ function generateChampionLootOptions(
     }
   }
 
-  // Add item options (only if the winning champion has room for more items and items aren't stuck)
-  if (winningChampion.items.length < 2) {
+  // Add item options (only if the winning champion has room for more items and items aren't stuck or unstealable)
+  if (canChampionCarryMoreItems(winningChampion)) {
     defeatedChampion.items.forEach((item: any, index: number) => {
       // Skip stuck items - they cannot be looted
-      if (item.stuck) {
+      // Skip unstealable items - they cannot be stolen in combat
+      if (item.stuck || item.unstealable) {
         return;
       }
 

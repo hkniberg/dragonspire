@@ -2,7 +2,7 @@ import { getMonsterCardById } from "@/content/monsterCards";
 import { GameState } from "@/game/GameState";
 import { CarriableItem, Decision, EventCardResult, Monster, Player, Tile, TileTier } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
-import { createDropItemDecision, handleDropItemDecision } from "@/players/PlayerUtils";
+import { canChampionCarryMoreItems, createDropItemDecision, handleDropItemDecision } from "@/players/PlayerUtils";
 
 /**
  * Create a runed dagger item (+1 might)
@@ -51,7 +51,7 @@ export async function handleDruidRampage(
   const runedDagger = createRunedDagger();
 
   // Handle giving the runed dagger to the champion
-  if (champion.items.length < 2) {
+  if (canChampionCarryMoreItems(champion)) {
     // Add the runed dagger directly
     champion.items.push(runedDagger);
     logFn("event", `The Druid hands Champion${championId} a Runed Dagger (+1 might)!`);

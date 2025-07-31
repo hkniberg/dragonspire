@@ -4,6 +4,7 @@ import { GameDecks } from "@/lib/cards";
 import { TraderAction, TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { CarriableItem, Player, ResourceType } from "@/lib/types";
 import { formatResources } from "@/lib/utils";
+import { canChampionCarryMoreItems } from "@/players/PlayerUtils";
 
 
 
@@ -174,7 +175,7 @@ function processBuyItemAction(
   }
 
   // If champion's inventory is full, drop the first non-stuck item to the ground
-  if (champion.items.length >= 2) {
+  if (!canChampionCarryMoreItems(champion)) {
     const currentTile = gameState.board.getTileAt(champion.position);
     if (!currentTile) {
       return { success: false, reason: `Champion ${championId} position is invalid` };
@@ -222,7 +223,13 @@ function processBuyItemAction(
 
   // Deduct gold and add item to champion's inventory as CarriableItem
   player.resources.gold -= traderItem.cost;
-  champion.items.push({ traderItem });
+
+  // Mark backpack as unstealable (cannot be stolen but can be dropped)
+  const isBackpack = traderItem.id === "backpack";
+  champion.items.push({
+    traderItem,
+    unstealable: isBackpack
+  });
 
   logFn("event", `Champion ${championId} purchased ${traderItem.name} for ${traderItem.cost} gold`);
 

@@ -1,15 +1,7 @@
 import { GameState } from "@/game/GameState";
 import { Champion, Decision, DecisionContext, DecisionOption, GameLogEntry, Player, ResourceType } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
-
-/**
- * Check if a player has a specific trader item
- */
-function hasTraderItem(player: Player, itemId: string): boolean {
-  return player.champions.some(champion =>
-    champion.items.some(item => item.traderItem?.id === itemId)
-  );
-}
+import { canChampionCarryMoreItems, hasTraderItem } from "@/players/PlayerUtils";
 
 /**
  * Generate loot options for champion vs champion combat victory
@@ -40,7 +32,7 @@ function generateChampionLootOptions(
   }
 
   // Add item options (only if the winning champion has room for more items)
-  if (winningChampion.items.length < 2) {
+  if (canChampionCarryMoreItems(winningChampion)) {
     defeatedChampion.items.forEach((item: any, index: number) => {
       let itemName = "Unknown Item";
       if (item.treasureCard) {
@@ -85,7 +77,7 @@ function applyChampionLootDecision(
     const itemIndex = parseInt(choice.split("_")[1]);
 
     // Transfer item from defeated champion to winning champion
-    if (itemIndex >= 0 && itemIndex < defeatedChampion.items.length && winningChampion.items.length < 2) {
+    if (itemIndex >= 0 && itemIndex < defeatedChampion.items.length && canChampionCarryMoreItems(winningChampion)) {
       const item = defeatedChampion.items.splice(itemIndex, 1)[0];
       winningChampion.items.push(item);
       let itemName = "Unknown Item";

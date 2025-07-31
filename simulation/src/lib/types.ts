@@ -32,6 +32,7 @@ export interface CarriableItem {
   treasureCard?: TreasureCard;
   traderItem?: TraderItem;
   stuck?: boolean; // If true, this item cannot be dropped by the champion
+  unstealable?: boolean; // If true, this item cannot be stolen in combat
   combatBonus?: number; // Combat might bonus provided by this item
 }
 

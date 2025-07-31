@@ -2,7 +2,7 @@ import { getTreasureCardById } from "@/content/treasureCards";
 import { GameState } from "@/game/GameState";
 import { Decision, DecisionContext, GameLogEntry, Player, Tile, TileTier } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
-import { createDropItemDecision, handleDropItemDecision } from "@/players/PlayerUtils";
+import { canChampionCarryMoreItems, createDropItemDecision, handleDropItemDecision } from "@/players/PlayerUtils";
 import { handleMysteriousRing } from "./mysteriousRingHandler";
 import { handleSwordInStone } from "./swordInStoneHandler";
 
@@ -160,7 +160,7 @@ async function handleRustySword(
   }
 
   // Check if champion has space for the item
-  if (champion.items.length < 2) {
+  if (canChampionCarryMoreItems(champion)) {
     // Add the item directly
     const rustySword = {
       treasureCard: {
@@ -256,7 +256,7 @@ async function handleGenericTreasure(
   }
 
   // Check if champion has space for the item
-  if (champion.items.length < 2) {
+  if (canChampionCarryMoreItems(champion)) {
     // Add the item directly
     champion.items.push({ treasureCard });
     logFn("event", `Champion${championId} picked up ${treasureCard.name}.`);
