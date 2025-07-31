@@ -78,14 +78,158 @@ function calculateItemEffects(champion: Champion | undefined, logFn: (type: stri
  */
 function removeBrokenItems(champion: Champion | undefined, itemsToRemove: CarriableItem[], logFn: (type: string, content: string) => void, championDescription: string = "champion"): void {
   if (itemsToRemove.length > 0 && champion) {
-    for (const itemToRemove of itemsToRemove) {
-      const itemIndex = champion.items.indexOf(itemToRemove);
-      if (itemIndex > -1) {
+    // Remove broken items
+    for (const brokenItem of itemsToRemove) {
+      const itemIndex = champion.items.indexOf(brokenItem);
+      if (itemIndex !== -1) {
         champion.items.splice(itemIndex, 1);
-        logFn("combat", `${itemToRemove.treasureCard?.name || itemToRemove.traderItem?.name} broke and was removed from ${championDescription}'s inventory`);
+        const itemName = brokenItem.treasureCard?.name || brokenItem.traderItem?.name || 'Unknown Item';
+        logFn("combat", `${itemName} breaks and is removed from ${championDescription}'s inventory`);
       }
     }
   }
+}
+
+/**
+ * Identify available combat items and ask player which ones to use after seeing dice roll
+ */
+async function handlePostDiceItemDecisions(
+  champion: Champion | undefined,
+  player: Player,
+  diceRoll: number | string,
+  opponentMight?: number,
+  isDragonFight?: boolean,
+  playerAgent?: PlayerAgent,
+  gameState?: GameState,
+  gameLog?: readonly GameLogEntry[],
+  logFn?: (type: string, content: string) => void,
+  thinkingLogger?: (content: string) => void
+): Promise<{ mightBonus: number; itemsToRemove: CarriableItem[] }> {
+  let mightBonus = 0;
+  let itemsToRemove: CarriableItem[] = [];
+
+  if (!champion || !logFn) {
+    return { mightBonus, itemsToRemove };
+  }
+
+  // First, apply automatic items (always trigger)
+  for (const item of champion.items) {
+    // General combat bonus (always applies)
+    if (item.combatBonus) {
+      mightBonus += item.combatBonus;
+      const itemName = item.treasureCard?.name || item.traderItem?.name || 'Unknown Item';
+      logFn("combat", `${itemName} provides +${item.combatBonus} might`);
+    }
+
+    // Spear (always applies +1 might)
+    if (item.traderItem?.id === "spear") {
+      mightBonus += 1;
+      logFn("combat", `Spear provides +1 might`);
+    }
+
+    // Long sword (always applies, doesn't break)
+    if (item.treasureCard?.id === "long-sword") {
+      mightBonus += 2;
+      logFn("combat", `Löng Swörd provides +2 might`);
+    }
+  }
+
+  // Handle beneficial items with no downside (use automatically)
+  for (const item of champion.items) {
+    // Porcupine shield (conditional, but no downside - use automatically when applicable)
+    if (item.treasureCard?.id === "porcupine" && opponentMight !== undefined && opponentMight > player.might) {
+      mightBonus += 2;
+      logFn("combat", `Porcupine Shield activated automatically: +2 might (opponent has more base might)`);
+    }
+
+    // Dragonsbane ring (only vs dragon, but no downside - use automatically when applicable)
+    if (item.treasureCard?.id === "dragonsbane-ring" && isDragonFight) {
+      mightBonus += 3;
+      logFn("combat", `Dragonsbane Ring activated automatically: +3 might (vs dragon)`);
+    }
+  }
+
+  // Identify items that require player decisions (have trade-offs/costs)
+  const itemsRequiringDecision: Array<{
+    item: CarriableItem;
+    name: string;
+    effect: string;
+    mightBonus: number;
+    breaks: boolean;
+  }> = [];
+
+  for (const item of champion.items) {
+    // Rusty sword (breaks after use - requires decision)
+    if (item.treasureCard?.id === "rusty-sword") {
+      itemsRequiringDecision.push({
+        item,
+        name: "Rusty Sword",
+        effect: "+2 might (breaks after combat)",
+        mightBonus: 2,
+        breaks: true
+      });
+    }
+  }
+
+  // If no items require decisions, return what we have
+  if (itemsRequiringDecision.length === 0) {
+    return { mightBonus, itemsToRemove };
+  }
+
+  // Ask player about items with trade-offs
+  if (playerAgent && gameState && gameLog) {
+    const diceInfo = typeof diceRoll === 'string' ? diceRoll : `[${diceRoll}]`;
+    logFn("combat", `After rolling ${diceInfo}, deciding on single-use items...`);
+
+    for (const choice of itemsRequiringDecision) {
+      const decisionContext: DecisionContext = {
+        description: `Use ${choice.name}? (${choice.effect})`,
+        options: [
+          {
+            id: "yes",
+            description: `Yes, use ${choice.name}`
+          },
+          {
+            id: "no",
+            description: `No, save ${choice.name} for later`
+          }
+        ]
+      };
+
+      try {
+        const decision = await playerAgent.makeDecision(gameState, gameLog, decisionContext, thinkingLogger);
+
+        if (decision.choice === "yes") {
+          mightBonus += choice.mightBonus;
+          logFn("combat", `${choice.name} activated: ${choice.effect}`);
+
+          if (choice.breaks) {
+            itemsToRemove.push(choice.item);
+          }
+        } else {
+          logFn("combat", `${choice.name} saved for later use`);
+        }
+      } catch (error) {
+        // Fallback: automatically use all items
+        logFn("combat", `Error asking about ${choice.name}, using automatically`);
+        mightBonus += choice.mightBonus;
+        if (choice.breaks) {
+          itemsToRemove.push(choice.item);
+        }
+      }
+    }
+  } else {
+    // No player agent available - use all available items automatically
+    for (const choice of itemsRequiringDecision) {
+      mightBonus += choice.mightBonus;
+      logFn("combat", `${choice.name} used automatically: ${choice.effect}`);
+      if (choice.breaks) {
+        itemsToRemove.push(choice.item);
+      }
+    }
+  }
+
+  return { mightBonus, itemsToRemove };
 }
 
 export interface CombatResult {
@@ -272,22 +416,64 @@ export async function resolveChampionVsChampionCombat(
   const attackerSupport = gameState.getCombatSupport(attackingPlayer.name, tile.position);
   const defenderSupport = gameState.getCombatSupport(defendingPlayer.name, tile.position);
 
-  // Calculate item effects for both champions
   const attackingChampion = gameState.getChampion(attackingPlayer.name, attackingChampionId);
-  const { mightBonus: attackerMightBonus, itemsToRemove: attackerItemsToRemove } = calculateItemEffects(attackingChampion, logFn, attackingPlayer.might, defendingPlayer.might, false);
-  const { mightBonus: defenderMightBonus, itemsToRemove: defenderItemsToRemove } = calculateItemEffects(opposingChampion, logFn, defendingPlayer.might, attackingPlayer.might, false);
 
   // Roll dice for champion vs champion battle - keep rerolling on ties
   let attackerRoll: number;
   let defenderRoll: number;
   let attackerTotal: number;
   let defenderTotal: number;
+  let attackerMightBonus: number;
+  let defenderMightBonus: number;
+  let attackerItemsToRemove: CarriableItem[];
+  let defenderItemsToRemove: CarriableItem[];
 
   do {
     attackerRoll = rollD3() + rollD3(); // Roll 2d3
     defenderRoll = rollD3() + rollD3(); // Roll 2d3
+
+    logFn("combat", `${attackingPlayer.name} rolled [${Math.floor(attackerRoll / 2)}+${attackerRoll - Math.floor(attackerRoll / 2)}] = ${attackerRoll}`);
+    logFn("combat", `${defendingPlayer.name} rolled [${Math.floor(defenderRoll / 2)}+${defenderRoll - Math.floor(defenderRoll / 2)}] = ${defenderRoll}`);
+
+    // Now ask both players about their item usage after seeing dice results
+    const attackerItemResult = await handlePostDiceItemDecisions(
+      attackingChampion,
+      attackingPlayer,
+      `[${Math.floor(attackerRoll / 2)}+${attackerRoll - Math.floor(attackerRoll / 2)}] = ${attackerRoll}`,
+      defendingPlayer.might,
+      false, // not dragon fight
+      playerAgent,
+      gameState,
+      gameLog,
+      logFn,
+      thinkingLogger
+    );
+
+    const defendingPlayerAgent = getPlayerAgent ? getPlayerAgent(defendingPlayer.name) : undefined;
+    const defenderItemResult = await handlePostDiceItemDecisions(
+      opposingChampion,
+      defendingPlayer,
+      `[${Math.floor(defenderRoll / 2)}+${defenderRoll - Math.floor(defenderRoll / 2)}] = ${defenderRoll}`,
+      attackingPlayer.might,
+      false, // not dragon fight
+      defendingPlayerAgent,
+      gameState,
+      gameLog,
+      logFn,
+      thinkingLogger
+    );
+
+    attackerMightBonus = attackerItemResult.mightBonus;
+    defenderMightBonus = defenderItemResult.mightBonus;
+    attackerItemsToRemove = attackerItemResult.itemsToRemove;
+    defenderItemsToRemove = defenderItemResult.itemsToRemove;
+
     attackerTotal = attackingPlayer.might + attackerRoll + attackerSupport + attackerMightBonus;
     defenderTotal = defendingPlayer.might + defenderRoll + defenderSupport + defenderMightBonus;
+
+    if (attackerTotal === defenderTotal) {
+      logFn("combat", `Combat tied (${attackerTotal} vs ${defenderTotal}), rerolling...`);
+    }
   } while (attackerTotal === defenderTotal); // Keep rerolling on ties
 
   const attackerWins = attackerTotal > defenderTotal;
@@ -486,23 +672,16 @@ async function performChampionVsMonsterCombat(
   player: Player,
   championId: number,
   position: { row: number; col: number },
-  logFn: (type: string, content: string) => void
+  logFn: (type: string, content: string) => void,
+  playerAgent?: PlayerAgent,
+  gameLog?: readonly GameLogEntry[],
+  thinkingLogger?: (content: string) => void
 ): Promise<{
   championWins: boolean;
   combatDetails: string;
   itemsToRemove: CarriableItem[];
 }> {
   const champion = gameState.getChampion(player.name, championId);
-
-  // Calculate item effects
-  const { mightBonus, itemsToRemove } = calculateItemEffects(champion, logFn, player.might, monster.might, false);
-
-  // Check for spear bonus against beasts
-  const hasSpear = champion?.items.some(item => item.traderItem?.id === "spear") || false;
-  const isFightingBeast = monster.isBeast || false;
-  if (hasSpear && isFightingBeast) {
-    logFn("combat", `Spear provides +1 might against ${monster.name} (beast)`);
-  }
 
   // Get combat support from adjacent units
   const supportBonus = gameState.getCombatSupport(player.name, position);
@@ -512,11 +691,36 @@ async function performChampionVsMonsterCombat(
 
   // Roll dice for champion vs monster battle
   const championRoll = rollD3();
-  const championTotal = player.might + championRoll + mightBonus + supportBonus;
+  logFn("combat", `Champion rolled [${championRoll}] for combat with ${monster.name}`);
+
+  // Now ask about item usage after seeing the dice roll
+  const { mightBonus, itemsToRemove } = await handlePostDiceItemDecisions(
+    champion,
+    player,
+    championRoll,
+    monster.might,
+    false, // not dragon fight
+    playerAgent,
+    gameState,
+    gameLog,
+    logFn,
+    thinkingLogger
+  );
+
+  // Handle spear bonus against beasts (special case)
+  let spearBonus = 0;
+  const hasSpear = champion?.items.some(item => item.traderItem?.id === "spear") || false;
+  const isFightingBeast = monster.isBeast || false;
+  if (hasSpear && isFightingBeast) {
+    spearBonus = 1;
+    logFn("combat", `Spear provides additional +1 might against ${monster.name} (beast)`);
+  }
+
+  const championTotal = player.might + championRoll + mightBonus + spearBonus + supportBonus;
   const championWins = championTotal >= monster.might;
 
   // Create combat details string (rewards will be added by calling function)
-  const championBase = player.might + championRoll + mightBonus;
+  const championBase = player.might + championRoll + mightBonus + spearBonus;
   const combatDetails = championWins
     ? `Defeated ${monster.name} (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${monster.might})`
     : `Fought ${monster.name}, but was defeated (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${monster.might})`;
@@ -538,7 +742,7 @@ export async function resolveImmediateCombat(
   const champion = gameState.getChampion(player.name, championId);
 
   const { championWins, combatDetails, itemsToRemove } = await performChampionVsMonsterCombat(
-    gameState, monster, player, championId, position, logFn
+    gameState, monster, player, championId, position, logFn, undefined, undefined, undefined
   );
 
   if (championWins) {
@@ -639,7 +843,7 @@ export async function resolveChampionVsMonsterCombat(
   }
 
   const { championWins, combatDetails, itemsToRemove } = await performChampionVsMonsterCombat(
-    gameState, monster, player, championId, tile.position, logFn
+    gameState, monster, player, championId, tile.position, logFn, playerAgent, gameLog, thinkingLogger
   );
 
   if (championWins) {
@@ -783,11 +987,8 @@ export async function resolveChampionVsDragonEncounter(
     player.statistics.dragonEncounters += 1;
   }
 
-  // Calculate item effects for dragon combat
+  // Get champion and combat support
   const champion = gameState.getChampion(player.name, championId);
-  const { mightBonus, itemsToRemove } = calculateItemEffects(champion, logFn, player.might, undefined, true);
-
-  // Get combat support from adjacent units
   const supportBonus = gameState.getCombatSupport(player.name, tile.position);
   if (supportBonus > 0) {
     logFn("combat", `Combat support: +${supportBonus} might from adjacent units`);
@@ -796,6 +997,22 @@ export async function resolveChampionVsDragonEncounter(
   // Both champion and dragon roll dice during combat (as per rules)
   const championRoll = rollD3();
   const dragonRoll = rollD3();
+
+  logFn("combat", `Champion rolled [${championRoll}] vs Dragon's [${dragonRoll}]`);
+
+  // Now ask about item usage after seeing the dice roll
+  const { mightBonus, itemsToRemove } = await handlePostDiceItemDecisions(
+    champion,
+    player,
+    championRoll,
+    GameSettings.DRAGON_BASE_MIGHT + dragonRoll, // opponent might (dragon total)
+    true, // is dragon fight
+    playerAgent,
+    gameState,
+    gameLog,
+    logFn,
+    thinkingLogger
+  );
 
   const championTotal = player.might + championRoll + supportBonus + mightBonus;
   const dragonTotal = GameSettings.DRAGON_BASE_MIGHT + dragonRoll;
