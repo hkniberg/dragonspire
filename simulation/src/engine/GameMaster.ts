@@ -1,6 +1,6 @@
 // Lords of Doomspire Game Master
 
-import { BoatAction, BuildAction, ChampionAction, HarvestAction, TileAction } from "@/lib/actionTypes";
+import { BoatAction, ChampionAction, HarvestAction, TileAction } from "@/lib/actionTypes";
 import { TokenUsageTracker } from "@/lib/TokenUsageTracker";
 import { GameLogEntry, GameLogEntryType, Player, Tile, TurnContext } from "@/lib/types";
 import { formatPosition, formatResources } from "@/lib/utils";
@@ -14,15 +14,18 @@ import { checkVictory } from "./actions/victoryChecker";
 import { DiceRoller, RandomDiceRoller } from "./DiceRoller";
 import { DiceRolls } from "./DiceRolls";
 import { handleAdventureCard } from "./handlers/adventureCardHandler";
-import { handleBuildAction } from "./handlers/buildActionHandler";
 import { handleBuildingUsage as handleBuildingUsageHandler } from "./handlers/buildingUsageHandler";
 import {
   handleChampionCombat,
   handleDoomspireTile,
   handleExploration,
+  handleItemManagement,
+  handleMercenaryAction,
   handleMonsterCombat,
   handleSpecialTiles,
-  handleTileClaiming
+  handleTempleAction,
+  handleTileClaiming,
+  handleTileInteractions
 } from "./handlers/tileArrivalHandler";
 import { createTraderContext, handleTraderInteraction } from "./handlers/traderHandler";
 import { StatisticsCollector } from "./StatisticsCollector";
@@ -132,9 +135,11 @@ export class GameMaster {
     const thinkingLogger = (content: string) => this.addGameLogEntry("thinking", content);
 
     try {
-      const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues, this.gameState.currentRound, this.gameDecks.getAvailableTraderCards(), thinkingLogger);
-      if (strategicAssessment) {
-        this.addGameLogEntry("assessment", strategicAssessment);
+      if (currentPlayerAgent.makeStrategicAssessment) {
+        const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues, this.gameState.currentRound, this.gameDecks.getAvailableTraderCards(), thinkingLogger);
+        if (strategicAssessment) {
+          this.addGameLogEntry("assessment", strategicAssessment);
+        }
       }
     } catch (error) {
       console.error("Error during strategic assessment:", error);
@@ -187,14 +192,6 @@ export class GameMaster {
           // Track statistics
           if (currentPlayer.statistics) {
             currentPlayer.statistics.harvestActions += 1;
-          }
-        } else if (actionType === "buildAction") {
-          const buildAction = diceAction.buildAction!;
-          diceRolls.consumeDiceRoll(buildAction.diceValueUsed);
-          await this.executeBuildAction(currentPlayer, buildAction, diceAction.reasoning);
-          // Track statistics
-          if (currentPlayer.statistics) {
-            currentPlayer.statistics.buildActions += 1;
           }
         } else {
           throw new Error(`Unknown action type: ${actionType}`);
@@ -518,7 +515,6 @@ export class GameMaster {
 
     // Step 5: Handle item pickup and drop
     if (tileAction?.pickUpItems || tileAction?.dropItems) {
-      const { handleItemManagement } = await import("@/engine/handlers/tileArrivalHandler");
       const itemResult = handleItemManagement(
         this.gameState,
         tile,
@@ -546,7 +542,6 @@ export class GameMaster {
 
     // Step 7: Handle mercenary camp interactions
     if (tile.tileType === "mercenary" && tileAction?.useMercenary) {
-      const { handleMercenaryAction } = await import("@/engine/handlers/tileArrivalHandler");
       const mercenaryResult = handleMercenaryAction(
         this.gameState,
         tile,
@@ -563,7 +558,6 @@ export class GameMaster {
 
     // Step 8: Handle temple interactions
     if (tile.tileType === "temple" && tileAction?.useTemple) {
-      const { handleTempleAction } = await import("@/engine/handlers/tileArrivalHandler");
       const templeResult = handleTempleAction(
         this.gameState,
         tile,
@@ -582,7 +576,6 @@ export class GameMaster {
     handleTileClaiming(this.gameState, tile, player, championId, !!tileAction?.claimTile, logFn);
 
     // Step 10: Handle tile conquest and revolt
-    const { handleTileInteractions } = await import("@/engine/handlers/tileArrivalHandler");
     handleTileInteractions(
       this.gameState,
       tile,
@@ -624,14 +617,6 @@ export class GameMaster {
     } else {
       this.addGameLogEntry("harvest", `Attempted to harvest but no tiles were harvestable for some reason.${reasoningText}`);
     }
-  }
-
-  private async executeBuildAction(player: Player, action: BuildAction, reasoning?: string): Promise<void> {
-    const logFn = (type: string, content: string) => this.addGameLogEntry(type as GameLogEntryType, content);
-    const result = handleBuildAction(player, action, logFn, reasoning);
-
-    // The handler already logs the results, so we don't need to do anything else here
-    // The result object contains information about whether the action was successful
   }
 
   private async handleBuildingUsage(

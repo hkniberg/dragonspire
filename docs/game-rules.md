@@ -1,8 +1,10 @@
 # LORDS OF DOOMSPIRE - Rulebook
 
-You are a lord commanding knights from your island castle to explore a dangerous neighboring island. Compete with other players to accumulate fame, might, and resources while seeking to reach the dragon at **Doomspire**.
+You are all Lords who have since long established forts on islands neighboring the resource rich land of **Doomspire** - named so after the fierce mountain range, and the dragon nesting within, guarding the domain.
 
-Explore tiles, fight monsters and other players, claim resources, and buy knights/boats/buildings to achieve victory through combat, diplomacy, economics, or wealth.
+Whoever can defeat, bribe, impress or coherse the dragon into exile has a good shot at becoming its next ruler. Or at least secure a high position in the new hierarchical order... the role of Jester awaits the one who fails to excel.
+
+Compete with other players, explore tiles, fight monsters and other players, claim resources, and buy knights/boats/buildings. Accumulate fame, might, and resources while seeking to reach the dragon at **Doomspire**.
 
 ---
 
@@ -17,12 +19,16 @@ Each player starts with:
 
 ## Victory Conditions
 
-Win immediately by reaching **Doomspire** (one of the center 4 tiles) with any of these:
+The game is won through a **victory point system**. The player with the most victory points becomes King of Doomspire.
 
-- **Combat Victory**: Defeat the dragon in battle
-- **Diplomatic Victory**: Have +15 Fame (dragon becomes your advisor)
-- **Economic Victory**: Own 4+ starred resource tiles (dragon accepts tribute)
-- **Gold Victory**: Have 15+ Gold (dragon shares treasures)
+The game ends when any player **exiles the dragon** by reaching **Doomspire** (one of the center 4 tiles) with any of these conditions:
+
+- **Combat Exile**: Defeat the dragon in battle. The dragon flees the island.
+- **Fame Exile**: Have 15+ Fame. The dragon is so impressed by your fame that it leaves to let you rule.
+- **Economic Exile**: Own 4+ starred resource tiles. The dragon agrees to move to another island in exchange for tribute.
+- **Gold Exile**: Have 12+ Gold. You bribe the dragon with gold, and it leaves to let you rule.
+
+When a player exiles the dragon, the current round finishes normally, then victory points are calculated, estabilshing the pecking order of the new realm. Exiling the dragon grants 8 victory points, but does not guarantee victory if other players have accumulated more points through other means.
 
 ---
 
@@ -252,7 +258,7 @@ Combat happens when:
 ### Fleeing combat
 
 - A knight can attempt to flee from combat if forced into unexpected combat, for example by exploring a tile or drawing an adventure card, or being attacked by another knight.
-  - Fleeing is not allowed if the combat was chosen deliberately, for example by entering an explored adventure tile an existing monster, entering a tile with a knight in it, or entering already-explored doomspire without having achieved a victory condition.
+  - Fleeing is not allowed if the combat was chosen deliberately, for example by entering an explored adventure tile an existing monster, entering a tile with a knight in it, or entering already-explored doomspire without having achieved an exile condition.
 - When fleeing, roll 1D3:
   - 1: Failure. Combat happens as normal.
   - 2: Partial success. Knight flees to home tile, without any loss.
@@ -313,13 +319,13 @@ This is similar to monster combat, with some differences:
 
 ---
 
-## Doomspire - winning the game
+## Doomspire - exiling the dragon
 
-All four victory conditions require you to interact with the dragon at Doomspire.
+All four exile conditions require you to interact with the dragon at Doomspire.
 
 When you enter the doomspire tile, the following happens:
 
-- If you have achieved a victory condition (15 fame, 15 gold, or 4 starred resource tiles), you win the game.
+- If you have achieved an exile condition (15+ fame, 12+ gold, or 4+ starred resource tiles), you exile the dragon and trigger the endgame.
   - Starred resources count even if they are blockaded, as long as you own them.
 - If not, the dragon will attack and you need to either fight or flee.
   - Fleeing always succeeds, but you will be chased all the way back to your home tile and lose 1 fame.
@@ -331,10 +337,36 @@ The dragon has might 8 + 1D3. Fighting the dragon is similar to monster combat, 
 - Pick another player to represent the dragon - ideally your biggest rival!
 - Roll 1D3 and add your might, support bonus from adjacent knights, and any bonus from items or followers.
 - Dragon rolls 1D3 and adds their might of 8
-- If you match or exceed the dragon's total, you defeat the dragon and win the game.
+- If you match or exceed the dragon's total, you defeat the dragon (combat exile), triggering the endgame.
 - If you lose, your knight gets eaten and removed from the game (including their followers and items)
 
 If you lose your last knight, you can choose whether to stay in the game and save up for a new knight (you still get one die every turn), or concede defeat. See Conceding defeat.
+
+---
+
+## Victory Points
+
+When the dragon is exiled, calculate victory points (VP) for final ranking:
+
+- **Dragon exile**: 8 VP (for the player who exiled the dragon)
+- **Might**: 1 VP per might
+- **Fame**: 1 VP per 2 fame (rounded down)
+- **Knights**: 3 VP per knight
+- **Starred tiles claimed**: 1 VP per starred tile (excluding home tile)
+- **Total tiles claimed**: 1 VP per tile (excluding home tile)
+- **Castle buildings**: 2 VP per building (market, blacksmith, etc.)
+- **Warships**: 3 VP per warship
+- **Items and followers**: 1 VP per item or follower carried by all knights
+- **Gold**: 1 VP per 2 gold (rounded down)
+
+**Final ranking**:
+
+- First place: King of Doomspire
+- Second place: Hand of the King
+- Third place: Head of Forest-Observing
+- Fourth place: Court Jester
+
+In case of ties, factors listed higher above take priority.
 
 ---
 
@@ -395,13 +427,13 @@ The game has 4 types of resources: **gold**, **food**, **wood**, and **ore**. Re
 - Defeat monsters
 - Some adventure cards give resources
 
-Owning resource tiles let you build a sustainable economy. They can also be used to score an economic victory (own 4 starred resource tiles and visit the dragon)
+Owning resource tiles let you build a sustainable economy. They can also be used to achieve economic exile (own 4 starred resource tiles and visit the dragon)
 
 **Types of resource tiles**:
 
 - **Home tile**: This is resource tile provides 1 wood and 1 food. Opposing knights cannot enter this tile.
 - **Normal resource tiles**: These provide 1 resource.
-- **Starred resource tiles**: Resource tiles that provide more than one resource are considered starred resource tiles. All resource tiles in Tier 2 region are starred, and some in Tier 1. Only starred resource tiles count towards economic victory.
+- **Starred resource tiles**: Resource tiles that provide more than one resource are considered starred resource tiles. All resource tiles in Tier 2 region are starred, and some in Tier 1. Only starred resource tiles count towards economic exile.
 
 **Claiming a resource tile**:
 

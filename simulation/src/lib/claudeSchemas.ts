@@ -1,56 +1,81 @@
-// Claude AI JSON Schemas for Lords of Doomspire
+/**
+ * Lords of Doomspire - Claude API Schema Definitions
+ * 
+ * This file defines the JSON schemas used for structured communication with Claude.
+ * These schemas ensure that Claude's responses match our expected data formats.
+ */
 
 /**
  * Schema for tile action parameters
  */
 export const tileActionSchema = {
   type: "object",
-  description: "Tile action to perform",
+  description: "Actions to perform on a tile",
   properties: {
     claimTile: {
       type: "boolean",
-      description: "Whether to claim the tile (only for resource tiles)",
+      description: "Whether to claim this tile (place a flag)"
     },
     useTrader: {
       type: "boolean",
-      description: "Whether to buy/sell at the trader (only for trader tile, available items will be shown when you arrive)",
+      description: "Whether to interact with the trader on this tile"
     },
     useMercenary: {
       type: "boolean",
-      description: "Whether to buy 1 might at the mercenary camp (only at mercenary tile, only if you have 3 gold)",
+      description: "Whether to pay the mercenary for might"
     },
     useTemple: {
       type: "boolean",
-      description: "Whether to sacrifice 2 fame to gain 1 might at the temple (only at temple tile, only if you have 2 fame)",
+      description: "Whether to sacrifice fame for might at the temple"
     },
     pickUpItems: {
       type: "array",
-      description: "Optional array of item IDs to pick up from the tile. Must be items present on the tile.",
-      items: {
-        type: "string"
-      }
+      items: { type: "string" },
+      description: "Array of item IDs to pick up from this tile"
     },
     dropItems: {
       type: "array",
-      description: "Optional array of item IDs to drop on the tile. Must be items held by the champion.",
-      items: {
-        type: "string"
-      }
+      items: { type: "string" },
+      description: "Array of item IDs to drop on this tile"
     },
     conquerWithMight: {
       type: "boolean",
-      description: "Whether to conquer an enemy's claimed tile (costs 1 might, takes over the tile)",
+      description: "Conquer this tile using military might (costs 1 might)"
     },
     inciteRevolt: {
       type: "boolean",
-      description: "Whether to incite revolt in an enemy's claimed tile (costs 1 fame, frees up tile but doesn't claim it)",
+      description: "Incite revolt using fame (costs 1 fame, frees up tile but doesn't claim it)"
     },
     preferredAdventureTheme: {
       type: "string",
-      description: "Preferred theme when drawing adventure cards from adventure tiles or unexplored tiles. Options: 'beast', 'cave', 'grove'",
-      enum: ["beast", "cave", "grove"]
-    },
+      enum: ["beast", "cave", "grove"],
+      description: "Preferred theme when drawing adventure cards"
+    }
   },
+  additionalProperties: false
+};
+
+/**
+ * Schema for position coordinates
+ */
+export const positionSchema = {
+  type: "object",
+  description: "Position coordinates on the game board",
+  properties: {
+    x: { type: "number", description: "X coordinate" },
+    y: { type: "number", description: "Y coordinate" }
+  },
+  required: ["x", "y"],
+  additionalProperties: false
+};
+
+/**
+ * Schema for ocean position coordinates  
+ */
+export const oceanPositionSchema = {
+  type: "string",
+  enum: ["northwest", "northeast", "southwest", "southeast"],
+  description: "Ocean zone position"
 };
 
 /**
@@ -58,34 +83,25 @@ export const tileActionSchema = {
  */
 export const championActionSchema = {
   type: "object",
-  description: "Parameters for championAction",
+  description: "Parameters for championAction - move a champion and perform tile actions",
   properties: {
     diceValueUsed: {
       type: "number",
-      description: "The dice value used for this action",
+      description: "The dice value being consumed for this action"
     },
     championId: {
       type: "number",
-      description: "Champion ID being moved or performing action",
+      description: "ID of the champion to move"
     },
     movementPathIncludingStartPosition: {
       type: "array",
-      description: "Optional path for movement, including the starting position. If not provided, champion stays in place. No diagonal movement allowed.",
-      items: {
-        type: "object",
-        properties: {
-          row: { type: "number" },
-          col: { type: "number" },
-        },
-        required: ["row", "col"],
-      },
+      items: positionSchema,
+      description: "Complete movement path including starting position (empty array or single position for no movement)"
     },
-    tileAction: {
-      ...tileActionSchema,
-      description: "Optional tile action to perform at the destination tile (or current tile if no movement)",
-    },
+    tileAction: tileActionSchema
   },
   required: ["diceValueUsed", "championId"],
+  additionalProperties: false
 };
 
 /**
@@ -93,42 +109,33 @@ export const championActionSchema = {
  */
 export const boatActionSchema = {
   type: "object",
-  description: "Parameters for boatAction",
+  description: "Parameters for boatAction - move a boat and optionally transport a champion",
   properties: {
     diceValueUsed: {
       type: "number",
-      description: "The dice value used for this action",
+      description: "The dice value being consumed for this action"
     },
     boatId: {
       type: "number",
-      description: "Boat ID",
+      description: "ID of the boat to move"
     },
     movementPathIncludingStartPosition: {
       type: "array",
-      description: "Optional ocean path as array of strings representing ocean positions, including start position. Valid values for each string is 'nw', 'ne', 'sw', 'se'. If not provided, boat stays in place.",
-      items: {
-        type: "string",
-      },
+      items: oceanPositionSchema,
+      description: "Complete movement path including starting position (empty array or single position for no movement)"
     },
     championIdToPickUp: {
       type: "number",
-      description: "Optional champion being picked up or transported",
+      description: "Optional champion ID to pick up from a coastal tile"
     },
     championDropPosition: {
-      type: "object",
-      description: "Where to drop off champion. Required if championIdToPickUp is provided",
-      properties: {
-        row: { type: "number" },
-        col: { type: "number" },
-      },
-      required: ["row", "col"],
+      ...positionSchema,
+      description: "Position to drop off the champion (must be coastal)"
     },
-    championTileAction: {
-      ...tileActionSchema,
-      description: "Optional tile action for the champion at drop position",
-    },
+    championTileAction: tileActionSchema
   },
   required: ["diceValueUsed", "boatId"],
+  additionalProperties: false
 };
 
 /**
@@ -136,68 +143,91 @@ export const boatActionSchema = {
  */
 export const harvestActionSchema = {
   type: "object",
-  description: "Parameters for harvestAction",
+  description: "Parameters for harvestAction - collect resources from claimed tiles",
   properties: {
     diceValuesUsed: {
       type: "array",
-      description: "The dice values used for this harvest action",
       items: { type: "number" },
-      minItems: 1
+      description: "Array of dice values being consumed for this harvest action"
     },
     tilePositions: {
       type: "array",
-      description: "Positions of tiles to harvest from",
-      items: {
-        type: "object",
-        properties: { row: { type: "number" }, col: { type: "number" } },
-        required: ["row", "col"],
-      },
-    },
+      items: positionSchema,
+      description: "Positions of tiles to harvest from"
+    }
   },
   required: ["diceValuesUsed", "tilePositions"],
+  additionalProperties: false
 };
 
 /**
- * Schema for buildAction action parameters
+ * Schema for building usage decision parameters
  */
-export const buildActionSchema = {
+export const buildingUsageDecisionSchema = {
   type: "object",
-  description: "Parameters for buildAction - construct a building in your castle or recruit a champion/boat",
+  description: "Parameters for using existing buildings",
   properties: {
-    diceValueUsed: {
-      type: "number",
-      description: "The die value to use for this action",
+    useBlacksmith: {
+      type: "boolean",
+      description: "Whether to use the blacksmith to gain might (costs 1 gold + 2 ore)"
     },
-    buildActionType: {
-      type: "string",
-      enum: ["blacksmith", "market", "recruitChampion", "buildBoat", "chapel", "upgradeChapelToMonastery"],
-      description: "Type of building to construct or action to perform"
+    sellAtMarket: {
+      type: "object",
+      description: "Resources to sell at the market (2:1 ratio for gold)",
+      properties: {
+        food: { type: "number", minimum: 0 },
+        wood: { type: "number", minimum: 0 },
+        ore: { type: "number", minimum: 0 }
+      },
+      additionalProperties: false
     },
+    useFletcher: {
+      type: "boolean",
+      description: "Whether to use the fletcher to gain might (costs 3 wood + 1 ore)"
+    }
   },
-  required: ["diceValueUsed", "buildActionType"],
+  additionalProperties: false
 };
 
 /**
- * Schema for dice action responses from Claude using nested structure
+ * Schema for building decision responses from Claude (harvest phase)
+ */
+export const buildingDecisionSchema = {
+  type: "object",
+  description: "Decision about building usage and build actions during harvest phase",
+  properties: {
+    buildingUsageDecision: buildingUsageDecisionSchema,
+    buildAction: {
+      type: "string",
+      enum: ["blacksmith", "market", "recruitChampion", "buildBoat", "chapel", "upgradeChapelToMonastery", "warshipUpgrade", "fletcher"],
+      description: "Type of build action to perform (construct building, recruit champion, etc.)"
+    }
+  },
+  additionalProperties: false
+};
+
+/**
+ * Main schema for dice action responses from Claude
  */
 export const diceActionSchema = {
   type: "object",
+  description: "A single dice action to perform during the movement phase",
   properties: {
     actionType: {
       type: "string",
-      enum: ["championAction", "boatAction", "harvestAction", "buildAction"],
-      description: "The type of action to perform",
+      enum: ["championAction", "boatAction", "harvestAction"],
+      description: "Type of action to perform"
     },
     championAction: championActionSchema,
     boatAction: boatActionSchema,
     harvestAction: harvestActionSchema,
-    buildAction: buildActionSchema,
     reasoning: {
       type: "string",
-      description: "Brief explanation of why this action was chosen",
-    },
+      description: "Brief explanation of why this action was chosen"
+    }
   },
   required: ["actionType"],
+  additionalProperties: false
 };
 
 /**
@@ -205,51 +235,19 @@ export const diceActionSchema = {
  */
 export const decisionSchema = {
   type: "object",
+  description: "Response to a decision prompt",
   properties: {
     choice: {
       type: "string",
-      description: "The chosen option ID from the available choices",
+      description: "The chosen option ID"
     },
     reasoning: {
       type: "string",
-      description: "Single sentence explaining why this choice was made",
-    },
+      description: "Brief explanation of why this choice was made"
+    }
   },
-  required: ["choice", "reasoning"],
-};
-
-/**
- * Schema for trader action
- */
-export const traderActionSchema = {
-  type: "object",
-  properties: {
-    type: {
-      type: "string",
-      enum: ["buyItem", "sellResources"],
-      description: "Type of trader action",
-    },
-    itemId: {
-      type: "string",
-      description: "ID of the item to purchase (required for buyItem actions)",
-    },
-    resourcesSold: {
-      type: "object",
-      description: "Resources to sell. You must already own these resources.",
-      properties: {
-        gold: { type: "number" },
-        wood: { type: "number" },
-        food: { type: "number" },
-        ore: { type: "number" },
-      },
-    },
-    resourceRequested: {
-      type: "string",
-      enum: ["gold", "wood", "food", "ore"],
-      description: "Resource type to receive in exchange (required for sellResources actions)",
-    },
-  },
-  required: ["type"],
+  required: ["choice"],
+  additionalProperties: false
 };
 
 /**
@@ -257,53 +255,52 @@ export const traderActionSchema = {
  */
 export const traderDecisionSchema = {
   type: "object",
+  description: "Decision about trader interactions",
   properties: {
     actions: {
       type: "array",
       description: "Array of trader actions to perform",
-      items: traderActionSchema,
+      items: {
+        type: "object",
+        properties: {
+          type: {
+            type: "string",
+            enum: ["buyItem", "sellResources"],
+            description: "Type of trader action"
+          },
+          itemId: {
+            type: "string",
+            description: "ID of the item to purchase (required for buyItem actions)"
+          },
+          resourcesSold: {
+            type: "object",
+            description: "Resources to sell",
+            properties: {
+              food: { type: "number", minimum: 0 },
+              wood: { type: "number", minimum: 0 },
+              ore: { type: "number", minimum: 0 },
+              gold: { type: "number", minimum: 0 }
+            },
+            additionalProperties: false
+          },
+          resourceRequested: {
+            type: "string",
+            enum: ["food", "wood", "ore", "gold"],
+            description: "Resource type to receive in exchange (required for sellResources actions)"
+          }
+        },
+        required: ["type"],
+        additionalProperties: false
+      }
     },
     reasoning: {
       type: "string",
-      description: "Brief explanation of the trading strategy and decisions",
-    },
-  },
-  required: ["actions"],
-};
-
-/**
- * Schema for building usage decision responses from Claude
- */
-export const buildingUsageSchema = {
-  type: "object",
-  properties: {
-    useBlacksmith: {
-      type: "boolean",
-      description: "Whether to use the blacksmith to buy 1 Might for 1 Gold + 2 Ore"
-    },
-    sellAtMarket: {
-      type: "object",
-      description: "Resources to sell at market (only used if you have a market). You can only sell food, wood, and ore - not gold.",
-      properties: {
-        food: {
-          type: "number",
-          description: "Amount of food to sell"
-        },
-        wood: {
-          type: "number",
-          description: "Amount of wood to sell"
-        },
-        ore: {
-          type: "number",
-          description: "Amount of ore to sell"
-        }
-      },
-      additionalProperties: false
-    },
-    reasoning: {
-      type: "string",
-      description: "Brief reasoning for the decision"
+      description: "Brief explanation of the trader decisions"
     }
   },
-  required: ["useBlacksmith", "sellAtMarket"]
+  required: ["actions"],
+  additionalProperties: false
 };
+
+// Legacy alias for backward compatibility  
+export const buildingUsageSchema = buildingDecisionSchema;

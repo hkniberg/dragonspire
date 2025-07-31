@@ -33,10 +33,8 @@ export interface HarvestAction {
   tilePositions: Position[]; // Tiles to harvest from
 }
 
-export interface BuildAction {
-  diceValueUsed: number;
-  buildActionType: "blacksmith" | "market" | "recruitChampion" | "buildBoat" | "chapel" | "upgradeChapelToMonastery" | "warshipUpgrade" | "fletcher";
-}
+// Build action is now just a string representing the type of build action
+export type BuildAction = "blacksmith" | "market" | "recruitChampion" | "buildBoat" | "chapel" | "upgradeChapelToMonastery" | "warshipUpgrade" | "fletcher";
 
 export interface BuildingUsageDecision {
   useBlacksmith?: boolean;
@@ -44,12 +42,17 @@ export interface BuildingUsageDecision {
   useFletcher?: boolean;
 }
 
-// Nested DiceAction structure for Claude communication (matches schema)
+// New combined interface for harvest phase decisions
+export interface BuildingDecision {
+  buildingUsageDecision?: BuildingUsageDecision;
+  buildAction?: BuildAction;
+}
+
+// Dice actions no longer include build actions
 export interface DiceAction {
-  actionType: "championAction" | "boatAction" | "harvestAction" | "buildAction";
+  actionType: "championAction" | "boatAction" | "harvestAction";
   championAction?: ChampionAction;
   boatAction?: BoatAction;
   harvestAction?: HarvestAction;
-  buildAction?: BuildAction;
   reasoning?: string;
 }

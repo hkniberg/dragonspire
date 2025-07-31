@@ -2,12 +2,12 @@
 
 import { getTraderItemById } from "@/content/traderItems";
 import { formatBuildingInfo, stringifyGameState, stringifyPlayer } from "@/game/gameStateStringifier";
-import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
+import { BuildingDecision, DiceAction } from "@/lib/actionTypes";
 import { TraderCard } from "@/lib/cards";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, Player, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
-import { buildingUsageSchema, decisionSchema, diceActionSchema, traderDecisionSchema } from "../lib/claudeSchemas";
+import { buildingDecisionSchema, decisionSchema, diceActionSchema, traderDecisionSchema } from "../lib/claudeSchemas";
 import { TemplateProcessor, TemplateVariables } from "../lib/templateProcessor";
 import { Claude } from "../llm/claude";
 import { PlayerAgent } from "./PlayerAgent";
@@ -111,26 +111,27 @@ export class ClaudePlayerAgent implements PlayerAgent {
         gameLog: readonly GameLogEntry[],
         playerName: string,
         thinkingLogger?: (content: string) => void,
-    ): Promise<BuildingUsageDecision> {
+    ): Promise<BuildingDecision> {
         const player = gameState.getPlayer(playerName);
         if (!player) {
             throw new Error(`Player with name ${playerName} not found`);
         }
 
-        // Check for usable buildings early
+        // Check for usable buildings and available build actions early
         const usableBuildings = getUsableBuildings(player);
-        if (usableBuildings.length === 0) {
-            // No buildings can be used, return empty decision
+        const availableBuildActions = this.getAvailableBuildActions(player);
+
+        if (usableBuildings.length === 0 && availableBuildActions.length === 0) {
+            // No buildings can be used and no build actions available, return empty decision
             return {};
         }
 
-        const userMessage = await this.prepareBuildingUsageMessage(gameState, gameLog, playerName, usableBuildings);
+        const userMessage = await this.prepareBuildingDecisionMessage(gameState, gameLog, playerName, usableBuildings, availableBuildActions);
 
-        // Get structured JSON response for building usage decision
-        const response = await this.claude.useClaude(userMessage, buildingUsageSchema, 0, 300, thinkingLogger);
+        // Get structured JSON response for building decision
+        const response = await this.claude.useClaude(userMessage, buildingDecisionSchema, 0, 400, thinkingLogger);
 
-        return response as BuildingUsageDecision;
-
+        return response as BuildingDecision;
     }
 
     private async prepareAssessmentMessage(
@@ -194,7 +195,6 @@ export class ClaudePlayerAgent implements PlayerAgent {
             boardState: boardState,
             turnNumber: turnContext.turnNumber,
             remainingDice: turnContext.remainingDiceValues.join(", "),
-            availableBuildActions: this.buildAvailableBuildActionsSummary(gameState.getCurrentPlayer()),
             extraInstructions: this.getExtraInstructionsSection(gameState)
         };
 
@@ -268,11 +268,12 @@ export class ClaudePlayerAgent implements PlayerAgent {
         return await this.templateProcessor.processTemplate("traderDecision", variables);
     }
 
-    private async prepareBuildingUsageMessage(
+    private async prepareBuildingDecisionMessage(
         gameState: GameState,
         gameLog: readonly GameLogEntry[],
         playerName: string,
         usableBuildings: string[],
+        availableBuildActions: string[],
     ): Promise<string> {
         const player = gameState.getPlayer(playerName);
         if (!player) {
@@ -286,12 +287,18 @@ export class ClaudePlayerAgent implements PlayerAgent {
         // Build available buildings summary
         const availableBuildings = this.buildAvailableBuildingsSummary(player, usableBuildings);
 
+        // Build available build actions summary
+        const buildActionsText = availableBuildActions.length > 0
+            ? `You can currently afford these build actions: ${availableBuildActions.join(", ")}.`
+            : "You cannot afford any build actions yet.";
+
         const variables: TemplateVariables = {
             playerName: player.name,
             boardState: boardState,
             gameLog: gameLogText,
             playerStatus: playerStatus,
             availableBuildings: availableBuildings,
+            availableBuildActions: buildActionsText,
             extraInstructions: this.getExtraInstructionsSection(gameState),
         };
 
@@ -329,7 +336,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         return buildingSummaries.join("\n");
     }
 
-    private buildAvailableBuildActionsSummary(player: Player): string {
+    private getAvailableBuildActions(player: Player): string[] {
         const availableActions: string[] = [];
         const { resources } = player;
 
@@ -385,11 +392,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             availableActions.push("warshipUpgrade");
         }
 
-        if (availableActions.length === 0) {
-            return "You cannot afford any build actions yet.";
-        }
-
-        return `You can currently afford build actions: ${availableActions.join(", ")}.`;
+        return availableActions;
     }
 
     private getExtraInstructionsSection(gameState: GameState): string {

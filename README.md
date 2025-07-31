@@ -14,7 +14,7 @@ A strategic board game design project with digital simulation for playtesting an
 ### Game Rules (Three Versions)
 
 - **[Game Rules](docs/game-rules.md)** - Canonical version for the printed board game and human players (source of truth)
-- **[Player Cheat Sheets](simulation/src/pages/cheat-sheet-1.tsx)** - Shorter cheat sheet versions, packaged as web pages. Deployed at https://doomspire.vercel.app/cheat-sheet-1 and https://doomspire.vercel.app/cheat-sheet-2
+- **[Player Cheat Sheet](simulation/src/pages/cheat-sheet.tsx)** - Consolidated game reference cheat sheet, packaged as a web page. Deployed at https://doomspire.vercel.app/cheat-sheet
 - **[AI Rules](simulation/public/prompts/game-rules-for-ai.md)** - AI-adapted rules with minor changes to work better in the simulator context
 
 ## Quick Start

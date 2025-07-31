@@ -1,43 +1,41 @@
 // Lords of Doomspire Player Interface
 
-import { BuildingUsageDecision, DiceAction } from "@/lib/actionTypes";
+import { GameState } from "@/game/GameState";
+import { BuildingDecision, DiceAction } from "@/lib/actionTypes";
 import { TraderCard } from "@/lib/cards";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, PlayerType, TurnContext } from "@/lib/types";
-import { GameState } from "../game/GameState";
 
-
-/**
- * Interface that all player implementations must follow
- */
 export interface PlayerAgent {
-  /**
-   * Get the player's display name
-   */
   getName(): string;
-
-  /**
-   * Get the player's type identifier
-   */
   getType(): PlayerType;
 
-
   /**
-   * Provide strategic assessment at the start of each turn
-   * @returns String describing strategic assessment or undefined to skip
+   * Strategic assessment of the current game situation
+   * @param gameState Current game state
+   * @param gameLog Game log entries for this session
+   * @param diceValues The dice values rolled for this turn
+   * @param turnNumber Current turn number
+   * @param traderItems Available trader items
+   * @param thinkingLogger Optional logger for AI thinking process
+   * @returns Strategic assessment text or undefined if not supported
    */
-  makeStrategicAssessment(
+  makeStrategicAssessment?(
     gameState: GameState,
     gameLog: readonly GameLogEntry[],
-    diceRolls: number[],
+    diceValues: number[],
     turnNumber: number,
     traderItems: readonly TraderCard[],
     thinkingLogger?: (content: string) => void,
   ): Promise<string | undefined>;
 
   /**
-   * Decide on a single action to take.
-   * @returns DiceAction intent declaring what the player wants to do
+   * Choose a dice action during the movement phase
+   * @param gameState Current game state
+   * @param gameLog Game log entries for this session
+   * @param turnContext Context about the current turn (remaining dice, etc.)
+   * @param thinkingLogger Optional logger for AI thinking process
+   * @returns The chosen dice action
    */
   decideDiceAction(
     gameState: GameState,
@@ -47,9 +45,12 @@ export interface PlayerAgent {
   ): Promise<DiceAction>;
 
   /**
-   * Make a decision when choices arise during action resolution
-   * @param decisionContext Description of the choice to be made
-   * @returns Decision object with the chosen option
+   * Make a decision when prompted with specific options
+   * @param gameState Current game state
+   * @param gameLog Game log entries for this session
+   * @param decisionContext Context about the decision to make
+   * @param thinkingLogger Optional logger for AI thinking process
+   * @returns The chosen decision
    */
   makeDecision(
     gameState: GameState,
@@ -59,11 +60,12 @@ export interface PlayerAgent {
   ): Promise<Decision>;
 
   /**
-   * Make trader decisions when visiting a trader tile
+   * Make a decision about trader interactions
    * @param gameState Current game state
-   * @param gameLog Game log entries
-   * @param traderContext Available trader options and player resources
-   * @returns TraderDecision with actions to perform
+   * @param gameLog Game log entries for this session
+   * @param traderContext Context about the trader interaction
+   * @param thinkingLogger Optional logger for AI thinking process
+   * @returns The chosen trader decision
    */
   makeTraderDecision(
     gameState: GameState,
@@ -73,16 +75,17 @@ export interface PlayerAgent {
   ): Promise<TraderDecision>;
 
   /**
-   * Decide which buildings to use after all dice have been consumed
+   * Decide which buildings to use and what to build during the harvest phase
    * @param gameState Current game state
-   * @param gameLog Game log entries
+   * @param gameLog Game log entries for this session
    * @param playerName Name of the player making the decision
-   * @returns BuildingUsageDecision with which buildings to use
+   * @param thinkingLogger Optional logger for AI thinking process
+   * @returns BuildingDecision with which buildings to use and what to build
    */
   useBuilding(
     gameState: GameState,
     gameLog: readonly GameLogEntry[],
     playerName: string,
     thinkingLogger?: (content: string) => void,
-  ): Promise<BuildingUsageDecision>;
+  ): Promise<BuildingDecision>;
 }

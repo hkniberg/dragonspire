@@ -6,10 +6,7 @@ export default function PrintPage() {
     <>
       <Head>
         <title>Print - Lords of Doomspire</title>
-        <meta
-          name="description"
-          content="Print game components for Lords of Doomspire"
-        />
+        <meta name="description" content="Print game components for Lords of Doomspire" />
       </Head>
 
       <div style={{ padding: "2rem", fontFamily: "Arial, sans-serif" }}>
@@ -66,6 +63,57 @@ export default function PrintPage() {
             }}
           >
             Print Compact Cards
+          </Link>
+
+          <Link
+            href="/tracks"
+            style={{
+              display: "inline-block",
+              padding: "1rem 2rem",
+              backgroundColor: "#FF9800",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: "4px",
+              fontSize: "1.1rem",
+              marginRight: "1rem",
+              marginBottom: "1rem",
+            }}
+          >
+            Print Player Tracks
+          </Link>
+
+          <Link
+            href="/castleBoard"
+            style={{
+              display: "inline-block",
+              padding: "1rem 2rem",
+              backgroundColor: "#795548",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: "4px",
+              fontSize: "1.1rem",
+              marginRight: "1rem",
+              marginBottom: "1rem",
+            }}
+          >
+            Print Castle Board
+          </Link>
+
+          <Link
+            href="/specialTileLabels"
+            style={{
+              display: "inline-block",
+              padding: "1rem 2rem",
+              backgroundColor: "#607D8B",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: "4px",
+              fontSize: "1.1rem",
+              marginRight: "1rem",
+              marginBottom: "1rem",
+            }}
+          >
+            Print Special Tile Labels
           </Link>
         </div>
 
