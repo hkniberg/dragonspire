@@ -378,7 +378,10 @@ export class GameMaster {
     // Step 1: Handle exploration
     handleExploration(this.gameState, tile, player, logFn);
 
-    // Step 2: Handle champion combat
+    // Step 2: Handle ALL existing combat first (this takes priority over adventure cards)
+    let existingCombatOccurred = false;
+
+    // Step 2a: Handle champion combat
     const getPlayerAgent = (playerName: string) => {
       const playerIndex = this.gameState.players.findIndex(p => p.name === playerName);
       return playerIndex >= 0 ? this.playerAgents[playerIndex] : undefined;
@@ -396,92 +399,94 @@ export class GameMaster {
       getPlayerAgent,
       isChampionCombatActivelyChosen
     );
-    if (championCombatResult.combatOccurred && !championCombatResult.attackerWon) {
-      // Attacker lost, defeat effects already applied by combat handler
-      return;
-    }
-
-    // Step 3: Handle monster combat (but only if not from an adventure card)
-    let adventureCardCombatOccurred = false;
-
-    // Step 4: Handle special tiles (adventure/oasis) - moved before monster combat
-    const specialTileResult = handleSpecialTiles(tile, championId, logFn);
-    if (specialTileResult.interactionOccurred && specialTileResult.adventureCardDrawn) {
-      // Use player's preferred theme from TileAction to choose deck
-      const preferredBiome = tileAction?.preferredAdventureTheme;
-
-      // Draw adventure card using simplified API
-      const drawResult = this.gameDecks.drawCard(tile.tier!, preferredBiome);
-
-      // Log the card draw with simplified format
-      if (drawResult.card) {
-        const biomeDisplayName = drawResult.card.theme.charAt(0).toUpperCase() + drawResult.card.theme.slice(1);
-        logFn("event", `${player.name} drew from tier ${tile.tier}, deck ${drawResult.selectedDeckNumber} (a ${biomeDisplayName} card)`);
-      } else {
-        logFn("event", `${player.name} drew from tier ${tile.tier}, deck ${drawResult.selectedDeckNumber} (no card available)`);
-      }
-
-      // Handle the adventure card
-      const adventureCard = drawResult.card;
-      // Track statistics
-      player.statistics!.adventureCards += 1;
-
-      if (!adventureCard) {
-        console.log(`No adventure card found for tier ${tile.tier}`);
-      } else {
-        const currentPlayerAgent = this.playerAgents[this.gameState.currentPlayerIndex];
-        const adventureResult = await handleAdventureCard(
-          adventureCard,
-          this.gameState,
-          tile,
-          player,
-          currentPlayerAgent,
-          championId,
-          this.gameLog,
-          logFn,
-          thinkingLogger,
-          getPlayerAgent
-        );
-
-        // If the card should be returned to the deck (e.g., sword-in-stone resisted pull)
-        if (adventureResult.cardReturnedToDeck && adventureCard) {
-          this.gameDecks.returnCardToTop(tile.tier!, drawResult.selectedDeckNumber, adventureCard);
-          logFn("event", `The card returned to the top of the adventure deck.`);
-        }
-
-        // Handle results from adventure card
-        if (adventureResult.cardProcessed && adventureResult.monsterPlaced) {
-          // A monster was placed, so don't do additional monster combat regardless of outcome
-          adventureCardCombatOccurred = true;
-
-          if (adventureResult.monsterPlaced.championDefeated) {
-            // Champion was defeated by a monster from the adventure card, defeat effects already applied by combat handler
-            return;
-          }
-        }
+    if (championCombatResult.combatOccurred) {
+      existingCombatOccurred = true;
+      if (!championCombatResult.attackerWon) {
+        // Attacker lost, defeat effects already applied by combat handler
+        return;
       }
     }
 
-    // Only handle existing monster combat if no adventure card combat occurred
-    if (!adventureCardCombatOccurred) {
-      const monsterCombatResult = await handleMonsterCombat(
-        this.gameState,
-        tile,
-        player,
-        championId,
-        logFn,
-        isMonsterCombatActivelyChosen,
-        this.playerAgents[this.gameState.currentPlayerIndex],
-        this.gameLog,
-        thinkingLogger
-      );
-      if (monsterCombatResult.combatOccurred && !monsterCombatResult.championWon) {
+    // Step 2b: Handle existing monster combat (only if no champion combat occurred or champion won)
+    const monsterCombatResult = await handleMonsterCombat(
+      this.gameState,
+      tile,
+      player,
+      championId,
+      logFn,
+      isMonsterCombatActivelyChosen,
+      this.playerAgents[this.gameState.currentPlayerIndex],
+      this.gameLog,
+      thinkingLogger
+    );
+    if (monsterCombatResult.combatOccurred) {
+      existingCombatOccurred = true;
+      if (!monsterCombatResult.championWon) {
         // Champion lost to monster, defeat effects already applied by combat handler
         return;
       }
     }
 
-    // Step 5: Handle Doomspire tile (dragon combat and victory conditions)
+    // Step 3: Handle adventure cards ONLY if no existing combat occurred
+    // This follows the rule: "if you enter an adventure tile with a monster already present, 
+    // you will be forced to fight the monster but not draw another adventure card after"
+    if (!existingCombatOccurred) {
+      const specialTileResult = handleSpecialTiles(tile, championId, logFn);
+      if (specialTileResult.interactionOccurred && specialTileResult.adventureCardDrawn) {
+        // Use player's preferred theme from TileAction to choose deck
+        const preferredBiome = tileAction?.preferredAdventureTheme;
+
+        // Draw adventure card using simplified API
+        const drawResult = this.gameDecks.drawCard(tile.tier!, preferredBiome);
+
+        // Log the card draw with simplified format
+        if (drawResult.card) {
+          const biomeDisplayName = drawResult.card.theme.charAt(0).toUpperCase() + drawResult.card.theme.slice(1);
+          logFn("event", `${player.name} drew from tier ${tile.tier}, deck ${drawResult.selectedDeckNumber} (a ${biomeDisplayName} card)`);
+        } else {
+          logFn("event", `${player.name} drew from tier ${tile.tier}, deck ${drawResult.selectedDeckNumber} (no card available)`);
+        }
+
+        // Handle the adventure card
+        const adventureCard = drawResult.card;
+        // Track statistics
+        player.statistics!.adventureCards += 1;
+
+        if (!adventureCard) {
+          console.log(`No adventure card found for tier ${tile.tier}`);
+        } else {
+          const currentPlayerAgent = this.playerAgents[this.gameState.currentPlayerIndex];
+          const adventureResult = await handleAdventureCard(
+            adventureCard,
+            this.gameState,
+            tile,
+            player,
+            currentPlayerAgent,
+            championId,
+            this.gameLog,
+            logFn,
+            thinkingLogger,
+            getPlayerAgent
+          );
+
+          // If the card should be returned to the deck (e.g., sword-in-stone resisted pull)
+          if (adventureResult.cardReturnedToDeck && adventureCard) {
+            this.gameDecks.returnCardToTop(tile.tier!, drawResult.selectedDeckNumber, adventureCard);
+            logFn("event", `The card returned to the top of the adventure deck.`);
+          }
+
+          // Handle results from adventure card
+          if (adventureResult.cardProcessed && adventureResult.monsterPlaced) {
+            if (adventureResult.monsterPlaced.championDefeated) {
+              // Champion was defeated by a monster from the adventure card, defeat effects already applied by combat handler
+              return;
+            }
+          }
+        }
+      }
+    }
+
+    // Step 4: Handle Doomspire tile (dragon combat and victory conditions)
     const doomspireResult = await handleDoomspireTile(
       this.gameState,
       tile,
@@ -511,7 +516,7 @@ export class GameMaster {
       }
     }
 
-    // Step 6: Handle item pickup and drop
+    // Step 5: Handle item pickup and drop
     if (tileAction?.pickUpItems || tileAction?.dropItems) {
       const { handleItemManagement } = await import("@/engine/handlers/tileArrivalHandler");
       const itemResult = handleItemManagement(
@@ -534,12 +539,12 @@ export class GameMaster {
     }
 
 
-    // Step 7: Handle trader interactions
+    // Step 6: Handle trader interactions
     if (tile.tileType === "trader" && tileAction?.useTrader) {
       await this.handleTraderVisit(player, championId, logFn);
     }
 
-    // Step 8: Handle mercenary camp interactions
+    // Step 7: Handle mercenary camp interactions
     if (tile.tileType === "mercenary" && tileAction?.useMercenary) {
       const { handleMercenaryAction } = await import("@/engine/handlers/tileArrivalHandler");
       const mercenaryResult = handleMercenaryAction(
@@ -556,7 +561,7 @@ export class GameMaster {
       }
     }
 
-    // Step 9: Handle temple interactions
+    // Step 8: Handle temple interactions
     if (tile.tileType === "temple" && tileAction?.useTemple) {
       const { handleTempleAction } = await import("@/engine/handlers/tileArrivalHandler");
       const templeResult = handleTempleAction(
@@ -573,10 +578,10 @@ export class GameMaster {
       }
     }
 
-    // Step 10: Handle tile claiming
+    // Step 9: Handle tile claiming
     handleTileClaiming(this.gameState, tile, player, championId, !!tileAction?.claimTile, logFn);
 
-    // Step 11: Handle tile conquest
+    // Step 10: Handle tile conquest
     const { handleTileConquest } = await import("@/engine/handlers/tileArrivalHandler");
     handleTileConquest(
       this.gameState,
