@@ -126,6 +126,7 @@ export class GameState {
           dragonEncounters: 0,
           marketInteractions: 0,
           blacksmithInteractions: 0,
+          fletcherInteractions: 0,
           traderInteractions: 0,
           templeInteractions: 0,
           mercenaryInteractions: 0,

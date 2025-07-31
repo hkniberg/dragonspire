@@ -4,6 +4,7 @@ import { PlayerAgent } from "../../players/PlayerAgent";
 export interface BuildingUsageResult {
   blacksmithUsed: boolean;
   marketUsed: boolean;
+  fletcherUsed: boolean;
   totalGoldGained: number;
   totalResourcesSold: number;
   failedActions: Array<{ action: string; reason: string }>;
@@ -23,6 +24,7 @@ export async function handleBuildingUsage(
   const result: BuildingUsageResult = {
     blacksmithUsed: false,
     marketUsed: false,
+    fletcherUsed: false,
     totalGoldGained: 0,
     totalResourcesSold: 0,
     failedActions: []
@@ -31,8 +33,9 @@ export async function handleBuildingUsage(
   // Check if player has any usable buildings
   const hasBlacksmith = player.buildings.includes("blacksmith");
   const hasMarket = player.buildings.includes("market");
+  const hasFletcher = player.buildings.includes("fletcher");
 
-  if (!hasBlacksmith && !hasMarket) {
+  if (!hasBlacksmith && !hasMarket && !hasFletcher) {
     return result; // No buildings to use
   }
 
@@ -99,6 +102,28 @@ export async function handleBuildingUsage(
           player.statistics.marketInteractions += 1;
         }
       }
+    }
+  }
+
+  // Process fletcher usage
+  if (buildingUsageDecision.useFletcher) {
+    if (hasFletcher && player.resources.wood >= 3 && player.resources.ore >= 1) {
+      // Deduct resources and gain might
+      player.resources.wood -= 3;
+      player.resources.ore -= 1;
+      player.might += 1;
+
+      logFn("system", `Used fletcher to buy 1 Might for 3 Wood + 1 Ore.`);
+      result.fletcherUsed = true;
+
+      // Track statistics
+      if (player.statistics) {
+        player.statistics.fletcherInteractions += 1;
+      }
+    } else if (player.resources.wood < 3 || player.resources.ore < 1) {
+      const reason = `Cannot use fletcher - requires 3 Wood + 1 Ore.`;
+      logFn("system", reason);
+      result.failedActions.push({ action: "fletcher", reason });
     }
   }
 

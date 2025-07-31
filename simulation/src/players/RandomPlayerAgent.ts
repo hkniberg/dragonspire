@@ -164,11 +164,20 @@ export class RandomPlayerAgent implements PlayerAgent {
     // Check if player has a market
     const hasMarket = player.buildings.includes("market");
 
+    // Check if player has a fletcher
+    const hasFletcher = player.buildings.includes("fletcher");
+
+    // Check if player can afford fletcher (3 Wood + 1 Ore according to rules)
+    const canAffordFletcher = player.resources.wood >= 3 && player.resources.ore >= 1;
+
     // Check if player has resources to sell at market
     const hasResourcesToSell = player.resources.food > 0 || player.resources.wood > 0 || player.resources.ore > 0;
 
     // RandomPlayer always uses blacksmith if available and affordable
     const useBlacksmith = hasBlacksmith && canAffordBlacksmith;
+
+    // RandomPlayer always uses fletcher if available and affordable
+    const useFletcher = hasFletcher && canAffordFletcher;
 
     // Only create sellAtMarket if player has market and resources to sell
     let sellAtMarket: Record<MarketResourceType, number> | undefined;
@@ -194,6 +203,10 @@ export class RandomPlayerAgent implements PlayerAgent {
 
     if (useBlacksmith) {
       result.useBlacksmith = useBlacksmith;
+    }
+
+    if (useFletcher) {
+      result.useFletcher = useFletcher;
     }
 
     if (sellAtMarket) {
@@ -321,6 +334,7 @@ export class RandomPlayerAgent implements PlayerAgent {
     // Check if player already has buildings
     const hasBlacksmith = player.buildings.includes("blacksmith");
     const hasMarket = player.buildings.includes("market");
+    const hasFletcher = player.buildings.includes("fletcher");
     const hasChapel = player.buildings.includes("chapel");
     const hasMonastery = player.buildings.includes("monastery");
     const hasWarshipUpgrade = player.buildings.includes("warshipUpgrade");
@@ -330,7 +344,7 @@ export class RandomPlayerAgent implements PlayerAgent {
     const canRecruitChampion = currentChampionCount < 3;
 
     // Randomly choose between blacksmith, market, chapel, monastery, warship upgrade, champion recruitment, and boat building (if available)
-    const availableBuildings: ("blacksmith" | "market" | "chapel" | "upgradeChapelToMonastery" | "warshipUpgrade" | "recruitChampion" | "buildBoat")[] = [];
+    const availableBuildings: ("blacksmith" | "market" | "fletcher" | "chapel" | "upgradeChapelToMonastery" | "warshipUpgrade" | "recruitChampion" | "buildBoat")[] = [];
 
     // Prioritize champion recruitment - add it first if available
     if (canRecruitChampion) {
@@ -349,13 +363,17 @@ export class RandomPlayerAgent implements PlayerAgent {
       availableBuildings.push("market");
     }
 
+    if (!hasFletcher && player.resources.wood >= 1 && player.resources.food >= 1 && player.resources.gold >= 1 && player.resources.ore >= 1) {
+      availableBuildings.push("fletcher");
+    }
+
     // Chapel can be built if player doesn't have chapel or monastery
-    if (!hasChapel && !hasMonastery && player.resources.wood >= 3 && player.resources.gold >= 4) {
+    if (!hasChapel && !hasMonastery && player.resources.wood >= 6 && player.resources.gold >= 2) {
       availableBuildings.push("chapel");
     }
 
     // Monastery can only be built if player has chapel and doesn't have monastery
-    if (hasChapel && !hasMonastery && player.resources.wood >= 4 && player.resources.gold >= 5 && player.resources.ore >= 2) {
+    if (hasChapel && !hasMonastery && player.resources.wood >= 8 && player.resources.gold >= 3 && player.resources.ore >= 1) {
       availableBuildings.push("upgradeChapelToMonastery");
     }
 

@@ -438,6 +438,8 @@ export function formatBuildingInfo(buildingType: string): string {
       return "market (sell food/wood/ore for gold, 2 resources = 1 gold)";
     case "blacksmith":
       return "blacksmith (buy 1 might for 1 gold + 2 ore)";
+    case "fletcher":
+      return "fletcher (buy 1 might for 3 wood + 1 ore)";
     case "chapel":
       return "chapel (buy 3 fame for 1 might)";
     case "monastery":

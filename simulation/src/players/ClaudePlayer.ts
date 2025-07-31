@@ -315,6 +315,13 @@ export class ClaudePlayerAgent implements PlayerAgent {
             buildingSummaries.push(`- ${formatBuildingInfo("market")}: ${status}`);
         }
 
+        // Check for Fletcher
+        if (player.buildings.includes("fletcher")) {
+            const canUseFletcher = usableBuildings.includes("fletcher");
+            const status = canUseFletcher ? "Available" : "Cannot use (need 3 Wood + 1 Ore)";
+            buildingSummaries.push(`- ${formatBuildingInfo("fletcher")}: ${status}`);
+        }
+
         if (buildingSummaries.length === 0) {
             return "You have no buildings that can be used after your turn.";
         }
@@ -338,15 +345,21 @@ export class ClaudePlayerAgent implements PlayerAgent {
             availableActions.push("market");
         }
 
-        // Check Chapel (3 Wood + 4 Gold, only once per player)
+        // Check Fletcher (1 Wood + 1 Food + 1 Gold + 1 Ore, max 1 per player)
+        const hasFletcher = player.buildings.includes("fletcher");
+        if (!hasFletcher && resources.wood >= 1 && resources.food >= 1 && resources.gold >= 1 && resources.ore >= 1) {
+            availableActions.push("fletcher");
+        }
+
+        // Check Chapel (6 Wood + 2 Gold, only once per player)
         const hasChapel = player.buildings.includes("chapel");
         const hasMonastery = player.buildings.includes("monastery");
-        if (!hasChapel && !hasMonastery && resources.wood >= 3 && resources.gold >= 4) {
+        if (!hasChapel && !hasMonastery && resources.wood >= 6 && resources.gold >= 2) {
             availableActions.push("chapel");
         }
 
-        // Check Monastery upgrade (4 Wood + 5 Gold + 2 Ore, requires chapel)
-        if (hasChapel && !hasMonastery && resources.wood >= 4 && resources.gold >= 5 && resources.ore >= 2) {
+        // Check Monastery upgrade (8 Wood + 3 Gold + 1 Ore, requires chapel)
+        if (hasChapel && !hasMonastery && resources.wood >= 8 && resources.gold >= 3 && resources.ore >= 1) {
             availableActions.push("upgradeChapelToMonastery");
         }
 

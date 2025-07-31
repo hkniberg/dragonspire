@@ -304,6 +304,12 @@ export function getUsableBuildings(player: Player): string[] {
     }
   }
 
+  // Check for Fletcher
+  const hasFletcher = player.buildings.includes("fletcher");
+  if (hasFletcher && player.resources.wood >= 3 && player.resources.ore >= 1) {
+    usableBuildings.push("fletcher");
+  }
+
   return usableBuildings;
 }
 

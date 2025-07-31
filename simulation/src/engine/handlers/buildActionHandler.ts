@@ -29,6 +29,8 @@ export function handleBuildAction(
     return handleMonasteryBuild(player, action, logFn, reasoningText);
   } else if (action.buildActionType === "warshipUpgrade") {
     return handleWarshipUpgrade(player, action, logFn, reasoningText);
+  } else if (action.buildActionType === "fletcher") {
+    return handleFletcherBuild(player, action, logFn, reasoningText);
   } else {
     return {
       actionSuccessful: false,
@@ -251,9 +253,9 @@ function handleChapelBuild(
   logFn: (type: string, content: string) => void,
   reasoningText: string
 ): BuildActionResult {
-  // Check if player can afford chapel: 3 Wood + 4 Gold (according to rules)
-  if (player.resources.wood < 3 || player.resources.gold < 4) {
-    logFn("system", `Cannot afford chapel - requires 3 Wood + 4 Gold.${reasoningText}`);
+  // Check if player can afford chapel: 6 Wood + 2 Gold (according to rules)
+  if (player.resources.wood < 6 || player.resources.gold < 2) {
+    logFn("system", `Cannot afford chapel - requires 6 Wood + 2 Gold.${reasoningText}`);
     return {
       actionSuccessful: false,
       reason: "Insufficient resources"
@@ -272,8 +274,8 @@ function handleChapelBuild(
   }
 
   // Deduct resources
-  player.resources.wood -= 3;
-  player.resources.gold -= 4;
+  player.resources.wood -= 6;
+  player.resources.gold -= 2;
 
   // Add chapel to player's buildings
   player.buildings.push("chapel");
@@ -283,12 +285,12 @@ function handleChapelBuild(
 
   logFn(
     "system",
-    `Built a chapel for 3 Wood + 4 Gold, using die value [${action.diceValueUsed}]. Gained 3 Fame.${reasoningText}`
+    `Built a chapel for 6 Wood + 2 Gold, using die value [${action.diceValueUsed}]. Gained 3 Fame.${reasoningText}`
   );
 
   return {
     actionSuccessful: true,
-    resourcesSpent: { food: 0, wood: 3, ore: 0, gold: 4 }
+    resourcesSpent: { food: 0, wood: 6, ore: 0, gold: 2 }
   };
 }
 
@@ -298,9 +300,9 @@ function handleMonasteryBuild(
   logFn: (type: string, content: string) => void,
   reasoningText: string
 ): BuildActionResult {
-  // Check if player can afford monastery: 4 Wood + 5 Gold + 2 Ore (according to rules)
-  if (player.resources.wood < 4 || player.resources.gold < 5 || player.resources.ore < 2) {
-    logFn("system", `Cannot afford monastery - requires 4 Wood + 5 Gold + 2 Ore.${reasoningText}`);
+  // Check if player can afford monastery: 8 Wood + 3 Gold + 1 Ore (according to rules)
+  if (player.resources.wood < 8 || player.resources.gold < 3 || player.resources.ore < 1) {
+    logFn("system", `Cannot afford monastery - requires 8 Wood + 3 Gold + 1 Ore.${reasoningText}`);
     return {
       actionSuccessful: false,
       reason: "Insufficient resources"
@@ -328,9 +330,9 @@ function handleMonasteryBuild(
   }
 
   // Deduct resources
-  player.resources.wood -= 4;
-  player.resources.gold -= 5;
-  player.resources.ore -= 2;
+  player.resources.wood -= 8;
+  player.resources.gold -= 3;
+  player.resources.ore -= 1;
 
   // Remove chapel and add monastery (monastery replaces chapel)
   const chapelIndex = player.buildings.indexOf("chapel");
@@ -344,12 +346,12 @@ function handleMonasteryBuild(
 
   logFn(
     "system",
-    `Built a monastery for 4 Wood + 5 Gold + 2 Ore, using die value [${action.diceValueUsed}]. Upgraded chapel to monastery. Gained 5 Fame.${reasoningText}`
+    `Built a monastery for 8 Wood + 3 Gold + 1 Ore, using die value [${action.diceValueUsed}]. Upgraded chapel to monastery. Gained 5 Fame.${reasoningText}`
   );
 
   return {
     actionSuccessful: true,
-    resourcesSpent: { food: 0, wood: 4, ore: 2, gold: 5 }
+    resourcesSpent: { food: 0, wood: 8, ore: 1, gold: 3 }
   };
 }
 
@@ -394,5 +396,50 @@ function handleWarshipUpgrade(
   return {
     actionSuccessful: true,
     resourcesSpent: { food: 0, wood: 2, ore: 1, gold: 1 }
+  };
+}
+
+function handleFletcherBuild(
+  player: Player,
+  action: BuildAction,
+  logFn: (type: string, content: string) => void,
+  reasoningText: string
+): BuildActionResult {
+  // Check if player can afford fletcher: 1 Wood, 1 Food, 1 Gold, 1 Ore (according to rules)
+  if (player.resources.wood < 1 || player.resources.food < 1 || player.resources.gold < 1 || player.resources.ore < 1) {
+    logFn("system", `Cannot afford fletcher - requires 1 Wood + 1 Food + 1 Gold + 1 Ore.${reasoningText}`);
+    return {
+      actionSuccessful: false,
+      reason: "Insufficient resources"
+    };
+  }
+
+  // Check if player already has a fletcher (max 1 per player)
+  const hasFletcher = player.buildings.includes("fletcher");
+  if (hasFletcher) {
+    logFn("system", `Cannot build fletcher - player already has one.${reasoningText}`);
+    return {
+      actionSuccessful: false,
+      reason: "Already has fletcher"
+    };
+  }
+
+  // Deduct resources
+  player.resources.wood -= 1;
+  player.resources.food -= 1;
+  player.resources.gold -= 1;
+  player.resources.ore -= 1;
+
+  // Add fletcher to player's buildings
+  player.buildings.push("fletcher");
+
+  logFn(
+    "system",
+    `Built a fletcher for 1 Wood + 1 Food + 1 Gold + 1 Ore, using die value [${action.diceValueUsed}].${reasoningText}`
+  );
+
+  return {
+    actionSuccessful: true,
+    resourcesSpent: { food: 1, wood: 1, ore: 1, gold: 1 }
   };
 } 

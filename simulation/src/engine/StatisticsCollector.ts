@@ -57,6 +57,7 @@ export class StatisticsCollector {
         dragonEncounters: player.statistics?.dragonEncounters ?? 0,
         marketInteractions: player.statistics?.marketInteractions ?? 0,
         blacksmithInteractions: player.statistics?.blacksmithInteractions ?? 0,
+        fletcherInteractions: player.statistics?.fletcherInteractions ?? 0,
         traderInteractions: player.statistics?.traderInteractions ?? 0,
         templeInteractions: player.statistics?.templeInteractions ?? 0,
         mercenaryInteractions: player.statistics?.mercenaryInteractions ?? 0,
@@ -70,6 +71,7 @@ export class StatisticsCollector {
         totalResourcesFromTiles,
         hasBlacksmith: player.buildings.includes("blacksmith"),
         hasMarket: player.buildings.includes("market"),
+        hasFletcher: player.buildings.includes("fletcher"),
         hasChapel: player.buildings.includes("chapel"),
         hasMonastery: player.buildings.includes("monastery"),
         hasWarshipUpgrade: player.buildings.includes("warshipUpgrade"),
@@ -118,6 +120,7 @@ export class StatisticsCollector {
         `${playerName}_DragonEncounters`,
         `${playerName}_MarketInteractions`,
         `${playerName}_BlacksmithInteractions`,
+        `${playerName}_FletcherInteractions`,
         `${playerName}_TraderInteractions`,
         `${playerName}_TempleInteractions`,
         `${playerName}_MercenaryInteractions`,
@@ -131,6 +134,7 @@ export class StatisticsCollector {
         `${playerName}_TotalResourcesFromTiles`,
         `${playerName}_HasBlacksmith`,
         `${playerName}_HasMarket`,
+        `${playerName}_HasFletcher`,
         `${playerName}_HasChapel`,
         `${playerName}_HasMonastery`,
         `${playerName}_HasWarshipUpgrade`
@@ -147,7 +151,7 @@ export class StatisticsCollector {
         const playerStats = turnStats.playerStats.find(p => p.playerName === playerName);
         if (!playerStats) {
           // Fill with empty values if player data is missing
-          for (let i = 0; i < 33; i++) {
+          for (let i = 0; i < 35; i++) {
             row.push("");
           }
           continue;
@@ -171,6 +175,7 @@ export class StatisticsCollector {
           playerStats.dragonEncounters,
           playerStats.marketInteractions,
           playerStats.blacksmithInteractions,
+          playerStats.fletcherInteractions,
           playerStats.traderInteractions,
           playerStats.templeInteractions,
           playerStats.mercenaryInteractions,
@@ -184,6 +189,7 @@ export class StatisticsCollector {
           playerStats.totalResourcesFromTiles,
           playerStats.hasBlacksmith,
           playerStats.hasMarket,
+          playerStats.hasFletcher,
           playerStats.hasChapel,
           playerStats.hasMonastery,
           playerStats.hasWarshipUpgrade

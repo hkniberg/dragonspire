@@ -47,7 +47,7 @@ Each round has 3 phases:
 
 1. **Roll Phase** (Parallel): Move the first player token clockwise, then all players roll dice simultaneously.
 2. **Move Phase** (Sequential): One player at a time, use dice for movement and tile actions
-3. **Harvest Phase** (Parallel): Use remaining dice for harvest and build actions
+3. **Harvest Phase** (Parallel): Use remaining dice for harvest, and do build actions.
 
 ---
 

@@ -88,6 +88,7 @@ export interface PlayerStatistics {
   dragonEncounters: number;
   marketInteractions: number;
   blacksmithInteractions: number;
+  fletcherInteractions: number;
   traderInteractions: number;
   templeInteractions: number;
   mercenaryInteractions: number;
@@ -138,6 +139,7 @@ export interface PlayerTurnStats {
   dragonEncounters: number;
   marketInteractions: number;
   blacksmithInteractions: number;
+  fletcherInteractions: number;
   traderInteractions: number;
   templeInteractions: number;
   mercenaryInteractions: number;
@@ -151,6 +153,7 @@ export interface PlayerTurnStats {
   totalResourcesFromTiles: number;
   hasBlacksmith: boolean;
   hasMarket: boolean;
+  hasFletcher: boolean;
   hasChapel: boolean;
   hasMonastery: boolean;
   hasWarshipUpgrade: boolean;
@@ -214,7 +217,7 @@ export interface GameLogEntry {
 /**
  * Types of buildings that can be constructed in a player's castle
  */
-export type BuildingType = "blacksmith" | "market" | "chapel" | "monastery" | "warshipUpgrade";
+export type BuildingType = "blacksmith" | "market" | "chapel" | "monastery" | "warshipUpgrade" | "fletcher";
 
 export interface EventCardResult {
   eventProcessed: boolean;

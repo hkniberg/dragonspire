@@ -35,12 +35,13 @@ export interface HarvestAction {
 
 export interface BuildAction {
   diceValueUsed: number;
-  buildActionType: "blacksmith" | "market" | "recruitChampion" | "buildBoat" | "chapel" | "upgradeChapelToMonastery" | "warshipUpgrade";
+  buildActionType: "blacksmith" | "market" | "recruitChampion" | "buildBoat" | "chapel" | "upgradeChapelToMonastery" | "warshipUpgrade" | "fletcher";
 }
 
 export interface BuildingUsageDecision {
   useBlacksmith?: boolean;
   sellAtMarket?: Record<MarketResourceType, number>;
+  useFletcher?: boolean;
 }
 
 // Nested DiceAction structure for Claude communication (matches schema)
