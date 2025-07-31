@@ -3,12 +3,12 @@ import { GameSettings } from "@/lib/GameSettings";
 import { CarriableItem, GameLogEntry, Player, Tile } from "@/lib/types";
 import { formatResources } from "@/lib/utils";
 import { PlayerAgent } from "@/players/PlayerAgent";
+import { canChampionCarryMoreItems } from "@/players/PlayerUtils";
 import {
   resolveChampionVsChampionCombat,
   resolveChampionVsDragonEncounter,
   resolveChampionVsMonsterCombat
 } from "./combatHandler";
-import { canChampionCarryMoreItems } from "@/players/PlayerUtils";
 
 export interface ChampionCombatResult {
   combatOccurred: boolean;
@@ -280,53 +280,53 @@ export function handleTileClaiming(
 }
 
 /**
- * Handle conquering of resource tiles
+ * Handle conquering and inciting revolt on resource tiles
  */
-export function handleTileConquest(
+export function handleTileInteractions(
   gameState: GameState,
   tile: Tile,
   player: Player,
   championId: number,
   conquerWithMight: boolean,
-  conquerWithFame: boolean,
+  inciteRevolt: boolean,
   logFn: (type: string, content: string) => void
 ): void {
-  // Only one conquest method can be used
-  if (conquerWithMight && conquerWithFame) {
-    logFn("event", `Champion${championId} cannot use both might and fame to conquer tile (${tile.position.row}, ${tile.position.col})`);
+  // Only one interaction method can be used
+  if (conquerWithMight && inciteRevolt) {
+    logFn("event", `Champion${championId} cannot use both might and fame interactions on tile (${tile.position.row}, ${tile.position.col})`);
     return;
   }
 
-  if (!conquerWithMight && !conquerWithFame) {
+  if (!conquerWithMight && !inciteRevolt) {
     return;
   }
 
-  // Only resource tiles can be conquered
+  // Only resource tiles can be conquered or have revolt incited
   if (tile.tileType !== "resource") {
-    logFn("event", `Champion${championId} cannot conquer non-resource tile (${tile.position.row}, ${tile.position.col})`);
+    logFn("event", `Champion${championId} cannot conquer or incite revolt on non-resource tile (${tile.position.row}, ${tile.position.col})`);
     return;
   }
 
   // Tile must be claimed by another player
   if (tile.claimedBy === undefined || tile.claimedBy === player.name) {
-    logFn("event", `Champion${championId} cannot conquer unclaimed tile or own tile (${tile.position.row}, ${tile.position.col})`);
+    logFn("event", `Champion${championId} cannot conquer or incite revolt on unclaimed tile or own tile (${tile.position.row}, ${tile.position.col})`);
     return;
   }
 
-  // Check if there are other knights on this tile (conquest should only happen after combat)
+  // Check if there are other knights on this tile (these actions should only happen after combat)
   const otherKnightsOnTile = gameState.getOpposingChampionsAtPosition(player.name, tile.position);
   if (otherKnightsOnTile.length > 0) {
-    logFn("event", `Champion${championId} cannot conquer tile (${tile.position.row}, ${tile.position.col}) - other knights are present`);
+    logFn("event", `Champion${championId} cannot conquer or incite revolt on tile (${tile.position.row}, ${tile.position.col}) - other knights are present`);
     return;
   }
 
   // Check if the tile is protected by adjacent knights
   if (gameState.isClaimProtected(tile)) {
-    logFn("event", `Champion${championId} cannot conquer tile (${tile.position.row}, ${tile.position.col}) - protected by adjacent knight of ${tile.claimedBy}`);
+    logFn("event", `Champion${championId} cannot conquer or incite revolt on tile (${tile.position.row}, ${tile.position.col}) - protected by adjacent knight of ${tile.claimedBy}`);
     return;
   }
 
-  // Check if player has enough might or fame
+  // Handle conquest with might
   if (conquerWithMight) {
     if (player.might <= 0) {
       logFn("event", `Champion${championId} cannot conquer with might - insufficient might (${player.might})`);
@@ -338,17 +338,20 @@ export function handleTileConquest(
     tile.claimedBy = player.name;
     player.might = Math.max(0, player.might - 1);
     logFn("event", `Champion${championId} conquered tile (${tile.position.row}, ${tile.position.col}) from ${previousOwner} using might. New might: ${player.might}`);
-  } else if (conquerWithFame) {
+  }
+
+  // Handle inciting revolt with fame
+  if (inciteRevolt) {
     if (player.fame <= 0) {
-      logFn("event", `Champion${championId} cannot conquer with fame - insufficient fame (${player.fame})`);
+      logFn("event", `Champion${championId} cannot incite revolt - insufficient fame (${player.fame})`);
       return;
     }
 
-    // Successful conquest with fame
+    // Successful revolt - removes claim but doesn't take over
     const previousOwner = tile.claimedBy;
-    tile.claimedBy = player.name;
+    tile.claimedBy = undefined;
     player.fame = Math.max(0, player.fame - 1);
-    logFn("event", `Champion${championId} conquered tile (${tile.position.row}, ${tile.position.col}) from ${previousOwner} using fame. New fame: ${player.fame}`);
+    logFn("event", `Champion${championId} incited revolt on tile (${tile.position.row}, ${tile.position.col}) from ${previousOwner} using fame. Tile is now unclaimed. New fame: ${player.fame}`);
   }
 }
 

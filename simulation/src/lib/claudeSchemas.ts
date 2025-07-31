@@ -39,11 +39,11 @@ export const tileActionSchema = {
     },
     conquerWithMight: {
       type: "boolean",
-      description: "Whether to conquer the tile using military might (costs 1 might, only for resource tiles claimed by other players)",
+      description: "Whether to conquer an enemy's claimed tile (costs 1 might, takes over the tile)",
     },
-    conquerWithFame: {
+    inciteRevolt: {
       type: "boolean",
-      description: "Whether to conquer the tile using treachery (costs 1 fame, only for resource tiles claimed by other players)",
+      description: "Whether to incite revolt in an enemy's claimed tile (costs 1 fame, frees up tile but doesn't claim it)",
     },
     preferredAdventureTheme: {
       type: "string",

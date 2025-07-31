@@ -251,14 +251,14 @@ export class RandomPlayerAgent implements PlayerAgent {
       useTemple: true,
     };
 
-    // Check if we should conquer the tile (if it's claimed by another player and we have might or fame)
+    // Check if we should conquer the tile or incite revolt (if it's claimed by another player and we have might or fame)
     if (destinationTile?.tileType === "resource" && destinationTile.claimedBy && destinationTile.claimedBy !== playerName) {
-      if (player.might > 0) {
+      if (player.might > 0 && Math.random() < 0.5) {
         tileAction.conquerWithMight = true;
         tileAction.claimTile = false; // Don't claim if we're conquering
-      } else if (player.fame > 0) {
-        tileAction.conquerWithFame = true;
-        tileAction.claimTile = false; // Don't claim if we're conquering
+      } else if (player.fame > 0 && Math.random() < 0.5) {
+        tileAction.inciteRevolt = true;
+        tileAction.claimTile = false; // Don't claim if we're inciting revolt (it frees up the tile)
       }
     }
 

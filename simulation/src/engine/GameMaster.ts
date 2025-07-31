@@ -581,15 +581,15 @@ export class GameMaster {
     // Step 9: Handle tile claiming
     handleTileClaiming(this.gameState, tile, player, championId, !!tileAction?.claimTile, logFn);
 
-    // Step 10: Handle tile conquest
-    const { handleTileConquest } = await import("@/engine/handlers/tileArrivalHandler");
-    handleTileConquest(
+    // Step 10: Handle tile conquest and revolt
+    const { handleTileInteractions } = await import("@/engine/handlers/tileArrivalHandler");
+    handleTileInteractions(
       this.gameState,
       tile,
       player,
       championId,
       !!tileAction?.conquerWithMight,
-      !!tileAction?.conquerWithFame,
+      !!tileAction?.inciteRevolt,
       logFn
     );
   }
