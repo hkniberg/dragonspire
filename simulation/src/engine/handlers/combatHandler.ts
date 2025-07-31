@@ -783,7 +783,9 @@ export async function resolveChampionVsDragonEncounter(
     player.statistics.dragonEncounters += 1;
   }
 
-  const dragonMight = GameSettings.DRAGON_BASE_MIGHT + rollD3();
+  // Calculate item effects for dragon combat
+  const champion = gameState.getChampion(player.name, championId);
+  const { mightBonus, itemsToRemove } = calculateItemEffects(champion, logFn, player.might, undefined, true);
 
   // Get combat support from adjacent units
   const supportBonus = gameState.getCombatSupport(player.name, tile.position);
@@ -791,24 +793,39 @@ export async function resolveChampionVsDragonEncounter(
     logFn("combat", `Combat support: +${supportBonus} might from adjacent units`);
   }
 
-  // Calculate item effects for dragon combat
-  const champion = gameState.getChampion(player.name, championId);
-  const { mightBonus, itemsToRemove } = calculateItemEffects(champion, logFn, player.might, dragonMight, true);
-
+  // Both champion and dragon roll dice during combat (as per rules)
   const championRoll = rollD3();
+  const dragonRoll = rollD3();
+
   const championTotal = player.might + championRoll + supportBonus + mightBonus;
-  const championWins = championTotal >= dragonMight;
+  const dragonTotal = GameSettings.DRAGON_BASE_MIGHT + dragonRoll;
+
+  const championWins = championTotal >= dragonTotal;
 
   if (!championWins) {
-    // Champion was defeated by dragon - apply defeat effects immediately
+    // Champion was defeated by dragon - they get EATEN (permanently removed from game)
     const championBase = player.might + championRoll + mightBonus;
-    const combatDetails = `was eaten by the dragon (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${dragonMight})! Actually, that's not implemented yet, so champion is just sent home.`;
+    const combatDetails = `was eaten by the dragon (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${dragonTotal})!`;
 
     // Remove items that break after combat (even if defeated)
     removeBrokenItems(champion, itemsToRemove, logFn);
 
-    // Apply defeat effects internally
-    await applyChampionDefeat(gameState, player, championId, combatDetails, logFn);
+    // Champion gets eaten - permanently remove from game
+    logFn("combat", `Champion${championId} ${combatDetails}`);
+
+    // Remove the champion permanently (eaten by dragon)
+    const championIndex = player.champions.findIndex(c => c.id === championId);
+    if (championIndex !== -1) {
+      const eatenChampion = player.champions[championIndex];
+      // Drop all items and dismiss all followers when eaten
+      if (eatenChampion.items.length > 0) {
+        logFn("combat", `Champion${championId}'s items are lost forever!`);
+      }
+      if (eatenChampion.followers.length > 0) {
+        logFn("combat", `Champion${championId}'s followers flee in terror!`);
+      }
+      player.champions.splice(championIndex, 1);
+    }
 
     return {
       encounterOccurred: true,
@@ -821,7 +838,7 @@ export async function resolveChampionVsDragonEncounter(
   } else {
     // Champion won - COMBAT VICTORY!
     const championBase = player.might + championRoll + mightBonus;
-    const combatDetails = `Combat Victory! ${player.name} defeated the dragon (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${dragonMight})!`;
+    const combatDetails = `Combat Victory! ${player.name} defeated the dragon (${championBase}${supportBonus > 0 ? `+${supportBonus}` : ""} vs ${dragonTotal})!`;
     logFn("victory", combatDetails);
 
     // Remove items that break after combat
