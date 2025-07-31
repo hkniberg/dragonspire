@@ -90,9 +90,21 @@ export async function handleChampionCombat(
   gameLog: readonly GameLogEntry[],
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void,
-  getPlayerAgent?: (playerName: string) => PlayerAgent | undefined
+  getPlayerAgent?: (playerName: string) => PlayerAgent | undefined,
+  isActivelyChosen: boolean = true // New parameter to determine if combat was actively chosen
 ): Promise<ChampionCombatResult> {
-  const combatResult = await resolveChampionVsChampionCombat(gameState, tile, player, championId, playerAgent, gameLog, logFn, thinkingLogger, getPlayerAgent);
+  const combatResult = await resolveChampionVsChampionCombat(
+    gameState,
+    tile,
+    player,
+    championId,
+    playerAgent,
+    gameLog,
+    logFn,
+    thinkingLogger,
+    getPlayerAgent,
+    isActivelyChosen
+  );
 
   if (!combatResult.combatOccurred) {
     return { combatOccurred: false };
@@ -119,9 +131,23 @@ export async function handleMonsterCombat(
   tile: Tile,
   player: Player,
   championId: number,
-  logFn: (type: string, content: string) => void
+  logFn: (type: string, content: string) => void,
+  isActivelyChosen: boolean = true, // New parameter to determine if combat was actively chosen
+  playerAgent?: PlayerAgent,
+  gameLog?: readonly GameLogEntry[],
+  thinkingLogger?: (content: string) => void
 ): Promise<MonsterCombatResult> {
-  const combatResult = await resolveChampionVsMonsterCombat(gameState, tile, player, championId, logFn);
+  const combatResult = await resolveChampionVsMonsterCombat(
+    gameState,
+    tile,
+    player,
+    championId,
+    logFn,
+    isActivelyChosen,
+    playerAgent,
+    gameLog,
+    thinkingLogger
+  );
 
   if (!combatResult.combatOccurred) {
     return { combatOccurred: false };
@@ -148,9 +174,23 @@ export async function handleDoomspireTile(
   tile: Tile,
   player: Player,
   championId: number,
-  logFn: (type: string, content: string) => void
+  logFn: (type: string, content: string) => void,
+  isActivelyChosen: boolean = true, // New parameter to determine if combat was actively chosen
+  playerAgent?: PlayerAgent,
+  gameLog?: readonly GameLogEntry[],
+  thinkingLogger?: (content: string) => void
 ): Promise<DoomspireResult> {
-  const dragonEncounter = await resolveChampionVsDragonEncounter(gameState, tile, player, championId, logFn);
+  const dragonEncounter = await resolveChampionVsDragonEncounter(
+    gameState,
+    tile,
+    player,
+    championId,
+    logFn,
+    isActivelyChosen,
+    playerAgent,
+    gameLog,
+    thinkingLogger
+  );
 
   if (!dragonEncounter.encounterOccurred) {
     return { entered: false };
@@ -184,6 +224,16 @@ export async function handleDoomspireTile(
           championWon: false,
           championDefeated: true,
           combatDetails: combatResult.combatDetails!
+        }
+      };
+    } else if (!combatResult.combatOccurred) {
+      // This handles the case where the champion fled from the dragon
+      return {
+        entered: true,
+        dragonCombat: {
+          championWon: false,
+          championDefeated: false,
+          combatDetails: combatResult.combatDetails || "Champion fled from dragon"
         }
       };
     }

@@ -363,6 +363,18 @@ export class GameMaster {
     const logFn = (type: string, content: string) => this.addGameLogEntry(type as GameLogEntryType, content);
     const thinkingLogger = (content: string) => this.addGameLogEntry("thinking", content);
 
+    // Determine if combat was actively chosen based on tile state and movement
+    const hadOpposingChampions = this.gameState.getOpposingChampionsAtPosition(player.name, tile.position).length > 0;
+    const hadMonster = tile.monster !== undefined;
+    const isDoomspireAlreadyExplored = tile.tileType === "doomspire" && tile.explored;
+
+    // Combat is actively chosen if:
+    // 1. Moved to a tile that already had opposing champions or monsters
+    // 2. Entered Doomspire when it was already explored (knew dragon was there)
+    const isChampionCombatActivelyChosen = hadOpposingChampions;
+    const isMonsterCombatActivelyChosen = hadMonster;
+    const isDragonCombatActivelyChosen = isDoomspireAlreadyExplored;
+
     // Step 1: Handle exploration
     handleExploration(this.gameState, tile, player, logFn);
 
@@ -372,7 +384,18 @@ export class GameMaster {
       return playerIndex >= 0 ? this.playerAgents[playerIndex] : undefined;
     };
 
-    const championCombatResult = await handleChampionCombat(this.gameState, tile, player, championId, this.playerAgents[this.gameState.currentPlayerIndex], this.gameLog, logFn, thinkingLogger, getPlayerAgent);
+    const championCombatResult = await handleChampionCombat(
+      this.gameState,
+      tile,
+      player,
+      championId,
+      this.playerAgents[this.gameState.currentPlayerIndex],
+      this.gameLog,
+      logFn,
+      thinkingLogger,
+      getPlayerAgent,
+      isChampionCombatActivelyChosen
+    );
     if (championCombatResult.combatOccurred && !championCombatResult.attackerWon) {
       // Attacker lost, defeat effects already applied by combat handler
       return;
@@ -427,7 +450,8 @@ export class GameMaster {
         }
 
         // Handle results from adventure card
-        if (adventureResult.cardProcessed && adventureResult.monsterPlaced?.combatOccurred) {
+        if (adventureResult.cardProcessed && adventureResult.monsterPlaced) {
+          // A monster was placed, so don't do additional monster combat regardless of outcome
           adventureCardCombatOccurred = true;
 
           if (adventureResult.monsterPlaced.championDefeated) {
@@ -440,7 +464,17 @@ export class GameMaster {
 
     // Only handle existing monster combat if no adventure card combat occurred
     if (!adventureCardCombatOccurred) {
-      const monsterCombatResult = await handleMonsterCombat(this.gameState, tile, player, championId, logFn);
+      const monsterCombatResult = await handleMonsterCombat(
+        this.gameState,
+        tile,
+        player,
+        championId,
+        logFn,
+        isMonsterCombatActivelyChosen,
+        this.playerAgents[this.gameState.currentPlayerIndex],
+        this.gameLog,
+        thinkingLogger
+      );
       if (monsterCombatResult.combatOccurred && !monsterCombatResult.championWon) {
         // Champion lost to monster, defeat effects already applied by combat handler
         return;
@@ -448,7 +482,17 @@ export class GameMaster {
     }
 
     // Step 5: Handle Doomspire tile (dragon combat and victory conditions)
-    const doomspireResult = await handleDoomspireTile(this.gameState, tile, player, championId, logFn);
+    const doomspireResult = await handleDoomspireTile(
+      this.gameState,
+      tile,
+      player,
+      championId,
+      logFn,
+      isDragonCombatActivelyChosen,
+      this.playerAgents[this.gameState.currentPlayerIndex],
+      this.gameLog,
+      thinkingLogger
+    );
     if (doomspireResult.entered) {
       if (doomspireResult.alternativeVictory) {
         this.endGame(doomspireResult.alternativeVictory.playerName, doomspireResult.alternativeVictory.type);
@@ -462,6 +506,8 @@ export class GameMaster {
           // Champion defeated by dragon, defeat effects already applied by combat handler
           return;
         }
+        // If dragon combat occurred but champion wasn't defeated, they might have fled
+        // In that case, we continue with the rest of the tile actions
       }
     }
 

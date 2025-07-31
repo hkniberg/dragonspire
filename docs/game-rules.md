@@ -251,8 +251,8 @@ Combat happens when:
 
 ### Fleeing combat
 
-- A knight can attempt to flee from combat. For example, to avoid a battle with impossible odds.
-  - Exception: A player who actively chose to fight (for example by moving to another knight's tile) cannot flee.
+- A knight can attempt to flee from combat if forced into unexpected combat, for example by exploring a tile or drawing an adventure card, or being attacked by another knight.
+  - Fleeing is not allowed if the combat was chosen deliberately, for example by entering an explored adventure tile an existing monster, entering a tile with a knight in it, or entering already-explored doomspire without having achieved a victory condition.
 - When fleeing, roll 1D3:
   - 1: Failure. Combat happens as normal.
   - 2: Partial success. Knight flees to home tile, without any loss.

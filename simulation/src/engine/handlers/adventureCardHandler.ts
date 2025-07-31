@@ -43,22 +43,23 @@ export async function handleMonsterCard(
   tile: Tile,
   player: Player,
   championId: number,
-  logFn: (type: string, content: string) => void
+  logFn: (type: string, content: string) => void,
+  playerAgent?: PlayerAgent,
+  gameLog?: readonly GameLogEntry[],
+  thinkingLogger?: (content: string) => void
 ): Promise<AdventureCardResult> {
   // Look up the monster details
   const monsterCard = getMonsterCardById(cardId);
   if (!monsterCard) {
-    const errorMessage = `Champion${championId} drew unknown monster card ${cardId}`;
-    logFn("event", errorMessage);
     return {
       cardProcessed: false,
-      errorMessage
+      errorMessage: `Monster card ${cardId} not found`
     };
   }
 
-  // Create a Monster object
+  // Create the monster object
   const monster: Monster = {
-    id: monsterCard.id,
+    id: cardId,
     name: monsterCard.name,
     tier: monsterCard.tier,
     icon: monsterCard.icon,
@@ -74,7 +75,17 @@ export async function handleMonsterCard(
   };
 
   // Use the combat handler for placement and combat
-  const combatResult = await resolveMonsterPlacementAndCombat(gameState, monster, tile, player, championId, logFn);
+  const combatResult = await resolveMonsterPlacementAndCombat(
+    gameState,
+    monster,
+    tile,
+    player,
+    championId,
+    logFn,
+    playerAgent,
+    gameLog,
+    thinkingLogger
+  );
 
   if (combatResult.victory) {
     return {
@@ -85,9 +96,8 @@ export async function handleMonsterCard(
         monsterName: monster.name,
         combatOccurred: true,
         championWon: true,
-        championDefeated: false,
-        monsterRemains: false
-      }
+        monsterRemains: false,
+      },
     };
   } else if (combatResult.defeat) {
     return {
@@ -97,16 +107,26 @@ export async function handleMonsterCard(
       monsterPlaced: {
         monsterName: monster.name,
         combatOccurred: true,
-        championWon: false,
         championDefeated: true,
-        monsterRemains: true
-      }
+        monsterRemains: true,
+      },
+    };
+  } else if (!combatResult.combatOccurred) {
+    // This handles the case where the champion fled from the monster
+    return {
+      cardProcessed: true,
+      cardType: "monster",
+      cardId,
+      monsterPlaced: {
+        monsterName: monster.name,
+        combatOccurred: false,
+        monsterRemains: true,
+      },
     };
   } else {
-    // This shouldn't happen, but handle gracefully
     return {
       cardProcessed: false,
-      errorMessage: "Unexpected combat result"
+      errorMessage: `Unexpected combat result for monster ${monster.name}`
     };
   }
 }
@@ -296,7 +316,7 @@ export async function handleAdventureCard(
 
   switch (cardType) {
     case "monster":
-      return await handleMonsterCard(cardId, gameState, tile, player, championId, logFn);
+      return await handleMonsterCard(cardId, gameState, tile, player, championId, logFn, playerAgent, gameLog, thinkingLogger);
 
     case "event":
       return await handleEventCardFromAdventure(cardId, gameState, tile, player, playerAgent, championId, gameLog, logFn, thinkingLogger, getPlayerAgent);

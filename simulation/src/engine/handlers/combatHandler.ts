@@ -4,6 +4,7 @@ import { CarriableItem, Champion, Decision, DecisionContext, DecisionOption, Gam
 import { formatResources } from "@/lib/utils";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { handleBackpackEffect } from "./backpackHandler";
+import { FleeContext, handleFleeDecision } from "./fleeHandler";
 import { handlePaddedHelmetRespawn } from "./paddedHelmetHandler";
 
 /**
@@ -218,7 +219,8 @@ export async function resolveChampionVsChampionCombat(
   gameLog: readonly GameLogEntry[],
   logFn: (type: string, content: string) => void,
   thinkingLogger?: (content: string) => void,
-  getPlayerAgent?: (playerName: string) => PlayerAgent | undefined
+  getPlayerAgent?: (playerName: string) => PlayerAgent | undefined,
+  isActivelyChosen: boolean = true // New parameter to track if combat was actively chosen
 ): Promise<CombatResult> {
   const opposingChampions = gameState.getOpposingChampionsAtPosition(attackingPlayer.name, tile.position);
 
@@ -231,6 +233,39 @@ export async function resolveChampionVsChampionCombat(
   const defendingPlayer = gameState.getPlayer(opposingChampion.playerName);
   if (!defendingPlayer) {
     throw new Error(`Opposing player ${opposingChampion.playerName} not found`);
+  }
+
+  // In champion vs champion combat:
+  // - Attacker always actively chose combat (moved to occupied tile) - no fleeing
+  // - Defender never actively chose combat (was already there) - can attempt fleeing
+
+  // Handle defender fleeing decision (defender never actively chose this combat)
+  const defendingPlayerAgent = getPlayerAgent ? getPlayerAgent(defendingPlayer.name) : undefined;
+  if (defendingPlayerAgent) {
+    const defenderFleeContext: FleeContext = {
+      combatType: 'champion',
+      isActivelyChosen: false, // Defender never actively chose this combat
+      gameState,
+      player: defendingPlayer,
+      championId: opposingChampion.id,
+      tile,
+      opponentName: attackingPlayer.name
+    };
+
+    const defenderFleeResult = await handleFleeDecision(defenderFleeContext, defendingPlayerAgent, gameLog, logFn, thinkingLogger);
+
+    if (defenderFleeResult.attemptedFlee && defenderFleeResult.fleeSuccessful) {
+      // Defender fled successfully, no combat occurs
+      return {
+        combatOccurred: false,
+        combatDetails: `${defendingPlayer.name}'s champion fled from combat with ${attackingPlayer.name}'s champion`
+      };
+    }
+
+    // If defender flee was attempted but failed, continue with combat
+    if (defenderFleeResult.attemptedFlee && !defenderFleeResult.fleeSuccessful) {
+      logFn("combat", "Defender's flee attempt failed, proceeding with combat");
+    }
   }
 
   // Get combat support for both players
@@ -563,7 +598,11 @@ export async function resolveChampionVsMonsterCombat(
   tile: Tile,
   player: Player,
   championId: number,
-  logFn: (type: string, content: string) => void
+  logFn: (type: string, content: string) => void,
+  isActivelyChosen: boolean = true, // New parameter to track if combat was actively chosen
+  playerAgent?: PlayerAgent,
+  gameLog?: readonly GameLogEntry[],
+  thinkingLogger?: (content: string) => void
 ): Promise<CombatResult> {
   if (!tile.monster) {
     return { combatOccurred: false };
@@ -571,6 +610,33 @@ export async function resolveChampionVsMonsterCombat(
 
   const monster = tile.monster;
   const champion = gameState.getChampion(player.name, championId);
+
+  // Handle fleeing decision if applicable and we have the required parameters
+  if (playerAgent && gameLog) {
+    const fleeContext: FleeContext = {
+      combatType: 'monster',
+      isActivelyChosen,
+      gameState,
+      player,
+      championId,
+      tile
+    };
+
+    const fleeResult = await handleFleeDecision(fleeContext, playerAgent, gameLog, logFn, thinkingLogger);
+
+    if (fleeResult.attemptedFlee && fleeResult.fleeSuccessful) {
+      // Fleeing was successful, no combat occurs
+      return {
+        combatOccurred: false,
+        combatDetails: `Champion fled from combat with ${monster.name}`
+      };
+    }
+
+    // If flee was attempted but failed, or player chose to fight, continue with combat
+    if (fleeResult.attemptedFlee && !fleeResult.fleeSuccessful) {
+      logFn("combat", "Flee attempt failed, proceeding with combat");
+    }
+  }
 
   const { championWins, combatDetails, itemsToRemove } = await performChampionVsMonsterCombat(
     gameState, monster, player, championId, tile.position, logFn
@@ -636,7 +702,11 @@ export async function resolveChampionVsDragonEncounter(
   tile: Tile,
   player: Player,
   championId: number,
-  logFn: (type: string, content: string) => void
+  logFn: (type: string, content: string) => void,
+  isActivelyChosen: boolean = true, // New parameter to track if combat was actively chosen
+  playerAgent?: PlayerAgent,
+  gameLog?: readonly GameLogEntry[],
+  thinkingLogger?: (content: string) => void
 ): Promise<DragonEncounterResult> {
   if (tile.tileType !== "doomspire") {
     return { encounterOccurred: false };
@@ -675,6 +745,36 @@ export async function resolveChampionVsDragonEncounter(
         playerName: player.name
       }
     };
+  }
+
+  // Handle fleeing decision if applicable and we have the required parameters
+  if (playerAgent && gameLog) {
+    const fleeContext: FleeContext = {
+      combatType: 'dragon',
+      isActivelyChosen,
+      gameState,
+      player,
+      championId,
+      tile
+    };
+
+    const fleeResult = await handleFleeDecision(fleeContext, playerAgent, gameLog, logFn, thinkingLogger);
+
+    if (fleeResult.attemptedFlee && fleeResult.fleeSuccessful) {
+      // Fleeing was successful, no combat occurs
+      return {
+        encounterOccurred: true,
+        combatResult: {
+          combatOccurred: false,
+          combatDetails: `Champion fled from the dragon`
+        }
+      };
+    }
+
+    // If flee was attempted but failed, or player chose to fight, continue with combat
+    if (fleeResult.attemptedFlee && !fleeResult.fleeSuccessful) {
+      logFn("combat", "Flee attempt failed, proceeding with dragon combat");
+    }
   }
 
   // Must fight the dragon - roll dice for champion vs dragon battle
@@ -926,12 +1026,26 @@ export async function resolveMonsterPlacementAndCombat(
   tile: Tile,
   player: Player,
   championId: number,
-  logFn: (type: string, content: string) => void
+  logFn: (type: string, content: string) => void,
+  playerAgent?: PlayerAgent,
+  gameLog?: readonly GameLogEntry[],
+  thinkingLogger?: (content: string) => void
 ): Promise<CombatResult> {
   // Place monster on tile
   tile.monster = monster;
   logFn("event", `Champion${championId} drew monster card: ${monster.name} (might ${monster.might})!`);
 
   // Immediately resolve combat using the regular monster combat function
-  return await resolveChampionVsMonsterCombat(gameState, tile, player, championId, logFn);
-} 
+  // Adventure card monsters are NOT actively chosen (monster appeared after arrival)
+  return await resolveChampionVsMonsterCombat(
+    gameState,
+    tile,
+    player,
+    championId,
+    logFn,
+    false, // isActivelyChosen = false for adventure card monsters
+    playerAgent,
+    gameLog,
+    thinkingLogger
+  );
+}
