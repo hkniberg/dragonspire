@@ -33,7 +33,7 @@
 
 ### Cards
 
-- Adventure cards (organized by tier and biome)
+- Adventure cards (organized by tier and theme)
 - Trader item cards
 
 ### Marker Tokens
@@ -86,7 +86,7 @@ The board uses a 3-tier system:
 4. **Place Tier 2 tiles** face down in the inner middle layer (12 tiles)
 5. **Place Tier 3 tiles** face down in the center (4 tiles)
 6. **Place the trader item deck** next to the board, open for browsing
-7. **Shuffle adventure card decks** by tier and biome, place near board
+7. **Shuffle adventure card decks** by tier and theme, place near board
 
 ### Player Setup
 

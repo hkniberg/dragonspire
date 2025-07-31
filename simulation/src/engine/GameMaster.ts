@@ -384,15 +384,15 @@ export class GameMaster {
     // Step 4: Handle special tiles (adventure/oasis) - moved before monster combat
     const specialTileResult = handleSpecialTiles(tile, championId, logFn);
     if (specialTileResult.interactionOccurred && specialTileResult.adventureCardDrawn) {
-      // Use player's preferred biome from TileAction to choose deck
-      const preferredBiome = tileAction?.preferredAdventureBiome;
+      // Use player's preferred theme from TileAction to choose deck
+      const preferredBiome = tileAction?.preferredAdventureTheme;
 
       // Draw adventure card using simplified API
       const drawResult = this.gameDecks.drawCard(tile.tier!, preferredBiome);
 
       // Log the card draw with simplified format
       if (drawResult.card) {
-        const biomeDisplayName = drawResult.card.biome.charAt(0).toUpperCase() + drawResult.card.biome.slice(1);
+        const biomeDisplayName = drawResult.card.theme.charAt(0).toUpperCase() + drawResult.card.theme.slice(1);
         logFn("event", `${player.name} drew from tier ${tile.tier}, deck ${drawResult.selectedDeckNumber} (a ${biomeDisplayName} card)`);
       } else {
         logFn("event", `${player.name} drew from tier ${tile.tier}, deck ${drawResult.selectedDeckNumber} (no card available)`);

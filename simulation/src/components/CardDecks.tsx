@@ -152,7 +152,7 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
     const biomes = gameDecks.getTopCardBiomes(tier);
     const deckSizes = gameDecks.getDeckSizes(tier);
     const deckSize = deckSizes[deckNumber - 1];
-    const biome = biomes[deckNumber - 1];
+    const theme = biomes[deckNumber - 1];
 
     // Always show card back
     return (
@@ -175,7 +175,7 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
         <CardComponent
           showBackside={true}
           tier={tier}
-          backsideImageUrl={`/cardBacksides/${biome}.png`}
+          backsideImageUrl={`/cardBacksides/${theme}.png`}
           borderColor="#666666"
           title={`Deck ${deckNumber} - ${deckSize} cards remaining`}
         />

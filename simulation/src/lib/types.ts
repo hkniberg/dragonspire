@@ -6,7 +6,7 @@ import type { TreasureCard } from "../content/treasureCards";
 export type ResourceType = "food" | "wood" | "ore" | "gold";
 export type MarketResourceType = "food" | "wood" | "ore";
 export type TileTier = 1 | 2 | 3;
-export type BiomeType = "plains" | "mountains" | "woodlands";
+export type AdventureThemeType = "beast" | "cave" | "grove";
 export type OceanPosition = "nw" | "ne" | "sw" | "se";
 export type TileType =
   | "empty"

@@ -3,7 +3,7 @@ import { EVENT_CARDS } from "../content/eventCards";
 import { MONSTER_CARDS } from "../content/monsterCards";
 import { TRADER_ITEMS } from "../content/traderItems";
 import { TREASURE_CARDS } from "../content/treasureCards";
-import { BiomeType, TileTier } from "./types";
+import { AdventureThemeType, TileTier } from "./types";
 
 /**
  * Development/Testing Configuration
@@ -23,7 +23,7 @@ export type CardType = "monster" | "event" | "treasure" | "encounter" | "followe
 export interface Card {
   type: CardType;
   tier: TileTier;
-  biome: BiomeType;
+  theme: AdventureThemeType;
   id: string;
 }
 
@@ -224,34 +224,34 @@ export class GameDecks {
   }
 
   drawCard(tier: TileTier, deckNumber: 1 | 2): Card | undefined;
-  drawCard(tier: TileTier, preferredBiome?: BiomeType): CardDrawResult;
-  drawCard(tier: TileTier, deckNumberOrPreferredBiome?: 1 | 2 | BiomeType): Card | undefined | CardDrawResult {
+  drawCard(tier: TileTier, preferredBiome?: AdventureThemeType): CardDrawResult;
+  drawCard(tier: TileTier, deckNumberOrPreferredBiome?: 1 | 2 | AdventureThemeType): Card | undefined | CardDrawResult {
     // Check if this is the old API (deckNumber passed)
     if (typeof deckNumberOrPreferredBiome === 'number') {
       const deckIndex = deckNumberOrPreferredBiome - 1; // Convert 1,2 to 0,1
       return this.decks[tier][deckIndex].drawFromTop();
     }
 
-    // New API: handle biome preference and deck selection
-    const preferredBiome = deckNumberOrPreferredBiome;
-    const biomes = this.getTopCardBiomes(tier);
+    // New API: handle theme preference and deck selection
+    const preferredTheme = deckNumberOrPreferredBiome;
+    const themes = this.getTopCardBiomes(tier);
     const deckSizes = this.getDeckSizes(tier);
 
     let selectedDeckNumber: 1 | 2 = 1; // Default to deck 1
 
-    // Find a deck with the preferred biome if specified
-    if (preferredBiome) {
+    // Find a deck with the preferred theme if specified
+    if (preferredTheme) {
       for (let i = 0; i < 2; i++) {
         const deckNumber = (i + 1) as 1 | 2;
-        const biome = biomes[i];
+        const theme = themes[i];
         const size = deckSizes[i];
-        if (biome === preferredBiome && size > 0) {
+        if (theme === preferredTheme && size > 0) {
           selectedDeckNumber = deckNumber;
           break;
         }
       }
-      // If preferred biome not available, fallback to any available deck
-      if (biomes[selectedDeckNumber - 1] !== preferredBiome) {
+      // If preferred theme not available, fallback to any available deck
+      if (themes[selectedDeckNumber - 1] !== preferredTheme) {
         for (let i = 0; i < 2; i++) {
           const deckNumber = (i + 1) as 1 | 2;
           const size = deckSizes[i];
@@ -288,14 +288,14 @@ export class GameDecks {
     this.decks[tier][deckIndex].addToTop(card);
   }
 
-  getTopCardBiomes(tier: TileTier): [BiomeType | null, BiomeType | null] {
-    const biomes: (BiomeType | null)[] = [];
+  getTopCardBiomes(tier: TileTier): [AdventureThemeType | null, AdventureThemeType | null] {
+    const biomes: (AdventureThemeType | null)[] = [];
     let allEmpty = true;
 
     for (let i = 0; i < 2; i++) {
       const topCard = this.decks[tier][i].peekTop();
       if (topCard) {
-        biomes.push(topCard.biome);
+        biomes.push(topCard.theme);
         allEmpty = false;
       } else {
         biomes.push(null);
@@ -309,7 +309,7 @@ export class GameDecks {
       return this.getTopCardBiomes(tier);
     }
 
-    return biomes as [BiomeType | null, BiomeType | null];
+    return biomes as [AdventureThemeType | null, AdventureThemeType | null];
   }
 
   peekTopCard(tier: TileTier, deckNumber: 1 | 2): Card | undefined {
@@ -352,13 +352,13 @@ class SeededRandom {
   }
 }
 
-// Create a seeded random instance for biome assignment
+// Create a seeded random instance for theme assignment
 const biomeRng = new SeededRandom(12345); // Fixed seed for consistency
 
-// Helper function to deterministically assign a biome
-function getRandomBiome(): BiomeType {
-  const biomes: BiomeType[] = ["plains", "mountains", "woodlands"];
-  return biomes[Math.floor(biomeRng.next() * biomes.length)];
+// Helper function to deterministically assign a theme
+function getRandomTheme(): AdventureThemeType {
+  const themes: AdventureThemeType[] = ["beast", "cave", "grove"];
+  return themes[Math.floor(biomeRng.next() * themes.length)];
 }
 
 // Build the card deck
@@ -371,7 +371,7 @@ function buildCardDeck(includeDisabled: boolean = false): Card[] {
       deck.addCard(monster.count, {
         type: "monster",
         tier: ONLY_INCLUDE_CARDS ? 1 : monster.tier,
-        biome: monster.biome,
+        theme: monster.theme,
         id: monster.id,
       });
     }
@@ -384,7 +384,7 @@ function buildCardDeck(includeDisabled: boolean = false): Card[] {
         deck.addToTop({
           type: "treasure",
           tier: ONLY_INCLUDE_CARDS ? 1 : treasure.tier,
-          biome: getRandomBiome(), // Random biome assignment
+          theme: getRandomTheme(),
           id: treasure.id,
         });
       }
@@ -398,7 +398,7 @@ function buildCardDeck(includeDisabled: boolean = false): Card[] {
         deck.addToTop({
           type: "encounter",
           tier: ONLY_INCLUDE_CARDS ? 1 : encounter.tier,
-          biome: getRandomBiome(), // Random biome assignment
+          theme: getRandomTheme(), // Random theme assignment
           id: encounter.id,
         });
       }
@@ -412,7 +412,7 @@ function buildCardDeck(includeDisabled: boolean = false): Card[] {
         deck.addToTop({
           type: "event",
           tier: ONLY_INCLUDE_CARDS ? 1 : event.tier,
-          biome: getRandomBiome(), // Random biome assignment
+          theme: getRandomTheme(), // Random theme assignment
           id: event.id,
         });
       }
@@ -451,22 +451,8 @@ export function getCardsByType(type: CardType): Card[] {
   return CARDS.filter((card) => card.type === type);
 }
 
-export function getCardsByBiome(biome: BiomeType): Card[] {
-  return CARDS.filter((card) => card.biome === biome);
-}
-
-export function getRandomCardFromBiome(biome: BiomeType, type?: CardType): Card {
-  let filteredCards = getCardsByBiome(biome);
-  if (type) {
-    filteredCards = filteredCards.filter((card) => card.type === type);
-  }
-  const randomIndex = Math.floor(Math.random() * filteredCards.length);
-  return filteredCards[randomIndex];
-}
-
-// Trader deck helper functions
-export function getTraderCards(): TraderCard[] {
-  return TRADER_CARDS;
+export function getCardsByTheme(theme: AdventureThemeType): Card[] {
+  return CARDS.filter((card) => card.theme === theme);
 }
 
 export function getRandomTraderCard(): TraderCard {

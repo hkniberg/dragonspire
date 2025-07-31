@@ -22,7 +22,7 @@ type ExtendedCard = (
   | {
       type: "trader";
       tier: number;
-      biome: "trader";
+      theme: "trader";
       id: string;
     }
 ) & {
@@ -73,7 +73,7 @@ export default function CardsPage() {
       return {
         ...card,
         tier: 1, // Traders are always tier 1
-        biome: "trader" as const, // Special biome for traders
+        theme: "trader" as const, // Special theme for traders
         originalData,
         id: `${card.type}-${index}`,
       };
@@ -99,7 +99,7 @@ export default function CardsPage() {
   const filteredCards = cardsToShow.filter((card) => {
     const matchesType = cardTypeFilter === "all" || card.type === cardTypeFilter;
     const matchesTier = tierFilter === "all" || card.tier === tierFilter;
-    const matchesBiome = biomeFilter === "all" || card.biome === biomeFilter;
+    const matchesBiome = biomeFilter === "all" || card.theme === biomeFilter;
     return matchesType && matchesTier && matchesBiome;
   });
 
@@ -133,7 +133,7 @@ export default function CardsPage() {
       disabled: card.originalData.disabled,
       title: `${card.type.charAt(0).toUpperCase() + card.type.slice(1)}: ${
         card.originalData.name
-      } (Tier ${card.tier}, ${card.biome})${card.originalData.disabled ? " [DISABLED]" : ""}`,
+      } (Tier ${card.tier}, ${card.theme})${card.originalData.disabled ? " [DISABLED]" : ""}`,
     };
 
     if (isCardFlipped(card.id)) {
@@ -141,7 +141,7 @@ export default function CardsPage() {
         <CardComponent
           {...commonProps}
           showBackside={true}
-          backsideImageUrl={`/cardBacksides/${card.type === "trader" ? "trader" : card.biome}.png`}
+          backsideImageUrl={`/cardBacksides/${card.type === "trader" ? "trader" : card.theme}.png`}
           backsideLabel={card.type === "trader" ? "TRADER" : "ADVENTURE"}
           showTier={card.type !== "trader"}
           disabled={card.originalData.disabled}
@@ -201,7 +201,7 @@ export default function CardsPage() {
   };
 
   // Get unique biomes from the deck
-  const uniqueBiomes = Array.from(new Set(allCards.map((card) => card.biome))).sort();
+  const uniqueThemes = Array.from(new Set(allCards.map((card) => card.theme))).sort();
 
   return (
     <div
@@ -293,9 +293,9 @@ export default function CardsPage() {
             }}
           >
             <option value="all">All Biomes</option>
-            {uniqueBiomes.map((biome) => (
-              <option key={biome} value={biome}>
-                {biome.charAt(0).toUpperCase() + biome.slice(1)}
+            {uniqueThemes.map((theme) => (
+              <option key={theme} value={theme}>
+                {theme.charAt(0).toUpperCase() + theme.slice(1)}
               </option>
             ))}
           </select>
@@ -473,9 +473,9 @@ export default function CardsPage() {
           <div>
             <h3 style={{ color: "#555", fontSize: "16px" }}>By Biome</h3>
             <div style={{ fontSize: "14px", color: "#666" }}>
-              {uniqueBiomes.map((biome) => (
-                <div key={biome}>
-                  {biome.charAt(0).toUpperCase() + biome.slice(1)}: {allCards.filter((c) => c.biome === biome).length}{" "}
+              {uniqueThemes.map((theme) => (
+                <div key={theme}>
+                  {theme.charAt(0).toUpperCase() + theme.slice(1)}: {allCards.filter((c) => c.theme === theme).length}{" "}
                   cards
                 </div>
               ))}

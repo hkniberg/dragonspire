@@ -89,7 +89,7 @@ export default function PrintCards() {
 
     if (isBackside) {
       // Use "trader" biome for trader cards, otherwise use the card's biome
-      const biome = card.type === "trader" ? "trader" : (card as Card).biome;
+      const biome = card.type === "trader" ? "trader" : (card as Card).theme;
       const backsideLabel = card.type === "trader" ? "Trader" : "ADVENTURE";
       return (
         <CardComponent
