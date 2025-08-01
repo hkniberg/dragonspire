@@ -329,6 +329,13 @@ export class GameMaster {
       // Get boat start position for logging
       const boatStartPosition = action.movementPathIncludingStartPosition[0];
 
+      // Update the boat's actual position in the game state
+      const boat = player.boats.find(b => b.id === action.boatId);
+      if (!boat) {
+        throw new Error(`Boat ${action.boatId} not found for player ${player.name}`);
+      }
+      boat.position = boatMoveResult.endPosition;
+
       if (boatMoveResult.championMoveResult === "championMoved") {
         const tile = this.gameState.updateChampionPosition(player.name, championId!, action.championDropPosition!);
         const tileDescription = stringifyTileForGameLog(tile, this.gameState, player.name);
