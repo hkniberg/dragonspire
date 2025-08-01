@@ -79,6 +79,15 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
     count: 1,
   },
   {
+    id: "temple-trial",
+    name: "Temple Trial",
+    tier: 2,
+    description: `An ancient *temple priest* tests your worthiness before the gods.  
+**Make an offering**: give \`1 resource\` to any player. **Gain \`1 fame\`.**  
+**or** **Commit sacrilege**: take \`1 resource\` from any player. **Lose \`1 fame\`.**`,
+    count: 1,
+  },
+  {
     id: "you-got-riches",
     name: "You got riches!",
     tier: 2,

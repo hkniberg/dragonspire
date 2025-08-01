@@ -1,5 +1,6 @@
 import Head from "next/head";
-import React from "react";
+import { useRouter } from "next/router";
+import React, { useEffect, useState } from "react";
 import {
   CardComponent,
   formatEncounterContent,
@@ -23,6 +24,18 @@ type ExtendedCard = (Card | TraderCard) & {
 };
 
 export default function PrintCards() {
+  const router = useRouter();
+  const [filteredCardIds, setFilteredCardIds] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    if (router.isReady) {
+      const cardsParam = router.query.cards as string;
+      if (cardsParam) {
+        setFilteredCardIds(cardsParam.split(",").map((id) => id.trim()));
+      }
+    }
+  }, [router.isReady, router.query.cards]);
+
   // Card size constants for easy experimentation
   const CARD_SCALE = 1.0; // Scale factor for card visual size
   const CARD_WIDTH = 160; // Grid column width - matches card width
@@ -72,7 +85,12 @@ export default function PrintCards() {
   const allCards = [...adventureCards, ...traderCards];
 
   // Filter out cards without original data (include disabled cards for printing)
-  const validCards = allCards.filter((card) => card.originalData);
+  let validCards = allCards.filter((card) => card.originalData);
+
+  // Apply filtering if card IDs were provided in URL
+  if (filteredCardIds) {
+    validCards = validCards.filter((card) => filteredCardIds.includes(card.originalData.id));
+  }
 
   const renderCard = (card: ExtendedCard, isBackside: boolean = false) => {
     if (!card.originalData) {
@@ -172,7 +190,11 @@ export default function PrintCards() {
   return (
     <>
       <Head>
-        <title>Print Cards - Lords of Doomspire</title>
+        <title>
+          {filteredCardIds
+            ? `Print Selected Cards (${validCards.length}) - Lords of Doomspire`
+            : "Print Cards - Lords of Doomspire"}
+        </title>
       </Head>
 
       <style jsx>{`
@@ -215,6 +237,10 @@ export default function PrintCards() {
             padding: 0 !important;
           }
 
+          .filter-info {
+            display: none !important;
+          }
+
           /* Force colors to print */
           * {
             -webkit-print-color-adjust: exact !important;
@@ -249,6 +275,26 @@ export default function PrintCards() {
         <button className="print-button" onClick={() => window.print()}>
           📄 Print / Save as PDF
         </button>
+
+        {filteredCardIds && (
+          <div
+            className="filter-info"
+            style={{
+              marginBottom: "20px",
+              padding: "12px",
+              backgroundColor: "#e3f2fd",
+              borderRadius: "4px",
+              border: "1px solid #2196f3",
+            }}
+          >
+            <strong>Printing {validCards.length} selected cards</strong>
+            {validCards.length === 0 && (
+              <div style={{ color: "#f44336", marginTop: "8px" }}>
+                No cards found matching the selection. Please check your card selection.
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Alternating front and back pages */}
         {frontPages.map((frontPageCards, pageIndex) => {

@@ -44,7 +44,7 @@ Spend \`2 ore\` to gain \`+1 might\``,
 **(1)** The ring does nothing and is *stuck* on your knight
 **(2)** **Swap** location with any knight, then the ring breaks.
 **(3)** \`+3 might\` against **dragons**`,
-    count: 1,
+    count: 2,
     carriable: true,
   },
 
@@ -77,5 +77,16 @@ Spend \`2 ore\` to gain \`+1 might\``,
 **(3)** You gain **Cloudslicer** which gives \`+4 might\``,
     count: 1,
     carriable: false, // This stays on the tile until someone pulls it out
+  },
+  {
+    id: "staff-of-protection",
+    name: "Staff of protection",
+    tier: 2,
+    description: `You encounter a dying wizard leaning on an interesting looking staff. Choose one:
+**(1)** Steal it (lose \`2 fame\`). The staff protects all neighbouring tiles, even diagonally.
+**(2)** Give him \`2 food\` (earn \`1 fame\`)
+**(3)** Move on`,
+    count: 2,
+    carriable: true,
   },
 ];

@@ -1,0 +1,7 @@
+
+AI fixes:
+- No action after a claim
+- OK to claim after a fight
+- Boat not moving?
+- Not getting proper context for item usage 
+- AI rule sync: not spend die for building

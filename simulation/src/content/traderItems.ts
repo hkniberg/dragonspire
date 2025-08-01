@@ -36,4 +36,26 @@ export const TRADER_ITEMS: TraderItem[] = [
     count: 2,
     imagePromptGuidance: "Simple medieval leather helmet",
   },
+  {
+    id: "the-hedgehog",
+    name: "The Hedgehog",
+    description: "When battling another player, if their might is higher than yours, you have `+1 might` for that fight.",
+    cost: 1,
+    count: 2,
+  },
+  {
+    id: "ellions-bow",
+    name: "Ellion's bow",
+    description: "You may initiate an attack on a neighboring tile as if you were there.",
+    cost: 3,
+    count: 1,
+    imagePromptGuidance: "A fancy looking longbow",
+  },
+  {
+    id: "robe-of-the-salamander",
+    name: "Robe of the Salamander",
+    description: "Each battle you may burn `3x wood` for `+2 might`.",
+    cost: 3,
+    count: 1,
+  },
 ]; 

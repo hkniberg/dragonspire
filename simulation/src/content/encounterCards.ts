@@ -39,8 +39,27 @@ export const ENCOUNTERS: Encounter[] = [
     tier: 1,
     description: "**Heals** you for *free* if you lose a fight.",
     follower: true,
-    count: 1,
+    count: 2,
   },
+  {
+    disabled: true,
+    id: "abandoned-mule",
+    name: "Abandoned Mule",
+    tier: 1,
+    description: "Max movement `2` per action die. The mule can carry `2 items`.",
+    follower: true,
+    count: 2,
+  },
+  {
+    disabled: true,
+    id: "fairy-godmother",
+    name: "Fairy godmother",
+    tier: 1,
+    description: "Every time your *champion* supports another player in battle, you get `1 fame`.",
+    follower: true,
+    count: 2,
+  },
+
 
   // Tier 2 Encounter Cards
   {
