@@ -62,10 +62,10 @@ export const positionSchema = {
   type: "object",
   description: "Position coordinates on the game board",
   properties: {
-    x: { type: "number", description: "X coordinate" },
-    y: { type: "number", description: "Y coordinate" }
+    row: { type: "number", description: "Row coordinate" },
+    col: { type: "number", description: "Column coordinate" }
   },
-  required: ["x", "y"],
+  required: ["row", "col"],
   additionalProperties: false
 };
 

@@ -127,13 +127,7 @@ export async function handleBuildingUsage(
   // Process build action (happens after building usage)
   if (buildingDecision.buildAction) {
     try {
-      // Create the old-style build action object for compatibility
-      const oldStyleBuildAction = {
-        buildActionType: buildingDecision.buildAction as any,
-        diceValueUsed: 0 // Not used anymore, but needed for interface compatibility
-      };
-
-      const buildResult = handleBuildAction(player, oldStyleBuildAction as any, logFn);
+      const buildResult = handleBuildAction(player, buildingDecision.buildAction, logFn);
       if (buildResult.actionSuccessful) {
         result.buildActionPerformed = buildingDecision.buildAction;
         logFn("build", `Built ${buildingDecision.buildAction}`);

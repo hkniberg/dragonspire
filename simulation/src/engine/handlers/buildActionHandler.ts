@@ -15,26 +15,26 @@ export function handleBuildAction(
 ): BuildActionResult {
   const reasoningText = reasoning ? ` Reason: ${reasoning}.` : "";
 
-  if (action.buildActionType === "blacksmith") {
+  if (action === "blacksmith") {
     return handleBlacksmithBuild(player, action, logFn, reasoningText);
-  } else if (action.buildActionType === "market") {
+  } else if (action === "market") {
     return handleMarketBuild(player, action, logFn, reasoningText);
-  } else if (action.buildActionType === "recruitChampion") {
+  } else if (action === "recruitChampion") {
     return handleChampionRecruitment(player, action, logFn, reasoningText);
-  } else if (action.buildActionType === "buildBoat") {
+  } else if (action === "buildBoat") {
     return handleBoatBuild(player, action, logFn, reasoningText);
-  } else if (action.buildActionType === "chapel") {
+  } else if (action === "chapel") {
     return handleChapelBuild(player, action, logFn, reasoningText);
-  } else if (action.buildActionType === "upgradeChapelToMonastery") {
+  } else if (action === "upgradeChapelToMonastery") {
     return handleMonasteryBuild(player, action, logFn, reasoningText);
-  } else if (action.buildActionType === "warshipUpgrade") {
+  } else if (action === "warshipUpgrade") {
     return handleWarshipUpgrade(player, action, logFn, reasoningText);
-  } else if (action.buildActionType === "fletcher") {
+  } else if (action === "fletcher") {
     return handleFletcherBuild(player, action, logFn, reasoningText);
   } else {
     return {
       actionSuccessful: false,
-      reason: `Unknown building type: ${action.buildActionType}`
+      reason: `Unknown building type: ${action}`
     };
   }
 }
@@ -73,7 +73,7 @@ function handleBlacksmithBuild(
 
   logFn(
     "system",
-    `Built a blacksmith for 2 Food + 2 Ore, using die value [${action.diceValueUsed}].${reasoningText}`
+    `Built a blacksmith for 2 Food + 2 Ore.${reasoningText}`
   );
 
   return {
@@ -116,7 +116,7 @@ function handleMarketBuild(
 
   logFn(
     "system",
-    `Built a market for 2 Food + 2 Wood, using die value [${action.diceValueUsed}].${reasoningText}`
+    `Built a market for 2 Food + 2 Wood.${reasoningText}`
   );
 
   return {
@@ -188,7 +188,7 @@ function handleChampionRecruitment(
 
   logFn(
     "system",
-    `Recruited champion ${championId} for ${cost.food} Food + ${cost.gold} Gold + ${cost.ore} Ore, using die value [${action.diceValueUsed}].${reasoningText}`
+    `Recruited champion ${championId} for ${cost.food} Food + ${cost.gold} Gold + ${cost.ore} Ore.${reasoningText}`
   );
 
   return {
@@ -238,7 +238,7 @@ function handleBoatBuild(
 
   logFn(
     "system",
-    `Built boat ${newBoatId} for 2 Wood + 2 Gold, using die value [${action.diceValueUsed}].${reasoningText}`
+    `Built boat ${newBoatId} for 2 Wood + 2 Gold.${reasoningText}`
   );
 
   return {
@@ -285,7 +285,7 @@ function handleChapelBuild(
 
   logFn(
     "system",
-    `Built a chapel for 6 Wood + 2 Gold, using die value [${action.diceValueUsed}]. Gained 3 Fame.${reasoningText}`
+    `Built a chapel for 6 Wood + 2 Gold. Gained 3 Fame.${reasoningText}`
   );
 
   return {
@@ -346,7 +346,7 @@ function handleMonasteryBuild(
 
   logFn(
     "system",
-    `Built a monastery for 8 Wood + 3 Gold + 1 Ore, using die value [${action.diceValueUsed}]. Upgraded chapel to monastery. Gained 5 Fame.${reasoningText}`
+    `Built a monastery for 8 Wood + 3 Gold + 1 Ore. Upgraded chapel to monastery. Gained 5 Fame.${reasoningText}`
   );
 
   return {
@@ -390,7 +390,7 @@ function handleWarshipUpgrade(
 
   logFn(
     "system",
-    `Built warship upgrade for 2 Wood + 1 Ore + 1 Gold, using die value [${action.diceValueUsed}]. All boats are now warships.${reasoningText}`
+    `Built warship upgrade for 2 Wood + 1 Ore + 1 Gold. All boats are now warships.${reasoningText}`
   );
 
   return {
@@ -435,7 +435,7 @@ function handleFletcherBuild(
 
   logFn(
     "system",
-    `Built a fletcher for 1 Wood + 1 Food + 1 Gold + 1 Ore, using die value [${action.diceValueUsed}].${reasoningText}`
+    `Built a fletcher for 1 Wood + 1 Food + 1 Gold + 1 Ore.${reasoningText}`
   );
 
   return {
