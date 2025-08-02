@@ -503,4 +503,71 @@ export class GameState {
 
     return null; // No blockade
   }
+
+  /**
+   * Get all coastal tile positions for a given ocean zone
+   */
+  public getCoastalTilesForOceanZone(oceanPosition: OceanPosition): Position[] {
+    switch (oceanPosition) {
+      case "nw":
+        return [
+          { row: 3, col: 0 }, { row: 2, col: 0 }, { row: 1, col: 0 }, { row: 0, col: 0 },
+          { row: 0, col: 1 }, { row: 0, col: 2 }, { row: 0, col: 3 }
+        ];
+      case "ne":
+        return [
+          { row: 0, col: 4 }, { row: 0, col: 5 }, { row: 0, col: 6 }, { row: 0, col: 7 },
+          { row: 1, col: 7 }, { row: 2, col: 7 }, { row: 3, col: 7 }
+        ];
+      case "se":
+        return [
+          { row: 4, col: 7 }, { row: 5, col: 7 }, { row: 6, col: 7 }, { row: 7, col: 7 },
+          { row: 7, col: 6 }, { row: 7, col: 5 }, { row: 7, col: 4 }
+        ];
+      case "sw":
+        return [
+          { row: 7, col: 3 }, { row: 7, col: 2 }, { row: 7, col: 1 }, { row: 7, col: 0 },
+          { row: 6, col: 0 }, { row: 5, col: 0 }, { row: 4, col: 0 }
+        ];
+    }
+  }
+
+  /**
+   * Get neighboring ocean zones for a given ocean position
+   * Ocean zones form a ring: nw-ne-se-sw-nw
+   */
+  public getNeighboringOceanZones(oceanPosition: OceanPosition): OceanPosition[] {
+    switch (oceanPosition) {
+      case "nw":
+        return ["ne", "sw"];
+      case "ne":
+        return ["nw", "se"];
+      case "se":
+        return ["ne", "sw"];
+      case "sw":
+        return ["se", "nw"];
+    }
+  }
+
+  /**
+   * Find all champions of a player that are in coastal tiles of a given ocean zone
+   */
+  public getChampionsInCoastalTiles(playerName: string, oceanPosition: OceanPosition): Champion[] {
+    const player = this.getPlayer(playerName);
+    if (!player) return [];
+
+    const coastalTiles = this.getCoastalTilesForOceanZone(oceanPosition);
+    const championsInCoast: Champion[] = [];
+
+    for (const champion of player.champions) {
+      for (const coastalPos of coastalTiles) {
+        if (champion.position.row === coastalPos.row && champion.position.col === coastalPos.col) {
+          championsInCoast.push(champion);
+          break; // Champion found, no need to check other coastal positions
+        }
+      }
+    }
+
+    return championsInCoast;
+  }
 }

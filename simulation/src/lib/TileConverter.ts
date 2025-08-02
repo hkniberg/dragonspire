@@ -1,5 +1,5 @@
 import type { TileDef } from "../content/tilesDefs";
-import type { Position, ResourceType, Tile } from "./types";
+import type { Position, ResourceType, Tile, TileTier } from "./types";
 
 /**
  * Converts a tile definition to an actual tile object
@@ -11,11 +11,17 @@ export function convertTileDefToTile(
   backColor: string = "#90EE90",
   borderColor: string = "#228B22",
   tileGroup?: number,
+  boardTier?: TileTier,
 ): Tile {
   const tile: Tile = { position, explored, backColor, borderColor };
 
   if (tileGroup !== undefined) {
     tile.tileGroup = tileGroup;
+  }
+
+  // Set tier based on board position if provided
+  if (boardTier !== undefined) {
+    tile.tier = boardTier;
   }
 
   if (typeof tileDef === "string") {

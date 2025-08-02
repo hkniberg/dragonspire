@@ -482,17 +482,15 @@ Owning resource tiles let you build a sustainable economy. They can also be used
 
 ## Buildings and build actions
 
-- **Buy a 2nd Knight**
+- **Recruit Knight**
   - Costs 3 Food, 3 Gold, and 1 Ore
-  - Gives you a second knight, place it on your home tile.
+  - Gives you another knight, place it on your home tile.
   - Also gives you 1 extra die at the start of every turn, if you can afford the food tax (2 food).
-- **Buy a 3rd Knight**:
-  - Costs 6 Food, 6 Gold, 3 Ore
-  - Gives you a third knight and another extra die every turn (if you can pay the additional food tax).
+  - You can have max 3 knights in total
 - **Buy a 2nd Boat**:
   - Costs 2 Wood, 2 Gold
   - Gives you an additional boat. Place it outside your home tile
-  - You can only have 2 boats in total at any given moment.
+  - You can have max 2 boats in total
 - **Warship upgrade**:
   - Costs 2 Wood, 1 Ore, 1 Gold
   - All boats become warships, allowing them to protect coastal tiles and support coastal battles.

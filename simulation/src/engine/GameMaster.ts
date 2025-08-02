@@ -336,17 +336,18 @@ export class GameMaster {
       }
       boat.position = boatMoveResult.endPosition;
 
-      if (boatMoveResult.championMoveResult === "championMoved") {
-        const tile = this.gameState.updateChampionPosition(player.name, championId!, action.championDropPosition!);
+      if (boatMoveResult.championMoveResult === "championMoved" && championId !== undefined && action.championDropPosition) {
+        const tile = this.gameState.updateChampionPosition(player.name, championId, action.championDropPosition);
         const tileDescription = stringifyTileForGameLog(tile, this.gameState, player.name);
-        this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition}, transporting champion ${championId} from ${formatPosition(championStartPosition!)} to ${formatPosition(action.championDropPosition!)}, using dice value [${action.diceValueUsed}]. Champion arrived: ${tileDescription}.${reasoningText}`);
-        await this.executeChampionArrivalAtTile(player, tile, championId!, action.championTileAction);
+        this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition}, transporting champion ${championId} from ${formatPosition(championStartPosition!)} to ${formatPosition(action.championDropPosition)}, using dice value [${action.diceValueUsed}]. Champion arrived: ${tileDescription}.${reasoningText}`);
+        await this.executeChampionArrivalAtTile(player, tile, championId, action.championTileAction);
       } else if (boatMoveResult.championMoveResult === "championNotReachableByBoat") {
         this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition} and tried to move champion ${championId} at ${formatPosition(championStartPosition!)} but the champion was not reachable by this boat, using dice value [${action.diceValueUsed}].${reasoningText}`);
       } else if (boatMoveResult.championMoveResult === "targetPositionNotReachableByBoat") {
         this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition} and tried to move champion ${championId} to ${formatPosition(action.championDropPosition!)} but that position was not reachable by this boat, using dice value [${action.diceValueUsed}].${reasoningText}`);
       } else {
-        throw new Error(`Unknown boat move result: ${boatMoveResult.championMoveResult}`);
+        // Handle case where boat moves but no champion transport was requested or possible
+        this.addGameLogEntry("boat", `Boat ${action.boatId} moved from ${boatStartPosition} to ${boatMoveResult.endPosition}, using dice value [${action.diceValueUsed}].${reasoningText}`);
       }
     } else {
       // Boat is staying in place but still using a die

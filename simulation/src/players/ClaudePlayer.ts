@@ -101,7 +101,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         const userMessage = await this.prepareTraderDecisionMessage(gameState, gameLog, traderContext);
 
         // Get structured JSON response for trader decision
-        const response = await this.claude.useClaude(userMessage, traderDecisionSchema, 0, 500, thinkingLogger);
+        const response = await this.claude.useClaude(userMessage, traderDecisionSchema, 1024, 3000, thinkingLogger);
 
         return response as TraderDecision;
     }
@@ -129,7 +129,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         const userMessage = await this.prepareBuildingDecisionMessage(gameState, gameLog, playerName, usableBuildings, availableBuildActions);
 
         // Get structured JSON response for building decision
-        const response = await this.claude.useClaude(userMessage, buildingDecisionSchema, 0, 400, thinkingLogger);
+        const response = await this.claude.useClaude(userMessage, buildingDecisionSchema, 1024, 3000, thinkingLogger);
 
         return response as BuildingDecision;
     }
@@ -330,7 +330,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         }
 
         if (buildingSummaries.length === 0) {
-            return "You have no buildings that can be used after your turn.";
+            return "You have no buildings.";
         }
 
         return buildingSummaries.join("\n");

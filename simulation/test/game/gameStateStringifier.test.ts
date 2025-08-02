@@ -72,19 +72,70 @@ Spend \`2 ore\` to gain \`+1 might\`
 Tile (0,0)
 - Home tile for Bob (can ONLY be entered by Bob's champions)
 
+Tile (0,1)
+- Unexplored tier 1 tile
+
+Tile (0,2)
+- Unexplored tier 1 tile
+
+Tile (0,3)
+- Unexplored tier 1 tile
+
+Tile (0,4)
+- Unexplored tier 1 tile
+
 Tile (0,5)
 - Starred Resource tile providing 2 food, 1 gold
 - Claimed by Jim
 - Bob champion1 is here, blockading
 
+Tile (0,6)
+- Unexplored tier 1 tile
+
 Tile (0,7)
 - Resource tile providing 1 ore
 - Claimed by Jim
+
+Tile (1,0)
+- Unexplored tier 1 tile
+
+Tile (1,1)
+- Unexplored tier 1 tile
+
+Tile (1,2)
+- Unexplored tier 1 tile
+
+Tile (1,3)
+- Unexplored tier 1 tile
+
+Tile (1,4)
+- Unexplored tier 1 tile
+
+Tile (1,5)
+- Unexplored tier 1 tile
 
 Tile (1,6)
 - Tier 1 adventure tile
 - No adventure cards left
 - Monster: bandit (might 3) (reward 1 fame, 3 gold)
+
+Tile (1,7)
+- Unexplored tier 1 tile
+
+Tile (2,0)
+- Unexplored tier 1 tile
+
+Tile (2,1)
+- Unexplored tier 1 tile
+
+Tile (2,2)
+- Unexplored tier 1 tile
+
+Tile (2,3)
+- Unexplored tier 1 tile
+
+Tile (2,4)
+- Unexplored tier 1 tile
 
 Tile (2,5)
 - Tier 2 adventure tile
@@ -95,9 +146,24 @@ Tile (2,6)
 - Unclaimed
 - Monster: wolf (beast) (might 6) (reward 1 fame, 2 food)
 
+Tile (2,7)
+- Unexplored tier 2 tile
+
+Tile (3,0)
+- Unexplored tier 1 tile
+
+Tile (3,1)
+- Unexplored tier 1 tile
+
+Tile (3,2)
+- Unexplored tier 1 tile
+
 Tile (3,3)
-- Unexplored tile
+- Unexplored tier 1 tile
 - Jim champion1 is here
+
+Tile (3,4)
+- Unexplored tier 1 tile
 
 Tile (3,5)
 - Chapel (no combat). Buy 3 fame for 1 might
@@ -110,12 +176,99 @@ Tile (3,6)
 Tile (3,7)
 - Mercenary camp (no combat). Buy 1 might for 3 gold
 
+Tile (4,0)
+- Unexplored tier 1 tile
+
+Tile (4,1)
+- Unexplored tier 1 tile
+
+Tile (4,2)
+- Unexplored tier 1 tile
+
+Tile (4,3)
+- Unexplored tier 1 tile
+
 Tile (4,4)
 - Doomspire Dragon (might 13)
+
+Tile (4,5)
+- Unexplored tier 1 tile
+
+Tile (4,6)
+- Unexplored tier 1 tile
+
+Tile (4,7)
+- Unexplored tier 1 tile
+
+Tile (5,0)
+- Unexplored tier 1 tile
+
+Tile (5,1)
+- Unexplored tier 1 tile
+
+Tile (5,2)
+- Unexplored tier 1 tile
+
+Tile (5,3)
+- Unexplored tier 1 tile
+
+Tile (5,4)
+- Unexplored tier 1 tile
+
+Tile (5,5)
+- Unexplored tier 1 tile
+
+Tile (5,6)
+- Unexplored tier 1 tile
+
+Tile (5,7)
+- Unexplored tier 1 tile
+
+Tile (6,0)
+- Unexplored tier 1 tile
+
+Tile (6,1)
+- Unexplored tier 1 tile
+
+Tile (6,2)
+- Unexplored tier 1 tile
+
+Tile (6,3)
+- Unexplored tier 1 tile
+
+Tile (6,4)
+- Unexplored tier 1 tile
+
+Tile (6,5)
+- Unexplored tier 1 tile
+
+Tile (6,6)
+- Unexplored tier 1 tile
+
+Tile (6,7)
+- Unexplored tier 1 tile
 
 Tile (7,0)
 - Home tile for Alice (can ONLY be entered by Alice's champions)
 - Alice champion1 is here
+
+Tile (7,1)
+- Unexplored tier 1 tile
+
+Tile (7,2)
+- Unexplored tier 1 tile
+
+Tile (7,3)
+- Unexplored tier 1 tile
+
+Tile (7,4)
+- Unexplored tier 1 tile
+
+Tile (7,5)
+- Unexplored tier 1 tile
+
+Tile (7,6)
+- Unexplored tier 1 tile
 
 Tile (7,7)
 - Home tile for David (can ONLY be entered by David's champions)

@@ -5,7 +5,7 @@ import { HOME_TILE_TRIOS, TIER_1_TRIOS, TIER_2_TRIOS, type TileDef, type TileTri
 import { Board } from "./Board";
 import { convertTileDefToTile, TileColors } from "./TileConverter";
 import { calculateTrioPlacement, type Rotation } from "./tilePlacementUtils";
-import type { Position } from "./types";
+import type { Position, TileTier } from "./types";
 
 export class BoardBuilder {
   private seedValue: number;
@@ -80,21 +80,22 @@ export class BoardBuilder {
       const positions = calculateTrioPlacement(corner, rotation);
 
       // Place the tiles with different colors: darker green for home tile, regular green for others
-      this.placeHomeTrio(board, trioDef, positions, true);
+      this.placeHomeTrio(board, trioDef, positions, true, 1);
     });
   }
 
   /**
    * Places a home trio with special coloring: darker green for home tile, regular green for others
    */
-  private placeHomeTrio(board: Board, trioDef: TileTrioDef, positions: Position[], explored: boolean): void {
+  private placeHomeTrio(board: Board, trioDef: TileTrioDef, positions: Position[], explored: boolean, tier: TileTier): void {
     const tileDefs = [trioDef.corner, trioDef.right, trioDef.below];
     const groupId = this.currentGroupId++;
 
     tileDefs.forEach((tileDef, index) => {
+      const position = positions[index];
       const backColor = tileDef === "home" ? TileColors.homeBack : TileColors.tier1Back;
       const borderColor = tileDef === "home" ? TileColors.homeBorder : TileColors.tier1Border;
-      const tile = convertTileDefToTile(tileDef, positions[index], explored, backColor, borderColor, groupId);
+      const tile = convertTileDefToTile(tileDef, position, explored, backColor, borderColor, groupId, tier);
 
       // Add monsters to appropriate tiles
       this.addMonsterToTile(tile, backColor);
@@ -134,7 +135,7 @@ export class BoardBuilder {
       const positions = calculateTrioPlacement(corner, rotation);
 
       // Place the tiles with green back color and forest green border
-      this.placeTrio(board, trioDef, positions, true, TileColors.tier1Back, TileColors.tier1Border);
+      this.placeTrio(board, trioDef, positions, true, TileColors.tier1Back, TileColors.tier1Border, 1);
     });
   }
 
@@ -161,7 +162,7 @@ export class BoardBuilder {
       const positions = calculateTrioPlacement(corner, rotation);
 
       // Place the tiles with orange back color and dark orange border
-      this.placeTrio(board, trioDef, positions, false, TileColors.tier2Back, TileColors.tier2Border);
+      this.placeTrio(board, trioDef, positions, false, TileColors.tier2Back, TileColors.tier2Border, 2);
     });
   }
 
@@ -184,7 +185,7 @@ export class BoardBuilder {
 
     centralPositions.forEach((position, index) => {
       const tileDef = shuffledTiles[index] as TileDef;
-      const tile = convertTileDefToTile(tileDef, position, false, TileColors.tier3Back, TileColors.tier3Border);
+      const tile = convertTileDefToTile(tileDef, position, false, TileColors.tier3Back, TileColors.tier3Border, undefined, 3);
       board.setTile(tile);
     });
   }
@@ -200,6 +201,7 @@ export class BoardBuilder {
     explored: boolean,
     backColor: string,
     borderColor: string,
+    tier: TileTier,
   ): void {
     const tileDefs = [trioDef.corner, trioDef.right, trioDef.below];
     const groupId = this.currentGroupId++;
@@ -216,7 +218,7 @@ export class BoardBuilder {
         throw new Error(`Tile at ${position.row},${position.col} already exists`);
       }
 
-      const tile = convertTileDefToTile(tileDef, positions[index], explored, backColor, borderColor, groupId);
+      const tile = convertTileDefToTile(tileDef, position, explored, backColor, borderColor, groupId, tier);
 
       // Add monsters to appropriate tiles
       this.addMonsterToTile(tile, backColor);

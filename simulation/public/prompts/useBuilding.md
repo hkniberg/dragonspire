@@ -26,7 +26,7 @@ You have finished using all your dice for this turn. Now you are in the harvest 
 
 Consider your current strategic situation and resource needs. Build actions happen after building usage, so you can use buildings to gain resources/might and then spend those resources on build actions.
 
-You may use multiple buildings if you have them and can afford them, but you can only perform one build action per turn.
+You may use multiple buildings if you have them and can afford them, but you can only perform one build action per turn. It is also OK to not do anything and save resources for the future.
 </harvest-phase-decision-request>
 
 {{extraInstructions}}

@@ -2,7 +2,7 @@
 
 import { getTraderItemById } from "@/content/traderItems";
 import { GameState } from "@/game/GameState";
-import { BuildingDecision, DiceAction } from "@/lib/actionTypes";
+import { BuildingDecision, DiceAction, TileAction } from "@/lib/actionTypes";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
 import { Decision, DecisionContext, GameLogEntry, Player, PlayerType, TurnContext } from "@/lib/types";
 import { PlayerAgent } from "./PlayerAgent";
@@ -83,7 +83,7 @@ export class RandomPlayerAgent implements PlayerAgent {
     const chosenAction = actions[Math.floor(Math.random() * actions.length)];
 
     if (thinkingLogger) {
-      thinkingLogger(`Random player ${this.name} chose ${chosenAction.actionType} with die ${dieValue}`);
+      thinkingLogger(`Will do ${chosenAction.actionType} with die ${dieValue}`);
     }
 
     return chosenAction;
@@ -230,9 +230,7 @@ export class RandomPlayerAgent implements PlayerAgent {
           diceValueUsed: dieValue,
           championId: champion.id,
           movementPathIncludingStartPosition: [champion.position],
-          tileAction: {
-            claimTile: Math.random() < 0.5, // 50% chance to claim
-          },
+          tileAction: this.generateTileAction(player),
         },
       });
 
@@ -256,9 +254,7 @@ export class RandomPlayerAgent implements PlayerAgent {
                   champion.position,
                   { row: newRow, col: newCol },
                 ],
-                tileAction: {
-                  claimTile: Math.random() < 0.3,
-                },
+                tileAction: this.generateTileAction(player),
               },
             });
           }
@@ -276,7 +272,7 @@ export class RandomPlayerAgent implements PlayerAgent {
     const actions: DiceAction[] = [];
 
     for (const boat of player.boats) {
-      // Simple boat action: stay in place
+      // Option 1: Stay in place
       actions.push({
         actionType: "boatAction",
         boatAction: {
@@ -285,9 +281,48 @@ export class RandomPlayerAgent implements PlayerAgent {
           movementPathIncludingStartPosition: [boat.position],
         },
       });
+
+      // Option 2: Move to neighboring ocean zones (0 or 1 step works for any dice value)
+      const neighboringZones = gameState.getNeighboringOceanZones(boat.position);
+      for (const targetZone of neighboringZones) {
+        // Simple move without champion transport
+        actions.push({
+          actionType: "boatAction",
+          boatAction: {
+            diceValueUsed: dieValue,
+            boatId: boat.id,
+            movementPathIncludingStartPosition: [boat.position, targetZone],
+          },
+        });
+
+        // Option 3: Move and transport champion if available
+        const championsInCoast = gameState.getChampionsInCoastalTiles(playerName, boat.position);
+        if (championsInCoast.length > 0) {
+          // Pick a random champion to transport
+          const championToTransport = championsInCoast[Math.floor(Math.random() * championsInCoast.length)];
+
+          // Get target coastal tiles and pick a random one
+          const targetCoastalTiles = gameState.getCoastalTilesForOceanZone(targetZone);
+          if (targetCoastalTiles.length > 0) {
+            const randomTargetTile = targetCoastalTiles[Math.floor(Math.random() * targetCoastalTiles.length)];
+
+            actions.push({
+              actionType: "boatAction",
+              boatAction: {
+                diceValueUsed: dieValue,
+                boatId: boat.id,
+                movementPathIncludingStartPosition: [boat.position, targetZone],
+                championIdToPickUp: championToTransport.id,
+                championDropPosition: randomTargetTile,
+                championTileAction: this.generateTileAction(player),
+              },
+            });
+          }
+        }
+      }
     }
 
-    return actions.slice(0, 5);
+    return actions.slice(0, 10); // Increased limit since we have more options now
   }
 
   private generateRandomHarvestAction(gameState: GameState, playerName: string, dieValue: number): DiceAction | null {
@@ -313,6 +348,37 @@ export class RandomPlayerAgent implements PlayerAgent {
     }
 
     return null;
+  }
+
+  private generateTileAction(player: Player): TileAction {
+    const tileAction: TileAction = {
+      claimTile: true, // Always try to claim
+    };
+
+    // Use trader is always true
+    tileAction.useTrader = true;
+
+    // Use mercenary if player has >= 3 gold
+    if (player.resources.gold >= 3) {
+      tileAction.useMercenary = true;
+    }
+
+    // Use temple if player has >= 3 fame
+    if (player.fame >= 3) {
+      tileAction.useTemple = true;
+    }
+
+    // Conquer with might if player has >= 1 might (50% chance)
+    if (player.might >= 1 && Math.random() < 0.5) {
+      tileAction.conquerWithMight = true;
+    }
+
+    // Incite revolt if player has >= 1 fame (50% chance)
+    if (player.fame >= 1 && Math.random() < 0.5) {
+      tileAction.inciteRevolt = true;
+    }
+
+    return tileAction;
   }
 
   private getAvailableBuildActions(player: Player): string[] {

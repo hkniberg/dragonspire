@@ -74,7 +74,7 @@ export const positionSchema = {
  */
 export const oceanPositionSchema = {
   type: "string",
-  enum: ["northwest", "northeast", "southwest", "southeast"],
+  enum: ["nw", "ne", "sw", "se"],
   description: "Ocean zone position"
 };
 
@@ -201,6 +201,10 @@ export const buildingDecisionSchema = {
       type: "string",
       enum: ["blacksmith", "market", "recruitChampion", "buildBoat", "chapel", "upgradeChapelToMonastery", "warshipUpgrade", "fletcher"],
       description: "Type of build action to perform (construct building, recruit champion, etc.)"
+    },
+    reasoning: {
+      type: "string",
+      description: "Brief explanation of why these decisions were made"
     }
   },
   additionalProperties: false

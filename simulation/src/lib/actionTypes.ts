@@ -46,6 +46,7 @@ export interface BuildingUsageDecision {
 export interface BuildingDecision {
   buildingUsageDecision?: BuildingUsageDecision;
   buildAction?: BuildAction;
+  reasoning?: string;
 }
 
 // Dice actions no longer include build actions

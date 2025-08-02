@@ -46,6 +46,9 @@ export async function handleBuildingUsage(
   // Ask player for building decision (both usage and build action)
   const buildingDecision = await playerAgent.useBuilding(gameState, gameLog, player.name, thinkingLogger);
 
+  // Collect all actions for consolidated logging
+  const logParts: string[] = [];
+
   // Process building usage first
   if (buildingDecision.buildingUsageDecision) {
     const usageDecision = buildingDecision.buildingUsageDecision;
@@ -59,7 +62,7 @@ export async function handleBuildingUsage(
         player.might += 1;
 
         result.blacksmithUsed = true;
-        logFn("building", `Used blacksmith: paid 1 gold + 2 ore, gained 1 might`);
+        logParts.push("Used blacksmith: paid 1 Gold + 2 Ore, gained 1 Might");
       } else {
         result.failedActions.push({
           action: "blacksmith",
@@ -73,6 +76,7 @@ export async function handleBuildingUsage(
       if (hasMarket && Object.values(usageDecision.sellAtMarket).some(amount => amount > 0)) {
         let totalSold = 0;
         let goldGained = 0;
+        const resourcesSoldDetails: string[] = [];
 
         for (const [resourceType, amount] of Object.entries(usageDecision.sellAtMarket)) {
           if (amount > 0 && resourceType !== "gold") {
@@ -86,6 +90,9 @@ export async function handleBuildingUsage(
               // Market sells at 2:1 ratio (2 resources for 1 gold)
               const goldFromThisResource = Math.floor(actualAmount / 2);
               goldGained += goldFromThisResource;
+
+              const resourceName = resourceType.charAt(0).toUpperCase() + resourceType.slice(1);
+              resourcesSoldDetails.push(`${actualAmount} ${resourceName}`);
             }
           }
         }
@@ -95,7 +102,7 @@ export async function handleBuildingUsage(
           result.marketUsed = true;
           result.totalGoldGained += goldGained;
           result.totalResourcesSold += totalSold;
-          logFn("building", `Used market: sold ${totalSold} resources for ${goldGained} gold`);
+          logParts.push(`Used market: sold ${resourcesSoldDetails.join(" + ")} for ${goldGained} Gold`);
         }
       } else {
         result.failedActions.push({
@@ -114,7 +121,7 @@ export async function handleBuildingUsage(
         player.might += 1;
 
         result.fletcherUsed = true;
-        logFn("building", `Used fletcher: paid 3 wood + 1 ore, gained 1 might`);
+        logParts.push("Used fletcher: paid 3 Wood + 1 Ore, gained 1 Might");
       } else {
         result.failedActions.push({
           action: "fletcher",
@@ -127,10 +134,13 @@ export async function handleBuildingUsage(
   // Process build action (happens after building usage)
   if (buildingDecision.buildAction) {
     try {
-      const buildResult = handleBuildAction(player, buildingDecision.buildAction, logFn);
+      const buildResult = handleBuildAction(player, buildingDecision.buildAction, () => { }); // Don't log individually
       if (buildResult.actionSuccessful) {
         result.buildActionPerformed = buildingDecision.buildAction;
-        logFn("build", `Built ${buildingDecision.buildAction}`);
+
+        // Get build cost details for logging
+        const buildCostDetails = getBuildCostDetails(buildingDecision.buildAction, player);
+        logParts.push(`Built ${buildingDecision.buildAction}${buildCostDetails ? ` for ${buildCostDetails}` : ""}`);
 
         // Track statistics
         if (player.statistics) {
@@ -150,7 +160,45 @@ export async function handleBuildingUsage(
     }
   }
 
+  // Create consolidated log entry if any actions were performed
+  if (logParts.length > 0) {
+    let consolidatedMessage = logParts.join(". ");
+
+    // Add reasoning if provided
+    if (buildingDecision.reasoning) {
+      consolidatedMessage += `. Reason: ${buildingDecision.reasoning}`;
+    }
+
+    logFn("building", consolidatedMessage);
+  }
+
   return result;
+}
+
+/**
+ * Get the cost details for a build action for logging purposes
+ */
+function getBuildCostDetails(buildAction: string, player?: Player): string {
+  switch (buildAction) {
+    case "blacksmith":
+      return "2 Food + 2 Ore";
+    case "market":
+      return "2 Food + 2 Wood";
+    case "fletcher":
+      return "1 Wood + 1 Food + 1 Gold + 1 Ore";
+    case "chapel":
+      return "6 Wood + 2 Gold";
+    case "upgradeChapelToMonastery":
+      return "8 Wood + 3 Gold + 1 Ore";
+    case "recruitChampion":
+      return "3 Food + 3 Gold + 1 Ore";
+    case "buildBoat":
+      return "2 Wood + 2 Gold";
+    case "warshipUpgrade":
+      return "2 Wood + 1 Ore + 1 Gold";
+    default:
+      return "";
+  }
 }
 
 function checkAvailableBuildActions(player: Player): string[] {

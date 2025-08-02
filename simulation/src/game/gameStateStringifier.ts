@@ -26,7 +26,7 @@ export function stringifyTileForGameLog(tile: Tile, gameState: GameState, ignore
   const sentences: string[] = [];
 
   if (!tile.explored) {
-    sentences.push(`This is an unexplored tile`);
+    sentences.push(`This is an unexplored tier ${tile.tier} tile`);
   } else {
     // Format based on tile type
     switch (tile.tileType) {
@@ -227,19 +227,11 @@ function formatClaimedTile(tile: Tile, gameState: GameState): string {
 function formatBoard(gameState: GameState): string {
   const sections: string[] = ["# Board"];
 
-  // Only show interesting tiles (explored tiles or tiles with champions)
-  const interestingTiles: Tile[] = [];
-
+  // Show all tiles
   for (const row of gameState.board.getTilesGrid()) {
     for (const tile of row) {
-      if (isTileInteresting(tile, gameState)) {
-        interestingTiles.push(tile);
-      }
+      sections.push(formatTileForBoard(tile, gameState));
     }
-  }
-
-  for (const tile of interestingTiles) {
-    sections.push(formatTileForBoard(tile, gameState));
   }
 
   return sections.join("\n\n");
@@ -249,7 +241,7 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
   const lines: string[] = [`Tile ${formatPosition(tile.position)}`];
 
   if (!tile.explored) {
-    lines.push(`- Unexplored tile`);
+    lines.push(`- Unexplored tier ${tile.tier} tile`);
   } else {
     // Format based on tile type
     switch (tile.tileType) {
@@ -353,21 +345,7 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
   return lines.join("\n");
 }
 
-function isTileInteresting(tile: Tile, gameState: GameState): boolean {
-  // Show explored tiles
-  if (tile.explored) {
-    return true;
-  }
 
-  // Show unexplored tiles that have champions on them
-  const championsOnTile = getChampionsOnTile(tile.position, gameState);
-  if (championsOnTile.length > 0) {
-    return true;
-  }
-
-  // Don't show empty unexplored tiles
-  return false;
-}
 
 function getChampionsOnTile(position: { row: number; col: number }, gameState: GameState): Champion[] {
   const champions: Champion[] = [];
