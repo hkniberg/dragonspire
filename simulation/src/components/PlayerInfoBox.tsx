@@ -192,6 +192,33 @@ export const PlayerInfoBox = ({
               {player.name}
               {isCurrentPlayer && " ⭐"}
             </h4>
+            {/* Final Ranking Label */}
+            {player.finalRank && (
+              <div
+                style={{
+                  fontSize: "10px",
+                  fontWeight: "bold",
+                  color:
+                    player.finalRank === "King of Doomspire"
+                      ? "#DAA520"
+                      : player.finalRank === "Hand of the King"
+                        ? "#4169E1"
+                        : player.finalRank === "Master of Coin"
+                          ? "#228B22"
+                          : "#8B0000",
+                  textTransform: "uppercase",
+                  marginBottom: "2px",
+                }}
+              >
+                {player.finalRank === "King of Doomspire"
+                  ? "👑 King of Doomspire"
+                  : player.finalRank === "Hand of the King"
+                    ? "🤝 Hand of the King"
+                    : player.finalRank === "Master of Coin"
+                      ? "💰 Master of Coin"
+                      : "🃏 Court Jester"}
+              </div>
+            )}
             <div style={{ fontSize: "11px", color: "#6c757d" }}>
               Fame: {player.fame} | Might: {player.might}
             </div>
@@ -359,7 +386,7 @@ export const PlayerInfoBox = ({
                   >
                     <div style={{ display: "flex", alignItems: "center" }}>
                       <span style={{ color: colors.main, fontWeight: "bold", marginRight: "4px" }}>
-                        ({tile.position.row},{tile.position.col})
+                        ({tile.position.row},{tile.position.col}){tile.isStarred && " ⭐"}
                       </span>
                       {resourceEntries.length > 0 && (
                         <span style={{ color: "#6c757d" }}>

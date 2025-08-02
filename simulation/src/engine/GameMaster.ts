@@ -292,7 +292,20 @@ export class GameMaster {
       const actuallyMoved = startPosition.row !== moveResult.endPosition.row || startPosition.col !== moveResult.endPosition.col;
 
       // Create log message with reasoning first, then detailed tile description
-      const tileDescription = stringifyTileForGameLog(tile, this.gameState, player.name);
+      // For movement, we need to account for exploration that will happen
+      const wasUnexplored = !tile.explored;
+      let tileDescription: string;
+
+      if (actuallyMoved && wasUnexplored) {
+        // Temporarily mark as explored to get the proper description
+        tile.explored = true;
+        tileDescription = `This was unexplored, but I explored it. ${stringifyTileForGameLog(tile, this.gameState, player.name)}`;
+        // Restore the unexplored state (it will be properly explored later)
+        tile.explored = false;
+      } else {
+        tileDescription = stringifyTileForGameLog(tile, this.gameState, player.name);
+      }
+
       const reasoningText = reasoning ? ` Reason: ${reasoning}.` : "";
 
       if (actuallyMoved) {
@@ -503,12 +516,22 @@ export class GameMaster {
     );
     if (doomspireResult.entered) {
       if (doomspireResult.alternativeVictory) {
-        this.endGame(doomspireResult.alternativeVictory.playerName, doomspireResult.alternativeVictory.type);
-        return;
+        // Check if this is a final impression (3rd time) that ends the game
+        if (doomspireResult.alternativeVictory.type.includes("Final Impression")) {
+          this.endGameWithRanking(doomspireResult.alternativeVictory.playerName);
+          return;
+        } else {
+          this.endGameWithRanking(doomspireResult.alternativeVictory.playerName);
+          return;
+        }
+      }
+      if (doomspireResult.dragonImpressed) {
+        // Dragon was impressed but game continues (1st or 2nd impression)
+        logFn("system", `Dragon impressed ${doomspireResult.dragonImpressed.impressionCount} time(s). Game continues.`);
       }
       if (doomspireResult.dragonCombat) {
         if (doomspireResult.dragonCombat.combatVictory) {
-          this.endGame(doomspireResult.dragonCombat.combatVictory.playerName, "Combat Victory");
+          this.endGameWithRanking(doomspireResult.dragonCombat.combatVictory.playerName);
           return;
         } else if (doomspireResult.dragonCombat.championDefeated) {
           // Champion defeated by dragon, defeat effects already applied by combat handler
@@ -779,6 +802,103 @@ export class GameMaster {
     // Find the player index for the winner
     const winnerIndex = winnerName ? this.gameState.players.findIndex(p => p.name === winnerName) : undefined;
     this.gameState.winner = winnerIndex;
+  }
+
+  private endGameWithRanking(kingName: string): void {
+    this.masterState = "finished";
+    this.gameState.gameEnded = true;
+
+    // Establish final ranking according to the rules
+    const players = [...this.gameState.players];
+
+    // 1. King of Doomspire: The last player to impress the dragon
+    const king = players.find(p => p.name === kingName)!;
+    king.finalRank = "King of Doomspire";
+
+    // Get remaining players
+    const remainingPlayers = players.filter(p => p.name !== kingName);
+
+    // 2. Hand of the King: Player with the most resource tiles claimed
+    // Tiebreaker: most starred resource tiles, then most gold. If still tied, King decides (randomize)
+    const handOfKing = this.findHandOfKing(remainingPlayers);
+    handOfKing.finalRank = "Hand of the King";
+
+    // 3. Master of Coin: Player with the most gold from remaining players
+    // Tiebreaker: total value of all resources. If still tied, King decides (randomize)
+    const finalRemaining = remainingPlayers.filter(p => p !== handOfKing);
+    const masterOfCoin = this.findMasterOfCoin(finalRemaining);
+    masterOfCoin.finalRank = "Master of Coin";
+
+    // 4. Court Jester: The remaining player
+    const jester = finalRemaining.find(p => p !== masterOfCoin)!;
+    jester.finalRank = "Court Jester";
+
+    // Log the final rankings
+    this.addGameLogEntry("victory", `GAME ENDED! Final Rankings:`);
+    this.addGameLogEntry("victory", `👑 King of Doomspire: ${king.name}`);
+    this.addGameLogEntry("victory", `🤝 Hand of the King: ${handOfKing.name}`);
+    this.addGameLogEntry("victory", `💰 Master of Coin: ${masterOfCoin.name}`);
+    this.addGameLogEntry("victory", `🃏 Court Jester: ${jester.name}`);
+
+    console.log(`\n🎉 GAME ENDED! Final Rankings:`);
+    console.log(`👑 King of Doomspire: ${king.name}`);
+    console.log(`🤝 Hand of the King: ${handOfKing.name}`);
+    console.log(`💰 Master of Coin: ${masterOfCoin.name}`);
+    console.log(`🃏 Court Jester: ${jester.name}`);
+
+    // Set winner index for compatibility
+    this.gameState.winner = this.gameState.players.findIndex(p => p.name === kingName);
+  }
+
+  private findHandOfKing(players: Player[]): Player {
+    if (players.length === 0) throw new Error("No players to choose from");
+
+    // Count resource tiles for each player
+    const playerTileData = players.map(player => {
+      const resourceTiles = this.gameState.board.findTiles(
+        tile => tile.tileType === "resource" && tile.claimedBy === player.name
+      );
+      const starredTiles = resourceTiles.filter(tile => tile.isStarred).length;
+
+      return {
+        player,
+        totalTiles: resourceTiles.length,
+        starredTiles,
+        gold: player.resources.gold
+      };
+    });
+
+    // Sort by: most resource tiles, then most starred tiles, then most gold
+    playerTileData.sort((a, b) => {
+      if (a.totalTiles !== b.totalTiles) return b.totalTiles - a.totalTiles;
+      if (a.starredTiles !== b.starredTiles) return b.starredTiles - a.starredTiles;
+      if (a.gold !== b.gold) return b.gold - a.gold;
+      return Math.random() - 0.5; // Random tiebreaker if still tied
+    });
+
+    return playerTileData[0].player;
+  }
+
+  private findMasterOfCoin(players: Player[]): Player {
+    if (players.length === 0) throw new Error("No players to choose from");
+
+    const playerGoldData = players.map(player => {
+      const totalResourceValue = player.resources.gold + player.resources.food + player.resources.wood + player.resources.ore;
+      return {
+        player,
+        gold: player.resources.gold,
+        totalResourceValue
+      };
+    });
+
+    // Sort by: most gold, then total resource value
+    playerGoldData.sort((a, b) => {
+      if (a.gold !== b.gold) return b.gold - a.gold;
+      if (a.totalResourceValue !== b.totalResourceValue) return b.totalResourceValue - a.totalResourceValue;
+      return Math.random() - 0.5; // Random tiebreaker if still tied
+    });
+
+    return playerGoldData[0].player;
   }
 
   private printGameSummary(): void {

@@ -45,6 +45,7 @@ As an AI player, you should:
 - Utilize the different game mechanics - buying buildings, buying new champions, attacking other knights, blockading and conquering and inciting revolt, using multiple knights to support each other, using warships to support coastal battles, using boats for mobility between coastal tiles, using the trader, the mercenary, the temple, etc.
 - Balance risk and reward in your decisions
 - Plan both short-term moves and long-term strategy
+- Losing a battle is not the end of the world, as long as you have a single resource you only risk getting sent home and losing 1 resource. So you don't need to wait for 100% odds of winning.
 </tips>
 
 {{extraInstructions}}

@@ -345,11 +345,12 @@ If you lose your last knight, you can choose whether to stay in the game and sav
 
 **Fighting the dragon**:
 
-The dragon has might 8 + 1D3. Fighting the dragon is similar to monster combat, except that the dragon also gets a dice.
+The dragon has might 8. Fighting the dragon is like knight-to-knight combat.
 
 - Pick another player to represent the dragon - ideally your biggest rival!
-- Roll 1D3 and add your might, support bonus from adjacent knights, and any bonus from items or followers.
-- Dragon rolls 1D3 and adds their might of 8
+- Both you and the dragon roll 1D3 and add your might/support bonuses.
+- Dragon rolls 1D3 and adds their might of 8.
+- Highest total wins. Ties are rerolled until someone wins.
 - If you match or exceed the dragon's total, you win the combat.
 
 ---

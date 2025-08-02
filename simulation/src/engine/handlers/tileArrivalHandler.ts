@@ -1,6 +1,6 @@
 import { GameState } from "@/game/GameState";
 import { GameSettings } from "@/lib/GameSettings";
-import { CarriableItem, GameLogEntry, Player, Tile } from "@/lib/types";
+import { CarriableItem, GameLogEntry, Player, Tile, ResourceType, DecisionContext, DecisionOption } from "@/lib/types";
 import { formatResources } from "@/lib/utils";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { canChampionCarryMoreItems } from "@/players/PlayerUtils";
@@ -31,7 +31,7 @@ export interface DragonCombatResult {
 export interface DoomspireResult {
   entered: boolean;
   alternativeVictory?: {
-    type: "Fame Victory" | "Gold Victory" | "Economic Victory";
+    type: "Fame Victory" | "Gold Victory" | "Economic Victory" | "Fame Victory (Final Impression)" | "Gold Victory (Final Impression)" | "Economic Victory (Final Impression)";
     playerName: string;
   };
   dragonCombat?: {
@@ -42,6 +42,55 @@ export interface DoomspireResult {
     };
     combatDetails: string;
   };
+  dragonImpressed?: {
+    playerName: string;
+    impressionType: string;
+    impressionCount: number;
+    needsResourceChoice: boolean;
+  };
+}
+
+/**
+ * Generate resource choice options for dragon impression rewards
+ */
+function generateResourceChoiceOptions(): DecisionOption[] {
+  const resourceTypes: ResourceType[] = ["gold", "food", "wood", "ore"];
+  const options: DecisionOption[] = [];
+
+  // Generate all combinations of 2 resources (including same resource twice)
+  for (let i = 0; i < resourceTypes.length; i++) {
+    for (let j = i; j < resourceTypes.length; j++) {
+      const resource1 = resourceTypes[i];
+      const resource2 = resourceTypes[j];
+      const optionId = `${resource1}-${resource2}`;
+      const description = resource1 === resource2
+        ? `2 ${resource1}`
+        : `1 ${resource1} + 1 ${resource2}`;
+
+      options.push({
+        id: optionId,
+        description
+      });
+    }
+  }
+
+  return options;
+}
+
+/**
+ * Apply the chosen resource reward to the player
+ */
+function applyResourceChoice(player: Player, choice: string, logFn: (type: string, content: string) => void): void {
+  const [resource1, resource2] = choice.split('-') as ResourceType[];
+
+  player.resources[resource1] += 1;
+  player.resources[resource2] += 1;
+
+  const description = resource1 === resource2
+    ? `2 ${resource1}`
+    : `1 ${resource1} + 1 ${resource2}`;
+
+  logFn("event", `${player.name} received ${description} from the dragon as reward for impressing it!`);
 }
 
 
@@ -204,17 +253,65 @@ export async function handleDoomspireTile(
     };
   }
 
+  // Handle dragon impression (non-combat) 
+  if (dragonEncounter.dragonImpressed) {
+    const impression = dragonEncounter.dragonImpressed;
+
+    if (impression.needsResourceChoice && playerAgent && gameLog) {
+      // Let player choose 2 resources as reward
+      const resourceOptions = generateResourceChoiceOptions();
+      const decisionContext: DecisionContext = {
+        description: `The dragon is impressed by your ${impression.impressionType.toLowerCase()} and offers you 2 resources of your choice as a reward!`,
+        options: resourceOptions
+      };
+
+      const decision = await playerAgent.makeDecision(gameState, gameLog, decisionContext, thinkingLogger);
+      applyResourceChoice(player, decision.choice, logFn);
+
+      // Send champion home
+      const champion = gameState.getChampion(player.name, championId);
+      if (champion) {
+        champion.position = player.homePosition;
+        logFn("event", `Champion${championId} was flown home by the grateful dragon.`);
+      }
+    }
+
+    return {
+      entered: true,
+      dragonImpressed: impression
+    };
+  }
+
   if (dragonEncounter.combatResult) {
     const combatResult = dragonEncounter.combatResult;
 
     if (combatResult.victory) {
+      // Handle resource choice for combat victories too
+      if (combatResult.needsResourceChoice && playerAgent && gameLog) {
+        const resourceOptions = generateResourceChoiceOptions();
+        const decisionContext: DecisionContext = {
+          description: "The dragon is impressed by your combat prowess and offers you 2 resources of your choice as a reward!",
+          options: resourceOptions
+        };
+
+        const decision = await playerAgent.makeDecision(gameState, gameLog, decisionContext, thinkingLogger);
+        applyResourceChoice(player, decision.choice, logFn);
+
+        // Send champion home
+        const champion = gameState.getChampion(player.name, championId);
+        if (champion) {
+          champion.position = player.homePosition;
+          logFn("event", `Champion${championId} was flown home by the grateful dragon.`);
+        }
+      }
+
       return {
         entered: true,
         dragonCombat: {
           championWon: true,
-          combatVictory: {
+          combatVictory: combatResult.finalImpression ? {
             playerName: player.name
-          },
+          } : undefined,
           combatDetails: combatResult.combatDetails!
         }
       };

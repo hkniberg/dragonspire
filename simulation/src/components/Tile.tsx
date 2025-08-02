@@ -409,6 +409,47 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}${isBlo
         </div>
       )}
 
+      {/* Dragon impression counter for doomspire */}
+      {effectiveTile.tileType === "doomspire" &&
+        effectiveTile.explored &&
+        effectiveTile.impressionCounter !== undefined &&
+        effectiveTile.impressionCounter > 0 && (
+          <div
+            style={{
+              position: "absolute",
+              top: "8px",
+              left: "8px",
+              display: "flex",
+              flexDirection: "row",
+              gap: "2px",
+              zIndex: 6,
+            }}
+          >
+            {Array.from({ length: effectiveTile.impressionCounter }, (_, index) => (
+              <div
+                key={index}
+                style={{
+                  backgroundColor: "#FFD700",
+                  borderRadius: "50%",
+                  width: "16px",
+                  height: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "10px",
+                  fontWeight: "bold",
+                  border: "1px solid #000",
+                  boxShadow: "0 1px 2px rgba(0,0,0,0.3)",
+                  color: "#000",
+                }}
+                title={`Dragon impressed ${effectiveTile.impressionCounter} time(s)`}
+              >
+                👑
+              </div>
+            ))}
+          </div>
+        )}
+
       {/* Adventure tokens as question mark circles */}
       {(effectiveTile.tileType === "adventure" || effectiveTile.tileType === "oasis") &&
         effectiveTile.explored &&

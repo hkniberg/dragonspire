@@ -15,63 +15,6 @@ function rollD3(): number {
   return outcomes[Math.floor(Math.random() * outcomes.length)];
 }
 
-/**
- * Calculate item bonuses and effects for combat
- */
-function calculateItemEffects(champion: Champion | undefined, logFn: (type: string, content: string) => void, playerMight?: number, opponentMight?: number, isDragonFight?: boolean): { mightBonus: number; itemsToRemove: CarriableItem[] } {
-  let mightBonus = 0;
-  let itemsToRemove: CarriableItem[] = [];
-
-  if (!champion) {
-    return { mightBonus, itemsToRemove };
-  }
-
-  for (const item of champion.items) {
-    // Check for general combat bonus first
-    if (item.combatBonus) {
-      mightBonus += item.combatBonus;
-      const itemName = item.treasureCard?.name || item.traderItem?.name || 'Unknown Item';
-      logFn("combat", `${itemName} provides +${item.combatBonus} might`);
-    }
-
-    // Check for spear bonus against beasts (trader item specific logic)
-    if (item.traderItem?.id === "spear") {
-      mightBonus += 1;
-      logFn("combat", `Spear provides +1 might`);
-    }
-
-    // Check for rusty sword (breaks after one fight)
-    if (item.treasureCard?.id === "rusty-sword") {
-      mightBonus += 2;
-      itemsToRemove.push(item);
-      logFn("combat", `Rusty sword provides +2 might but breaks after this fight`);
-    }
-
-    // Check for long sword (doesn't break)
-    if (item.treasureCard?.id === "long-sword") {
-      mightBonus += 2;
-      logFn("combat", `Löng Swörd provides +2 might`);
-    }
-
-    // Check for porcupine (conditional bonus if opponent has more might)
-    if (item.treasureCard?.id === "porcupine" && opponentMight !== undefined && playerMight !== undefined && opponentMight > playerMight) {
-      mightBonus += 2;
-      logFn("combat", `Porcupine shield provides +2 might (opponent has more base might)`);
-    }
-
-    // Check for mysterious ring with dragon slaying power
-    if (item.treasureCard?.id === "dragonsbane-ring") {
-      if (isDragonFight) {
-        mightBonus += 3;
-        logFn("combat", `Dragonsbane ring provides +3 might against the dragon!`);
-      } else {
-        logFn("combat", `Dragonsbane ring detected - bonus only applies against dragons`);
-      }
-    }
-  }
-
-  return { mightBonus, itemsToRemove };
-}
 
 /**
  * Remove items that break after combat
@@ -114,18 +57,14 @@ async function handlePostDiceItemDecisions(
 
   // First, apply automatic items (always trigger)
   for (const item of champion.items) {
-    // General combat bonus (always applies)
+    // General combat bonus (always applies) - but exclude spears since they only work against beasts
     if (item.combatBonus) {
       mightBonus += item.combatBonus;
       const itemName = item.treasureCard?.name || item.traderItem?.name || 'Unknown Item';
       logFn("combat", `${itemName} provides +${item.combatBonus} might`);
     }
 
-    // Spear (always applies +1 might)
-    if (item.traderItem?.id === "spear") {
-      mightBonus += 1;
-      logFn("combat", `Spear provides +1 might`);
-    }
+    // Spear bonus is handled separately in monster combat only
 
     // Long sword (always applies, doesn't break)
     if (item.treasureCard?.id === "long-sword") {
@@ -242,10 +181,20 @@ export interface CombatResult {
 export interface DragonEncounterResult {
   encounterOccurred: boolean;
   alternativeVictory?: {
-    type: "Fame Victory" | "Gold Victory" | "Economic Victory";
+    type: "Fame Victory" | "Gold Victory" | "Economic Victory" | "Fame Victory (Final Impression)" | "Gold Victory (Final Impression)" | "Economic Victory (Final Impression)";
     playerName: string;
   };
-  combatResult?: CombatResult;
+  combatResult?: CombatResult & {
+    finalImpression?: boolean;
+    needsResourceChoice?: boolean;
+    impressionCount?: number;
+  };
+  dragonImpressed?: {
+    playerName: string;
+    impressionType: string;
+    impressionCount: number;
+    needsResourceChoice: boolean;
+  };
 }
 
 /**
@@ -917,37 +866,61 @@ export async function resolveChampionVsDragonEncounter(
     return { encounterOccurred: false };
   }
 
+  // Initialize impression counter if not already set
+  if (tile.impressionCounter === undefined) {
+    tile.impressionCounter = 0;
+  }
+
   // Check alternative victory conditions first
+  let impressedDragon = false;
+  let impressionType = "";
+
   if (player.fame >= GameSettings.VICTORY_FAME_THRESHOLD) {
-    logFn("victory", `Fame Victory! ${player.name} reached ${GameSettings.VICTORY_FAME_THRESHOLD} fame and recruited the dragon with fame!`);
-    return {
-      encounterOccurred: true,
-      alternativeVictory: {
-        type: "Fame Victory",
-        playerName: player.name
-      }
-    };
+    logFn("victory", `Dragon Impressed! ${player.name} impressed the dragon with ${GameSettings.VICTORY_FAME_THRESHOLD}+ fame!`);
+    impressedDragon = true;
+    impressionType = "Fame";
+  } else if (player.resources.gold >= GameSettings.VICTORY_GOLD_THRESHOLD) {
+    logFn("victory", `Dragon Impressed! ${player.name} impressed the dragon with ${GameSettings.VICTORY_GOLD_THRESHOLD}+ gold!`);
+    impressedDragon = true;
+    impressionType = "Gold";
+  } else {
+    const starredTileCount = gameState.getStarredTileCount(player.name);
+    if (starredTileCount >= GameSettings.VICTORY_STARRED_TILES_THRESHOLD) {
+      logFn("victory", `Dragon Impressed! ${player.name} impressed the dragon with ${GameSettings.VICTORY_STARRED_TILES_THRESHOLD}+ starred resource tiles!`);
+      impressedDragon = true;
+      impressionType = "Economic";
+    }
   }
 
-  if (player.resources.gold >= GameSettings.VICTORY_GOLD_THRESHOLD) {
-    logFn("victory", `Gold Victory! ${player.name} reached ${GameSettings.VICTORY_GOLD_THRESHOLD} gold and bribed the dragon with gold!`);
-    return {
-      encounterOccurred: true,
-      alternativeVictory: {
-        type: "Gold Victory",
-        playerName: player.name
-      }
-    };
-  }
+  if (impressedDragon) {
+    // Increment impression counter
+    tile.impressionCounter = (tile.impressionCounter || 0) + 1;
+    logFn("system", `Dragon impression count: ${tile.impressionCounter}/3`);
 
-  const starredTileCount = gameState.getStarredTileCount(player.name);
-  if (starredTileCount >= GameSettings.VICTORY_STARRED_TILES_THRESHOLD) {
-    logFn("victory", `Economic Victory! ${player.name} reached ${GameSettings.VICTORY_STARRED_TILES_THRESHOLD} starred tiles and impressed the dragon with their economic prowess!`);
+    // Check if this is the final impression (3rd time)
+    if (tile.impressionCounter >= 3) {
+      const finalImpressionType =
+        impressionType === "Fame" ? "Fame Victory (Final Impression)" as const :
+          impressionType === "Gold" ? "Gold Victory (Final Impression)" as const :
+            "Economic Victory (Final Impression)" as const;
+
+      return {
+        encounterOccurred: true,
+        alternativeVictory: {
+          type: finalImpressionType,
+          playerName: player.name
+        }
+      };
+    }
+
+    // For first and second impressions, give 2 resources of choice and send knight home
     return {
       encounterOccurred: true,
-      alternativeVictory: {
-        type: "Economic Victory",
-        playerName: player.name
+      dragonImpressed: {
+        playerName: player.name,
+        impressionType: impressionType,
+        impressionCount: tile.impressionCounter,
+        needsResourceChoice: true
       }
     };
   }
@@ -995,11 +968,22 @@ export async function resolveChampionVsDragonEncounter(
     logFn("combat", `Combat support: +${supportBonus} might from adjacent units`);
   }
 
-  // Both champion and dragon roll dice during combat (as per rules)
-  const championRoll = rollD3();
-  const dragonRoll = rollD3();
+  // Dragon combat is like knight-to-knight combat: both roll d3, reroll on ties
+  let championRoll: number;
+  let dragonRoll: number;
+  let rollCount = 1;
 
-  logFn("combat", `Champion rolled [${championRoll}] vs Dragon's [${dragonRoll}]`);
+  do {
+    championRoll = rollD3();
+    dragonRoll = rollD3();
+
+    if (rollCount === 1) {
+      logFn("combat", `Champion rolled [${championRoll}] vs Dragon's [${dragonRoll}]`);
+    } else {
+      logFn("combat", `Tie! Rerolling: Champion [${championRoll}] vs Dragon [${dragonRoll}]`);
+    }
+    rollCount++;
+  } while (championRoll + player.might + supportBonus === dragonRoll + GameSettings.DRAGON_BASE_MIGHT);
 
   // Now ask about item usage after seeing the dice roll
   const { mightBonus, itemsToRemove } = await handlePostDiceItemDecisions(
@@ -1018,7 +1002,7 @@ export async function resolveChampionVsDragonEncounter(
   const championTotal = player.might + championRoll + supportBonus + mightBonus;
   const dragonTotal = GameSettings.DRAGON_BASE_MIGHT + dragonRoll;
 
-  const championWins = championTotal >= dragonTotal;
+  const championWins = championTotal > dragonTotal;
 
   if (!championWins) {
     // Champion was defeated by dragon - they get EATEN (permanently removed from game)
@@ -1062,12 +1046,32 @@ export async function resolveChampionVsDragonEncounter(
     // Remove items that break after combat
     removeBrokenItems(champion, itemsToRemove, logFn);
 
+    // Increment impression counter for combat victory
+    tile.impressionCounter = (tile.impressionCounter || 0) + 1;
+    logFn("system", `Dragon impression count: ${tile.impressionCounter}/3`);
+
+    // Check if this is the final impression (3rd time)
+    if (tile.impressionCounter >= 3) {
+      return {
+        encounterOccurred: true,
+        combatResult: {
+          combatOccurred: true,
+          victory: true,
+          combatDetails,
+          finalImpression: true
+        }
+      };
+    }
+
+    // For first and second impressions, give 2 resources of choice and send knight home
     return {
       encounterOccurred: true,
       combatResult: {
         combatOccurred: true,
         victory: true,
-        combatDetails
+        combatDetails,
+        needsResourceChoice: true,
+        impressionCount: tile.impressionCounter
       }
     };
   }

@@ -126,7 +126,7 @@ export const boatActionSchema = {
     },
     championIdToPickUp: {
       type: "number",
-      description: "Optional champion ID to pick up from a coastal tile"
+      description: "Optional champion ID to pick up from a coastal tile (Must be coastal - row 0, row 7, col 0, or col 7)."
     },
     championDropPosition: {
       ...positionSchema,

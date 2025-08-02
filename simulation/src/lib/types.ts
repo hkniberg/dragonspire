@@ -61,6 +61,7 @@ export interface Tile {
   borderColor?: string; // Border color set by BoardBuilder
   tileGroup?: number; // Optional group identifier - when one tile in group is explored, all tiles in group are explored
   items?: CarriableItem[]; // Items present on this tile
+  impressionCounter?: number; // Number of times the dragon has been impressed at this tile (only relevant for doomspire)
 }
 
 export interface Champion {
@@ -112,6 +113,7 @@ export interface Player {
   homePosition: Position;
   extraInstructions?: string; // Optional extra instructions for AI players
   statistics?: PlayerStatistics; // Match statistics tracking
+  finalRank?: "King of Doomspire" | "Hand of the King" | "Master of Coin" | "Court Jester"; // Final ranking when game ends
 }
 
 

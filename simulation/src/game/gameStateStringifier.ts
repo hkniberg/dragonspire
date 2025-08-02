@@ -197,6 +197,11 @@ function formatChampion(champion: Champion, playerName: string): string {
 function formatClaimedTile(tile: Tile, gameState: GameState): string {
   let line = `  - Tile ${formatPosition(tile.position)}`;
 
+  // Add starred indicator
+  if (tile.isStarred) {
+    line += " (starred)";
+  }
+
   if (tile.resources) {
     const resourceStr = formatResources(tile.resources);
     if (resourceStr) {
@@ -254,7 +259,8 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
           const resourceStr = formatResources(tile.resources);
           if (resourceStr) {
             const starredPrefix = tile.isStarred ? "Starred " : "";
-            lines.push(`- ${starredPrefix}Resource tile providing ${resourceStr}`);
+            const unclaimedPrefix = !tile.claimedBy ? "Unclaimed " : "";
+            lines.push(`- ${unclaimedPrefix}${starredPrefix}Resource tile providing ${resourceStr}`);
           }
         }
         if (tile.claimedBy) {
@@ -267,8 +273,6 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
           if (isProtected) {
             lines.push("- Protected by unit in neighbouring tile");
           }
-        } else {
-          lines.push("- Unclaimed");
         }
         if (tile.monster) {
           lines.push(`- Monster: ${formatMonsterInfo(tile.monster)}`);
@@ -293,7 +297,11 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
         lines.push("- Mercenary camp (no combat). Buy 1 might for 3 gold");
         break;
       case "doomspire":
-        lines.push("- Doomspire Dragon (might 13)");
+        const impressionCount = tile.impressionCounter || 0;
+        lines.push(`- Doomspire Dragon (might 13) - Impressed ${impressionCount}/3 times`);
+        if (impressionCount >= 3) {
+          lines.push("- The dragon has left the island!");
+        }
         break;
       case "oasis":
         lines.push(`- Tier ${tile.tier} oasis`);
