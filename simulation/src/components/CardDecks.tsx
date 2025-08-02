@@ -22,7 +22,6 @@ interface CardDecksProps {
 
 interface ModalCardData {
   tier: TileTier;
-  deckNumber: 1 | 2;
   cardData: any;
   originalData: any;
   imageUrl: string;
@@ -72,11 +71,10 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
     );
   }
 
-  const handleCardClick = (tier: TileTier, deckNumber: 1 | 2) => {
+  const handleCardClick = (tier: TileTier) => {
     const gameDecks = gameSession.getGameDecks();
-    const topCard = gameDecks.peekTopCard(tier, deckNumber);
-    const deckSizes = gameDecks.getDeckSizes(tier);
-    const deckSize = deckSizes[deckNumber - 1];
+    const topCard = gameDecks.peekTopCard(tier);
+    const deckSize = gameDecks.getDeckSize(tier);
 
     if (!topCard) return;
 
@@ -121,7 +119,6 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
 
     setModalCard({
       tier,
-      deckNumber,
       cardData: topCard,
       originalData,
       imageUrl,
@@ -145,14 +142,12 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
     setTraderModal(null);
   };
 
-  const renderCard = (tier: TileTier, deckNumber: 1 | 2) => {
-    const cardKey = `tier-${tier}-deck-${deckNumber}`;
+  const renderCard = (tier: TileTier) => {
+    const cardKey = `tier-${tier}-deck`;
     const gameDecks = gameSession.getGameDecks();
-    const topCard = gameDecks.peekTopCard(tier, deckNumber);
-    const biomes = gameDecks.getTopCardBiomes(tier);
-    const deckSizes = gameDecks.getDeckSizes(tier);
-    const deckSize = deckSizes[deckNumber - 1];
-    const theme = biomes[deckNumber - 1];
+    const topCard = gameDecks.peekTopCard(tier);
+    const deckSize = gameDecks.getDeckSize(tier);
+    const theme = topCard?.theme || "beast"; // Default theme fallback
 
     // Always show card back
     return (
@@ -163,7 +158,7 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
           cursor: topCard ? "pointer" : "default",
           transition: "transform 0.2s ease",
         }}
-        onClick={topCard ? () => handleCardClick(tier, deckNumber) : undefined}
+        onClick={topCard ? () => handleCardClick(tier) : undefined}
         onMouseEnter={(e) => {
           if (topCard) e.currentTarget.style.transform = "scale(1.05)";
         }}
@@ -177,7 +172,7 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
           tier={tier}
           backsideImageUrl={`/cardBacksides/${theme}.png`}
           borderColor="#666666"
-          title={`Deck ${deckNumber} - ${deckSize} cards remaining`}
+          title={`Tier ${tier} - ${deckSize} cards remaining`}
         />
         {/* Deck counter */}
         <div
@@ -271,7 +266,10 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
           {/* Adventure card decks */}
           {[1, 2, 3].map((tier) => {
             const gameDecks = gameSession.getGameDecks();
-            const deckSizes = gameDecks.getDeckSizes(tier as TileTier);
+            const deckSize = gameDecks.getDeckSize(tier as TileTier);
+
+            // Only render deck if it has cards
+            if (deckSize === 0) return null;
 
             return (
               <div
@@ -282,13 +280,7 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
                   alignItems: "center",
                 }}
               >
-                {[1, 2].map((deckNumber) => {
-                  const deckSize = deckSizes[deckNumber - 1];
-                  // Only render deck if it has cards
-                  if (deckSize === 0) return null;
-
-                  return <div key={deckNumber}>{renderCard(tier as TileTier, deckNumber as 1 | 2)}</div>;
-                })}
+                {renderCard(tier as TileTier)}
               </div>
             );
           })}
@@ -375,7 +367,7 @@ export const CardDecks = ({ gameSession }: CardDecksProps) => {
                 whiteSpace: "nowrap",
               }}
             >
-              Tier {modalCard.tier} - Deck {modalCard.deckNumber} - {modalCard.deckSize} cards remaining
+              Tier {modalCard.tier} - {modalCard.deckSize} cards remaining
             </div>
           </div>
         </div>

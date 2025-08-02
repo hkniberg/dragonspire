@@ -29,6 +29,7 @@ import {
 } from "./handlers/tileArrivalHandler";
 import { createTraderContext, handleTraderInteraction } from "./handlers/traderHandler";
 import { StatisticsCollector } from "./StatisticsCollector";
+import { GameSettings } from "@/lib/GameSettings";
 
 export type GameMasterState = "setup" | "playing" | "finished";
 
@@ -100,12 +101,12 @@ export class GameMaster {
     const totalDiceCount = 1 + championCount;
 
     // Calculate dice tax: 2 food per die after the first 2
-    const freeDice = 2;
+    const freeDice = GameSettings.FREE_DICE_COUNT;
     const taxedDice = Math.max(0, totalDiceCount - freeDice);
-    const foodCost = taxedDice * 2;
+    const foodCost = taxedDice * GameSettings.DICE_TAX_FOOD_PER_DIE;
 
     // Check if player can afford the dice tax
-    const affordableDice = currentPlayer.resources.food >= foodCost ? totalDiceCount : freeDice + Math.floor(currentPlayer.resources.food / 2);
+    const affordableDice = currentPlayer.resources.food >= foodCost ? totalDiceCount : freeDice + Math.floor(currentPlayer.resources.food / GameSettings.DICE_TAX_FOOD_PER_DIE);
     const actualDiceCount = Math.min(totalDiceCount, affordableDice);
     const actualFoodCost = Math.min(foodCost, currentPlayer.resources.food);
 
@@ -136,7 +137,8 @@ export class GameMaster {
 
     try {
       if (currentPlayerAgent.makeStrategicAssessment) {
-        const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues, this.gameState.currentRound, this.gameDecks.getAvailableTraderCards(), thinkingLogger);
+        const adventureDeckThemes = this.gameDecks.getAdventureDeckThemes();
+        const strategicAssessment = await currentPlayerAgent.makeStrategicAssessment(this.gameState, this.gameLog, diceRollValues, this.gameState.currentRound, this.gameDecks.getAvailableTraderCards(), adventureDeckThemes, thinkingLogger);
         if (strategicAssessment) {
           this.addGameLogEntry("assessment", strategicAssessment);
         }
@@ -438,22 +440,18 @@ export class GameMaster {
     if (!existingCombatOccurred) {
       const specialTileResult = handleSpecialTiles(tile, championId, logFn);
       if (specialTileResult.interactionOccurred && specialTileResult.adventureCardDrawn) {
-        // Use player's preferred theme from TileAction to choose deck
-        const preferredBiome = tileAction?.preferredAdventureTheme;
-
         // Draw adventure card using simplified API
-        const drawResult = this.gameDecks.drawCard(tile.tier!, preferredBiome);
+        const adventureCard = this.gameDecks.drawCard(tile.tier!);
 
-        // Log the card draw with simplified format
-        if (drawResult.card) {
-          const biomeDisplayName = drawResult.card.theme.charAt(0).toUpperCase() + drawResult.card.theme.slice(1);
-          logFn("event", `${player.name} drew from tier ${tile.tier}, deck ${drawResult.selectedDeckNumber} (a ${biomeDisplayName} card)`);
+        // Log the card draw
+        if (adventureCard) {
+          const themeDisplayName = adventureCard.theme.charAt(0).toUpperCase() + adventureCard.theme.slice(1);
+          logFn("event", `${player.name} drew from tier ${tile.tier} (a ${themeDisplayName} card)`);
         } else {
-          logFn("event", `${player.name} drew from tier ${tile.tier}, deck ${drawResult.selectedDeckNumber} (no card available)`);
+          logFn("event", `${player.name} drew from tier ${tile.tier} (no card available)`);
         }
 
         // Handle the adventure card
-        const adventureCard = drawResult.card;
         // Track statistics
         player.statistics!.adventureCards += 1;
 
@@ -476,7 +474,7 @@ export class GameMaster {
 
           // If the card should be returned to the deck (e.g., sword-in-stone resisted pull)
           if (adventureResult.cardReturnedToDeck && adventureCard) {
-            this.gameDecks.returnCardToTop(tile.tier!, drawResult.selectedDeckNumber, adventureCard);
+            this.gameDecks.returnCardToTop(tile.tier!, adventureCard);
             logFn("event", `The card returned to the top of the adventure deck.`);
           }
 

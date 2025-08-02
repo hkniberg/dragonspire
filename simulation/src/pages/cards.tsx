@@ -36,7 +36,7 @@ export default function CardsPage() {
   const [individualFlips, setIndividualFlips] = useState<Record<string, boolean>>({});
   const [cardTypeFilter, setCardTypeFilter] = useState<ExtendedCardType | "all">("all");
   const [tierFilter, setTierFilter] = useState<number | "all">("all");
-  const [biomeFilter, setBiomeFilter] = useState<string | "all">("all");
+  const [themeFilter, setThemeFilter] = useState<string | "all">("all");
 
   // Create extended card array by looking up original data
   const allCards: ExtendedCard[] = [
@@ -99,8 +99,8 @@ export default function CardsPage() {
   const filteredCards = cardsToShow.filter((card) => {
     const matchesType = cardTypeFilter === "all" || card.type === cardTypeFilter;
     const matchesTier = tierFilter === "all" || card.tier === tierFilter;
-    const matchesBiome = biomeFilter === "all" || card.theme === biomeFilter;
-    return matchesType && matchesTier && matchesBiome;
+    const matchesTheme = themeFilter === "all" || card.theme === themeFilter;
+    return matchesType && matchesTier && matchesTheme;
   });
 
   const handleFlipAll = () => {
@@ -200,7 +200,7 @@ export default function CardsPage() {
     }
   };
 
-  // Get unique biomes from the deck
+  // Get unique themes from the deck
   const uniqueThemes = Array.from(new Set(allCards.map((card) => card.theme))).sort();
 
   return (
@@ -278,12 +278,12 @@ export default function CardsPage() {
           </select>
         </div>
 
-        {/* Biome Filter */}
+        {/* Theme Filter */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <label style={{ fontWeight: "bold", color: "#333" }}>Biome:</label>
+          <label style={{ fontWeight: "bold", color: "#333" }}>Theme:</label>
           <select
-            value={biomeFilter}
-            onChange={(e) => setBiomeFilter(e.target.value)}
+            value={themeFilter}
+            onChange={(e) => setThemeFilter(e.target.value)}
             style={{
               padding: "8px 12px",
               borderRadius: "6px",
@@ -292,7 +292,7 @@ export default function CardsPage() {
               backgroundColor: "white",
             }}
           >
-            <option value="all">All Biomes</option>
+            <option value="all">All Themes</option>
             {uniqueThemes.map((theme) => (
               <option key={theme} value={theme}>
                 {theme.charAt(0).toUpperCase() + theme.slice(1)}
@@ -471,7 +471,7 @@ export default function CardsPage() {
             </div>
           </div>
           <div>
-            <h3 style={{ color: "#555", fontSize: "16px" }}>By Biome</h3>
+            <h3 style={{ color: "#555", fontSize: "16px" }}>By Theme</h3>
             <div style={{ fontSize: "14px", color: "#666" }}>
               {uniqueThemes.map((theme) => (
                 <div key={theme}>

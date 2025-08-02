@@ -336,7 +336,7 @@ export function handleTileInteractions(
     // Successful conquest with might
     const previousOwner = tile.claimedBy;
     tile.claimedBy = player.name;
-    player.might = Math.max(0, player.might - 1);
+    player.might = Math.max(0, player.might - GameSettings.CONQUEST_MIGHT_COST);
     logFn("event", `Champion${championId} conquered tile (${tile.position.row}, ${tile.position.col}) from ${previousOwner} using might. New might: ${player.might}`);
   }
 
@@ -350,7 +350,7 @@ export function handleTileInteractions(
     // Successful revolt - removes claim but doesn't take over
     const previousOwner = tile.claimedBy;
     tile.claimedBy = undefined;
-    player.fame = Math.max(0, player.fame - 1);
+    player.fame = Math.max(0, player.fame - GameSettings.REVOLT_FAME_COST);
     logFn("event", `Champion${championId} incited revolt on tile (${tile.position.row}, ${tile.position.col}) from ${previousOwner} using fame. Tile is now unclaimed. New fame: ${player.fame}`);
   }
 }
@@ -510,18 +510,18 @@ export function handleMercenaryAction(
     };
   }
 
-  if (player.resources.gold < 3) {
+  if (player.resources.gold < GameSettings.MERCENARY_GOLD_COST) {
     return {
       actionSuccessful: false,
-      reason: "Not enough gold (need 3 gold)"
+      reason: `Not enough gold (need ${GameSettings.MERCENARY_GOLD_COST} gold)`
     };
   }
 
   // Successful mercenary purchase
-  player.resources.gold -= 3;
-  player.might += 1;
+  player.resources.gold -= GameSettings.MERCENARY_GOLD_COST;
+  player.might += GameSettings.MERCENARY_MIGHT_REWARD;
 
-  logFn("event", `Champion ${championId} hired mercenaries for 3 gold, gaining 1 might`);
+  logFn("event", `Champion ${championId} hired mercenaries for ${GameSettings.MERCENARY_GOLD_COST} gold, gaining ${GameSettings.MERCENARY_MIGHT_REWARD} might`);
 
   // Track statistics
   if (player.statistics) {
@@ -555,18 +555,18 @@ export function handleTempleAction(
     };
   }
 
-  if (player.fame < 2) {
+  if (player.fame < GameSettings.TEMPLE_FAME_COST) {
     return {
       actionSuccessful: false,
-      reason: "Not enough fame (need 2 fame)"
+      reason: `Not enough fame (need ${GameSettings.TEMPLE_FAME_COST} fame)`
     };
   }
 
   // Successful temple sacrifice
-  player.fame -= 2;
-  player.might += 1;
+  player.fame -= GameSettings.TEMPLE_FAME_COST;
+  player.might += GameSettings.TEMPLE_MIGHT_REWARD;
 
-  logFn("event", `Champion ${championId} sacrificed 2 fame at the temple, gaining 1 might`);
+  logFn("event", `Champion ${championId} sacrificed ${GameSettings.TEMPLE_FAME_COST} fame at the temple, gaining ${GameSettings.TEMPLE_MIGHT_REWARD} might`);
 
   // Track statistics
   if (player.statistics) {

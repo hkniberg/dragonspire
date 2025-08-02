@@ -21,6 +21,21 @@ export function formatPosition(position: Position): string {
 }
 
 /**
+ * Format a cost object as a readable string for game log messages
+ * Example: { food: 2, wood: 0, ore: 2, gold: 1 } => "2 Food + 2 Ore + 1 Gold"
+ */
+export function formatCost(cost: Record<string, number>): string {
+  const parts = Object.entries(cost)
+    .filter(([_, amount]) => amount > 0)
+    .map(([type, amount]) => {
+      const resourceName = type.charAt(0).toUpperCase() + type.slice(1);
+      return `${amount} ${resourceName}`;
+    });
+
+  return parts.join(" + ");
+}
+
+/**
  * Calculate Manhattan distance between two positions
  */
 export function getManhattanDistance(pos1: Position, pos2: Position): number {

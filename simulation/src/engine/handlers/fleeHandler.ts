@@ -1,4 +1,5 @@
 import { GameState } from "@/game/GameState";
+import { GameSettings } from "@/lib/GameSettings";
 import { DecisionContext, GameLogEntry, Player, Position, Tile } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
 
@@ -16,7 +17,8 @@ export interface FleeResult {
   attemptedFlee: boolean;
   fleeSuccessful?: boolean;
   destination?: Position;
-  fameLosr?: number;
+  fameLoss?: number;
+  resourceLoss?: string;
   reasoning?: string;
 }
 
@@ -119,15 +121,15 @@ export async function handleFleeDecision(
     if (champion) {
       champion.position = context.player.homePosition;
     }
-    context.player.fame = Math.max(0, context.player.fame - 1);
+    context.player.fame = Math.max(0, context.player.fame - GameSettings.DEFEAT_FAME_PENALTY);
 
-    logFn("combat", `Champion${context.championId} fled from the dragon, returned home and lost 1 fame`);
+    logFn("combat", `Champion${context.championId} fled from the dragon, returned home and lost ${GameSettings.DEFEAT_FAME_PENALTY} fame`);
 
     return {
       attemptedFlee: true,
       fleeSuccessful: true,
       destination: context.player.homePosition,
-      fameLosr: 1,
+      fameLoss: GameSettings.DEFEAT_FAME_PENALTY,
       reasoning: decision.reasoning || "Fled from dragon"
     };
   }
@@ -156,36 +158,60 @@ export async function handleFleeDecision(
   }
 
   if (fleeRoll === 2) {
-    // Partial success - flee to home tile
-    champion.position = context.player.homePosition;
-    logFn("combat", `Champion${context.championId} fled to home tile without loss`);
+    // Partial success - flee to closest owned tile and lose 1 resource
+    const closestOwnedTile = findClosestOwnedTile(context.gameState, context.player, champion.position);
+
+    let destination: Position;
+    if (closestOwnedTile) {
+      destination = closestOwnedTile;
+      logFn("combat", `Champion${context.championId} fled to closest owned tile at (${destination.row}, ${destination.col})`);
+    } else {
+      destination = context.player.homePosition;
+      logFn("combat", `Champion${context.championId} fled to home tile (no owned tiles available)`);
+    }
+
+    champion.position = destination;
+
+    // Lose 1 resource of choice (prioritize in order: food, wood, ore, gold, fame)
+    let resourceLost = false;
+    let lossDescription = "";
+    const resourceTypes = ['food', 'wood', 'ore', 'gold'] as const;
+
+    for (const resourceType of resourceTypes) {
+      if (context.player.resources[resourceType] > 0) {
+        context.player.resources[resourceType]--;
+        logFn("combat", `Champion${context.championId} lost 1 ${resourceType} from fleeing`);
+        resourceLost = true;
+        lossDescription = resourceType;
+        break;
+      }
+    }
+
+    // If no resources available, lose 1 fame instead (unless fame is already 0)
+    if (!resourceLost && context.player.fame > 0) {
+      context.player.fame--;
+      logFn("combat", `Champion${context.championId} lost 1 fame from fleeing`);
+      lossDescription = "fame";
+    }
 
     return {
       attemptedFlee: true,
       fleeSuccessful: true,
-      destination: context.player.homePosition,
-      reasoning: decision.reasoning || "Fled to home"
+      destination,
+      resourceLoss: lossDescription || undefined,
+      fameLoss: lossDescription === "fame" ? 1 : undefined,
+      reasoning: decision.reasoning || "Fled to closest owned tile"
     };
   }
 
-  // fleeRoll === 3 - Success - flee to closest owned tile
-  const closestOwnedTile = findClosestOwnedTile(context.gameState, context.player, champion.position);
-
-  let destination: Position;
-  if (closestOwnedTile) {
-    destination = closestOwnedTile;
-    logFn("combat", `Champion${context.championId} fled to closest owned tile at (${destination.row}, ${destination.col})`);
-  } else {
-    destination = context.player.homePosition;
-    logFn("combat", `Champion${context.championId} fled to home tile (no owned tiles available)`);
-  }
-
-  champion.position = destination;
+  // fleeRoll === 3 - Success - flee to home tile without loss
+  champion.position = context.player.homePosition;
+  logFn("combat", `Champion${context.championId} fled to home tile without loss`);
 
   return {
     attemptedFlee: true,
     fleeSuccessful: true,
-    destination,
-    reasoning: decision.reasoning || "Fled to closest owned tile"
+    destination: context.player.homePosition,
+    reasoning: decision.reasoning || "Fled to home"
   };
 } 

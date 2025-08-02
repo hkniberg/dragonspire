@@ -5,13 +5,14 @@ import { formatBuildingInfo, stringifyGameState, stringifyPlayer } from "@/game/
 import { BuildingDecision, DiceAction } from "@/lib/actionTypes";
 import { TraderCard } from "@/lib/cards";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
-import { Decision, DecisionContext, GameLogEntry, Player, PlayerType, TurnContext } from "@/lib/types";
+import { AdventureThemeType, Decision, DecisionContext, GameLogEntry, Player, PlayerType, TurnContext } from "@/lib/types";
 import { GameState } from "../game/GameState";
 import { buildingDecisionSchema, decisionSchema, diceActionSchema, traderDecisionSchema } from "../lib/claudeSchemas";
+import { GameSettings } from "../lib/GameSettings";
 import { TemplateProcessor, TemplateVariables } from "../lib/templateProcessor";
 import { Claude } from "../llm/claude";
 import { PlayerAgent } from "./PlayerAgent";
-import { getUsableBuildings } from "./PlayerUtils";
+import { getUsableBuildings, canAfford } from "./PlayerUtils";
 
 export class ClaudePlayerAgent implements PlayerAgent {
     private name: string;
@@ -39,9 +40,10 @@ export class ClaudePlayerAgent implements PlayerAgent {
         diceValues: number[],
         turnNumber: number,
         traderItems: readonly TraderCard[],
+        adventureDeckThemes: [AdventureThemeType, AdventureThemeType, AdventureThemeType],
         thinkingLogger?: (content: string) => void,
     ): Promise<string | undefined> {
-        const userMessage = await this.prepareAssessmentMessage(gameState, gameLog, diceValues, turnNumber, traderItems);
+        const userMessage = await this.prepareAssessmentMessage(gameState, gameLog, diceValues, turnNumber, traderItems, adventureDeckThemes);
 
         // Get text response for strategic assessment
         const strategicAssessment = await this.claude.useClaude(userMessage, undefined, 3000, 6000, thinkingLogger);
@@ -140,6 +142,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
         diceRolls: number[],
         turnNumber: number,
         traderItems: readonly TraderCard[],
+        adventureDeckThemes: [AdventureThemeType, AdventureThemeType, AdventureThemeType],
     ): Promise<string> {
         const boardState = stringifyGameState(gameState);
         const gameLogText = this.formatGameLogForPrompt(gameLog, false, false);
@@ -164,6 +167,22 @@ export class ClaudePlayerAgent implements PlayerAgent {
             ? `\nTrader Items Available:\n${traderItemsText}`
             : "\nTrader Items Available: None";
 
+        // Format adventure deck themes
+        const getThemeDescription = (theme: AdventureThemeType): string => {
+            switch (theme) {
+                case "beast":
+                    return "Beast theme. Higher chance of food loot.";
+                case "grove":
+                    return "Grove theme. Higher chance of wood loot.";
+                case "cave":
+                    return "Cave theme. Higher chance of ore loot.";
+            }
+        };
+
+        const adventureDecksText = adventureDeckThemes
+            .map((theme, index) => `- Tier ${index + 1} top card: ${getThemeDescription(theme)}`)
+            .join("\n");
+
         const variables: TemplateVariables = {
             playerName: this.name,
             boardState: boardState,
@@ -172,6 +191,7 @@ export class ClaudePlayerAgent implements PlayerAgent {
             turnNumber: turnNumber,
             extraInstructions: this.getExtraInstructionsSection(gameState),
             traderItems: traderItemsSection,
+            adventureCards: `\nAdventure decks:\n${adventureDecksText}`,
         };
 
         return await this.templateProcessor.processTemplate("strategicAssessment", variables);
@@ -342,53 +362,51 @@ export class ClaudePlayerAgent implements PlayerAgent {
 
         // Check Blacksmith (2 Food + 2 Ore, max 1 per player)
         const hasBlacksmith = player.buildings.includes("blacksmith");
-        if (!hasBlacksmith && resources.food >= 2 && resources.ore >= 2) {
+        if (!hasBlacksmith && canAfford(player, GameSettings.BLACKSMITH_COST)) {
             availableActions.push("blacksmith");
         }
 
         // Check Market (2 Food + 2 Wood, max 1 per player)
         const hasMarket = player.buildings.includes("market");
-        if (!hasMarket && resources.food >= 2 && resources.wood >= 2) {
+        if (!hasMarket && canAfford(player, GameSettings.MARKET_COST)) {
             availableActions.push("market");
         }
 
         // Check Fletcher (1 Wood + 1 Food + 1 Gold + 1 Ore, max 1 per player)
         const hasFletcher = player.buildings.includes("fletcher");
-        if (!hasFletcher && resources.wood >= 1 && resources.food >= 1 && resources.gold >= 1 && resources.ore >= 1) {
+        if (!hasFletcher && canAfford(player, GameSettings.FLETCHER_COST)) {
             availableActions.push("fletcher");
         }
 
         // Check Chapel (6 Wood + 2 Gold, only once per player)
         const hasChapel = player.buildings.includes("chapel");
         const hasMonastery = player.buildings.includes("monastery");
-        if (!hasChapel && !hasMonastery && resources.wood >= 6 && resources.gold >= 2) {
+        if (!hasChapel && !hasMonastery && canAfford(player, GameSettings.CHAPEL_COST)) {
             availableActions.push("chapel");
         }
 
         // Check Monastery upgrade (8 Wood + 3 Gold + 1 Ore, requires chapel)
-        if (hasChapel && !hasMonastery && resources.wood >= 8 && resources.gold >= 3 && resources.ore >= 1) {
+        if (hasChapel && !hasMonastery && canAfford(player, GameSettings.MONASTERY_COST)) {
             availableActions.push("upgradeChapelToMonastery");
         }
 
         // Check Champion recruitment (max 3 total)
         const currentChampionCount = player.champions.length;
-        if (currentChampionCount < 3) {
-            if (currentChampionCount === 1 && resources.food >= 3 && resources.gold >= 3 && resources.ore >= 1) {
-                availableActions.push("recruitChampion");
-            } else if (currentChampionCount === 2 && resources.food >= 6 && resources.gold >= 6 && resources.ore >= 3) {
+        if (currentChampionCount < GameSettings.MAX_CHAMPIONS_PER_PLAYER) {
+            if (canAfford(player, GameSettings.CHAMPION_COST)) {
                 availableActions.push("recruitChampion");
             }
         }
 
         // Check Boat building (max 2 boats total)
         const currentBoatCount = player.boats.length;
-        if (currentBoatCount < 2 && resources.wood >= 2 && resources.gold >= 2) {
+        if (currentBoatCount < GameSettings.MAX_BOATS_PER_PLAYER && canAfford(player, GameSettings.BOAT_COST)) {
             availableActions.push("buildBoat");
         }
 
         // Check Warship upgrade (2 Wood + 1 Ore + 1 Gold, max 1 per player)
         const hasWarshipUpgrade = player.buildings.includes("warshipUpgrade");
-        if (!hasWarshipUpgrade && resources.wood >= 2 && resources.ore >= 1 && resources.gold >= 1) {
+        if (!hasWarshipUpgrade && canAfford(player, GameSettings.WARSHIP_UPGRADE_COST)) {
             availableActions.push("warshipUpgrade");
         }
 

@@ -5,6 +5,7 @@ You are player {{playerName}}.
 <current-board-state>
 {{boardState}}
 {{traderItems}}
+{{adventureCards}}
 </current-board-state>
 
 <game-log>

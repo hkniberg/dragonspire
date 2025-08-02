@@ -3,9 +3,12 @@
 import { getTraderItemById } from "@/content/traderItems";
 import { GameState } from "@/game/GameState";
 import { BuildingDecision, DiceAction, TileAction } from "@/lib/actionTypes";
+import { TraderCard } from "@/lib/cards";
 import { TraderContext, TraderDecision } from "@/lib/traderTypes";
-import { Decision, DecisionContext, GameLogEntry, Player, PlayerType, TurnContext } from "@/lib/types";
+import { AdventureThemeType, Decision, DecisionContext, GameLogEntry, Player, PlayerType, TurnContext } from "@/lib/types";
 import { PlayerAgent } from "./PlayerAgent";
+import { canAfford } from "./PlayerUtils";
+import { GameSettings } from "@/lib/GameSettings";
 
 export class RandomPlayerAgent implements PlayerAgent {
   private name: string;
@@ -22,7 +25,15 @@ export class RandomPlayerAgent implements PlayerAgent {
     return "random";
   }
 
-  async makeStrategicAssessment(): Promise<string | undefined> {
+  async makeStrategicAssessment(
+    gameState: GameState,
+    gameLog: readonly GameLogEntry[],
+    diceValues: number[],
+    turnNumber: number,
+    traderItems: readonly TraderCard[],
+    adventureDeckThemes: [AdventureThemeType, AdventureThemeType, AdventureThemeType],
+    thinkingLogger?: (content: string) => void,
+  ): Promise<string | undefined> {
     // Random players don't provide strategic assessments
     return undefined;
   }
@@ -160,8 +171,7 @@ export class RandomPlayerAgent implements PlayerAgent {
 
     // Random blacksmith usage (30% chance if affordable)
     if (player.buildings.includes("blacksmith") &&
-      player.resources.gold >= 1 &&
-      player.resources.ore >= 2 &&
+      canAfford(player, GameSettings.BLACKSMITH_USAGE_COST) &&
       Math.random() < 0.3) {
       buildingUsageDecision.useBlacksmith = true;
     }
@@ -169,7 +179,7 @@ export class RandomPlayerAgent implements PlayerAgent {
     // Random market usage (40% chance if have resources to sell)
     if (player.buildings.includes("market")) {
       const sellableResources = player.resources.food + player.resources.wood + player.resources.ore;
-      if (sellableResources > 2 && Math.random() < 0.4) {
+      if (sellableResources > GameSettings.MARKET_EXCHANGE_RATE && Math.random() < 0.4) {
         buildingUsageDecision.sellAtMarket = {};
 
         // Randomly sell some resources
@@ -187,8 +197,7 @@ export class RandomPlayerAgent implements PlayerAgent {
 
     // Random fletcher usage (25% chance if affordable)
     if (player.buildings.includes("fletcher") &&
-      player.resources.wood >= 3 &&
-      player.resources.ore >= 1 &&
+      canAfford(player, GameSettings.FLETCHER_USAGE_COST) &&
       Math.random() < 0.25) {
       buildingUsageDecision.useFletcher = true;
     }
@@ -359,12 +368,12 @@ export class RandomPlayerAgent implements PlayerAgent {
     tileAction.useTrader = true;
 
     // Use mercenary if player has >= 3 gold
-    if (player.resources.gold >= 3) {
+    if (player.resources.gold >= GameSettings.MERCENARY_GOLD_COST) {
       tileAction.useMercenary = true;
     }
 
     // Use temple if player has >= 3 fame
-    if (player.fame >= 3) {
+    if (player.fame >= GameSettings.TEMPLE_FAME_COST) {
       tileAction.useTemple = true;
     }
 
@@ -387,53 +396,51 @@ export class RandomPlayerAgent implements PlayerAgent {
 
     // Check Blacksmith (2 Food + 2 Ore, max 1 per player)
     const hasBlacksmith = player.buildings.includes("blacksmith");
-    if (!hasBlacksmith && resources.food >= 2 && resources.ore >= 2) {
+    if (!hasBlacksmith && canAfford(player, GameSettings.BLACKSMITH_COST)) {
       availableActions.push("blacksmith");
     }
 
     // Check Market (2 Food + 2 Wood, max 1 per player)
     const hasMarket = player.buildings.includes("market");
-    if (!hasMarket && resources.food >= 2 && resources.wood >= 2) {
+    if (!hasMarket && canAfford(player, GameSettings.MARKET_COST)) {
       availableActions.push("market");
     }
 
     // Check Fletcher (1 Wood + 1 Food + 1 Gold + 1 Ore, max 1 per player)
     const hasFletcher = player.buildings.includes("fletcher");
-    if (!hasFletcher && resources.wood >= 1 && resources.food >= 1 && resources.gold >= 1 && resources.ore >= 1) {
+    if (!hasFletcher && canAfford(player, GameSettings.FLETCHER_COST)) {
       availableActions.push("fletcher");
     }
 
     // Check Chapel (6 Wood + 2 Gold, only once per player)
     const hasChapel = player.buildings.includes("chapel");
     const hasMonastery = player.buildings.includes("monastery");
-    if (!hasChapel && !hasMonastery && resources.wood >= 6 && resources.gold >= 2) {
+    if (!hasChapel && !hasMonastery && canAfford(player, GameSettings.CHAPEL_COST)) {
       availableActions.push("chapel");
     }
 
     // Check Monastery upgrade (8 Wood + 3 Gold + 1 Ore, requires chapel)
-    if (hasChapel && !hasMonastery && resources.wood >= 8 && resources.gold >= 3 && resources.ore >= 1) {
+    if (hasChapel && !hasMonastery && canAfford(player, GameSettings.MONASTERY_COST)) {
       availableActions.push("upgradeChapelToMonastery");
     }
 
-    // Check Champion recruitment (max 3 total)
+    // Check Champion recruitment (max 3 total) - FIXED: Use fixed cost as per game rules
     const currentChampionCount = player.champions.length;
-    if (currentChampionCount < 3) {
-      if (currentChampionCount === 1 && resources.food >= 3 && resources.gold >= 3 && resources.ore >= 1) {
-        availableActions.push("recruitChampion");
-      } else if (currentChampionCount === 2 && resources.food >= 6 && resources.gold >= 6 && resources.ore >= 3) {
+    if (currentChampionCount < GameSettings.MAX_CHAMPIONS_PER_PLAYER) {
+      if (canAfford(player, GameSettings.CHAMPION_COST)) {
         availableActions.push("recruitChampion");
       }
     }
 
     // Check Boat building (max 2 boats total)
     const currentBoatCount = player.boats.length;
-    if (currentBoatCount < 2 && resources.wood >= 2 && resources.gold >= 2) {
+    if (currentBoatCount < GameSettings.MAX_BOATS_PER_PLAYER && canAfford(player, GameSettings.BOAT_COST)) {
       availableActions.push("buildBoat");
     }
 
     // Check Warship upgrade (2 Wood + 1 Ore + 1 Gold, max 1 per player)
     const hasWarshipUpgrade = player.buildings.includes("warshipUpgrade");
-    if (!hasWarshipUpgrade && resources.wood >= 2 && resources.ore >= 1 && resources.gold >= 1) {
+    if (!hasWarshipUpgrade && canAfford(player, GameSettings.WARSHIP_UPGRADE_COST)) {
       availableActions.push("warshipUpgrade");
     }
 

@@ -21,7 +21,7 @@ export function getMonsterCardById(id: string): MonsterCard | undefined {
 
 // All monsters in the game
 export const MONSTER_CARDS: MonsterCard[] = [
-  // Plains Biome Monsters
+  // Beast Theme Monsters
   {
     id: "wolf",
     name: "Wolf",
@@ -58,7 +58,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     count: 1,
   },
 
-  // Mountains Biome Monsters
+  // Cave Theme Monsters
   {
     id: "dwerm",
     name: "Dwerm",
@@ -93,7 +93,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     count: 1,
   },
 
-  // Woodlands Biome Monsters
+  // Grove Theme Monsters
   {
     id: "sprout",
     name: "Sprout",
@@ -132,7 +132,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
   },
 
   // TIER 2 MONSTERS
-  // Plains Biome Tier 2 Monsters
+  // Beast Theme Tier 2 Monsters
   {
     id: "bear",
     name: "Bear",
@@ -157,7 +157,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     count: 1,
   },
 
-  // Mountains Biome Tier 2 Monsters
+  // Cave Theme Tier 2 Monsters
   {
     id: "iron-golem",
     name: "Iron golem",
@@ -181,7 +181,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     count: 1,
   },
 
-  // Woodlands Biome Tier 2 Monsters
+  // Grove Theme Tier 2 Monsters
   {
     id: "elven-huntress",
     name: "Elven huntress",
@@ -207,7 +207,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
   },
 
   // TIER 3 MONSTERS
-  // Plains Biome Tier 3 Monsters (Beast tile)
+  // Beast Theme Tier 3 Monsters (Beast tile)
   {
     id: "wyrm",
     name: "Wyrm",
@@ -232,7 +232,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     count: 1,
   },
 
-  // Mountains Biome Tier 3 Monsters
+  // Cave Theme Tier 3 Monsters
   {
     id: "demon-core",
     name: "Demon core",
@@ -256,7 +256,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     count: 1,
   },
 
-  // Woodlands Biome Tier 3 Monsters
+  // Grove Theme Tier 3 Monsters
   {
     id: "three-eyed-ape",
     name: "Three eyed ape",

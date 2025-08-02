@@ -481,7 +481,7 @@ export async function resolveChampionVsChampionCombat(
 
   if (attackerWins) {
     // Attacker won - award fame and send defender home (no healing cost since they get looted)
-    attackingPlayer.fame += 1;
+    attackingPlayer.fame += GameSettings.CHAMPION_VS_CHAMPION_FAME_AWARD;
     opposingChampion.position = defendingPlayer.homePosition;
 
     // Get the attacking champion to generate loot options
@@ -1122,11 +1122,11 @@ async function handleHealingCost(
   }
 
   if (availableResources.length === 0) {
-    // No resources available - lose 1 fame if possible
+    // No resources available - lose fame if possible
     const hadFame = player.fame > 0;
-    player.fame = Math.max(0, player.fame - 1);
+    player.fame = Math.max(0, player.fame - GameSettings.DEFEAT_FAME_PENALTY);
     if (hadFame) {
-      logFn("combat", `${defeatContext}, had no resources to heal so lost 1 fame`);
+      logFn("combat", `${defeatContext}, had no resources to heal so lost ${GameSettings.DEFEAT_FAME_PENALTY} fame`);
     } else {
       logFn("combat", `${defeatContext}, had no resources to heal and no fame to lose`);
     }

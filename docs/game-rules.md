@@ -261,8 +261,8 @@ Combat happens when:
   - Fleeing is not allowed if the combat was chosen deliberately, for example by entering an explored adventure tile an existing monster, entering a tile with a knight in it, or entering already-explored doomspire without having achieved an exile condition.
 - When fleeing, roll 1D3:
   - 1: Failure. Combat happens as normal.
-  - 2: Partial success. Knight flees to home tile, without any loss.
-  - 3: Success. Knight flees to closest unoccupied tile owned by that player. If none are available, flee home. If several are the same distance, player chooses which.
+  - 2: Partial success. Knight flees to closest unoccupied tile owned by that player, and loses 1 resource of their choice. If no owned tiles are available, flee home instead.
+  - 3: Success. Knight flees to home tile, without any loss.
 
 ### Resolving knight to monster combat
 

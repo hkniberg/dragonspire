@@ -1,5 +1,6 @@
 import { GameState } from "@/game/GameState";
 import { CarriableItem, Champion, Decision, DecisionContext, DecisionOption, Player, Position, ResourceType, Tile } from "@/lib/types";
+import { GameSettings } from "@/lib/GameSettings";
 
 export interface Direction {
   row: number;
@@ -291,7 +292,7 @@ export function getUsableBuildings(player: Player): string[] {
 
   // Check for Blacksmith
   const hasBlacksmith = player.buildings.includes("blacksmith");
-  if (hasBlacksmith && player.resources.gold >= 1 && player.resources.ore >= 2) {
+  if (hasBlacksmith && canAfford(player, GameSettings.BLACKSMITH_USAGE_COST)) {
     usableBuildings.push("blacksmith");
   }
 
@@ -299,18 +300,26 @@ export function getUsableBuildings(player: Player): string[] {
   const hasMarket = player.buildings.includes("market");
   if (hasMarket) {
     const totalResources = player.resources.food + player.resources.wood + player.resources.ore;
-    if (totalResources >= 2) {
+    if (totalResources >= GameSettings.MARKET_EXCHANGE_RATE) {
       usableBuildings.push("market");
     }
   }
 
   // Check for Fletcher
   const hasFletcher = player.buildings.includes("fletcher");
-  if (hasFletcher && player.resources.wood >= 3 && player.resources.ore >= 1) {
+  if (hasFletcher && canAfford(player, GameSettings.FLETCHER_USAGE_COST)) {
     usableBuildings.push("fletcher");
   }
 
   return usableBuildings;
+}
+
+/**
+ * Get available item slots for a champion
+ */
+export function getChampionAvailableItemSlots(champion: Champion): number {
+  const capacity = getChampionItemCapacity(champion);
+  return Math.max(0, capacity - champion.items.length);
 }
 
 /**
@@ -493,10 +502,63 @@ export function canChampionCarryMoreItems(champion: Champion): boolean {
   return champion.items.length < capacity;
 }
 
+// Removed canAffordBuilding - use canAfford(player, GameSettings.BUILDING_COST) instead
+
 /**
- * Get available item slots for a champion
+ * Deduct resources from a player's inventory
  */
-export function getChampionAvailableItemSlots(champion: Champion): number {
-  const capacity = getChampionItemCapacity(champion);
-  return Math.max(0, capacity - champion.items.length);
+export function deductResources(player: Player, resourceType: ResourceType, amount: number): boolean {
+  if (player.resources[resourceType] < amount) {
+    return false;
+  }
+  player.resources[resourceType] -= amount;
+  return true;
+}
+
+/**
+ * Deduct gold from a player's inventory
+ */
+export function deductGold(player: Player, amount: number): boolean {
+  return deductResources(player, "gold", amount);
+}
+
+/**
+ * Deduct ore from a player's inventory
+ */
+export function deductOre(player: Player, amount: number): boolean {
+  return deductResources(player, "ore", amount);
+}
+
+/**
+ * Deduct food from a player's inventory
+ */
+export function deductFood(player: Player, amount: number): boolean {
+  return deductResources(player, "food", amount);
+}
+
+/**
+ * Deduct wood from a player's inventory
+ */
+export function deductWood(player: Player, amount: number): boolean {
+  return deductResources(player, "wood", amount);
+}
+
+/**
+ * Check if a player can afford a given cost
+ */
+export function canAfford(player: Player, cost: Record<ResourceType, number>): boolean {
+  return player.resources.food >= cost.food &&
+    player.resources.wood >= cost.wood &&
+    player.resources.ore >= cost.ore &&
+    player.resources.gold >= cost.gold;
+}
+
+/**
+ * Deduct resources from a player based on a cost object
+ */
+export function deductCost(player: Player, cost: Record<ResourceType, number>): void {
+  player.resources.food -= cost.food;
+  player.resources.wood -= cost.wood;
+  player.resources.ore -= cost.ore;
+  player.resources.gold -= cost.gold;
 }

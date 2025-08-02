@@ -32,11 +32,6 @@ export interface TraderCard {
   id: string;
 }
 
-export interface CardDrawResult {
-  card: Card | undefined;
-  selectedDeckNumber: 1 | 2;
-}
-
 class CardDeck {
   private cards: Card[] = [];
 
@@ -151,14 +146,14 @@ class TraderDeck {
 }
 
 export class GameDecks {
-  private decks: Record<TileTier, [CardDeck, CardDeck]>;
+  private decks: Record<TileTier, CardDeck>;
   private traderDeck: TraderDeck;
 
   constructor(allCards: Card[]) {
     this.decks = {
-      1: [new CardDeck(), new CardDeck()],
-      2: [new CardDeck(), new CardDeck()],
-      3: [new CardDeck(), new CardDeck()],
+      1: new CardDeck(),
+      2: new CardDeck(),
+      3: new CardDeck(),
     };
 
     this.traderDeck = new TraderDeck();
@@ -168,24 +163,15 @@ export class GameDecks {
   }
 
   private initializeDecks(allCards: Card[]): void {
-    // For each tier, collect cards, shuffle, and distribute into 2 decks
+    // For each tier, collect cards, shuffle, and add to single deck
     for (const tier of [1, 2, 3] as TileTier[]) {
       const tierCards = allCards.filter((card) => card.tier === tier);
 
       // Shuffle the tier cards
       this.shuffleArray(tierCards);
 
-      // Distribute into 2 roughly even decks
-      const deckSize = Math.floor(tierCards.length / 2);
-      const remainder = tierCards.length % 2;
-
-      let cardIndex = 0;
-      for (let deckNum = 0; deckNum < 2; deckNum++) {
-        const cardsForThisDeck = deckSize + (deckNum < remainder ? 1 : 0);
-        const deckCards = tierCards.slice(cardIndex, cardIndex + cardsForThisDeck);
-        this.decks[tier][deckNum].addCards(deckCards);
-        cardIndex += cardsForThisDeck;
-      }
+      // Add all cards to the single deck for this tier
+      this.decks[tier].addCards(tierCards);
     }
   }
 
@@ -203,125 +189,45 @@ export class GameDecks {
   }
 
   private resetTierDecks(tier: TileTier): void {
-    // Collect all tier cards, shuffle, and redistribute
+    // Collect all tier cards, shuffle, and add to single deck
     const allTierCards = CARDS.filter((card) => card.tier === tier);
     this.shuffleArray(allTierCards);
 
-    // Clear existing decks
-    this.decks[tier] = [new CardDeck(), new CardDeck()];
-
-    // Redistribute
-    const deckSize = Math.floor(allTierCards.length / 2);
-    const remainder = allTierCards.length % 2;
-
-    let cardIndex = 0;
-    for (let deckNum = 0; deckNum < 2; deckNum++) {
-      const cardsForThisDeck = deckSize + (deckNum < remainder ? 1 : 0);
-      const deckCards = allTierCards.slice(cardIndex, cardIndex + cardsForThisDeck);
-      this.decks[tier][deckNum].addCards(deckCards);
-      cardIndex += cardsForThisDeck;
-    }
+    // Clear existing deck and add all cards
+    this.decks[tier] = new CardDeck();
+    this.decks[tier].addCards(allTierCards);
   }
 
-  drawCard(tier: TileTier, deckNumber: 1 | 2): Card | undefined;
-  drawCard(tier: TileTier, preferredBiome?: AdventureThemeType): CardDrawResult;
-  drawCard(tier: TileTier, deckNumberOrPreferredBiome?: 1 | 2 | AdventureThemeType): Card | undefined | CardDrawResult {
-    // Check if this is the old API (deckNumber passed)
-    if (typeof deckNumberOrPreferredBiome === 'number') {
-      const deckIndex = deckNumberOrPreferredBiome - 1; // Convert 1,2 to 0,1
-      return this.decks[tier][deckIndex].drawFromTop();
-    }
+  drawCard(tier: TileTier): Card | undefined {
+    const card = this.decks[tier].drawFromTop();
 
-    // New API: handle theme preference and deck selection
-    const preferredTheme = deckNumberOrPreferredBiome;
-    const themes = this.getTopCardBiomes(tier);
-    const deckSizes = this.getDeckSizes(tier);
-
-    let selectedDeckNumber: 1 | 2 = 1; // Default to deck 1
-
-    // Find a deck with the preferred theme if specified
-    if (preferredTheme) {
-      for (let i = 0; i < 2; i++) {
-        const deckNumber = (i + 1) as 1 | 2;
-        const theme = themes[i];
-        const size = deckSizes[i];
-        if (theme === preferredTheme && size > 0) {
-          selectedDeckNumber = deckNumber;
-          break;
-        }
-      }
-      // If preferred theme not available, fallback to any available deck
-      if (themes[selectedDeckNumber - 1] !== preferredTheme) {
-        for (let i = 0; i < 2; i++) {
-          const deckNumber = (i + 1) as 1 | 2;
-          const size = deckSizes[i];
-          if (size > 0) {
-            selectedDeckNumber = deckNumber;
-            break;
-          }
-        }
-      }
-    } else {
-      // No preference specified, use first available deck
-      for (let i = 0; i < 2; i++) {
-        const deckNumber = (i + 1) as 1 | 2;
-        const size = deckSizes[i];
-        if (size > 0) {
-          selectedDeckNumber = deckNumber;
-          break;
-        }
-      }
-    }
-
-    // Draw the card from the selected deck
-    const deckIndex = selectedDeckNumber - 1;
-    const card = this.decks[tier][deckIndex].drawFromTop();
-
-    return {
-      card,
-      selectedDeckNumber
-    };
-  }
-
-  returnCardToTop(tier: TileTier, deckNumber: 1 | 2, card: Card): void {
-    const deckIndex = deckNumber - 1; // Convert 1,2 to 0,1
-    this.decks[tier][deckIndex].addToTop(card);
-  }
-
-  getTopCardBiomes(tier: TileTier): [AdventureThemeType | null, AdventureThemeType | null] {
-    const biomes: (AdventureThemeType | null)[] = [];
-    let allEmpty = true;
-
-    for (let i = 0; i < 2; i++) {
-      const topCard = this.decks[tier][i].peekTop();
-      if (topCard) {
-        biomes.push(topCard.theme);
-        allEmpty = false;
-      } else {
-        biomes.push(null);
-      }
-    }
-
-    // If all decks are empty, reset them
-    if (allEmpty) {
+    // If deck is empty, reset it and try again
+    if (!card) {
       this.resetTierDecks(tier);
-      // Get the new top card biomes after reset
-      return this.getTopCardBiomes(tier);
+      return this.decks[tier].drawFromTop();
     }
 
-    return biomes as [AdventureThemeType | null, AdventureThemeType | null];
+    return card;
   }
 
-  peekTopCard(tier: TileTier, deckNumber: 1 | 2): Card | undefined {
-    const deckIndex = deckNumber - 1; // Convert 1,2 to 0,1
-    return this.decks[tier][deckIndex].peekTop();
+  returnCardToTop(tier: TileTier, card: Card): void {
+    this.decks[tier].addToTop(card);
   }
 
-  getDeckSizes(tier: TileTier): [number, number] {
-    return [
-      this.decks[tier][0].size(),
-      this.decks[tier][1].size()
-    ];
+  peekTopCard(tier: TileTier): Card | undefined {
+    const card = this.decks[tier].peekTop();
+
+    // If deck is empty, reset it and peek again
+    if (!card) {
+      this.resetTierDecks(tier);
+      return this.decks[tier].peekTop();
+    }
+
+    return card;
+  }
+
+  getDeckSize(tier: TileTier): number {
+    return this.decks[tier].size();
   }
 
   // Trader deck methods
@@ -335,6 +241,14 @@ export class GameDecks {
 
   getTraderDeckSize(): number {
     return this.traderDeck.size();
+  }
+
+  // Get the themes of the top cards for each adventure deck tier
+  getAdventureDeckThemes(): [AdventureThemeType, AdventureThemeType, AdventureThemeType] {
+    const tier1Theme = this.peekTopCard(1)?.theme || "beast"; // fallback to beast if no card
+    const tier2Theme = this.peekTopCard(2)?.theme || "grove"; // fallback to grove if no card
+    const tier3Theme = this.peekTopCard(3)?.theme || "cave"; // fallback to cave if no card
+    return [tier1Theme, tier2Theme, tier3Theme];
   }
 }
 
@@ -353,12 +267,12 @@ class SeededRandom {
 }
 
 // Create a seeded random instance for theme assignment
-const biomeRng = new SeededRandom(12345); // Fixed seed for consistency
+const themeRng = new SeededRandom(12345); // Fixed seed for consistency
 
 // Helper function to deterministically assign a theme
 function getRandomTheme(): AdventureThemeType {
   const themes: AdventureThemeType[] = ["beast", "cave", "grove"];
-  return themes[Math.floor(biomeRng.next() * themes.length)];
+  return themes[Math.floor(themeRng.next() * themes.length)];
 }
 
 // Build the card deck
@@ -377,7 +291,7 @@ function buildCardDeck(includeDisabled: boolean = false): Card[] {
     }
   });
 
-  // Auto-generate treasure cards from TREASURES array with random biomes
+  // Auto-generate treasure cards from TREASURES array with random  themes
   TREASURE_CARDS.forEach((treasure) => {
     if ((includeDisabled || !treasure.disabled) && (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(treasure.id))) {
       for (let i = 0; i < treasure.count; i++) {
@@ -391,7 +305,7 @@ function buildCardDeck(includeDisabled: boolean = false): Card[] {
     }
   });
 
-  // Auto-generate encounter cards from ENCOUNTERS array with random biomes
+  // Auto-generate encounter cards from ENCOUNTERS array with random themes
   ENCOUNTERS.forEach((encounter) => {
     if ((includeDisabled || !encounter.disabled) && (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(encounter.id))) {
       for (let i = 0; i < encounter.count; i++) {
@@ -405,7 +319,7 @@ function buildCardDeck(includeDisabled: boolean = false): Card[] {
     }
   });
 
-  // Auto-generate event cards from EVENTS array with random biomes
+  // Auto-generate event cards from EVENTS array with random themes
   EVENT_CARDS.forEach((event) => {
     if ((includeDisabled || !event.disabled) && (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(event.id))) {
       for (let i = 0; i < event.count; i++) {

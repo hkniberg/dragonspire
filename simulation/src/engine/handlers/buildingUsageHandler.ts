@@ -1,6 +1,9 @@
 import { GameLogEntry, Player, ResourceType } from "@/lib/types";
 import { PlayerAgent } from "../../players/PlayerAgent";
 import { handleBuildAction } from "./buildActionHandler";
+import { GameSettings } from "@/lib/GameSettings";
+import { canAfford, deductCost } from "@/players/PlayerUtils";
+import { formatCost } from "@/lib/utils";
 
 export interface BuildingUsageResult {
   blacksmithUsed: boolean;
@@ -55,18 +58,17 @@ export async function handleBuildingUsage(
 
     // Process blacksmith usage
     if (usageDecision.useBlacksmith) {
-      if (hasBlacksmith && player.resources.gold >= 1 && player.resources.ore >= 2) {
+      if (hasBlacksmith && canAfford(player, GameSettings.BLACKSMITH_USAGE_COST)) {
         // Deduct resources and gain might
-        player.resources.gold -= 1;
-        player.resources.ore -= 2;
+        deductCost(player, GameSettings.BLACKSMITH_USAGE_COST);
         player.might += 1;
 
         result.blacksmithUsed = true;
-        logParts.push("Used blacksmith: paid 1 Gold + 2 Ore, gained 1 Might");
+        logParts.push(`Used blacksmith: paid ${formatCost(GameSettings.BLACKSMITH_USAGE_COST)}, gained 1 Might`);
       } else {
         result.failedActions.push({
           action: "blacksmith",
-          reason: hasBlacksmith ? "Insufficient resources (need 1 gold + 2 ore)" : "No blacksmith building"
+          reason: hasBlacksmith ? `Insufficient resources (need ${formatCost(GameSettings.BLACKSMITH_USAGE_COST)})` : "No blacksmith building"
         });
       }
     }
@@ -88,7 +90,7 @@ export async function handleBuildingUsage(
               totalSold += actualAmount;
 
               // Market sells at 2:1 ratio (2 resources for 1 gold)
-              const goldFromThisResource = Math.floor(actualAmount / 2);
+              const goldFromThisResource = Math.floor(actualAmount / GameSettings.MARKET_EXCHANGE_RATE);
               goldGained += goldFromThisResource;
 
               const resourceName = resourceType.charAt(0).toUpperCase() + resourceType.slice(1);
@@ -114,18 +116,17 @@ export async function handleBuildingUsage(
 
     // Process fletcher usage
     if (usageDecision.useFletcher) {
-      if (hasFletcher && player.resources.wood >= 3 && player.resources.ore >= 1) {
+      if (hasFletcher && canAfford(player, GameSettings.FLETCHER_USAGE_COST)) {
         // Deduct resources and gain might
-        player.resources.wood -= 3;
-        player.resources.ore -= 1;
+        deductCost(player, GameSettings.FLETCHER_USAGE_COST);
         player.might += 1;
 
         result.fletcherUsed = true;
-        logParts.push("Used fletcher: paid 3 Wood + 1 Ore, gained 1 Might");
+        logParts.push(`Used fletcher: paid ${formatCost(GameSettings.FLETCHER_USAGE_COST)}, gained 1 Might`);
       } else {
         result.failedActions.push({
           action: "fletcher",
-          reason: hasFletcher ? "Insufficient resources (need 3 wood + 1 ore)" : "No fletcher building"
+          reason: hasFletcher ? `Insufficient resources (need ${formatCost(GameSettings.FLETCHER_USAGE_COST)})` : "No fletcher building"
         });
       }
     }
@@ -181,21 +182,21 @@ export async function handleBuildingUsage(
 function getBuildCostDetails(buildAction: string, player?: Player): string {
   switch (buildAction) {
     case "blacksmith":
-      return "2 Food + 2 Ore";
+      return formatCost(GameSettings.BLACKSMITH_COST);
     case "market":
-      return "2 Food + 2 Wood";
+      return formatCost(GameSettings.MARKET_COST);
     case "fletcher":
-      return "1 Wood + 1 Food + 1 Gold + 1 Ore";
+      return formatCost(GameSettings.FLETCHER_COST);
     case "chapel":
-      return "6 Wood + 2 Gold";
+      return formatCost(GameSettings.CHAPEL_COST);
     case "upgradeChapelToMonastery":
-      return "8 Wood + 3 Gold + 1 Ore";
+      return formatCost(GameSettings.MONASTERY_COST);
     case "recruitChampion":
-      return "3 Food + 3 Gold + 1 Ore";
+      return formatCost(GameSettings.CHAMPION_COST);
     case "buildBoat":
-      return "2 Wood + 2 Gold";
+      return formatCost(GameSettings.BOAT_COST);
     case "warshipUpgrade":
-      return "2 Wood + 1 Ore + 1 Gold";
+      return formatCost(GameSettings.WARSHIP_UPGRADE_COST);
     default:
       return "";
   }
@@ -203,50 +204,46 @@ function getBuildCostDetails(buildAction: string, player?: Player): string {
 
 function checkAvailableBuildActions(player: Player): string[] {
   const availableActions: string[] = [];
-  const { resources } = player;
 
-  // Check various build actions (same logic as in ClaudePlayer)
+  // Check various build actions using canAfford utility and GameSettings
   const hasBlacksmith = player.buildings.includes("blacksmith");
-  if (!hasBlacksmith && resources.food >= 2 && resources.ore >= 2) {
+  if (!hasBlacksmith && canAfford(player, GameSettings.BLACKSMITH_COST)) {
     availableActions.push("blacksmith");
   }
 
   const hasMarket = player.buildings.includes("market");
-  if (!hasMarket && resources.food >= 2 && resources.wood >= 2) {
+  if (!hasMarket && canAfford(player, GameSettings.MARKET_COST)) {
     availableActions.push("market");
   }
 
   const hasFletcher = player.buildings.includes("fletcher");
-  if (!hasFletcher && resources.wood >= 1 && resources.food >= 1 && resources.gold >= 1 && resources.ore >= 1) {
+  if (!hasFletcher && canAfford(player, GameSettings.FLETCHER_COST)) {
     availableActions.push("fletcher");
   }
 
   const hasChapel = player.buildings.includes("chapel");
   const hasMonastery = player.buildings.includes("monastery");
-  if (!hasChapel && !hasMonastery && resources.wood >= 6 && resources.gold >= 2) {
+  if (!hasChapel && !hasMonastery && canAfford(player, GameSettings.CHAPEL_COST)) {
     availableActions.push("chapel");
   }
 
-  if (hasChapel && !hasMonastery && resources.wood >= 8 && resources.gold >= 3 && resources.ore >= 1) {
+  if (hasChapel && !hasMonastery && canAfford(player, GameSettings.MONASTERY_COST)) {
     availableActions.push("upgradeChapelToMonastery");
   }
 
+  // FIXED: Use fixed cost as per game rules (always 3 Food, 3 Gold, 1 Ore)
   const currentChampionCount = player.champions.length;
-  if (currentChampionCount < 3) {
-    if (currentChampionCount === 1 && resources.food >= 3 && resources.gold >= 3 && resources.ore >= 1) {
-      availableActions.push("recruitChampion");
-    } else if (currentChampionCount === 2 && resources.food >= 6 && resources.gold >= 6 && resources.ore >= 3) {
-      availableActions.push("recruitChampion");
-    }
+  if (currentChampionCount < GameSettings.MAX_CHAMPIONS_PER_PLAYER && canAfford(player, GameSettings.CHAMPION_COST)) {
+    availableActions.push("recruitChampion");
   }
 
   const currentBoatCount = player.boats.length;
-  if (currentBoatCount < 2 && resources.wood >= 2 && resources.gold >= 2) {
+  if (currentBoatCount < GameSettings.MAX_BOATS_PER_PLAYER && canAfford(player, GameSettings.BOAT_COST)) {
     availableActions.push("buildBoat");
   }
 
   const hasWarshipUpgrade = player.buildings.includes("warshipUpgrade");
-  if (!hasWarshipUpgrade && resources.wood >= 2 && resources.ore >= 1 && resources.gold >= 1) {
+  if (!hasWarshipUpgrade && canAfford(player, GameSettings.WARSHIP_UPGRADE_COST)) {
     availableActions.push("warshipUpgrade");
   }
 
