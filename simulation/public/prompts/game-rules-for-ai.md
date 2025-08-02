@@ -265,7 +265,7 @@ Combat happens when:
   - Fleeing is not allowed if the combat was chosen deliberately, for example by entering an explored adventure tile an existing monster, entering a tile with a knight in it, or entering doomspire.
 - When fleeing, roll 1D3:
   - 1: Failure. Combat happens as normal.
-  - 2: Partial success. Knight flees to closest unoccupied tile owned by that player, and loses 1 resource of their choice. If no owned tiles are available, flee home instead.
+  - 2: Partial success. Knight flees to closest unoccupied tile owned by that player, and loses 1 resource of their choice. If no owned tiles are available, flee home (but still lose 1 resource).
   - 3: Success. Knight flees to home tile, without any loss.
 
 ### Resolving knight to monster combat
@@ -365,6 +365,8 @@ When the dragon leaves the island (after being impressed three times), establish
 - **Master of Coin**: Player with the most gold. Tiebreaker: total value of all resources (gold + food + wood + ore). If still tied, King decides.
 - **Court Jester**: The remaining player. That player must clean up the mess (but may beg for help).
 
+Tip: Don't be the jester.
+
 ---
 
 ## Conceding defeat
@@ -420,7 +422,7 @@ The game has 4 types of resources: **gold**, **food**, **wood**, and **ore**. Re
 
 **How to earn resources**:
 
-- Claim, blockade, or conquer resource tiles and use action dice to harvest from them
+- Claim (or blockade) resource tiles and use action dice to harvest from them
 - Defeat monsters
 - Some adventure cards give resources
 
