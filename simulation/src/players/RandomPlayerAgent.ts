@@ -231,27 +231,7 @@ export class RandomPlayerAgent implements PlayerAgent {
 
     const actions: DiceAction[] = [];
 
-    // Center tiles where doomspire is located
-    const centerTiles = [
-      { row: 3, col: 3 },
-      { row: 3, col: 4 },
-      { row: 4, col: 3 },
-      { row: 4, col: 4 }
-    ];
-
     for (const champion of player.champions) {
-      // Find the closest center tile
-      let closestCenter = centerTiles[0];
-      let minDistance = this.manhattanDistance(champion.position, closestCenter);
-
-      for (const center of centerTiles) {
-        const distance = this.manhattanDistance(champion.position, center);
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestCenter = center;
-        }
-      }
-
       // Simple action: stay in place and claim tile if possible
       actions.push({
         actionType: "championAction",
@@ -263,49 +243,34 @@ export class RandomPlayerAgent implements PlayerAgent {
         },
       });
 
-      // Generate movements that get closer to center
+      // Try some simple movements
       for (let dRow = -1; dRow <= 1; dRow++) {
         for (let dCol = -1; dCol <= 1; dCol++) {
           if (dRow === 0 && dCol === 0) continue; // Skip staying in place
-          if (Math.abs(dRow) === Math.abs(dCol)) continue; // Skip diagonal movement
+          if (Math.abs(dRow) === Math.abs(dCol)) continue; // Skip diagonal moves for simplicity
 
-          const newRow = champion.position.row + dRow;
-          const newCol = champion.position.col + dCol;
+          const newRow = champion.position.row + dRow * dieValue;
+          const newCol = champion.position.col + dCol * dieValue;
 
-          // Basic bounds check
           if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
-            const newPosition = { row: newRow, col: newCol };
-            const newDistance = this.manhattanDistance(newPosition, closestCenter);
-
-            // Heavily bias towards moves that get closer to center (80% chance)
-            // Otherwise use any valid move (20% chance)
-            const getsCloser = newDistance < minDistance;
-            const shouldInclude = getsCloser ? Math.random() < 0.8 : Math.random() < 0.2;
-
-            if (shouldInclude) {
-              actions.push({
-                actionType: "championAction",
-                championAction: {
-                  diceValueUsed: dieValue,
-                  championId: champion.id,
-                  movementPathIncludingStartPosition: [
-                    champion.position,
-                    newPosition,
-                  ],
-                  tileAction: this.generateTileAction(player),
-                },
-              });
-            }
+            actions.push({
+              actionType: "championAction",
+              championAction: {
+                diceValueUsed: dieValue,
+                championId: champion.id,
+                movementPathIncludingStartPosition: [
+                  champion.position,
+                  { row: newRow, col: newCol },
+                ],
+                tileAction: this.generateTileAction(player),
+              },
+            });
           }
         }
       }
     }
 
-    return actions.slice(0, 10); // Limit to avoid too many options
-  }
-
-  private manhattanDistance(pos1: { row: number; col: number }, pos2: { row: number; col: number }): number {
-    return Math.abs(pos1.row - pos2.row) + Math.abs(pos1.col - pos2.col);
+    return actions;
   }
 
   private generateRandomBoatActions(gameState: GameState, playerName: string, dieValue: number): DiceAction[] {
