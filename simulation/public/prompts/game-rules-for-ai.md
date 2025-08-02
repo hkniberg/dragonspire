@@ -2,9 +2,11 @@
 
 You are all Lords who have since long established forts on islands neighboring the resource rich land of **Doomspire** - named so after the fierce mountain range, and the dragon nesting within, guarding the domain.
 
-Whoever can defeat, bribe, impress or coherse the dragon into exile has a good shot at becoming its next ruler. Or at least secure a high position in the new hierarchical order... the role of Jester awaits the one who fails to excel.
+The ancient dragon rules the island and is considering retiring to another island. It is willing to hand over ownership of Doomspire, but only to a Lord whose knights sufficiently impress it. Whoever impresses the dragon last will be chosen as the new ruler of Doomspire. The others will secure positions in the new hierarchical order... though the role of Jester awaits the one who fails to excel.
 
-Compete with other players, explore tiles, fight monsters and other players, claim resources, and buy knights/boats/buildings. Accumulate fame, might, and resources while seeking to reach the dragon at **Doomspire**.
+But beware - the dragon has little patience for those who waste its time. Knights who approach without sufficient preparation may find themselves becoming an unexpected snack.
+
+Compete with other players, explore tiles, fight monsters and other players, claim resources, and buy knights/boats/buildings. Accumulate fame, might, and resources while seeking to impress the dragon at **Doomspire**.
 
 ---
 
@@ -19,16 +21,18 @@ Each player starts with:
 
 ## Victory Conditions
 
-The game is won through a **victory point system**. The player with the most victory points becomes King of Doomspire.
+The game ends when the **dragon has been impressed 3 times in total**, and leaves the island in the capable hands of whoever impressed it last.
 
-The game ends when any player **exiles the dragon** by reaching **Doomspire** (one of the center 4 tiles) with any of these conditions:
+Players can impress the dragon by reaching **Doomspire** (hidden in the center of the board) with any of these conditions:
 
-- **Combat Exile**: Defeat the dragon in battle. The dragon flees the island.
-- **Fame Exile**: Have 15+ Fame. The dragon is so impressed by your fame that it leaves to let you rule.
-- **Economic Exile**: Own 4+ starred resource tiles. The dragon agrees to move to another island in exchange for tribute.
-- **Gold Exile**: Have 12+ Gold. You bribe the dragon with gold, and it leaves to let you rule.
+- **Combat**: Defeat the dragon in battle. The dragon is impressed by your might.
+- **Fame**: Have 15+ Fame. The dragon is impressed by your legendary reputation.
+- **Economy**: Own 4+ starred resource tiles. The dragon is impressed by your territorial dominance.
+- **Gold**: Have 12+ Gold. The dragon is impressed by your wealth.
 
-When a player exiles the dragon, the current round finishes normally, then victory points are calculated, estabilshing the pecking order of the new realm. Exiling the dragon grants 8 victory points, but does not guarantee victory if other players have accumulated more points through other means.
+Failure to impress means becoming the dragon's next meal.
+
+The first two players to impress the dragon get flown home and given 2 resources of their choice. The third player to impress the dragon wins the game and becomes **King of Doomspire**. The remaining players compete for the titles of **Hand of the King** (most resource tiles), **Master of Coin** (most gold), and **Court Jester** (whoever is left).
 
 ---
 
@@ -135,13 +139,13 @@ When a knight is moved (or uses a knight movement action without moving), a Tile
   - Earn 1 fame for exploring any tile.
   - If it is a bear's den or a resource tile, add a Bear to it. Tier 2 resource tiles are always guarded by a bear.
 - **Combat**: If a monster or opposing knight is on the tile, combat will happen. See Combat section below. Note that dragon combat is voluntary.
+- **Impress the dragon**: If you enter Doomspire, you must impress the dragon or be eaten. See Doomspire section below.
 - **Adventure**: If you enter an adventure tile that has remaining adventure tokens, you must draw a card. See Adventure Cards section below.
 
 **Voluntary interactions**:
 
 - Use a **special location** - trader/mercenary/temple. See Special Locations section.
 - Interact with a **resource tile** - claim, blockade, conquer, or incite revolt. See Resource System section.
-- Attack the **dragon** at Doomspire
 - Pick up or drop **items** in a tile
 
 **Multiple interactions**:
@@ -252,13 +256,13 @@ Combat happens when:
 
 - A knight enters a tile with a monster or opposing knight
 - A knight draws a monster adventure card
-- A knight enters doomspire and chooses to fight the dragon
+- A knight enters doomspire and does not have sufficient fame, gold, or starred resource tiles to impress the dragon - and must fight.
 - A knight attempts to pass through another knight's tile, and that knight forces a fight
 
 ### Fleeing combat
 
 - A knight can attempt to flee from combat if forced into unexpected combat, for example by exploring a tile or drawing an adventure card, or being attacked by another knight.
-  - Fleeing is not allowed if the combat was chosen deliberately, for example by entering an explored adventure tile an existing monster, entering a tile with a knight in it, or entering already-explored doomspire without having achieved an exile condition.
+  - Fleeing is not allowed if the combat was chosen deliberately, for example by entering an explored adventure tile an existing monster, entering a tile with a knight in it, or entering doomspire.
 - When fleeing, roll 1D3:
   - 1: Failure. Combat happens as normal.
   - 2: Partial success. Knight flees to closest unoccupied tile owned by that player, and loses 1 resource of their choice. If no owned tiles are available, flee home instead.
@@ -319,54 +323,47 @@ This is similar to monster combat, with some differences:
 
 ---
 
-## Doomspire - exiling the dragon
+## Doomspire - impressing the dragon
 
-All four exile conditions require you to interact with the dragon at Doomspire.
+All four impression conditions require you to interact with the dragon at Doomspire.
 
-When you enter the doomspire tile, the following happens:
+When you enter the doomspire tile, you must attempt to impress the dragon.
 
-- If you have achieved an exile condition (15+ fame, 12+ gold, or 4+ starred resource tiles), you exile the dragon and trigger the endgame.
-  - Starred resources count even if they are blockaded, as long as you own them.
-- If not, the dragon will attack and you need to either fight or flee.
-  - Fleeing always succeeds, but you will be chased all the way back to your home tile and lose 1 fame.
+- If you have achieved an impression condition (15+ fame, 12+ gold, or 4+ starred resource tiles), you automatically impress the dragon. Starred resources count even if they are blockaded, as long as you own them.
+- If not, you must fight the dragon - fleeing is impossible. You can't kill the dragon, but defeating it in combat will impress it.
+
+**Result of impressing the dragon**:
+
+- If this was the third time anyone has impressed the dragon, you win the game immediately. See Final Ranking section.
+- Otherwise the dragon gives you 2 resources of your choice and flies you to your home tile.
+
+**Result of failing to impress the dragon**:
+
+- Your knight gets eaten and taken off the board, along with any followers and items they are carrying.
+
+If you lose your last knight, you can choose whether to stay in the game and save up for a new knight (you still get one die every turn), or concede defeat. See Conceding defeat.
 
 **Fighting the dragon**:
 
-The dragon has might 8 + 1D3. Fighting the dragon is similar to monster combat, except that the dragon also gets a dice, and you get eaten if you lose.
+The dragon has might 8 + 1D3. Fighting the dragon is similar to monster combat, except that the dragon also gets a dice.
 
 - Pick another player to represent the dragon - ideally your biggest rival!
 - Roll 1D3 and add your might, support bonus from adjacent knights, and any bonus from items or followers.
 - Dragon rolls 1D3 and adds their might of 8
-- If you match or exceed the dragon's total, you defeat the dragon (combat exile), triggering the endgame.
-- If you lose, your knight gets eaten and removed from the game (including their followers and items)
-
-If you lose your last knight, you can choose whether to stay in the game and save up for a new knight (you still get one die every turn), or concede defeat. See Conceding defeat.
+- If you match or exceed the dragon's total, you win the combat.
 
 ---
 
-## Victory Points
+## Final Ranking
 
-When the dragon is exiled, calculate victory points (VP) for final ranking:
-
-- **Dragon exile**: 8 VP (for the player who exiled the dragon)
-- **Might**: 1 VP per might
-- **Fame**: 1 VP per 2 fame (rounded down)
-- **Knights**: 3 VP per knight
-- **Starred tiles claimed**: 1 VP per starred tile (excluding home tile)
-- **Total tiles claimed**: 1 VP per tile (excluding home tile)
-- **Castle buildings**: 2 VP per building (market, blacksmith, etc.)
-- **Warships**: 3 VP per warship
-- **Items and followers**: 1 VP per item or follower carried by all knights
-- **Gold**: 1 VP per 2 gold (rounded down)
+When the dragon leaves the island (after being impressed three times), establish the final ranking:
 
 **Final ranking**:
 
-- First place: King of Doomspire
-- Second place: Hand of the King
-- Third place: Head of Forest-Observing
-- Fourth place: Court Jester
-
-In case of ties, factors listed higher above take priority.
+- **King of Doomspire**: The last player to impress the dragon.
+- **Hand of the King**: Player with the most resource tiles claimed. Tiebreaker: most starred resource tiles, then most gold. If still tied, King decides.
+- **Master of Coin**: Player with the most gold. Tiebreaker: total value of all resources (gold + food + wood + ore). If still tied, King decides.
+- **Court Jester**: The remaining player. That player must clean up the mess (but may beg for help).
 
 ---
 
@@ -423,11 +420,11 @@ The game has 4 types of resources: **gold**, **food**, **wood**, and **ore**. Re
 
 **How to earn resources**:
 
-- Claim (or blockade) resource tiles and use action dice to harvest from them
+- Claim, blockade, or conquer resource tiles and use action dice to harvest from them
 - Defeat monsters
 - Some adventure cards give resources
 
-Owning resource tiles let you build a sustainable economy. They can also be used to achieve economic exile (own 4 starred resource tiles and visit the dragon)
+Owning resource tiles let you build a sustainable economy. They can also be used to impress the dragon economically (own 4 starred resource tiles and visit the dragon)
 
 **Types of resource tiles**:
 

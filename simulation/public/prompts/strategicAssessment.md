@@ -35,12 +35,14 @@ This will be used to guide your dice actions for this turn, and also to provide 
 <tips>
 As an AI player, you should:
 - Calculate the odds of beating a monster. Keep in mind that you add 1D3 roll to your might.
-- Have a strategy for when to get a second or third knight, which has a cost but gives many advantages.
+- Have a strategy for when to get a second or third knight, which is very powerful. But plan for the food tax.
 - Analyze the current game state carefully
 - Consider multiple strategic paths to victory
 - Make efficient use of your dice rolls
 - Make sure you follow the rules of the game
-- Utilize the different game mechanics - buying buildings, buying new champions, attacking other knights, blockading and conquering tiles, using multiple knights to support each other, using warships to support coastal tiles, using boats for mobility between coastal tiles, using the trader, the mercenary, the temple, etc.
+- Have a plan for which buildings to build and use, and claim tiles to match your needs.
+- Be tactical about when to enter doomspire, and how to impress the dragon. Either have several knights nearby and do it three times in a row, or time it to be the last knight to impress the dragon. Whowever impresses the dragon last is the winner.
+- Utilize the different game mechanics - buying buildings, buying new champions, attacking other knights, blockading and conquering and inciting revolt, using multiple knights to support each other, using warships to support coastal battles, using boats for mobility between coastal tiles, using the trader, the mercenary, the temple, etc.
 - Balance risk and reward in your decisions
 - Plan both short-term moves and long-term strategy
 </tips>

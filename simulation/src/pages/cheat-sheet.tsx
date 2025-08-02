@@ -112,10 +112,11 @@ export default function CheatSheet() {
               <h3 className={styles.sectionTitle}>FLEEING COMBAT</h3>
               <ul className={styles.bulletList}>
                 <li>
-                  <strong>Cannot flee</strong> if you chose to fight
+                  <strong>Cannot flee</strong> if combat was chosen deliberately
                 </li>
                 <li>
-                  <strong>Roll 1D3</strong>: 1=fail (fight), 2=flee home, 3=flee to closest owned tile
+                  <strong>Roll 1D3</strong>: 1=fail (fight), 2=flee to closest owned tile + lose 1 resource, 3=flee home
+                  (no loss)
                 </li>
               </ul>
             </section>
@@ -165,20 +166,20 @@ export default function CheatSheet() {
             </section>
 
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>DRAGON EXILE CONDITIONS</h3>
-              <p className={styles.note}>Reach Doomspire with ANY of these to exile the dragon and trigger endgame:</p>
+              <h3 className={styles.sectionTitle}>DRAGON IMPRESSION CONDITIONS</h3>
+              <p className={styles.note}>Reach Doomspire with ANY of these to impress the dragon:</p>
               <ul className={styles.victoryList}>
                 <li>
-                  <strong>Combat Exile</strong>: Defeat the Dragon (8 + 1D3 Might)
+                  <strong>Combat</strong>: Defeat the Dragon (8 + 1D3 Might)
                 </li>
                 <li>
-                  <strong>Fame Exile</strong>: Have 15+ Fame
+                  <strong>Fame</strong>: Have 15+ Fame
                 </li>
                 <li>
-                  <strong>Economic Exile</strong>: Own 4+ starred resource tiles
+                  <strong>Economy</strong>: Own 4+ starred resource tiles
                 </li>
                 <li>
-                  <strong>Gold Exile</strong>: Have 12+ Gold
+                  <strong>Gold</strong>: Have 12+ Gold
                 </li>
               </ul>
               <div className={styles.supportNote}>
@@ -187,37 +188,26 @@ export default function CheatSheet() {
             </section>
 
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>VICTORY POINTS SCORING</h3>
+              <h3 className={styles.sectionTitle}>VICTORY & FINAL RANKING</h3>
+              <p className={styles.note}>Game ends when dragon has been impressed 3 times total:</p>
               <ul className={styles.bulletList}>
                 <li>
-                  <strong>Dragon Exile</strong>: 8 VP (for player who exiled dragon)
+                  <strong>King of Doomspire</strong>: 3rd player to impress dragon (WINNER)
                 </li>
                 <li>
-                  <strong>Might</strong>: 1 VP per might
+                  <strong>1st & 2nd impressions</strong>: Get 2 resources of choice, flown home
+                </li>
+              </ul>
+              <p className={styles.note}>Remaining players ranked by:</p>
+              <ul className={styles.bulletList}>
+                <li>
+                  <strong>Hand of the King</strong>: Most resource tiles (tiebreaker: starred tiles, then gold)
                 </li>
                 <li>
-                  <strong>Fame</strong>: 1 VP per 2 fame (rounded down)
+                  <strong>Master of Coin</strong>: Most gold (tiebreaker: total resource value)
                 </li>
                 <li>
-                  <strong>Knights</strong>: 3 VP per knight
-                </li>
-                <li>
-                  <strong>Starred tiles</strong>: 1 VP per starred tile (excluding home)
-                </li>
-                <li>
-                  <strong>Total tiles</strong>: 1 VP per tile (excluding home)
-                </li>
-                <li>
-                  <strong>Castle buildings</strong>: 2 VP per building
-                </li>
-                <li>
-                  <strong>Warships</strong>: 3 VP per warship
-                </li>
-                <li>
-                  <strong>Items & followers</strong>: 1 VP per item/follower
-                </li>
-                <li>
-                  <strong>Gold</strong>: 1 VP per 2 gold (rounded down)
+                  <strong>Court Jester</strong>: The remaining player (cleans up the game!)
                 </li>
               </ul>
             </section>
