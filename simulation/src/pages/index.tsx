@@ -58,6 +58,7 @@ interface GameConfig {
   startOre: number;
   startGold: number;
   seed: number;
+  maxRounds: number;
 }
 
 export default function GameSimulation() {
@@ -87,6 +88,7 @@ export default function GameSimulation() {
     startOre: 0,
     startGold: 2,
     seed: 0,
+    maxRounds: 30,
   });
   const [apiKey, setApiKey] = useState("");
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
@@ -266,7 +268,7 @@ export default function GameSimulation() {
       // Create game session
       const sessionConfig: GameMasterConfig = {
         players: players,
-        maxRounds: 20, // Reasonable limit for web interface
+        maxRounds: gameConfig.maxRounds,
         startingValues: {
           fame: gameConfig.startFame,
           might: gameConfig.startMight,
@@ -864,6 +866,42 @@ export default function GameSimulation() {
                       fontSize: "14px",
                     }}
                   />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      marginBottom: "5px",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Max Rounds:
+                  </label>
+                  <input
+                    type="number"
+                    min="5"
+                    max="100"
+                    value={gameConfig.maxRounds}
+                    onChange={(e) =>
+                      setGameConfig({
+                        ...gameConfig,
+                        maxRounds: parseInt(e.target.value) || 30,
+                      })
+                    }
+                    style={{
+                      width: "80px",
+                      padding: "4px",
+                      border: "1px solid #ddd",
+                      borderRadius: "4px",
+                      fontSize: "14px",
+                    }}
+                    placeholder="30"
+                  />
+                  <small style={{ fontSize: "12px", color: "#666", marginTop: "2px", display: "block" }}>
+                    Maximum number of game rounds before ending.
+                  </small>
                 </div>
 
                 <div>
