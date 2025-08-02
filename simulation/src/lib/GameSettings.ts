@@ -33,7 +33,7 @@ export class GameSettings {
   static readonly MAX_BOATS_PER_PLAYER = 2; // Maximum number of boats per player
 
   // Building Usage Costs
-  static readonly BLACKSMITH_USAGE_COST = { food: 0, wood: 0, ore: 2, gold: 1 }; // To gain 1 might
+  static readonly BLACKSMITH_USAGE_COST = { food: 0, wood: 0, ore: 3, gold: 1 }; // To gain 1 might
   static readonly FLETCHER_USAGE_COST = { food: 0, wood: 3, ore: 1, gold: 0 }; // To gain 1 might
 
   // Special Location Costs
@@ -47,6 +47,7 @@ export class GameSettings {
   // Combat Rewards and Penalties
   static readonly CHAMPION_VS_CHAMPION_FAME_AWARD = 1; // Fame gained for winning champion vs champion combat
   static readonly DEFEAT_FAME_PENALTY = 1; // Fame lost when defeated with no resources to pay healing costs
+  static readonly COMBAT_SUPPORT_BONUS = 2; // Might bonus per supporting unit (knight or warship) in combat
 
   // Tile Interaction Costs
   static readonly CONQUEST_MIGHT_COST = 1; // Might cost to conquer a tile

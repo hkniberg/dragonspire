@@ -104,7 +104,7 @@ export default function CheatSheet() {
               </div>
 
               <div className={styles.supportNote}>
-                <strong>Adjacent Support:</strong> +1 per knight/warship in adjacent tiles
+                <strong>Adjacent Support:</strong> +2 per knight/warship in adjacent tiles
               </div>
             </section>
 
@@ -140,8 +140,7 @@ export default function CheatSheet() {
                 </div>
               </div>
               <div className={styles.supportNote}>
-                <strong>Protection:</strong> Tiles with adjacent knights or warships cannot be blockaded, conquered, or
-                revolted
+                <strong>Protection:</strong> Tiles with adjacent knights cannot be blockaded, conquered, or revolted
               </div>
             </section>
 

@@ -423,7 +423,7 @@ export function formatBuildingInfo(buildingType: string): string {
     case "monastery":
       return "monastery (buy 1 fame for 1 gold)";
     case "warshipUpgrade":
-      return "warship upgrade (boats provide combat support to adjacent tiles)";
+      return "warship upgrade (boats provide combat support in adjacent battles)";
     default:
       return buildingType;
   }

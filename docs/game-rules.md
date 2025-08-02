@@ -270,7 +270,7 @@ When fighting a monster:
 
 - Roll 1D3
 - Add your Might
-- Add +1 for each supporting knight or warship adjacent to the combat tile. Even from other players, if they choose to support you.
+- Add +2 for each supporting knight or warship adjacent to the combat tile. Even from other players, if they choose to support you.
 - Decide whether to use bonuses from items or followers (after seeing your dice roll)
 - The resulting attack value must be greater than or equal to the monster's Might to win.
 
@@ -298,8 +298,8 @@ For dragon combat, see the Doomspire section.
 > - She moves knight 1 to a neighbouring tile, and uses her boat to transport knight 2 into the tile with the bear. Combat ensues, with support from both knight 1 and the warship.
 > - Alice rolls 1D3 and gets a 2.
 > - +1 might = 3.
-> - +2 supporting units = 5.
-> - She matches the bear's might, and wins.
+> - +4 supporting units (2 units × +2 each) = 7.
+> - She exceeds the bear's might, and wins.
 
 ### Resolving knight to knight combat
 
@@ -446,16 +446,8 @@ Owning resource tiles let you build a sustainable economy. They can also be used
 
 **Protecting a resource tile**:
 
-- A claimed resource tile is protected if the owner has a knight in an adjacent tile, or a warship in the adjacent ocean zone (for coastal tiles)
+- A claimed resource tile is protected if the owner has a knight in an adjacent tile.
 - A protected tile cannot be conquered or blockaded by other players.
-- If multiple players have warship(s) in the same ocean zone, they interfere with each other and stop each other from protecting tiles in that zone - as long as they have the same number of warships.
-
-> Example:
->
-> - Alice wants to protect her important coastal double-gold resource tile, so she buys the warship upgrade and places a warship in that ocean zone. The warship protects that tile and all other coastal tiles in that ocean zone.
-> - Bob wants to conquer Alice's double-gold tile, but cannot do so as long as it is protected.
-> - So Bob also buys the warship upgrade and moves his boat to that ocean zone. Those two warships effectively cancel each other out, and neither can protect coastal tiles any more. So bob is free to blockade, conquer, or incite revolt on that tile.
-> - Later, Alice buys a second boat (which will automatically be a warship because of the warship upgrade), and moves it to that ocean zone. Now she has more warships than Bob in that zone, so her coastline is protected again.
 
 **Inciting revolt on a resource tile**:
 
@@ -493,7 +485,7 @@ Owning resource tiles let you build a sustainable economy. They can also be used
   - You can have max 2 boats in total
 - **Warship upgrade**:
   - Costs 2 Wood, 1 Ore, 1 Gold
-  - All boats become warships, allowing them to protect coastal tiles and support coastal battles.
+  - All boats become warships, allowing them to support coastal battles.
   - Future boats automatically become warships.
 - **Market**:
   - Costs 2 Food, 2 Wood
@@ -501,7 +493,7 @@ Owning resource tiles let you build a sustainable economy. They can also be used
   - Example: Sell 3 food and 1 wood for 2 gold.
 - **Blacksmith**:
   - Costs 2 Food, 2 Ore
-  - Allows you to buy 1 Might for 1 Gold + 2 Ore once per harvest phase
+  - Allows you to buy 1 Might for 1 Gold + 3 Ore once per harvest phase
 - **Fletcher**:
   - Costs 1 Wood, 1 Food, 1 Gold, 1 Ore
   - Allows you to buy 1 Might for 3 Wood + 1 Ore once per harvest phase

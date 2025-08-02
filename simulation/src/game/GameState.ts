@@ -3,6 +3,7 @@
 import { getCoastalTilesForOceanPosition } from "../engine/actions/moveCalculator";
 import { Board } from "../lib/Board";
 import { BoardBuilder } from "../lib/BoardBuilder";
+import { GameSettings } from "../lib/GameSettings";
 import type { Boat, Champion, OceanPosition, Player, Position, Tile } from "../lib/types";
 
 export class GameState {
@@ -331,8 +332,8 @@ export class GameState {
   }
 
   /**
-   * Get the number of supporting units (knights and warships) for a player at a given position
-   * This implements the combat support rules where your own units provide +1 might per supporting unit
+   * Get the combat support bonus from adjacent units (knights and warships) for a player at a given position
+   * This implements the combat support rules where your own units provide +2 might per supporting unit
    */
   public getCombatSupport(playerName: string, combatPosition: Position): number {
     let supportCount = 0;
@@ -360,7 +361,8 @@ export class GameState {
       }
     }
 
-    return supportCount;
+    // Apply the combat support bonus (each supporting unit gives +2 might)
+    return supportCount * GameSettings.COMBAT_SUPPORT_BONUS;
   }
 
   /**
@@ -419,7 +421,7 @@ export class GameState {
 
   /**
    * Check if a claimed tile is protected from blockade or conquest
-   * A tile is protected if the owner has knights in the tile, adjacent tiles, or warships in adjacent ocean zones
+   * A tile is protected if the owner has knights in the tile or adjacent tiles
    */
   public isClaimProtected(tile: Tile): boolean {
     // Only claimed tiles can be protected
@@ -458,23 +460,13 @@ export class GameState {
       }
     }
 
-    // Check for warship protection (coastal tiles in ocean zones)
-    const hasWarshipUpgrade = tileOwner.buildings.includes("warshipUpgrade");
-    if (hasWarshipUpgrade) {
-      for (const boat of tileOwner.boats) {
-        if (this.isBoatAdjacentToPosition(boat.position, tile.position)) {
-          return true;
-        }
-      }
-    }
-
     return false;
   }
 
   /**
    * Check if a claimed tile is being blockaded and return the blockading player's name
    * According to game rules: "A knight that is in another player's resource tile will blockade it"
-   * A tile can only be blockaded if it's not protected by adjacent knights or warships
+   * A tile can only be blockaded if it's not protected by adjacent knights
    */
   public getClaimBlockader(tile: Tile): string | null {
     // Only claimed resource tiles can be blockaded

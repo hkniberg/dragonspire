@@ -1,8 +1,10 @@
 # LORDS OF DOOMSPIRE - Rulebook
 
-You are a lord commanding knights from your island castle to explore a dangerous neighboring island. Compete with other players to accumulate fame, might, and resources while seeking to reach the dragon at **Doomspire**.
+You are all Lords who have since long established forts on islands neighboring the resource rich land of **Doomspire** - named so after the fierce mountain range, and the dragon nesting within, guarding the domain.
 
-Explore tiles, fight monsters and other players, claim resources, and buy knights/boats/buildings to achieve victory through combat, diplomacy, economics, or wealth.
+Whoever can defeat, bribe, impress or coherse the dragon into exile has a good shot at becoming its next ruler. Or at least secure a high position in the new hierarchical order... the role of Jester awaits the one who fails to excel.
+
+Compete with other players, explore tiles, fight monsters and other players, claim resources, and buy knights/boats/buildings. Accumulate fame, might, and resources while seeking to reach the dragon at **Doomspire**.
 
 ---
 
@@ -17,12 +19,16 @@ Each player starts with:
 
 ## Victory Conditions
 
-Win immediately by reaching **Doomspire** (one of the center 4 tiles) with any of these:
+The game is won through a **victory point system**. The player with the most victory points becomes King of Doomspire.
 
-- **Combat Victory**: Defeat the dragon in battle
-- **Diplomatic Victory**: Have +15 Fame (dragon becomes your advisor)
-- **Economic Victory**: Own 4+ starred resource tiles (dragon accepts tribute)
-- **Gold Victory**: Have 15+ Gold (dragon shares treasures)
+The game ends when any player **exiles the dragon** by reaching **Doomspire** (one of the center 4 tiles) with any of these conditions:
+
+- **Combat Exile**: Defeat the dragon in battle. The dragon flees the island.
+- **Fame Exile**: Have 15+ Fame. The dragon is so impressed by your fame that it leaves to let you rule.
+- **Economic Exile**: Own 4+ starred resource tiles. The dragon agrees to move to another island in exchange for tribute.
+- **Gold Exile**: Have 12+ Gold. You bribe the dragon with gold, and it leaves to let you rule.
+
+When a player exiles the dragon, the current round finishes normally, then victory points are calculated, estabilshing the pecking order of the new realm. Exiling the dragon grants 8 victory points, but does not guarantee victory if other players have accumulated more points through other means.
 
 ---
 
@@ -47,7 +53,7 @@ Each round has 3 phases:
 
 1. **Roll Phase** (Parallel): Move the first player token clockwise, then all players roll dice simultaneously.
 2. **Move Phase** (Sequential): One player at a time, use dice for movement and tile actions
-3. **Harvest Phase** (Parallel): Use remaining dice for harvest and build actions
+3. **Harvest Phase** (Parallel): Use remaining dice for harvest, and do build actions.
 
 ---
 
@@ -251,8 +257,8 @@ Combat happens when:
 
 ### Fleeing combat
 
-- A knight can attempt to flee from combat. For example, to avoid a battle with impossible odds.
-- Exception: A player who actively chose to fight (for example by moving to another knight's tile) cannot flee.
+- A knight can attempt to flee from combat if forced into unexpected combat, for example by exploring a tile or drawing an adventure card, or being attacked by another knight.
+  - Fleeing is not allowed if the combat was chosen deliberately, for example by entering an explored adventure tile an existing monster, entering a tile with a knight in it, or entering already-explored doomspire without having achieved an exile condition.
 - When fleeing, roll 1D3:
   - 1: Failure. Combat happens as normal.
   - 2: Partial success. Knight flees to closest unoccupied tile owned by that player, and loses 1 resource of their choice. If no owned tiles are available, flee home instead.
@@ -264,7 +270,7 @@ When fighting a monster:
 
 - Roll 1D3
 - Add your Might
-- Add +1 for each supporting knight or warship adjacent to the combat tile. Even from other players, if they choose to support you.
+- Add +2 for each supporting knight or warship adjacent to the combat tile. Even from other players, if they choose to support you.
 - Decide whether to use bonuses from items or followers (after seeing your dice roll)
 - The resulting attack value must be greater than or equal to the monster's Might to win.
 
@@ -292,8 +298,8 @@ For dragon combat, see the Doomspire section.
 > - She moves knight 1 to a neighbouring tile, and uses her boat to transport knight 2 into the tile with the bear. Combat ensues, with support from both knight 1 and the warship.
 > - Alice rolls 1D3 and gets a 2.
 > - +1 might = 3.
-> - +2 supporting units = 5.
-> - She matches the bear's might, and wins.
+> - +4 supporting units (2 units × +2 each) = 7.
+> - She exceeds the bear's might, and wins.
 
 ### Resolving knight to knight combat
 
@@ -313,13 +319,13 @@ This is similar to monster combat, with some differences:
 
 ---
 
-## Doomspire - winning the game
+## Doomspire - exiling the dragon
 
-All four victory conditions require you to interact with the dragon at Doomspire.
+All four exile conditions require you to interact with the dragon at Doomspire.
 
 When you enter the doomspire tile, the following happens:
 
-- If you have achieved a victory condition (15 fame, 15 gold, or 4 starred resource tiles), you win the game.
+- If you have achieved an exile condition (15+ fame, 12+ gold, or 4+ starred resource tiles), you exile the dragon and trigger the endgame.
   - Starred resources count even if they are blockaded, as long as you own them.
 - If not, the dragon will attack and you need to either fight or flee.
   - Fleeing always succeeds, but you will be chased all the way back to your home tile and lose 1 fame.
@@ -331,10 +337,36 @@ The dragon has might 8 + 1D3. Fighting the dragon is similar to monster combat, 
 - Pick another player to represent the dragon - ideally your biggest rival!
 - Roll 1D3 and add your might, support bonus from adjacent knights, and any bonus from items or followers.
 - Dragon rolls 1D3 and adds their might of 8
-- If you match or exceed the dragon's total, you defeat the dragon and win the game.
+- If you match or exceed the dragon's total, you defeat the dragon (combat exile), triggering the endgame.
 - If you lose, your knight gets eaten and removed from the game (including their followers and items)
 
 If you lose your last knight, you can choose whether to stay in the game and save up for a new knight (you still get one die every turn), or concede defeat. See Conceding defeat.
+
+---
+
+## Victory Points
+
+When the dragon is exiled, calculate victory points (VP) for final ranking:
+
+- **Dragon exile**: 8 VP (for the player who exiled the dragon)
+- **Might**: 1 VP per might
+- **Fame**: 1 VP per 2 fame (rounded down)
+- **Knights**: 3 VP per knight
+- **Starred tiles claimed**: 1 VP per starred tile (excluding home tile)
+- **Total tiles claimed**: 1 VP per tile (excluding home tile)
+- **Castle buildings**: 2 VP per building (market, blacksmith, etc.)
+- **Warships**: 3 VP per warship
+- **Items and followers**: 1 VP per item or follower carried by all knights
+- **Gold**: 1 VP per 2 gold (rounded down)
+
+**Final ranking**:
+
+- First place: King of Doomspire
+- Second place: Hand of the King
+- Third place: Head of Forest-Observing
+- Fourth place: Court Jester
+
+In case of ties, factors listed higher above take priority.
 
 ---
 
@@ -395,13 +427,13 @@ The game has 4 types of resources: **gold**, **food**, **wood**, and **ore**. Re
 - Defeat monsters
 - Some adventure cards give resources
 
-Owning resource tiles let you build a sustainable economy. They can also be used to score an economic victory (own 4 starred resource tiles and visit the dragon)
+Owning resource tiles let you build a sustainable economy. They can also be used to achieve economic exile (own 4 starred resource tiles and visit the dragon)
 
 **Types of resource tiles**:
 
 - **Home tile**: This is resource tile provides 1 wood and 1 food. Opposing knights cannot enter this tile.
 - **Normal resource tiles**: These provide 1 resource.
-- **Starred resource tiles**: Resource tiles that provide more than one resource are considered starred resource tiles. All resource tiles in Tier 2 region are starred, and some in Tier 1. Only starred resource tiles count towards economic victory.
+- **Starred resource tiles**: Resource tiles that provide more than one resource are considered starred resource tiles. All resource tiles in Tier 2 region are starred, and some in Tier 1. Only starred resource tiles count towards economic exile.
 
 **Claiming a resource tile**:
 
@@ -414,16 +446,8 @@ Owning resource tiles let you build a sustainable economy. They can also be used
 
 **Protecting a resource tile**:
 
-- A claimed resource tile is protected if the owner has a knight in an adjacent tile, or a warship in the adjacent ocean zone (for coastal tiles)
+- A claimed resource tile is protected if the owner has a knight in an adjacent tile.
 - A protected tile cannot be conquered or blockaded by other players.
-- If multiple players have warship(s) in the same ocean zone, they interfere with each other and stop each other from protecting tiles in that zone - as long as they have the same number of warships.
-
-> Example:
->
-> - Alice wants to protect her important coastal double-gold resource tile, so she buys the warship upgrade and places a warship in that ocean zone. The warship protects that tile and all other coastal tiles in that ocean zone.
-> - Bob wants to conquer Alice's double-gold tile, but cannot do so as long as it is protected.
-> - So Bob also buys the warship upgrade and moves his boat to that ocean zone. Those two warships effectively cancel each other out, and neither can protect coastal tiles any more. So bob is free to blockade, conquer, or incite revolt on that tile.
-> - Later, Alice buys a second boat (which will automatically be a warship because of the warship upgrade), and moves it to that ocean zone. Now she has more warships than Bob in that zone, so her coastline is protected again.
 
 **Inciting revolt on a resource tile**:
 
@@ -450,20 +474,18 @@ Owning resource tiles let you build a sustainable economy. They can also be used
 
 ## Buildings and build actions
 
-- **Buy a 2nd Knight**
+- **Recruit Knight**
   - Costs 3 Food, 3 Gold, and 1 Ore
-  - Gives you a second knight, place it on your home tile.
+  - Gives you another knight, place it on your home tile.
   - Also gives you 1 extra die at the start of every turn, if you can afford the food tax (2 food).
-- **Buy a 3rd Knight**:
-  - Costs 6 Food, 6 Gold, 3 Ore
-  - Gives you a third knight and another extra die every turn (if you can pay the additional food tax).
+  - You can have max 3 knights in total
 - **Buy a 2nd Boat**:
   - Costs 2 Wood, 2 Gold
   - Gives you an additional boat. Place it outside your home tile
-  - You can only have 2 boats in total at any given moment.
+  - You can have max 2 boats in total
 - **Warship upgrade**:
   - Costs 2 Wood, 1 Ore, 1 Gold
-  - All boats become warships, allowing them to protect coastal tiles and support coastal battles.
+  - All boats become warships, allowing them to support coastal battles.
   - Future boats automatically become warships.
 - **Market**:
   - Costs 2 Food, 2 Wood
@@ -471,7 +493,7 @@ Owning resource tiles let you build a sustainable economy. They can also be used
   - Example: Sell 3 food and 1 wood for 2 gold.
 - **Blacksmith**:
   - Costs 2 Food, 2 Ore
-  - Allows you to buy 1 Might for 1 Gold + 2 Ore once per harvest phase
+  - Allows you to buy 1 Might for 1 Gold + 3 Ore once per harvest phase
 - **Fletcher**:
   - Costs 1 Wood, 1 Food, 1 Gold, 1 Ore
   - Allows you to buy 1 Might for 3 Wood + 1 Ore once per harvest phase
