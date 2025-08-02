@@ -172,7 +172,7 @@ export async function handleFleeDecision(
 
     champion.position = destination;
 
-    // Lose 1 resource of choice (prioritize in order: food, wood, ore, gold, fame)
+    // Lose resource of choice (prioritize in order: food, wood, ore, gold, fame)
     let resourceLost = false;
     let lossDescription = "";
     const resourceTypes = ['food', 'wood', 'ore', 'gold'] as const;

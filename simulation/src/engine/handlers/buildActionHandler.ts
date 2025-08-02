@@ -135,8 +135,8 @@ function handleChampionRecruitment(
   // Check if player can recruit a champion
   const currentChampionCount = player.champions.length;
 
-  if (currentChampionCount >= 3) {
-    logFn("system", `Cannot recruit champion - already have maximum of 3 champions.${reasoningText}`);
+  if (currentChampionCount >= GameSettings.MAX_CHAMPIONS_PER_PLAYER) {
+    logFn("system", `Cannot recruit champion - already have maximum of ${GameSettings.MAX_CHAMPIONS_PER_PLAYER} champions.${reasoningText}`);
     return {
       actionSuccessful: false,
       reason: "Maximum champions reached"
@@ -197,8 +197,8 @@ function handleBoatBuild(
 
   // Check if player already has maximum boats (max 2 boats total)
   const currentBoatCount = player.boats.length;
-  if (currentBoatCount >= 2) {
-    logFn("system", `Cannot build boat - already have maximum of 2 boats.${reasoningText}`);
+  if (currentBoatCount >= GameSettings.MAX_BOATS_PER_PLAYER) {
+    logFn("system", `Cannot build boat - already have maximum of ${GameSettings.MAX_BOATS_PER_PLAYER} boats.${reasoningText}`);
     return {
       actionSuccessful: false,
       reason: "Maximum boats reached"

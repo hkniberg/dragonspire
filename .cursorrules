@@ -37,6 +37,7 @@ This is a board game design project, not a software application. Code in the sim
 - Keep the code as simple and clean as possible.
 - Performance doesn't matter. This is just for internal use, not a commercial product.
 - Use types for all variables and function parameters, avoid using `any` or `unknown` unless there is a specific reason.
+- Avoid hard-coding numbers that come from the rules, instead use the constants from `@/lib/GameSettings`. For number specific to adventure cards and items, it is OK to hard-code those numbers in the respective card handler (src/engine/handlers/cardHandlers/\*). If those numbers are used in multiple places, then export constants from that specific card handler file.
 
 ### Code Reuse and Utilities
 

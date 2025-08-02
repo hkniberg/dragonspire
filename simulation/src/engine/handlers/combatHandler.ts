@@ -5,7 +5,7 @@ import { formatResources } from "@/lib/utils";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { canChampionCarryMoreItems } from "@/players/PlayerUtils";
 import { FleeContext, handleFleeDecision } from "./fleeHandler";
-import { handlePaddedHelmetLootChoice } from "./paddedHelmetHandler";
+import { handlePaddedHelmetLootChoice } from "./cardHandlers/paddedHelmetHandler";
 
 /**
  * Roll a D3 (returns 1, 2, or 3 with equal probability like the game rules)

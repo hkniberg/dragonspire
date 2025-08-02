@@ -5,17 +5,17 @@ import { Card } from "@/lib/cards";
 import { EventCardResult, GameLogEntry, Monster, Player, Tile } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { resolveMonsterPlacementAndCombat } from "./combatHandler";
-import { handleCurseOfTheEarth } from "./eventCards/curseOfTheEarthHandler";
-import { handleDragonRaid } from "./eventCards/dragonRaidHandler";
-import { handleDruidRampage } from "./eventCards/druidRampageHandler";
-import { handleHungryPests } from "./eventCards/hungryPestsHandler";
-import { handleLandslide } from "./eventCards/landslideHandler";
-import { handleMarketDay } from "./eventCards/marketDayHandler";
-import { handleSeaMonsters } from "./eventCards/seaMonstersHandler";
-import { handleSuddenStorm } from "./eventCards/suddenStormHandler";
-import { handleThievingCrows } from "./eventCards/thievingCrowsHandler";
-import { handleThugAmbush } from "./eventCards/thugAmbushHandler";
-import { handleYouGotRiches } from "./eventCards/youGotRichesHandler";
+import { handleCurseOfTheEarth } from "./cardHandlers/curseOfTheEarthHandler";
+import { handleDragonRaid } from "./cardHandlers/dragonRaidHandler";
+import { handleDruidRampage } from "./cardHandlers/druidRampageHandler";
+import { handleHungryPests } from "./cardHandlers/hungryPestsHandler";
+import { handleLandslide } from "./cardHandlers/landslideHandler";
+import { handleMarketDay } from "./cardHandlers/marketDayHandler";
+import { handleSeaMonsters } from "./cardHandlers/seaMonstersHandler";
+import { handleSuddenStorm } from "./cardHandlers/suddenStormHandler";
+import { handleThievingCrows } from "./cardHandlers/thievingCrowsHandler";
+import { handleThugAmbush } from "./cardHandlers/thugAmbushHandler";
+import { handleYouGotRiches } from "./cardHandlers/youGotRichesHandler";
 import { handleTreasureCard as handleTreasureCardFromHandler } from "./treasureCardHandler";
 
 export interface AdventureCardResult {

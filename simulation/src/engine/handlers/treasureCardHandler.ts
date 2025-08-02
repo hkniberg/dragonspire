@@ -3,8 +3,12 @@ import { GameState } from "@/game/GameState";
 import { Decision, DecisionContext, GameLogEntry, Player, Tile, TileTier } from "@/lib/types";
 import { PlayerAgent } from "@/players/PlayerAgent";
 import { canChampionCarryMoreItems, createDropItemDecision, handleDropItemDecision } from "@/players/PlayerUtils";
-import { handleMysteriousRing } from "./mysteriousRingHandler";
-import { handleSwordInStone } from "./swordInStoneHandler";
+import { handleMysteriousRing } from "./cardHandlers/mysteriousRingHandler";
+import { handleSwordInStone } from "./cardHandlers/swordInStoneHandler";
+
+// Broken Shield card constants
+const BROKEN_SHIELD_ORE_COST = 2;
+const BROKEN_SHIELD_ORE_REWARD = 1;
 
 export interface TreasureCardResult {
   cardProcessed: boolean;
@@ -71,10 +75,10 @@ async function handleBrokenShield(
   thinkingLogger?: (content: string) => void
 ): Promise<TreasureCardResult> {
   // Check if player has enough ore for the might option
-  if (player.resources.ore < 2) {
+  if (player.resources.ore < BROKEN_SHIELD_ORE_COST) {
     // Not enough ore, automatically choose the first option
-    player.resources.ore += 1;
-    logFn("event", `Champion${championId} found a Broken Shield! Not enough ore (2 required) for the might option, so automatically gained +1 ore.`);
+    player.resources.ore += BROKEN_SHIELD_ORE_REWARD;
+    logFn("event", `Champion${championId} found a Broken Shield! Not enough ore (${BROKEN_SHIELD_ORE_COST} required) for the might option, so automatically gained +${BROKEN_SHIELD_ORE_REWARD} ore.`);
     return {
       cardProcessed: true,
       cardId: "broken-shield"
@@ -87,11 +91,11 @@ async function handleBrokenShield(
     options: [
       {
         id: "gain_ore",
-        description: "Gain +1 ore"
+        description: `Gain +${BROKEN_SHIELD_ORE_REWARD} ore`
       },
       {
         id: "gain_might",
-        description: "Spend 2 ore to gain +1 might"
+        description: `Spend ${BROKEN_SHIELD_ORE_COST} ore to gain +1 might`
       }
     ]
   };
@@ -100,26 +104,26 @@ async function handleBrokenShield(
   const decision: Decision = await playerAgent.makeDecision(gameState, [], decisionContext, thinkingLogger);
 
   if (decision.choice === "gain_ore") {
-    player.resources.ore += 1;
-    logFn("event", `Champion${championId} chose to gain +1 ore from the Broken Shield.`);
+    player.resources.ore += BROKEN_SHIELD_ORE_REWARD;
+    logFn("event", `Champion${championId} chose to gain +${BROKEN_SHIELD_ORE_REWARD} ore from the Broken Shield.`);
 
     return {
       cardProcessed: true,
       cardId: "broken-shield"
     };
   } else if (decision.choice === "gain_might") {
-    if (player.resources.ore >= 2) {
-      player.resources.ore -= 2;
+    if (player.resources.ore >= BROKEN_SHIELD_ORE_COST) {
+      player.resources.ore -= BROKEN_SHIELD_ORE_COST;
       player.might += 1;
-      logFn("event", `Champion${championId} spent 2 ore to gain +1 might from the Broken Shield.`);
+      logFn("event", `Champion${championId} spent ${BROKEN_SHIELD_ORE_COST} ore to gain +1 might from the Broken Shield.`);
 
       return {
         cardProcessed: true,
         cardId: "broken-shield"
       };
     } else {
-      logFn("event", `Champion${championId} doesn't have enough ore (need 2, have ${player.resources.ore}). Gained +1 ore instead.`);
-      player.resources.ore += 1;
+      logFn("event", `Champion${championId} doesn't have enough ore (need ${BROKEN_SHIELD_ORE_COST}, have ${player.resources.ore}). Gained +${BROKEN_SHIELD_ORE_REWARD} ore instead.`);
+      player.resources.ore += BROKEN_SHIELD_ORE_REWARD;
 
       return {
         cardProcessed: true,
