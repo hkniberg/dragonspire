@@ -235,15 +235,7 @@ export class BoardBuilder {
     if (backColor === TileColors.tier1Back && tile.tileType === "resource" && tile.isStarred) {
       const wolfMonster = getMonsterCardById("wolf");
       if (wolfMonster) {
-        tile.monster = {
-          id: wolfMonster.id,
-          name: wolfMonster.name,
-          tier: wolfMonster.tier,
-          icon: wolfMonster.icon,
-          might: wolfMonster.might,
-          fame: wolfMonster.fame,
-          resources: wolfMonster.resources,
-        };
+        tile.monster = wolfMonster;
       }
     }
 
@@ -251,15 +243,7 @@ export class BoardBuilder {
     if (backColor === TileColors.tier2Back && tile.tileType === "resource") {
       const bearMonster = getMonsterCardById("bear");
       if (bearMonster) {
-        tile.monster = {
-          id: bearMonster.id,
-          name: bearMonster.name,
-          tier: bearMonster.tier,
-          icon: bearMonster.icon,
-          might: bearMonster.might,
-          fame: bearMonster.fame,
-          resources: bearMonster.resources,
-        };
+        tile.monster = bearMonster;
       }
     }
 
@@ -267,15 +251,7 @@ export class BoardBuilder {
     if (tile.tileType === "wolfDen") {
       const wolfMonster = getMonsterCardById("wolf");
       if (wolfMonster) {
-        tile.monster = {
-          id: wolfMonster.id,
-          name: wolfMonster.name,
-          tier: wolfMonster.tier,
-          icon: wolfMonster.icon,
-          might: wolfMonster.might,
-          fame: wolfMonster.fame,
-          resources: wolfMonster.resources,
-        };
+        tile.monster = wolfMonster;
       }
     }
 
@@ -283,15 +259,7 @@ export class BoardBuilder {
     if (tile.tileType === "bearCave") {
       const bearMonster = getMonsterCardById("bear");
       if (bearMonster) {
-        tile.monster = {
-          id: bearMonster.id,
-          name: bearMonster.name,
-          tier: bearMonster.tier,
-          icon: bearMonster.icon,
-          might: bearMonster.might,
-          fame: bearMonster.fame,
-          resources: bearMonster.resources,
-        };
+        tile.monster = bearMonster;
       }
     }
   }
