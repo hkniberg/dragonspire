@@ -7,6 +7,7 @@ import { GameMaster, GameMasterConfig } from "../engine/GameMaster";
 import { FileLoader } from "../lib/templateProcessor";
 import { Claude } from "../llm/claude";
 import { ClaudePlayerAgent } from "../players/ClaudePlayer";
+import { GoalPlayer } from "../players/GoalPlayer";
 import { PlayerAgent } from "../players/PlayerAgent";
 import { RandomPlayerAgent } from "../players/RandomPlayerAgent";
 
@@ -15,7 +16,7 @@ dotenv.config();
 
 export interface PlayerConfig {
   name: string;
-  type: "random" | "claude";
+  type: "random" | "claude" | "goal";
 }
 
 export interface CLIConfig {
@@ -103,6 +104,8 @@ export class CLIRunner {
 
         const claude = new Claude(apiKey, systemPrompt);
         return new ClaudePlayerAgent(config.name, claude, templateProcessor);
+      case "goal":
+        return new GoalPlayer(config.name);
       default:
         throw new Error(`Unknown player type: ${config.type}`);
     }
@@ -112,8 +115,8 @@ export class CLIRunner {
     const playerConfigs: PlayerConfig[] = [];
     const defaultNames = ["Alice", "Bob", "Charlie", "Diana"];
 
-    // Look for player specifications like p1=random, p2=claude, etc.
-    const playerArgs = args.filter((arg) => arg.match(/^p[1-4]=(random|claude)$/));
+    // Look for player specifications like p1=random, p2=claude, p3=goal, etc.
+    const playerArgs = args.filter((arg) => arg.match(/^p[1-4]=(random|claude|goal)$/));
 
     if (playerArgs.length === 0) {
       // No player specifications, default to all random players
@@ -127,10 +130,10 @@ export class CLIRunner {
 
     // Override with specified player types
     for (const arg of playerArgs) {
-      const match = arg.match(/^p([1-4])=(random|claude)$/);
+      const match = arg.match(/^p([1-4])=(random|claude|goal)$/);
       if (match) {
         const playerIndex = parseInt(match[1]) - 1;
-        const playerType = match[2] as "random" | "claude";
+        const playerType = match[2] as "random" | "claude" | "goal";
 
         if (playerIndex >= 0 && playerIndex < 4) {
           playerConfigs[playerIndex].type = playerType;

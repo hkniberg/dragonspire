@@ -100,20 +100,20 @@ const argv = yargs
 
   // Player configuration options
   .option("p1", {
-    choices: ["random", "claude"],
-    description: "Player 1 type (random or claude)",
+    choices: ["random", "claude", "goal"],
+    description: "Player 1 type (random, claude, or goal)",
   })
   .option("p2", {
-    choices: ["random", "claude"],
-    description: "Player 2 type (random or claude)",
+    choices: ["random", "claude", "goal"],
+    description: "Player 2 type (random, claude, or goal)",
   })
   .option("p3", {
-    choices: ["random", "claude"],
-    description: "Player 3 type (random or claude)",
+    choices: ["random", "claude", "goal"],
+    description: "Player 3 type (random, claude, or goal)",
   })
   .option("p4", {
-    choices: ["random", "claude"],
-    description: "Player 4 type (random or claude)",
+    choices: ["random", "claude", "goal"],
+    description: "Player 4 type (random, claude, or goal)",
   })
 
   // Claude instructions
