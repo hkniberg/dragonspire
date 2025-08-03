@@ -10,6 +10,33 @@ import { PlayerAgent } from "./PlayerAgent";
 import { canAfford } from "./PlayerUtils";
 import { GameSettings } from "@/lib/GameSettings";
 
+// Random player behavior constants
+const RANDOM_PLAYER_CONSTANTS = {
+  // Trader decision probabilities
+  TRADER_BUY_ITEM_CHANCE: 0.3,
+
+  // Building usage probabilities
+  BLACKSMITH_USAGE_CHANCE: 0.3,
+  MARKET_USAGE_CHANCE: 0.4,
+  FLETCHER_USAGE_CHANCE: 0.25,
+  BUILD_ACTION_CHANCE: 0.3,
+
+  // Market selling probabilities
+  SELL_FOOD_CHANCE: 0.5,
+  SELL_WOOD_CHANCE: 0.5,
+  SELL_ORE_CHANCE: 0.5,
+
+  // Market selling limits
+  MAX_RESOURCE_SELL_AMOUNT: 3,
+
+  // Action generation limits
+  MAX_BOAT_ACTIONS: 10,
+
+  // Tile action probabilities
+  CONQUER_WITH_MIGHT_CHANCE: 0.5,
+  INCITE_REVOLT_CHANCE: 0.5,
+} as const;
+
 export class RandomPlayerAgent implements PlayerAgent {
   private name: string;
 
@@ -129,7 +156,7 @@ export class RandomPlayerAgent implements PlayerAgent {
     const actions: any[] = [];
 
     // Maybe buy an item if we have gold
-    if (playerResources.gold > 0 && availableItems.length > 0 && Math.random() < 0.3) {
+    if (playerResources.gold > 0 && availableItems.length > 0 && Math.random() < RANDOM_PLAYER_CONSTANTS.TRADER_BUY_ITEM_CHANCE) {
       const affordableItems = availableItems.filter(item => {
         const traderItem = getTraderItemById(item.id);
         return traderItem && playerResources.gold >= traderItem.cost;
@@ -172,25 +199,25 @@ export class RandomPlayerAgent implements PlayerAgent {
     // Random blacksmith usage (30% chance if affordable)
     if (player.buildings.includes("blacksmith") &&
       canAfford(player, GameSettings.BLACKSMITH_USAGE_COST) &&
-      Math.random() < 0.3) {
+      Math.random() < RANDOM_PLAYER_CONSTANTS.BLACKSMITH_USAGE_CHANCE) {
       buildingUsageDecision.useBlacksmith = true;
     }
 
     // Random market usage (40% chance if have resources to sell)
     if (player.buildings.includes("market")) {
       const sellableResources = player.resources.food + player.resources.wood + player.resources.ore;
-      if (sellableResources > GameSettings.MARKET_EXCHANGE_RATE && Math.random() < 0.4) {
+      if (sellableResources > GameSettings.MARKET_EXCHANGE_RATE && Math.random() < RANDOM_PLAYER_CONSTANTS.MARKET_USAGE_CHANCE) {
         buildingUsageDecision.sellAtMarket = {};
 
         // Randomly sell some resources
-        if (player.resources.food > 0 && Math.random() < 0.5) {
-          buildingUsageDecision.sellAtMarket.food = Math.floor(Math.random() * Math.min(3, player.resources.food)) + 1;
+        if (player.resources.food > 0 && Math.random() < RANDOM_PLAYER_CONSTANTS.SELL_FOOD_CHANCE) {
+          buildingUsageDecision.sellAtMarket.food = Math.floor(Math.random() * Math.min(RANDOM_PLAYER_CONSTANTS.MAX_RESOURCE_SELL_AMOUNT, player.resources.food)) + 1;
         }
-        if (player.resources.wood > 0 && Math.random() < 0.5) {
-          buildingUsageDecision.sellAtMarket.wood = Math.floor(Math.random() * Math.min(3, player.resources.wood)) + 1;
+        if (player.resources.wood > 0 && Math.random() < RANDOM_PLAYER_CONSTANTS.SELL_WOOD_CHANCE) {
+          buildingUsageDecision.sellAtMarket.wood = Math.floor(Math.random() * Math.min(RANDOM_PLAYER_CONSTANTS.MAX_RESOURCE_SELL_AMOUNT, player.resources.wood)) + 1;
         }
-        if (player.resources.ore > 0 && Math.random() < 0.5) {
-          buildingUsageDecision.sellAtMarket.ore = Math.floor(Math.random() * Math.min(3, player.resources.ore)) + 1;
+        if (player.resources.ore > 0 && Math.random() < RANDOM_PLAYER_CONSTANTS.SELL_ORE_CHANCE) {
+          buildingUsageDecision.sellAtMarket.ore = Math.floor(Math.random() * Math.min(RANDOM_PLAYER_CONSTANTS.MAX_RESOURCE_SELL_AMOUNT, player.resources.ore)) + 1;
         }
       }
     }
@@ -198,7 +225,7 @@ export class RandomPlayerAgent implements PlayerAgent {
     // Random fletcher usage (25% chance if affordable)
     if (player.buildings.includes("fletcher") &&
       canAfford(player, GameSettings.FLETCHER_USAGE_COST) &&
-      Math.random() < 0.25) {
+      Math.random() < RANDOM_PLAYER_CONSTANTS.FLETCHER_USAGE_CHANCE) {
       buildingUsageDecision.useFletcher = true;
     }
 
@@ -207,7 +234,7 @@ export class RandomPlayerAgent implements PlayerAgent {
     }
 
     // Random build action (30% chance)
-    if (Math.random() < 0.3) {
+    if (Math.random() < RANDOM_PLAYER_CONSTANTS.BUILD_ACTION_CHANCE) {
       const availableBuildActions = this.getAvailableBuildActions(player);
       if (availableBuildActions.length > 0) {
         const chosenAction = availableBuildActions[Math.floor(Math.random() * availableBuildActions.length)];
@@ -330,7 +357,7 @@ export class RandomPlayerAgent implements PlayerAgent {
       }
     }
 
-    return actions.slice(0, 10); // Increased limit since we have more options now
+    return actions.slice(0, RANDOM_PLAYER_CONSTANTS.MAX_BOAT_ACTIONS); // Increased limit since we have more options now
   }
 
   private generateRandomHarvestAction(gameState: GameState, playerName: string, dieValue: number): DiceAction | null {
@@ -377,12 +404,12 @@ export class RandomPlayerAgent implements PlayerAgent {
     }
 
     // Conquer with might if player has >= 1 might (50% chance)
-    if (player.might >= 1 && Math.random() < 0.5) {
+    if (player.might >= 1 && Math.random() < RANDOM_PLAYER_CONSTANTS.CONQUER_WITH_MIGHT_CHANCE) {
       tileAction.conquerWithMight = true;
     }
 
     // Incite revolt if player has >= 1 fame (50% chance)
-    if (player.fame >= 1 && Math.random() < 0.5) {
+    if (player.fame >= 1 && Math.random() < RANDOM_PLAYER_CONSTANTS.INCITE_REVOLT_CHANCE) {
       tileAction.inciteRevolt = true;
     }
 
