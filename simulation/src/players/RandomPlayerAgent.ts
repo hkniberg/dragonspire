@@ -149,30 +149,29 @@ export class RandomPlayerAgent implements PlayerAgent {
     traderContext: TraderContext,
     thinkingLogger?: (content: string) => void,
   ): Promise<TraderDecision> {
-    // Simple random trader strategy
+    // Always buy spear if available, otherwise buy nothing
     const playerResources = traderContext.playerResources;
     const availableItems = traderContext.availableItems;
 
     const actions: any[] = [];
 
-    // Maybe buy an item if we have gold
-    if (playerResources.gold > 0 && availableItems.length > 0 && Math.random() < RANDOM_PLAYER_CONSTANTS.TRADER_BUY_ITEM_CHANCE) {
-      const affordableItems = availableItems.filter(item => {
-        const traderItem = getTraderItemById(item.id);
-        return traderItem && playerResources.gold >= traderItem.cost;
-      });
+    // Look for spear specifically
+    if (playerResources.gold > 0 && availableItems.length > 0) {
+      const spearItem = availableItems.find(item => item.id === "spear");
 
-      if (affordableItems.length > 0) {
-        const randomItem = affordableItems[Math.floor(Math.random() * affordableItems.length)];
-        actions.push({
-          type: "buyItem",
-          itemId: randomItem.id
-        });
+      if (spearItem) {
+        const traderItem = getTraderItemById(spearItem.id);
+        if (traderItem && playerResources.gold >= traderItem.cost) {
+          actions.push({
+            type: "buyItem",
+            itemId: spearItem.id
+          });
+        }
       }
     }
 
     if (thinkingLogger) {
-      thinkingLogger(`Random player ${this.name} trader decision: ${actions.length} actions`);
+      thinkingLogger(`Random player ${this.name} trader decision: ${actions.length > 0 ? 'buying spear' : 'buying nothing'}`);
     }
 
     return {
