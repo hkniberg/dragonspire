@@ -23,23 +23,6 @@ export function isValidBoardPosition(position: Position): boolean {
 }
 
 /**
- * Get detailed information about harvestable resources, taking blockading into account
- *
- * A player can harvest from:
- * - Any tile that is claimed by them and doesn't have an opposing champion on it
- * - Any tile that is claimed by an opposing player and has their champion on it (blockading)
- */
-export interface HarvestableResourcesInfo {
-  ownedNonBlockedTiles: Tile[];
-  ownedBlockedTiles: Tile[];
-  blockadedOpponentTiles: Tile[];
-  totalHarvestableResources: Record<ResourceType, number>;
-}
-
-
-
-
-/**
  * Get a list of buildings that the player can afford to use
  */
 export function getUsableBuildings(player: Player): string[] {
