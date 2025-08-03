@@ -31,7 +31,7 @@ Spend \`2 ore\` to gain \`+1 might\`
 - boat1 at (sw)
 - Buildings: none
 - claims (2 tiles of max 10):
-  - Tile (0,5) providing 2 food, 1 gold (blockaded by Bob champion1)
+  - Tile (0,5) (starred) providing 2 food, 1 gold (blockaded by Bob champion1)
   - Tile (0,7) providing 1 ore
 
 ## Bob
@@ -142,8 +142,7 @@ Tile (2,5)
 - Jim champion1 is here
 
 Tile (2,6)
-- Resource tile providing 1 wood
-- Unclaimed
+- Unclaimed Resource tile providing 1 wood
 - Monster: wolf (beast) (might 6) (reward 1 fame, 2 food)
 
 Tile (2,7)
@@ -189,7 +188,7 @@ Tile (4,3)
 - Unexplored tier 1 tile
 
 Tile (4,4)
-- Doomspire Dragon (might 13)
+- Doomspire Dragon (might 13) - Impressed 0/3 times
 
 Tile (4,5)
 - Unexplored tier 1 tile
