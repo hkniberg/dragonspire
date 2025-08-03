@@ -61,7 +61,7 @@ export function stringifyTileForGameLog(tile: Tile, gameState: GameState, ignore
         }
         break;
       case "temple":
-        sentences.push("This is a chapel (no combat). Buy 3 fame for 1 might");
+        sentences.push("This is a temple (no combat). Sacrifice 2 fame for 1 might");
         break;
       case "trader":
         sentences.push("This is a trader (no combat). Exchange 2 of any resource (food/wood/ore/gold) for 1 of any resource. Buy weapons/tools/items for gold");
@@ -288,7 +288,7 @@ function formatTileForBoard(tile: Tile, gameState: GameState): string {
         }
         break;
       case "temple":
-        lines.push("- Chapel (no combat). Buy 3 fame for 1 might");
+        lines.push("- Temple (no combat). Sacrifice 2 fame for 1 might");
         break;
       case "trader":
         lines.push("- Trader (no combat). Exchange 2 of any resource (food/wood/ore/gold) for 1 of any resource. Buy weapons/tools/items for gold");
@@ -423,13 +423,13 @@ export function formatBuildingInfo(buildingType: string): string {
     case "market":
       return "market (sell food/wood/ore for gold, 2 resources = 1 gold)";
     case "blacksmith":
-      return "blacksmith (buy 1 might for 1 gold + 2 ore)";
+      return "blacksmith (buy 1 might for 1 gold + 3 ore)";
     case "fletcher":
       return "fletcher (buy 1 might for 3 wood + 1 ore)";
     case "chapel":
-      return "chapel (buy 3 fame for 1 might)";
+      return "chapel (gain a one-time 3 fame bonus)";
     case "monastery":
-      return "monastery (buy 1 fame for 1 gold)";
+      return "monastery (gain a one-time 5 fame bonus)";
     case "warshipUpgrade":
       return "warship upgrade (boats provide combat support in adjacent battles)";
     default:

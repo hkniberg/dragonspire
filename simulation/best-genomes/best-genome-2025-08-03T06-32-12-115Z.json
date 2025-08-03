@@ -1,0 +1,20 @@
+{
+  "timestamp": "2025-08-03T06:32:12.125Z",
+  "fitness": 372.25,
+  "gamesPlayed": 4,
+  "winRate": 0.75,
+  "averagePlacement": 1.75,
+  "genome": {
+    "combatRiskTolerance": 0.3370007004674255,
+    "economicFocus": 0.9121417510938861,
+    "territorialAggression": 0.6141701206034973,
+    "explorationAggression": 0.475528723102155,
+    "famePathWeight": 0.3154937174414303,
+    "goldPathWeight": 0.0314423221920589,
+    "territorialPathWeight": 0.378318782879567,
+    "combatPathWeight": 0.2747451774869438,
+    "defensivePosture": 0.7629002517989873,
+    "dragonTimingAggression": 0.8031216223754707,
+    "safetyMarginPreference": 0.3444533502351926
+  }
+}

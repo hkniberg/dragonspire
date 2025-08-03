@@ -100,20 +100,16 @@ const argv = yargs
 
   // Player configuration options
   .option("p1", {
-    choices: ["random", "claude"],
-    description: "Player 1 type (random or claude)",
+    description: "Player 1 type: random, claude, tactical, evolutionary, evolved, or evolved:filename.json",
   })
   .option("p2", {
-    choices: ["random", "claude"],
-    description: "Player 2 type (random or claude)",
+    description: "Player 2 type: random, claude, tactical, evolutionary, evolved, or evolved:filename.json",
   })
   .option("p3", {
-    choices: ["random", "claude"],
-    description: "Player 3 type (random or claude)",
+    description: "Player 3 type: random, claude, tactical, evolutionary, evolved, or evolved:filename.json",
   })
   .option("p4", {
-    choices: ["random", "claude"],
-    description: "Player 4 type (random or claude)",
+    description: "Player 4 type: random, claude, tactical, evolutionary, evolved, or evolved:filename.json",
   })
 
   // Claude instructions
@@ -130,7 +126,10 @@ Examples:
   $0 --turns 5                             # Run 5 turns
   $0 --complete                             # Run complete game
   $0 --single-turn --p1 claude             # 1 turn, Player 1 is Claude AI
+  $0 --single-turn --p1 tactical           # 1 turn, Player 1 is TacticalLord AI
+  $0 --single-turn --p1 evolved            # 1 turn, Player 1 uses latest evolved AI
   $0 --complete --p1 random --p2 claude    # Complete game, mixed players
+  $0 --complete --p1 tactical --p2 evolved # Complete game, TacticalLord vs evolved AI
   $0 --complete --max-rounds 25            # Complete game with 25 max rounds
   $0 --complete --seed 12345               # Complete game with specific board layout
   $0 --turns 5 --p1 claude --p2 claude    # 5 turns, first 2 players are Claude AI

@@ -9,13 +9,17 @@ import { Claude } from "../llm/claude";
 import { ClaudePlayerAgent } from "../players/ClaudePlayer";
 import { PlayerAgent } from "../players/PlayerAgent";
 import { RandomPlayerAgent } from "../players/RandomPlayerAgent";
+import { TacticalLord } from "../players/TacticalLord";
+import { EvolutionaryPlayer, generateRandomGenome } from "../players/EvolutionaryPlayer";
+import { EvolutionManager } from "../players/EvolutionManager";
 
 // Load environment variables
 dotenv.config();
 
 export interface PlayerConfig {
   name: string;
-  type: "random" | "claude";
+  type: "random" | "claude" | "tactical" | "evolutionary" | "evolved";
+  genomeFile?: string; // For evolved players loaded from file
 }
 
 export interface CLIConfig {
@@ -87,6 +91,8 @@ export class CLIRunner {
     switch (config.type) {
       case "random":
         return new RandomPlayerAgent(config.name);
+      case "tactical":
+        return new TacticalLord(config.name);
       case "claude":
         const apiKey = process.env.ANTHROPIC_API_KEY;
         if (!apiKey) {
@@ -103,6 +109,11 @@ export class CLIRunner {
 
         const claude = new Claude(apiKey, systemPrompt);
         return new ClaudePlayerAgent(config.name, claude, templateProcessor);
+      case "evolutionary":
+        return new EvolutionaryPlayer(generateRandomGenome(), config.name);
+      case "evolved":
+        const genome = await EvolutionManager.loadGenome(config.genomeFile);
+        return EvolutionManager.createPlayerFromGenome(genome, config.name);
       default:
         throw new Error(`Unknown player type: ${config.type}`);
     }
@@ -112,10 +123,21 @@ export class CLIRunner {
     const playerConfigs: PlayerConfig[] = [];
     const defaultNames = ["Alice", "Bob", "Charlie", "Diana"];
 
-    // Look for player specifications like p1=random, p2=claude, etc.
-    const playerArgs = args.filter((arg) => arg.match(/^p[1-4]=(random|claude)$/));
+    // Look for any player specifications like p1=..., p2=..., etc.
+    const allPlayerArgs = args.filter((arg) => arg.match(/^p[1-4]=/));
+    const validPlayerArgs = args.filter((arg) => arg.match(/^p[1-4]=(random|claude|tactical|evolutionary|evolved(?::.+)?)$/));
 
-    if (playerArgs.length === 0) {
+    // Check for invalid player types
+    const invalidPlayerArgs = allPlayerArgs.filter(arg => !validPlayerArgs.includes(arg));
+    if (invalidPlayerArgs.length > 0) {
+      const invalidTypes = invalidPlayerArgs.map(arg => {
+        const match = arg.match(/^p[1-4]=(.+)$/);
+        return match ? match[1] : arg;
+      });
+      throw new Error(`Invalid player type(s): ${invalidTypes.join(', ')}. Valid types are: random, claude, tactical, evolutionary, evolved, evolved:filename.json`);
+    }
+
+    if (validPlayerArgs.length === 0) {
       // No player specifications, default to all random players
       return defaultNames.map((name) => ({ name, type: "random" }));
     }
@@ -126,14 +148,22 @@ export class CLIRunner {
     }
 
     // Override with specified player types
-    for (const arg of playerArgs) {
-      const match = arg.match(/^p([1-4])=(random|claude)$/);
+    for (const arg of validPlayerArgs) {
+      const match = arg.match(/^p([1-4])=(random|claude|tactical|evolutionary|evolved(?::.+)?)$/);
       if (match) {
         const playerIndex = parseInt(match[1]) - 1;
-        const playerType = match[2] as "random" | "claude";
+        const playerTypeAndFile = match[2];
 
         if (playerIndex >= 0 && playerIndex < 4) {
-          playerConfigs[playerIndex].type = playerType;
+          if (playerTypeAndFile.startsWith("evolved:")) {
+            playerConfigs[playerIndex].type = "evolved";
+            playerConfigs[playerIndex].genomeFile = playerTypeAndFile.substring(8); // Remove "evolved:" prefix
+          } else if (playerTypeAndFile === "evolved") {
+            playerConfigs[playerIndex].type = "evolved";
+            // genomeFile remains undefined, will load latest automatically
+          } else {
+            playerConfigs[playerIndex].type = playerTypeAndFile as "random" | "claude" | "tactical" | "evolutionary";
+          }
         }
       }
     }
@@ -368,7 +398,7 @@ export class CLIRunner {
     // Create game master
     const masterConfig: GameMasterConfig = {
       players: players,
-      maxRounds: config.maxRounds || 10, // Limit for testing
+      maxRounds: config.maxRounds || 30, // Limit for testing
       seed: config.seed,
     };
 
@@ -477,7 +507,7 @@ export class CLIRunner {
           break;
         // Skip player arguments as they're already parsed
         default:
-          if (args[i].match(/^p[1-4]=(random|claude)$/)) {
+          if (args[i].match(/^p[1-4]=(random|claude|tactical|evolutionary|evolved(?::.+)?)$/)) {
             // Skip player arguments
             continue;
           }

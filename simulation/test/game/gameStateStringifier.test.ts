@@ -166,7 +166,7 @@ Tile (3,4)
 - Unexplored tier 1 tile
 
 Tile (3,5)
-- Chapel (no combat). Buy 3 fame for 1 might
+- Temple (no combat). Sacrifice 2 fame for 1 might.
 - Jim champion2 is here
 
 Tile (3,6)
@@ -306,9 +306,9 @@ Tile (7,7)
     expect(adventureWithTokensResult).toBe("This is an adventure tile.");
 
     // Test 5: Chapel with champion
-    const chapelTile = sampleGameState.getTile({ row: 3, col: 5 })!;
-    const chapelResult = stringifyTileForGameLog(chapelTile, sampleGameState, "Jim"); // Ignore Jim's champion
-    expect(chapelResult).toBe("This is a chapel (no combat). Buy 3 fame for 1 might.");
+    const templeTile = sampleGameState.getTile({ row: 3, col: 5 })!;
+    const chapelResult = stringifyTileForGameLog(templeTile, sampleGameState, "Jim"); // Ignore Jim's champion
+    expect(chapelResult).toBe("This is a temple (no combat). Sacrifice 2 fame for 1 might.");
 
     // Test 6: Protected resource tile (protected by adjacent champion)
     // Add a Jim champion adjacent to his claimed tile at (0,7) to protect it

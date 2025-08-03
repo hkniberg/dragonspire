@@ -58,6 +58,9 @@ node run-test.js --turns 5
 # Run a complete game
 node run-test.js --complete
 
+# Run a complete game with max rounds
+node run-test.js --complete --max-rounds 20
+
 # Run a single turn with a Claude AI player (requires ANTHROPIC_API_KEY in .env)
 node run-test.js --single-turn --p1 claude
 

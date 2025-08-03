@@ -1,0 +1,614 @@
+{
+  "timestamp": "2025-08-03T05:29:11.847Z",
+  "stats": {
+    "generation": 3,
+    "gamesPlayed": 70,
+    "bestFitness": 76.8,
+    "averageFitness": 45.25238095238095,
+    "populationDiversity": 0.16570667117842525
+  },
+  "bestGenomes": [
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6071374715709872,
+        "economicFocus": 0.8923463099330868,
+        "territorialAggression": 0.7811812107261016,
+        "explorationAggression": 0.9733067497499708,
+        "famePathWeight": 0.39068776375166986,
+        "goldPathWeight": 0.3320709642065316,
+        "territorialPathWeight": 0.020980414673502527,
+        "combatPathWeight": 0.256260857368296,
+        "defensivePosture": 0.746808708643756,
+        "dragonTimingAggression": 0.7732491546108515,
+        "safetyMarginPreference": 0.5195195630655471
+      },
+      "gamesPlayed": 1,
+      "totalPlacement": 1,
+      "wins": 1,
+      "averagePlacement": 1,
+      "fitness": 76.8
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6381800158135478,
+        "economicFocus": 0.9214284030235984,
+        "territorialAggression": 0.6450858817726326,
+        "explorationAggression": 0.6054583584074504,
+        "famePathWeight": 0.16705253674002177,
+        "goldPathWeight": 0.25264472101528634,
+        "territorialPathWeight": 0.3047394225516579,
+        "combatPathWeight": 0.27556331969303405,
+        "defensivePosture": 0.22220850327311759,
+        "dragonTimingAggression": 0.2808341858782868,
+        "safetyMarginPreference": 0.32509245548756405
+      },
+      "gamesPlayed": 6,
+      "totalPlacement": 7,
+      "wins": 5,
+      "averagePlacement": 1.1666666666666667,
+      "fitness": 76.5
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6071374715709872,
+        "economicFocus": 0.9672037933161407,
+        "territorialAggression": 0.7811812107261016,
+        "explorationAggression": 0.9733067497499708,
+        "famePathWeight": 0.39068776375166986,
+        "goldPathWeight": 0.3320709642065316,
+        "territorialPathWeight": 0.020980414673502527,
+        "combatPathWeight": 0.256260857368296,
+        "defensivePosture": 0.746808708643756,
+        "dragonTimingAggression": 0.8034371787986647,
+        "safetyMarginPreference": 0.5195195630655471
+      },
+      "gamesPlayed": 1,
+      "totalPlacement": 1,
+      "wins": 1,
+      "averagePlacement": 1,
+      "fitness": 75.7
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.3269279103280807,
+        "economicFocus": 0.9407472647450266,
+        "territorialAggression": 0.8618971394793449,
+        "explorationAggression": 0.3792038324209903,
+        "famePathWeight": 0.23654800928826594,
+        "goldPathWeight": 0.08911693488319228,
+        "territorialPathWeight": 0.3371611576089084,
+        "combatPathWeight": 0.3371738982196334,
+        "defensivePosture": 0.7386215736623761,
+        "dragonTimingAggression": 0.3798474826946206,
+        "safetyMarginPreference": 0.632755300608161
+      },
+      "gamesPlayed": 3,
+      "totalPlacement": 6,
+      "wins": 1,
+      "averagePlacement": 2,
+      "fitness": 65.66666666666667
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6684763992578571,
+        "economicFocus": 0.9214284030235984,
+        "territorialAggression": 0.6450858817726326,
+        "explorationAggression": 0.4400698261605569,
+        "famePathWeight": 0.16961008466717842,
+        "goldPathWeight": 0.2565126717519178,
+        "territorialPathWeight": 0.07189960954205755,
+        "combatPathWeight": 0.5019776340388463,
+        "defensivePosture": 0.510666032119415,
+        "dragonTimingAggression": 0.2808341858782868,
+        "safetyMarginPreference": 0.7574838784276103
+      },
+      "gamesPlayed": 4,
+      "totalPlacement": 6,
+      "wins": 3,
+      "averagePlacement": 1.5,
+      "fitness": 65.2
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.3269279103280807,
+        "economicFocus": 0.9407472647450266,
+        "territorialAggression": 0.8618971394793449,
+        "explorationAggression": 0.3792038324209903,
+        "famePathWeight": 0.22296517050455736,
+        "goldPathWeight": 0.08399974550984378,
+        "territorialPathWeight": 0.3178010046247018,
+        "combatPathWeight": 0.3752340793608971,
+        "defensivePosture": 0.7386215736623761,
+        "dragonTimingAggression": 0.3798474826946206,
+        "safetyMarginPreference": 0.632755300608161
+      },
+      "gamesPlayed": 5,
+      "totalPlacement": 9,
+      "wins": 3,
+      "averagePlacement": 1.8,
+      "fitness": 60
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.3269279103280807,
+        "economicFocus": 0.9407472647450266,
+        "territorialAggression": 0.8618971394793449,
+        "explorationAggression": 0.3792038324209903,
+        "famePathWeight": 0.22986614306119496,
+        "goldPathWeight": 0.07791544886670139,
+        "territorialPathWeight": 0.29783811599930193,
+        "combatPathWeight": 0.39438029207280173,
+        "defensivePosture": 0.8319066060962608,
+        "dragonTimingAggression": 0.4002209431480258,
+        "safetyMarginPreference": 0.632755300608161
+      },
+      "gamesPlayed": 5,
+      "totalPlacement": 16,
+      "wins": 0,
+      "averagePlacement": 3.2,
+      "fitness": 53.7
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6071374715709872,
+        "economicFocus": 0.9082641176642983,
+        "territorialAggression": 0.8574828443329814,
+        "explorationAggression": 0.9733067497499708,
+        "famePathWeight": 0.055325523076051444,
+        "goldPathWeight": 0.37945071970644567,
+        "territorialPathWeight": 0.07081543640631213,
+        "combatPathWeight": 0.49440832081119074,
+        "defensivePosture": 0.510666032119415,
+        "dragonTimingAggression": 0.06978224395094101,
+        "safetyMarginPreference": 0.7574838784276103
+      },
+      "gamesPlayed": 4,
+      "totalPlacement": 7,
+      "wins": 2,
+      "averagePlacement": 1.75,
+      "fitness": 51.6
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6381800158135478,
+        "economicFocus": 0.9407472647450266,
+        "territorialAggression": 0.8618971394793449,
+        "explorationAggression": 0.6054583584074504,
+        "famePathWeight": 0.1769460568105487,
+        "goldPathWeight": 0.08897454675703546,
+        "territorialPathWeight": 0.33662245252992745,
+        "combatPathWeight": 0.39745694390248854,
+        "defensivePosture": 0.22220850327311759,
+        "dragonTimingAggression": 0.2808341858782868,
+        "safetyMarginPreference": 0.632755300608161
+      },
+      "gamesPlayed": 3,
+      "totalPlacement": 6,
+      "wins": 0,
+      "averagePlacement": 2,
+      "fitness": 46.400000000000006
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6071374715709872,
+        "economicFocus": 0.8958306801876847,
+        "territorialAggression": 0.7811812107261016,
+        "explorationAggression": 0.9733067497499708,
+        "famePathWeight": 0.39122414470249045,
+        "goldPathWeight": 0.33252686929506214,
+        "territorialPathWeight": 0.019636304351216473,
+        "combatPathWeight": 0.25661268165123075,
+        "defensivePosture": 0.746808708643756,
+        "dragonTimingAggression": 0.8205569885608817,
+        "safetyMarginPreference": 0.5282585111289564
+      },
+      "gamesPlayed": 7,
+      "totalPlacement": 14,
+      "wins": 2,
+      "averagePlacement": 2,
+      "fitness": 45.714285714285715
+    }
+  ],
+  "fullPopulation": [
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6684763992578571,
+        "economicFocus": 0.9214284030235984,
+        "territorialAggression": 0.6450858817726326,
+        "explorationAggression": 0.4400698261605569,
+        "famePathWeight": 0.16961008466717842,
+        "goldPathWeight": 0.2565126717519178,
+        "territorialPathWeight": 0.07189960954205755,
+        "combatPathWeight": 0.5019776340388463,
+        "defensivePosture": 0.510666032119415,
+        "dragonTimingAggression": 0.2808341858782868,
+        "safetyMarginPreference": 0.7574838784276103
+      },
+      "gamesPlayed": 4,
+      "totalPlacement": 6,
+      "wins": 3,
+      "averagePlacement": 1.5,
+      "fitness": 65.2
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6071374715709872,
+        "economicFocus": 0.9672037933161407,
+        "territorialAggression": 0.7811812107261016,
+        "explorationAggression": 0.9733067497499708,
+        "famePathWeight": 0.39068776375166986,
+        "goldPathWeight": 0.3320709642065316,
+        "territorialPathWeight": 0.020980414673502527,
+        "combatPathWeight": 0.256260857368296,
+        "defensivePosture": 0.746808708643756,
+        "dragonTimingAggression": 0.8034371787986647,
+        "safetyMarginPreference": 0.5195195630655471
+      },
+      "gamesPlayed": 1,
+      "totalPlacement": 1,
+      "wins": 1,
+      "averagePlacement": 1,
+      "fitness": 75.7
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6381800158135478,
+        "economicFocus": 0.9214284030235984,
+        "territorialAggression": 0.6450858817726326,
+        "explorationAggression": 0.6054583584074504,
+        "famePathWeight": 0.16705253674002177,
+        "goldPathWeight": 0.25264472101528634,
+        "territorialPathWeight": 0.3047394225516579,
+        "combatPathWeight": 0.27556331969303405,
+        "defensivePosture": 0.22220850327311759,
+        "dragonTimingAggression": 0.2808341858782868,
+        "safetyMarginPreference": 0.32509245548756405
+      },
+      "gamesPlayed": 6,
+      "totalPlacement": 7,
+      "wins": 5,
+      "averagePlacement": 1.1666666666666667,
+      "fitness": 76.5
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.3269279103280807,
+        "economicFocus": 0.9407472647450266,
+        "territorialAggression": 0.8618971394793449,
+        "explorationAggression": 0.3792038324209903,
+        "famePathWeight": 0.22296517050455736,
+        "goldPathWeight": 0.08399974550984378,
+        "territorialPathWeight": 0.3178010046247018,
+        "combatPathWeight": 0.3752340793608971,
+        "defensivePosture": 0.7386215736623761,
+        "dragonTimingAggression": 0.3798474826946206,
+        "safetyMarginPreference": 0.632755300608161
+      },
+      "gamesPlayed": 5,
+      "totalPlacement": 9,
+      "wins": 3,
+      "averagePlacement": 1.8,
+      "fitness": 60
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6665725772354147,
+        "economicFocus": 0.7975497250880117,
+        "territorialAggression": 1,
+        "explorationAggression": 0.22360754735203692,
+        "famePathWeight": 0.4103988215898513,
+        "goldPathWeight": 0.12936686638153835,
+        "territorialPathWeight": 0.4602343120286104,
+        "combatPathWeight": 0,
+        "defensivePosture": 0.5646897941510705,
+        "dragonTimingAggression": 0.10805031009773192,
+        "safetyMarginPreference": 0.2917059476386964
+      },
+      "gamesPlayed": 3,
+      "totalPlacement": 10,
+      "wins": 0,
+      "averagePlacement": 3.3333333333333335,
+      "fitness": 32.266666666666666
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.3269279103280807,
+        "economicFocus": 0.9407472647450266,
+        "territorialAggression": 0.8618971394793449,
+        "explorationAggression": 0.3792038324209903,
+        "famePathWeight": 0.23654800928826594,
+        "goldPathWeight": 0.08911693488319228,
+        "territorialPathWeight": 0.3371611576089084,
+        "combatPathWeight": 0.3371738982196334,
+        "defensivePosture": 0.7386215736623761,
+        "dragonTimingAggression": 0.3798474826946206,
+        "safetyMarginPreference": 0.632755300608161
+      },
+      "gamesPlayed": 3,
+      "totalPlacement": 6,
+      "wins": 1,
+      "averagePlacement": 2,
+      "fitness": 65.66666666666667
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.3269279103280807,
+        "economicFocus": 0.9407472647450266,
+        "territorialAggression": 0.8618971394793449,
+        "explorationAggression": 0.3792038324209903,
+        "famePathWeight": 0.22986614306119496,
+        "goldPathWeight": 0.07791544886670139,
+        "territorialPathWeight": 0.29783811599930193,
+        "combatPathWeight": 0.39438029207280173,
+        "defensivePosture": 0.8319066060962608,
+        "dragonTimingAggression": 0.4002209431480258,
+        "safetyMarginPreference": 0.632755300608161
+      },
+      "gamesPlayed": 5,
+      "totalPlacement": 16,
+      "wins": 0,
+      "averagePlacement": 3.2,
+      "fitness": 53.7
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.3269279103280807,
+        "economicFocus": 0.8604703220834468,
+        "territorialAggression": 0.8618971394793449,
+        "explorationAggression": 0.3792038324209903,
+        "famePathWeight": 0.22296517050455736,
+        "goldPathWeight": 0.08399974550984378,
+        "territorialPathWeight": 0.3178010046247018,
+        "combatPathWeight": 0.3752340793608971,
+        "defensivePosture": 0.7386215736623761,
+        "dragonTimingAggression": 0.29209975402344507,
+        "safetyMarginPreference": 0.632755300608161
+      },
+      "gamesPlayed": 2,
+      "totalPlacement": 6,
+      "wins": 0,
+      "averagePlacement": 3,
+      "fitness": 35.7
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.3269279103280807,
+        "economicFocus": 0.9407472647450266,
+        "territorialAggression": 0.8618971394793449,
+        "explorationAggression": 0.3792038324209903,
+        "famePathWeight": 0.22296517050455736,
+        "goldPathWeight": 0.08399974550984378,
+        "territorialPathWeight": 0.3178010046247018,
+        "combatPathWeight": 0.3752340793608971,
+        "defensivePosture": 0.7386215736623761,
+        "dragonTimingAggression": 0.3798474826946206,
+        "safetyMarginPreference": 0.632755300608161
+      },
+      "gamesPlayed": 2,
+      "totalPlacement": 6,
+      "wins": 0,
+      "averagePlacement": 3,
+      "fitness": 35.400000000000006
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6071374715709872,
+        "economicFocus": 0.8923463099330868,
+        "territorialAggression": 0.7811812107261016,
+        "explorationAggression": 0.9733067497499708,
+        "famePathWeight": 0.39068776375166986,
+        "goldPathWeight": 0.3320709642065316,
+        "territorialPathWeight": 0.020980414673502527,
+        "combatPathWeight": 0.256260857368296,
+        "defensivePosture": 0.746808708643756,
+        "dragonTimingAggression": 0.7732491546108515,
+        "safetyMarginPreference": 0.5195195630655471
+      },
+      "gamesPlayed": 1,
+      "totalPlacement": 1,
+      "wins": 1,
+      "averagePlacement": 1,
+      "fitness": 76.8
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6684763992578571,
+        "economicFocus": 0.6652560520199446,
+        "territorialAggression": 0.297042025552009,
+        "explorationAggression": 0.4296621734882704,
+        "famePathWeight": 0.2913829043219869,
+        "goldPathWeight": 0.08839616936861251,
+        "territorialPathWeight": 0.4171291973542698,
+        "combatPathWeight": 0.2030917289551308,
+        "defensivePosture": 0.510666032119415,
+        "dragonTimingAggression": 0.06978224395094101,
+        "safetyMarginPreference": 0.8285370630813218
+      },
+      "gamesPlayed": 5,
+      "totalPlacement": 12,
+      "wins": 2,
+      "averagePlacement": 2.4,
+      "fitness": 34
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6684763992578571,
+        "economicFocus": 0.8448866629375265,
+        "territorialAggression": 0.6450858817726326,
+        "explorationAggression": 0.4400698261605569,
+        "famePathWeight": 0.1614138391085992,
+        "goldPathWeight": 0.25904454359639134,
+        "territorialPathWeight": 0.07260928441224968,
+        "combatPathWeight": 0.5069323328827599,
+        "defensivePosture": 0.510666032119415,
+        "dragonTimingAggression": 0.2808341858782868,
+        "safetyMarginPreference": 0.7574838784276103
+      },
+      "gamesPlayed": 5,
+      "totalPlacement": 14,
+      "wins": 0,
+      "averagePlacement": 2.8,
+      "fitness": 22
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6381800158135478,
+        "economicFocus": 0.9407472647450266,
+        "territorialAggression": 0.8618971394793449,
+        "explorationAggression": 0.6054583584074504,
+        "famePathWeight": 0.1769460568105487,
+        "goldPathWeight": 0.08897454675703546,
+        "territorialPathWeight": 0.33662245252992745,
+        "combatPathWeight": 0.39745694390248854,
+        "defensivePosture": 0.22220850327311759,
+        "dragonTimingAggression": 0.2808341858782868,
+        "safetyMarginPreference": 0.632755300608161
+      },
+      "gamesPlayed": 3,
+      "totalPlacement": 6,
+      "wins": 0,
+      "averagePlacement": 2,
+      "fitness": 46.400000000000006
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6071374715709872,
+        "economicFocus": 0.9082641176642983,
+        "territorialAggression": 0.8574828443329814,
+        "explorationAggression": 0.9733067497499708,
+        "famePathWeight": 0.055325523076051444,
+        "goldPathWeight": 0.37945071970644567,
+        "territorialPathWeight": 0.07081543640631213,
+        "combatPathWeight": 0.49440832081119074,
+        "defensivePosture": 0.510666032119415,
+        "dragonTimingAggression": 0.06978224395094101,
+        "safetyMarginPreference": 0.7574838784276103
+      },
+      "gamesPlayed": 4,
+      "totalPlacement": 7,
+      "wins": 2,
+      "averagePlacement": 1.75,
+      "fitness": 51.6
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6071374715709872,
+        "economicFocus": 0.8958306801876847,
+        "territorialAggression": 0.7811812107261016,
+        "explorationAggression": 0.9733067497499708,
+        "famePathWeight": 0.39122414470249045,
+        "goldPathWeight": 0.33252686929506214,
+        "territorialPathWeight": 0.019636304351216473,
+        "combatPathWeight": 0.25661268165123075,
+        "defensivePosture": 0.746808708643756,
+        "dragonTimingAggression": 0.8205569885608817,
+        "safetyMarginPreference": 0.5282585111289564
+      },
+      "gamesPlayed": 7,
+      "totalPlacement": 14,
+      "wins": 2,
+      "averagePlacement": 2,
+      "fitness": 45.714285714285715
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.3269279103280807,
+        "economicFocus": 0.9407472647450266,
+        "territorialAggression": 0.6450858817726326,
+        "explorationAggression": 0.6054583584074504,
+        "famePathWeight": 0.25129414830924535,
+        "goldPathWeight": 0.09467238519057439,
+        "territorialPathWeight": 0.3434582785870803,
+        "combatPathWeight": 0.3105751879131,
+        "defensivePosture": 0.8319066060962608,
+        "dragonTimingAggression": 0.2808341858782868,
+        "safetyMarginPreference": 0.32509245548756405
+      },
+      "gamesPlayed": 5,
+      "totalPlacement": 14,
+      "wins": 1,
+      "averagePlacement": 2.8,
+      "fitness": 26
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6684763992578571,
+        "economicFocus": 0.6652560520199446,
+        "territorialAggression": 0.297042025552009,
+        "explorationAggression": 0.4296621734882704,
+        "famePathWeight": 0.2763382857610142,
+        "goldPathWeight": 0.0838321176323022,
+        "territorialPathWeight": 0.44722385550361304,
+        "combatPathWeight": 0.19260574110307058,
+        "defensivePosture": 0.42165410867115594,
+        "dragonTimingAggression": 0.06978224395094101,
+        "safetyMarginPreference": 0.7574838784276103
+      },
+      "gamesPlayed": 2,
+      "totalPlacement": 6,
+      "wins": 0,
+      "averagePlacement": 3,
+      "fitness": 34.7
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.3269279103280807,
+        "economicFocus": 0.9407472647450266,
+        "territorialAggression": 0.8618971394793449,
+        "explorationAggression": 0.3792038324209903,
+        "famePathWeight": 0.23232383144396632,
+        "goldPathWeight": 0.08752552101749062,
+        "territorialPathWeight": 0.2891666260960951,
+        "combatPathWeight": 0.39098402144244804,
+        "defensivePosture": 0.7386215736623761,
+        "dragonTimingAggression": 0.3798474826946206,
+        "safetyMarginPreference": 0.632755300608161
+      },
+      "gamesPlayed": 4,
+      "totalPlacement": 13,
+      "wins": 1,
+      "averagePlacement": 3.25,
+      "fitness": 22.5
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.3269279103280807,
+        "economicFocus": 0.9407472647450266,
+        "territorialAggression": 0.8618971394793449,
+        "explorationAggression": 0.3792038324209903,
+        "famePathWeight": 0.21420699493046616,
+        "goldPathWeight": 0.0807001964471387,
+        "territorialPathWeight": 0.3053176333886153,
+        "combatPathWeight": 0.3997751752337798,
+        "defensivePosture": 0.7386215736623761,
+        "dragonTimingAggression": 0.3798474826946206,
+        "safetyMarginPreference": 0.632755300608161
+      },
+      "gamesPlayed": 1,
+      "totalPlacement": 3,
+      "wins": 0,
+      "averagePlacement": 3,
+      "fitness": 30.200000000000003
+    },
+    {
+      "genome": {
+        "combatRiskTolerance": 0.6684763992578571,
+        "economicFocus": 0.9214284030235984,
+        "territorialAggression": 0.6450858817726326,
+        "explorationAggression": 0.4400698261605569,
+        "famePathWeight": 0.16961008466717842,
+        "goldPathWeight": 0.2565126717519178,
+        "territorialPathWeight": 0.07189960954205755,
+        "combatPathWeight": 0.5019776340388463,
+        "defensivePosture": 0.510666032119415,
+        "dragonTimingAggression": 0.2808341858782868,
+        "safetyMarginPreference": 0.7574838784276103
+      },
+      "gamesPlayed": 2,
+      "totalPlacement": 7,
+      "wins": 0,
+      "averagePlacement": 3.5,
+      "fitness": 15
+    }
+  ]
+}

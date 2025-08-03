@@ -117,7 +117,7 @@ export interface Player {
 }
 
 
-export type PlayerType = "random" | "claude" | "human";
+export type PlayerType = "random" | "claude" | "human" | "tactical";
 
 /**
  * Player statistics snapshot for a single turn (combines counters and point-in-time data)
