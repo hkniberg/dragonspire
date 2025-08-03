@@ -113,4 +113,53 @@ export class Board {
       });
     });
   }
+
+  /**
+   * Get all tiles within a specified range from a starting tile
+   * Uses Manhattan distance to find tiles reachable within the given number of steps
+   * @param startTile The starting tile (or position)
+   * @param steps Maximum number of steps/moves allowed
+   * @param includeStartTile Whether to include the starting tile in the result
+   * @returns Array of tiles within range
+   */
+  getTilesWithinRange(startTile: Tile | Position, steps: number, includeStartTile: boolean = true): Tile[] {
+    const startPosition = 'position' in startTile ? startTile.position : startTile;
+
+    if (!this.isValidPosition(startPosition) || steps < 0) {
+      return [];
+    }
+
+    const result: Tile[] = [];
+    const { row: startRow, col: startCol } = startPosition;
+
+    // Iterate through all positions that could be within range
+    for (let row = startRow - steps; row <= startRow + steps; row++) {
+      for (let col = startCol - steps; col <= startCol + steps; col++) {
+        const position: Position = { row, col };
+
+        // Check if position is within board bounds
+        if (!this.isValidPosition(position)) {
+          continue;
+        }
+
+        // Calculate Manhattan distance
+        const distance = Math.abs(row - startRow) + Math.abs(col - startCol);
+
+        // Check if within range
+        if (distance <= steps) {
+          // Skip start tile if not including it
+          if (!includeStartTile && distance === 0) {
+            continue;
+          }
+
+          const tile = this.getTileAt(position);
+          if (tile) {
+            result.push(tile);
+          }
+        }
+      }
+    }
+
+    return result;
+  }
 }
