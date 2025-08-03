@@ -57,15 +57,18 @@ export class GoalPlayer implements PlayerAgent {
     thinkingLogger?: (content: string) => void,
   ): Promise<string | undefined> {
     const currentGoal = this.selectCurrentGoal(gameState);
-    return await currentGoal.makeStrategicAssessment(
-      gameState,
-      gameLog,
-      diceValues,
-      turnNumber,
-      traderItems,
-      adventureDeckThemes,
-      thinkingLogger
-    );
+    if (currentGoal.makeStrategicAssessment) {
+      return await currentGoal.makeStrategicAssessment(
+        gameState,
+        gameLog,
+        diceValues,
+        turnNumber,
+        traderItems,
+        adventureDeckThemes,
+        thinkingLogger
+      );
+    }
+    return undefined;
   }
 
   async decideDiceAction(
