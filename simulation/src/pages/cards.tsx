@@ -130,7 +130,7 @@ export default function CardsPage() {
       borderColor: getBorderColor(card.type),
       name: card.originalData.name,
       compactMode,
-      disabled: card.originalData.disabled,
+      disabled: false, //card.originalData.disabled,
       title: `${card.type.charAt(0).toUpperCase() + card.type.slice(1)}: ${
         card.originalData.name
       } (Tier ${card.tier}, ${card.theme})${card.originalData.disabled ? " [DISABLED]" : ""}`,
