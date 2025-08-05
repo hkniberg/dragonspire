@@ -55,7 +55,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     might: 3,
     fame: 1,
     resources: { food: 0, wood: 0, ore: 0, gold: 2 },
-    count: 1,
+    count: 2,
   },
 
   // Cave Theme Monsters
@@ -90,7 +90,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     might: 5,
     fame: 2,
     resources: { food: 0, wood: 0, ore: 2, gold: 2 },
-    count: 1,
+    count: 2,
   },
 
   // Grove Theme Monsters
@@ -127,7 +127,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     might: 4,
     fame: 1,
     resources: { food: 0, wood: 3, ore: 0, gold: 0 },
-    count: 1,
+    count: 2,
     imagePromptGuidance: "The young gangly version of an ent, dangerous and intelligent.",
   },
 
@@ -154,7 +154,7 @@ export const MONSTER_CARDS: MonsterCard[] = [
     might: 5,
     fame: 2,
     resources: { food: 0, wood: 0, ore: 0, gold: 3 },
-    count: 1,
+    count: 2,
   },
 
   // Cave Theme Tier 2 Monsters
