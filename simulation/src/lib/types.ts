@@ -28,6 +28,22 @@ export interface Position {
   col: number;
 }
 
+export type Path = Position[];
+
+export interface Bounds {
+  minRow: number;
+  maxRow: number;
+  minCol: number;
+  maxCol: number;
+}
+
+export interface ReachablePosition {
+  startPos: Position;
+  endPos: Position;
+  steps: number;
+  paths: Path[];
+}
+
 export interface CarriableItem {
   treasureCard?: TreasureCard;
   traderItem?: TraderItem;

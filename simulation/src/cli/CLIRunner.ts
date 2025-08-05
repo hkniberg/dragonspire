@@ -394,11 +394,15 @@ export class CLIRunner {
       console.log(`\nGame completed after ${gameState.currentRound} rounds`);
       console.log(`Total log entries: ${gameLog.length}`);
 
-      // Print final player states with might and formatted resources
+      // Print final player states with might, formatted resources, tiles, and buildings
       console.log("\nFinal Player States:");
       for (const player of gameState.players) {
         const { formatResources } = await import("../lib/utils");
-        console.log(`${player.name}: Fame=${player.fame}, Might=${player.might}, Resources=${formatResources(player.resources)}`);
+        const claimedTiles = gameState.getClaimedTiles(player.name);
+        const starredTiles = gameState.getStarredTileCount(player.name);
+        const buildings = player.buildings.length > 0 ? player.buildings.join(", ") : "none";
+
+        console.log(`${player.name}: Fame=${player.fame}, Might=${player.might}, Resources=${formatResources(player.resources)}, Tiles=${claimedTiles.length} (${starredTiles} starred), Buildings=[${buildings}]`);
       }
 
       console.log("✅ Complete game simulation successful!");
