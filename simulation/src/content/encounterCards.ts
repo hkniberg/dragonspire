@@ -43,6 +43,7 @@ export const ENCOUNTERS: Encounter[] = [
     description: "**Heals** you for *free* if you lose a fight against any wild creature.",
     follower: true,
     count: 1,
+    theme: "cave",
   },
   {
     disabled: true,
