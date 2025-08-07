@@ -25,6 +25,7 @@ export const EVENT_CARDS: EventCard[] = [
     tier: 1,
     description: "Choose **1 player** who loses `1 food` to a mischief of *starved rats*.",
     count: 2,
+    theme: "beast",
   },
   {
     id: "market-day",
@@ -33,6 +34,7 @@ export const EVENT_CARDS: EventCard[] = [
     description: `Decide if today is **Market Day**.  
 If so, *every player* must send **1 champion** to the trader, or refuse and pay \`1 gold\` in tax. Everyone visiting the trader may trade any resource 1:1 until harvest.`,
     count: 2,
+    theme: "beast",
   },
   {
     id: "thug-ambush",
@@ -43,6 +45,7 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
 **(2)** Fight *bandit* \`might 3\`, if you win, gain \`1 fame\` and \`2 gold\`  
 **(3)** You scare them off and gain \`1 fame\``,
     count: 2,
+    theme: "grove",
   },
   {
     id: "landslide",
@@ -53,13 +56,15 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
 **(2)** Flee to your nearest **claimed tile** (unoccupied)  
 **(3)** Miracle! You survive and find \`+2 ore\``,
     count: 2,
+    theme: "cave",
   },
   {
     id: "sudden-storm",
     name: "Sudden storm",
-    tier: 1,
-    description: "All **boats** move into an adjacent *sea*. All **oases** gain `+1 mystery card`.",
+    tier: 2,
+    description: "All **boats** move into an adjacent *sea*. All **oases** and **mountain tiles** gain `+1 mystery card`.",
     count: 2,
+    theme: "beast",
   },
 
   // Tier 2 Event Cards
@@ -69,7 +74,8 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
     name: "Hornet swarm",
     tier: 2,
     description: "Roll `2D3` to flee the swarm. The player to your right chooses direction, you must then move in that direction. Any **champion** passed by or through must *repeat this*.",
-    count: 1,
+    count: 2,
+    theme: "grove",
   },
   {
     id: "druid-rampage",
@@ -77,7 +83,8 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
     tier: 2,
     description:
       "A *wild-eyed Druid* hands you a **runed dagger**. `+1 might`. Once you leave, he turns into a *Bear*.",
-    count: 1,
+    count: 2,
+    theme: "grove",
   },
   {
     id: "temple-trial",
@@ -87,14 +94,16 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
 **Make an offering**: give \`1 resource\` to any player. **Gain \`1 fame\`.**  
 **or** **Commit sacrilege**: take \`1 resource\` from any player. **Lose \`1 fame\`.**`,
     count: 2,
+    theme: "beast",
   },
   {
-    id: "you-got-riches",
-    name: "You got riches!",
+    id: "riches-for-all",
+    name: "Riches for all!",
     tier: 2,
     description:
       "A shouting **genie** is granting everyone wishes. All players collect `1x food, ore, wood, gold`. All *oasis* also gain `+1 mystery card`.",
-    count: 1,
+    count: 2,
+    theme: "cave",
   },
   // Tier 3 Event Cards
   {
@@ -103,20 +112,23 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
     tier: 3,
     description: "You may pay the Bogwitch `2x gold` to **curse the lands**. If so *all* players (including you) lose `2 might` (if they have it), as their weapons rust and crumble.",
     count: 1,
+    theme: "cave",
   },
   {
     id: "thieving-crows",
     name: "Thieving crows",
     tier: 3,
-    description: "Choose which resource gets stolen: food, wood, or ore. All players lose all of that resource. The crows are not interested in gold.",
+    description: "A murder of mischievous, thieving crows are terrorizing the lands. Choose which resource gets stolen: food, wood, or ore. All players lose all of that resource.",
     count: 1,
+    theme: "grove",
   },
   {
     id: "dragon-raid",
     name: "Dragon raid",
     tier: 3,
-    description: "Each player loses 1D3 claimed tiles of their choice. Home tiles are never raided.",
+    description: "Each player loses *1x claimed tile* of their choice. Home tiles are never raided.",
     count: 1,
+    theme: "beast"
   },
   {
     id: "sea-monsters",
@@ -126,5 +138,6 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
 **Captain fights to the end.** Gain \`+2 fame\`, lose the boat.  
 **Captain flees.** Lose \`−1 fame\`, move the boat one step.`,
     count: 1,
+    theme: "beast"
   },
 ];
