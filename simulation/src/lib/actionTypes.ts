@@ -16,7 +16,6 @@ export interface TileAction {
   dropItems?: string[]; // Array of item IDs to drop on the tile
   conquerWithMight?: boolean; // Conquer tile using military might (costs 1 might)
   inciteRevolt?: boolean; // Incite revolt using fame (costs 1 fame, frees up tile but doesn't claim it)
-  preferredAdventureTheme?: AdventureThemeType; // Preferred theme when drawing adventure cards
 }
 
 export interface BoatAction {

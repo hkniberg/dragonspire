@@ -46,11 +46,6 @@ export const tileActionSchema = {
       type: "boolean",
       description: "Incite revolt using fame (costs 1 fame, frees up tile but doesn't claim it)"
     },
-    preferredAdventureTheme: {
-      type: "string",
-      enum: ["beast", "cave", "grove"],
-      description: "Preferred theme when drawing adventure cards"
-    }
   },
   additionalProperties: false
 };

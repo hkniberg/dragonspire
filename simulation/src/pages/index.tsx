@@ -12,13 +12,14 @@ import DicePanel from "../components/DicePanel";
 import { HumanPlayerModal } from "../components/HumanPlayerModal";
 import MovementIndicator from "../components/MovementIndicator";
 import { SettingsMenu } from "../components/SettingsMenu";
+import { TileActionModal } from "../components/TileActionModal";
 import { StatisticsView } from "../components/StatisticsView";
 import { TokenUsage } from "../components/TokenUsage";
 import { GameMaster, GameMasterConfig } from "../engine/GameMaster";
 import { GameState } from "../game/GameState";
 import { stringifyGameState } from "../game/gameStateStringifier";
 import { DiceAction } from "../lib/actionTypes";
-import { DecisionContext, GameLogEntry, TurnContext, TurnStatistics } from "../lib/types";
+import { DecisionContext, GameLogEntry, Position, Tile, TurnContext, TurnStatistics } from "../lib/types";
 import { ClaudePlayerAgent } from "../players/ClaudePlayer";
 import { HumanPlayer } from "../players/HumanPlayer";
 import { PlayerAgent } from "../players/PlayerAgent";
@@ -122,6 +123,15 @@ export default function GameSimulation() {
   } | null>(null);
   const [selectedChampionId, setSelectedChampionId] = useState<number | null>(null);
   const [championMovementPath, setChampionMovementPath] = useState<{ row: number; col: number }[]>([]);
+
+  // Tile action modal state
+  const [tileActionModalOpen, setTileActionModalOpen] = useState(false);
+  const [pendingChampionAction, setPendingChampionAction] = useState<{
+    diceValue: number;
+    championId: number;
+    movementPath: { row: number; col: number }[];
+    destinationTile: Tile;
+  } | null>(null);
 
   // Dice state
   const [diceValues, setDiceValues] = useState<number[]>([]);
@@ -459,25 +469,49 @@ export default function GameSimulation() {
       selectedChampionId !== null &&
       championMovementPath.length > 1 &&
       humanDiceActionContext &&
-      selectedDieIndex !== null
+      selectedDieIndex !== null &&
+      gameState
     ) {
       const diceValue = diceValues[selectedDieIndex];
+      const destinationPosition = championMovementPath[championMovementPath.length - 1];
+      const destinationTile = gameState.board.getTileAt(destinationPosition);
+
+      if (!destinationTile) {
+        console.error("Invalid destination tile");
+        return;
+      }
+
+      // Store the pending action and show tile action modal
+      setPendingChampionAction({
+        diceValue,
+        championId: selectedChampionId,
+        movementPath: championMovementPath,
+        destinationTile,
+      });
+      setTileActionModalOpen(true);
+    }
+  };
+
+  const handleTileActionConfirm = (tileAction: import("@/lib/actionTypes").TileAction) => {
+    if (pendingChampionAction && humanDiceActionContext) {
       const action: DiceAction = {
         actionType: "championAction",
         championAction: {
-          diceValueUsed: diceValue,
-          championId: selectedChampionId,
-          movementPathIncludingStartPosition: championMovementPath,
-          tileAction: {}, // Empty tile action for now
+          diceValueUsed: pendingChampionAction.diceValue,
+          championId: pendingChampionAction.championId,
+          movementPathIncludingStartPosition: pendingChampionAction.movementPath,
+          tileAction,
         },
-        reasoning: "Human player champion movement",
+        reasoning: "Human player champion movement with tile actions",
       };
 
       // Mark die as used and reset state
-      setUsedDiceIndices([...usedDiceIndices, selectedDieIndex]);
+      setUsedDiceIndices([...usedDiceIndices, selectedDieIndex!]);
       setSelectedDieIndex(null);
       setSelectedChampionId(null);
       setChampionMovementPath([]);
+      setPendingChampionAction(null);
+      setTileActionModalOpen(false);
 
       // Check if all dice are used
       if (usedDiceIndices.length + 1 >= diceValues.length) {
@@ -487,6 +521,12 @@ export default function GameSimulation() {
       // Resolve the action
       humanDiceActionContext.resolver(action);
     }
+  };
+
+  const handleTileActionCancel = () => {
+    setTileActionModalOpen(false);
+    setPendingChampionAction(null);
+    // Don't reset other state - let player continue moving or cancel movement manually
   };
 
   const createPlayer = async (
@@ -1405,6 +1445,19 @@ export default function GameSimulation() {
         {/* Human Player Decision Modal */}
         {humanDecisionContext && humanDecisionResolver && (
           <HumanPlayerModal isOpen={true} decisionContext={humanDecisionContext} onDecision={humanDecisionResolver} />
+        )}
+
+        {/* Tile Action Modal */}
+        {tileActionModalOpen && pendingChampionAction && gameState && (
+          <TileActionModal
+            isOpen={tileActionModalOpen}
+            gameState={gameState}
+            tile={pendingChampionAction.destinationTile}
+            player={gameState.getCurrentPlayer()}
+            championId={pendingChampionAction.championId}
+            onConfirm={handleTileActionConfirm}
+            onCancel={handleTileActionCancel}
+          />
         )}
       </div>
     </>
