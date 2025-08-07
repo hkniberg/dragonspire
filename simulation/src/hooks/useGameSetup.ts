@@ -9,6 +9,7 @@ import { RandomPlayerAgent } from "../players/RandomPlayerAgent";
 import { DecisionContext, GameLogEntry, TurnContext } from "../lib/types";
 import { DiceAction } from "../lib/actionTypes";
 import { TraderContext, TraderDecision } from "../lib/traderTypes";
+import { BuildingDecision } from "../lib/actionTypes";
 
 type PlayerType = "random" | "claude" | "human";
 
@@ -61,6 +62,11 @@ interface UseGameSetupReturn {
         gameLog: readonly GameLogEntry[],
         traderContext: TraderContext,
       ) => Promise<TraderDecision>;
+      onBuildingDecisionNeeded: (
+        gameState: import("../game/GameState").GameState,
+        gameLog: readonly GameLogEntry[],
+        playerName: string,
+      ) => Promise<BuildingDecision>;
     },
   ) => Promise<PlayerAgent>;
   startNewGame: (
@@ -87,6 +93,11 @@ interface UseGameSetupReturn {
         gameLog: readonly GameLogEntry[],
         traderContext: TraderContext,
       ) => Promise<TraderDecision>;
+      onBuildingDecisionNeeded: (
+        gameState: import("../game/GameState").GameState,
+        gameLog: readonly GameLogEntry[],
+        playerName: string,
+      ) => Promise<BuildingDecision>;
     },
   ) => Promise<void>;
   hasClaudePlayers: boolean;
@@ -139,6 +150,11 @@ export function useGameSetup(): UseGameSetupReturn {
         gameLog: readonly GameLogEntry[],
         traderContext: TraderContext,
       ) => Promise<TraderDecision>;
+      onBuildingDecisionNeeded: (
+        gameState: import("../game/GameState").GameState,
+        gameLog: readonly GameLogEntry[],
+        playerName: string,
+      ) => Promise<BuildingDecision>;
     },
   ): Promise<PlayerAgent> => {
     switch (config.type) {
@@ -189,6 +205,11 @@ export function useGameSetup(): UseGameSetupReturn {
         gameLog: readonly GameLogEntry[],
         traderContext: TraderContext,
       ) => Promise<TraderDecision>;
+      onBuildingDecisionNeeded: (
+        gameState: import("../game/GameState").GameState,
+        gameLog: readonly GameLogEntry[],
+        playerName: string,
+      ) => Promise<BuildingDecision>;
     },
   ) => {
     try {

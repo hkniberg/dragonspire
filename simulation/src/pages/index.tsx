@@ -10,6 +10,7 @@ import DicePanel from "../components/DicePanel";
 import { HumanPlayerModal } from "../components/HumanPlayerModal";
 import HumanPlayerStatus from "../components/HumanPlayerStatus";
 import { TraderModal } from "../components/TraderModal";
+import { BuildingModal } from "../components/BuildingModal";
 import { PlayerConfigurationPanel } from "../components/PlayerConfigurationPanel";
 import { SettingsMenu } from "../components/SettingsMenu";
 import { StatisticsView } from "../components/StatisticsView";
@@ -21,6 +22,7 @@ import { useGameSetup } from "../hooks/useGameSetup";
 import { useHumanPlayer } from "../hooks/useHumanPlayer";
 import { useMovementAndDice } from "../hooks/useMovementAndDice";
 import { useTraderModal } from "../hooks/useTraderModal";
+import { useBuildingModal } from "../hooks/useBuildingModal";
 
 // Simple spinner for loading states (used only in main component now)
 const Spinner = ({ size = 20 }: { size?: number }) => (
@@ -65,6 +67,7 @@ export default function GameSimulation() {
   const humanPlayer = useHumanPlayer();
   const movementAndDice = useMovementAndDice();
   const traderModal = useTraderModal();
+  const buildingModal = useBuildingModal();
 
   // Initialize component only on client side
   useEffect(() => {
@@ -237,6 +240,7 @@ export default function GameSimulation() {
         onDiceActionNeeded: enhancedHumanDiceAction,
         onDecisionNeeded: humanPlayer.handleHumanDecision,
         onTraderDecisionNeeded: traderModal.openTraderModal,
+        onBuildingDecisionNeeded: buildingModal.openBuildingModal,
       },
     );
   };
@@ -666,6 +670,16 @@ export default function GameSimulation() {
             traderContext={traderModal.traderContext}
             onConfirm={traderModal.handleTraderDecision}
             onCancel={() => traderModal.handleTraderDecision({ actions: [], reasoning: "Cancelled by user" })}
+          />
+        )}
+
+        {/* Building Modal */}
+        {buildingModal.isBuildingModalOpen && gameSession.gameState && (
+          <BuildingModal
+            isOpen={buildingModal.isBuildingModalOpen}
+            player={gameSession.gameState.getCurrentPlayer()}
+            onConfirm={buildingModal.handleBuildingDecision}
+            onCancel={() => buildingModal.handleBuildingDecision({ reasoning: "Cancelled by user" })}
           />
         )}
 

@@ -24,6 +24,11 @@ export class HumanPlayer implements PlayerAgent {
     gameLog: readonly GameLogEntry[],
     traderContext: TraderContext
   ) => Promise<TraderDecision>;
+  private onBuildingDecisionNeeded?: (
+    gameState: GameState,
+    gameLog: readonly GameLogEntry[],
+    playerName: string
+  ) => Promise<BuildingDecision>;
 
   constructor(
     name: string,
@@ -43,12 +48,18 @@ export class HumanPlayer implements PlayerAgent {
         gameLog: readonly GameLogEntry[],
         traderContext: TraderContext
       ) => Promise<TraderDecision>;
+      onBuildingDecisionNeeded?: (
+        gameState: GameState,
+        gameLog: readonly GameLogEntry[],
+        playerName: string
+      ) => Promise<BuildingDecision>;
     }
   ) {
     this.playerName = name;
     this.onDiceActionNeeded = callbacks?.onDiceActionNeeded;
     this.onDecisionNeeded = callbacks?.onDecisionNeeded;
     this.onTraderDecisionNeeded = callbacks?.onTraderDecisionNeeded;
+    this.onBuildingDecisionNeeded = callbacks?.onBuildingDecisionNeeded;
   }
 
   getName(): string {
@@ -115,10 +126,16 @@ export class HumanPlayer implements PlayerAgent {
     playerName: string,
     thinkingLogger?: (content: string) => void
   ): Promise<BuildingDecision> {
-    // Return empty decision for now
-    return {
-      reasoning: "Human player - building usage not implemented yet"
-    };
+    return new Promise((resolve) => {
+      if (this.onBuildingDecisionNeeded) {
+        this.onBuildingDecisionNeeded(gameState, gameLog, playerName).then(resolve);
+      } else {
+        // Fallback to empty decision if no handler is set
+        resolve({
+          reasoning: "Human player - no building decision handler set"
+        });
+      }
+    });
   }
 
   // Method to update callbacks (useful for connecting UI)
@@ -138,9 +155,15 @@ export class HumanPlayer implements PlayerAgent {
       gameLog: readonly GameLogEntry[],
       traderContext: TraderContext
     ) => Promise<TraderDecision>;
+    onBuildingDecisionNeeded?: (
+      gameState: GameState,
+      gameLog: readonly GameLogEntry[],
+      playerName: string
+    ) => Promise<BuildingDecision>;
   }): void {
     this.onDiceActionNeeded = callbacks.onDiceActionNeeded;
     this.onDecisionNeeded = callbacks.onDecisionNeeded;
     this.onTraderDecisionNeeded = callbacks.onTraderDecisionNeeded;
+    this.onBuildingDecisionNeeded = callbacks.onBuildingDecisionNeeded;
   }
 }
