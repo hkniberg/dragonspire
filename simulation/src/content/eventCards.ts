@@ -100,7 +100,7 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
     name: "Blessing of the lonesome",
     tier: 2,
     description:
-      "**Pick one of the following:** Lords with only *1x knight* in play gain another, those with *2x knights* or more gain `2 gold` for each knight. \ Lords with a lone knight gain +1 might, those with two or more gain +1 fame. \ The blessing turns into curse as *Foodtax is doubled next turn*.",
+      "**Choose:** Lords with only *1x knight* in play gain another, those with *2x knights* or more gain `2 gold` for each. \ Lords with a lone knight gain +1 might, those with two or more gain +1 fame. \ Blessing turns into curse as *Foodtax is doubled next turn*.",
     count: 1,
     theme: "beast",
   },
