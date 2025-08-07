@@ -39,7 +39,7 @@ Spend \`2 ore\` to gain \`+1 might\``,
     carriable: true,
     theme: "grove"
   },
-    {
+  {
     id: "trollsbane",
     name: "Trollsbane",
     tier: 1,
@@ -88,7 +88,7 @@ Spend \`2 ore\` to gain \`+1 might\``,
     tier: 2,
     description: `Attempt to pull the sword! Roll \`2x D3\`:
 **(2)** It breaks off. You get **half a sword** which gives \`+2 might\`
-**(3-5)** The Card remains on this tile untill the sword has been pulled out.
+**(3-5)** The Card remains on this tile until the sword has been pulled out.
 **(6)** You gain **Cloudslicer** which gives \`+4 might\``,
     count: 1,
     theme: "beast",

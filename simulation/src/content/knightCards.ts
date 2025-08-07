@@ -28,7 +28,7 @@ export const KNIGHT_CARDS: KnightCard[] = [
   {
     id: "ser-nothatrole",
     name: "Ser Nothatrole",
-    description: "Big Bob's sworn nemesis. Onesided as the rivalry is, Nothatrole once got his face stomped in and swore to return the favor. He stole the gear off of a few lowly knights and stitched it all together, untill he had himself a splendid armour. He now uhh...\"blends in\" among the other knights. Notathrole has 0 follower slots, but has +1 when fighting on a hills tile, and +3 might on any mountain tile (including the doomspire).",
+    description: "Big Bob's sworn nemesis. Onesided as the rivalry is, Nothatrole once got his face stomped in and swore to return the favor. He stole the gear off of a few lowly knights and stitched it all together, until he had himself a splendid armour. He now uhh...\"blends in\" among the other knights. Notathrole has 0 follower slots, but has +1 when fighting on a hills tile, and +3 might on any mountain tile (including the doomspire).",
   },
   {
     id: "roderick-the-grand",
