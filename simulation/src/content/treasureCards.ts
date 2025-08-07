@@ -106,4 +106,34 @@ Spend \`2 ore\` to gain \`+1 might\``,
     theme: "cave",
     carriable: true,
   },
+
+  // Tier 3 Treasure Cards
+  {
+    id: "the-one-ring",
+    name: "The one ring",
+    tier: 3,
+    description: "Grants `+2 might` in battle. Any *knight* with both the *one* and the *second* ring, may **exile the dragon** as if they had reached one of the four win-conditions. If one also posesses *the mysterious ring* while exiling the dragon, **the game immediately ends** as you absorb the dragons essence and take its place as the new tyranical ruler of Doomspire.",
+    count: 1,
+    carriable: true,
+    theme: "cave"
+  },
+  {
+    id: "the-second-ring",
+    name: "The second ring",
+    tier: 3,
+    description: "Gives `+2 fame` (lost if you loose the ring). Any *knight* with both the *one* and the *second* ring, may **exile the dragon** as if they had reached one of the four win-conditions. If one also posesses *the mysterious ring* while exiling the dragon, **the game immediately ends** as you absorb the dragons essence and take its place as the new tyranical ruler of Doomspire.",
+    count: 1,
+    carriable: true,
+    theme: "grove"
+  },
+  {
+    id: "the-black-blade",
+    name: "The black blade",
+    tier: 3,
+    description: "Fight a ghostly knight (Might 7). If you win, the knight disappers with a shriek, leaving an ominous black blade on the ground. *The black blade:* Grants `-1 might`. Each battle you may sacrifice a *follower* to temporarily gain`+5 might`. (Each time this blade swaps owner, or is left behind, the ghostly knight re-emerges).",
+    count: 1,
+    carriable: true,
+    theme: "beast"
+  },
+  
 ];
