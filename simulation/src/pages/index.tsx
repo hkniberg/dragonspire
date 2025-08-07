@@ -8,13 +8,17 @@ import { ControlPanel } from "../components/ControlPanel";
 import { GameBoard } from "../components/GameBoard";
 import { GameLog } from "../components/GameLog";
 import { GameStatus } from "../components/GameStatus";
+import { HumanPlayerModal } from "../components/HumanPlayerModal";
+import { SettingsMenu } from "../components/SettingsMenu";
 import { StatisticsView } from "../components/StatisticsView";
 import { TokenUsage } from "../components/TokenUsage";
 import { GameMaster, GameMasterConfig } from "../engine/GameMaster";
 import { GameState } from "../game/GameState";
 import { stringifyGameState } from "../game/gameStateStringifier";
-import { TurnStatistics } from "../lib/types";
+import { DiceAction } from "../lib/actionTypes";
+import { DecisionContext, GameLogEntry, TurnContext, TurnStatistics } from "../lib/types";
 import { ClaudePlayerAgent } from "../players/ClaudePlayer";
+import { HumanPlayer } from "../players/HumanPlayer";
 import { PlayerAgent } from "../players/PlayerAgent";
 import { RandomPlayerAgent } from "../players/RandomPlayerAgent";
 
@@ -42,7 +46,7 @@ const spinnerStyles = `
 `;
 
 type SimulationState = "setup" | "playing" | "finished";
-type PlayerType = "random" | "claude";
+type PlayerType = "random" | "claude" | "human";
 type ViewType = "game" | "statistics";
 
 interface PlayerConfig {
@@ -99,10 +103,23 @@ export default function GameSimulation() {
   const [autoPlaySpeed, setAutoPlaySpeed] = useState(1000); // ms between turns
   const [showActionLog, setShowActionLog] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
+  const [allowDragging, setAllowDragging] = useState(false);
   const [isStartingGame, setIsStartingGame] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [forceRender, setForceRender] = useState(0);
   const [copyGamestateSuccess, setCopyGamestateSuccess] = useState(false);
+
+  // Human player interaction state
+  const [humanDecisionContext, setHumanDecisionContext] = useState<DecisionContext | null>(null);
+  const [humanDecisionResolver, setHumanDecisionResolver] = useState<((choice: string) => void) | null>(null);
+  const [humanDiceActionContext, setHumanDiceActionContext] = useState<{
+    gameState: GameState;
+    gameLog: readonly GameLogEntry[];
+    turnContext: TurnContext;
+    resolver: (action: DiceAction) => void;
+  } | null>(null);
+  const [selectedChampionId, setSelectedChampionId] = useState<number | null>(null);
+  const [championMovementPath, setChampionMovementPath] = useState<{ row: number; col: number }[]>([]);
 
   // Ref to hold the autoplay timeout
   const autoPlayTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -123,6 +140,39 @@ export default function GameSimulation() {
       setApiKey(storedKey);
     }
   }, []);
+
+  // Keyboard handler for WASD movement
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (selectedChampionId !== null && humanDiceActionContext && championMovementPath.length > 0) {
+        const currentPos = championMovementPath[championMovementPath.length - 1];
+        let newPos: { row: number; col: number } | null = null;
+
+        switch (event.key.toLowerCase()) {
+          case "w":
+            newPos = { row: currentPos.row - 1, col: currentPos.col };
+            break;
+          case "s":
+            newPos = { row: currentPos.row + 1, col: currentPos.col };
+            break;
+          case "a":
+            newPos = { row: currentPos.row, col: currentPos.col - 1 };
+            break;
+          case "d":
+            newPos = { row: currentPos.row, col: currentPos.col + 1 };
+            break;
+        }
+
+        if (newPos && newPos.row >= 0 && newPos.row < 8 && newPos.col >= 0 && newPos.col < 8) {
+          event.preventDefault();
+          setChampionMovementPath([...championMovementPath, newPos]);
+        }
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [selectedChampionId, humanDiceActionContext, championMovementPath]);
 
   // Autoplay effect - starts initial autoplay and cleans up on changes
   useEffect(() => {
@@ -211,6 +261,96 @@ export default function GameSimulation() {
     }
   };
 
+  // Human player interaction handlers
+  const handleHumanDecision = (
+    gameState: GameState,
+    gameLog: readonly GameLogEntry[],
+    decisionContext: DecisionContext,
+  ): Promise<{ choice: string }> => {
+    return new Promise((resolve) => {
+      setHumanDecisionContext(decisionContext);
+      setHumanDecisionResolver(() => (choice: string) => {
+        setHumanDecisionContext(null);
+        setHumanDecisionResolver(null);
+        resolve({ choice });
+      });
+    });
+  };
+
+  const handleHumanDiceAction = (
+    gameState: GameState,
+    gameLog: readonly GameLogEntry[],
+    turnContext: TurnContext,
+  ): Promise<DiceAction> => {
+    return new Promise((resolve) => {
+      setHumanDiceActionContext({
+        gameState,
+        gameLog,
+        turnContext,
+        resolver: resolve,
+      });
+    });
+  };
+
+  const handleChampionSelection = (championId: number) => {
+    if (selectedChampionId === championId) {
+      // Deselect the champion and create action if there's a movement path
+      if (championMovementPath.length > 1 && humanDiceActionContext) {
+        const action: DiceAction = {
+          actionType: "championAction",
+          championAction: {
+            diceValueUsed: humanDiceActionContext.turnContext.remainingDiceValues[0],
+            championId: championId,
+            movementPathIncludingStartPosition: championMovementPath,
+            tileAction: {}, // Empty tile action for now
+          },
+          reasoning: "Human player champion movement",
+        };
+
+        // Reset state
+        setSelectedChampionId(null);
+        setChampionMovementPath([]);
+        setHumanDiceActionContext(null);
+
+        // Resolve the action
+        humanDiceActionContext.resolver(action);
+      } else {
+        // Just deselect
+        setSelectedChampionId(null);
+        setChampionMovementPath([]);
+      }
+    } else {
+      // Select new champion
+      setSelectedChampionId(championId);
+      if (humanDiceActionContext) {
+        const champion = humanDiceActionContext.gameState.getChampion(
+          humanDiceActionContext.gameState.getCurrentPlayer().name,
+          championId,
+        );
+        if (champion) {
+          setChampionMovementPath([champion.position]);
+        }
+      }
+    }
+  };
+
+  const handleTileClick = (row: number, col: number) => {
+    if (selectedChampionId !== null && humanDiceActionContext && championMovementPath.length > 0) {
+      const currentPos = championMovementPath[championMovementPath.length - 1];
+      const newPos = { row, col };
+
+      // Check if this is a neighboring tile (simple adjacency check)
+      const isAdjacent =
+        Math.abs(currentPos.row - newPos.row) <= 1 &&
+        Math.abs(currentPos.col - newPos.col) <= 1 &&
+        !(currentPos.row === newPos.row && currentPos.col === newPos.col);
+
+      if (isAdjacent) {
+        setChampionMovementPath([...championMovementPath, newPos]);
+      }
+    }
+  };
+
   const createPlayer = async (
     config: PlayerConfig,
     tokenUsageTracker?: import("@/lib/TokenUsageTracker").TokenUsageTracker,
@@ -228,6 +368,13 @@ export default function GameSimulation() {
         const systemMessage = await templateProcessor.processTemplate("SystemPrompt", {});
         const claude = new Claude(apiKey.trim(), systemMessage, undefined, tokenUsageTracker);
         return new ClaudePlayerAgent(config.name, claude, templateProcessor);
+      case "human":
+        const humanPlayer = new HumanPlayer(config.name);
+        humanPlayer.setCallbacks({
+          onDiceActionNeeded: handleHumanDiceAction,
+          onDecisionNeeded: handleHumanDecision,
+        });
+        return humanPlayer;
       default:
         throw new Error(`Unknown player type: ${config.type}`);
     }
@@ -314,6 +461,10 @@ export default function GameSimulation() {
 
   const toggleDebugMode = () => {
     setDebugMode(!debugMode);
+  };
+
+  const toggleAllowDragging = () => {
+    setAllowDragging(!allowDragging);
   };
 
   const resetGame = () => {
@@ -485,6 +636,13 @@ export default function GameSimulation() {
               >
                 📋 Game Reference
               </a>
+
+              <SettingsMenu
+                debugMode={debugMode}
+                onToggleDebugMode={toggleDebugMode}
+                allowDragging={allowDragging}
+                onToggleAllowDragging={toggleAllowDragging}
+              />
             </div>
 
             {/* Token Usage Widget */}
@@ -656,6 +814,7 @@ export default function GameSimulation() {
                     >
                       <option value="random">Random AI</option>
                       <option value="claude">Claude AI</option>
+                      <option value="human">Human Player</option>
                     </select>
                   </div>
                 </div>
@@ -972,7 +1131,6 @@ export default function GameSimulation() {
           autoPlay={autoPlay}
           autoPlaySpeed={autoPlaySpeed}
           showActionLog={showActionLog}
-          debugMode={debugMode}
           isStartingGame={isStartingGame}
           onStartNewGame={startNewGame}
           onExecuteNextTurn={executeNextTurn}
@@ -980,7 +1138,6 @@ export default function GameSimulation() {
           onSetAutoPlaySpeed={setAutoPlaySpeed}
           onResetGame={resetGame}
           onToggleActionLog={() => setShowActionLog(!showActionLog)}
-          onToggleDebugMode={toggleDebugMode}
         />
 
         {/* Conditional View Rendering */}
@@ -988,7 +1145,12 @@ export default function GameSimulation() {
           <>
             {/* Game Status */}
             {gameState && (
-              <GameStatus gameState={gameState} simulationState={simulationState} actionLogLength={actionLog.length} />
+              <GameStatus
+                gameState={gameState}
+                simulationState={simulationState}
+                actionLogLength={actionLog.length}
+                humanPlayerWaiting={humanDiceActionContext !== null}
+              />
             )}
 
             {/* Action Log */}
@@ -1006,6 +1168,7 @@ export default function GameSimulation() {
               <GameBoard
                 gameState={gameState}
                 debugMode={debugMode}
+                allowDragging={allowDragging}
                 playerConfigs={playerConfigs}
                 onExtraInstructionsChange={handleExtraInstructionsChange}
                 onGameStateUpdate={(newGameState) => {
@@ -1014,6 +1177,16 @@ export default function GameSimulation() {
                     gameSession.updateGameState(newGameState);
                   }
                 }}
+                humanPlayerState={
+                  humanDiceActionContext
+                    ? {
+                        selectedChampionId,
+                        championMovementPath,
+                        onChampionSelect: handleChampionSelection,
+                        onTileClick: handleTileClick,
+                      }
+                    : undefined
+                }
               />
             ) : simulationState === "setup" ? (
               <div
@@ -1054,6 +1227,11 @@ export default function GameSimulation() {
           apiKey={apiKey}
           onApiKeyChange={setApiKey}
         />
+
+        {/* Human Player Decision Modal */}
+        {humanDecisionContext && humanDecisionResolver && (
+          <HumanPlayerModal isOpen={true} decisionContext={humanDecisionContext} onDecision={humanDecisionResolver} />
+        )}
       </div>
     </>
   );

@@ -23,7 +23,6 @@ interface ControlPanelProps {
   autoPlay: boolean;
   autoPlaySpeed: number;
   showActionLog: boolean;
-  debugMode: boolean;
   isStartingGame: boolean;
   onStartNewGame: () => void;
   onExecuteNextTurn: () => void;
@@ -31,7 +30,6 @@ interface ControlPanelProps {
   onSetAutoPlaySpeed: (speed: number) => void;
   onResetGame: () => void;
   onToggleActionLog: () => void;
-  onToggleDebugMode: () => void;
 }
 
 export const ControlPanel: React.FC<ControlPanelProps> = ({
@@ -40,7 +38,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   autoPlay,
   autoPlaySpeed,
   showActionLog,
-  debugMode,
   isStartingGame,
   onStartNewGame,
   onExecuteNextTurn,
@@ -48,7 +45,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   onSetAutoPlaySpeed,
   onResetGame,
   onToggleActionLog,
-  onToggleDebugMode,
 }) => {
   return (
     <div
@@ -192,21 +188,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               }}
             >
               {showActionLog ? "📋 Hide Log" : "📋 Show Log"}
-            </button>
-
-            <button
-              onClick={onToggleDebugMode}
-              style={{
-                padding: "10px 20px",
-                backgroundColor: debugMode ? "#ff6b35" : "#6c757d",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-                fontSize: "16px",
-                cursor: "pointer",
-              }}
-            >
-              {debugMode ? "🔍 Hide All Tiles" : "🔍 Reveal All Tiles"}
             </button>
           </>
         )}

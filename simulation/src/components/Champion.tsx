@@ -1,11 +1,29 @@
 import React from "react";
 import type { Champion } from "../lib/types";
 
+// Add CSS for blinking animation
+const championStyles = `
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.5; }
+  }
+`;
+
+// Inject styles into the document
+if (typeof document !== "undefined") {
+  const styleElement = document.createElement("style");
+  styleElement.textContent = championStyles;
+  document.head.appendChild(styleElement);
+}
+
 export const ChampionComponent = ({
   champion,
   getPlayerColor,
   onDragStart,
   onDragEnd,
+  isSelected,
+  onSelect,
+  allowDragging = false,
 }: {
   champion: Champion;
   getPlayerColor: (playerName: string) => {
@@ -15,6 +33,9 @@ export const ChampionComponent = ({
   };
   onDragStart?: (champion: Champion, event: React.DragEvent) => void;
   onDragEnd?: (champion: Champion, event: React.DragEvent) => void;
+  isSelected?: boolean;
+  onSelect?: () => void;
+  allowDragging?: boolean;
 }) => {
   const playerColors = getPlayerColor(champion.playerName);
 
@@ -44,15 +65,22 @@ export const ChampionComponent = ({
         justifyContent: "center",
         fontSize: "18px",
         fontWeight: "bold",
-        border: "3px solid white",
-        boxShadow: "0 3px 6px rgba(0,0,0,0.4)",
+        border: isSelected ? "3px solid #FFD700" : "3px solid white",
+        boxShadow: isSelected ? "0 0 10px #FFD700, 0 3px 6px rgba(0,0,0,0.4)" : "0 3px 6px rgba(0,0,0,0.4)",
         position: "relative",
-        cursor: "grab",
+        cursor: onSelect ? "pointer" : allowDragging ? "grab" : "default",
+        animation: isSelected ? "blink 1s infinite" : "none",
       }}
-      title={`Champion ${champion.id} (${champion.playerName}) - Drag to move`}
-      draggable={true}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
+      title={`Champion ${champion.id} (${champion.playerName}) - ${onSelect ? "Click to select/move" : allowDragging ? "Drag to move" : "Champion"}`}
+      draggable={allowDragging && !onSelect}
+      onDragStart={allowDragging ? handleDragStart : undefined}
+      onDragEnd={allowDragging ? handleDragEnd : undefined}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (onSelect) {
+          onSelect();
+        }
+      }}
     >
       <img
         src="/knights/knight.png"

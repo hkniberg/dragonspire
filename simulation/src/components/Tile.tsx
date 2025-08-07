@@ -8,6 +8,13 @@ import { ClaimFlag } from "./ClaimFlag";
 import { ResourceIcon } from "./ResourceIcon";
 import { TileCardModal } from "./TileCardModal";
 
+interface HumanPlayerState {
+  selectedChampionId: number | null;
+  championMovementPath: { row: number; col: number }[];
+  onChampionSelect: (championId: number) => void;
+  onTileClick: (row: number, col: number) => void;
+}
+
 const getTileColor = (tile: Tile): string => {
   if (!tile.explored) {
     return tile.backColor || "#8B4513"; // Use backColor or brown fallback for unexplored
@@ -192,14 +199,17 @@ export const TileComponent = ({
   tile,
   champions,
   debugMode = false,
+  allowDragging = false,
   getPlayerColor,
   onChampionDrop,
   onChampionDragOver,
   gameState,
+  humanPlayerState,
 }: {
   tile: Tile;
   champions: Champion[];
   debugMode?: boolean;
+  allowDragging?: boolean;
   getPlayerColor: (playerName: string) => {
     main: string;
     light: string;
@@ -208,6 +218,7 @@ export const TileComponent = ({
   onChampionDrop?: (champion: Champion, targetTile: Tile) => void;
   onChampionDragOver?: (event: React.DragEvent) => void;
   gameState?: GameState;
+  humanPlayerState?: HumanPlayerState;
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -235,6 +246,15 @@ export const TileComponent = ({
 
   // Check if there are cards (monster or items) to show in modal
   const hasCards = effectiveTile.monster || (effectiveTile.items && effectiveTile.items.length > 0);
+
+  // Check if this tile is in the human player's movement path
+  const isInMovementPath = humanPlayerState?.championMovementPath.some(
+    (pos) => pos.row === tile.position.row && pos.col === tile.position.col,
+  );
+  const pathIndex =
+    humanPlayerState?.championMovementPath.findIndex(
+      (pos) => pos.row === tile.position.row && pos.col === tile.position.col,
+    ) ?? -1;
 
   const handleCardClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -282,7 +302,7 @@ export const TileComponent = ({
         fontSize: "24px",
         fontWeight: "bold",
         color: effectiveTile.explored ? "#000" : "#fff",
-        border: `2px solid ${borderColor}`,
+        border: isInMovementPath ? `3px solid #FFD700` : `2px solid ${borderColor}`,
         borderRadius: "8px",
         cursor: "pointer",
         transition: "transform 0.1s",
@@ -312,6 +332,11 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}${isBlo
       }}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      onClick={() => {
+        if (humanPlayerState) {
+          humanPlayerState.onTileClick(tile.position.row, tile.position.col);
+        }
+      }}
     >
       {/* Main tile symbol - moved to bottom */}
       <div
@@ -602,9 +627,48 @@ ${effectiveTile.claimedBy ? `Claimed by Player ${effectiveTile.claimedBy}${isBlo
             zIndex: 10,
           }}
         >
-          {championsOnTile.map((champion) => (
-            <ChampionComponent key={champion.id} champion={champion} getPlayerColor={getPlayerColor} />
-          ))}
+          {championsOnTile.map((champion) => {
+            // Only allow selection of the current player's champions
+            const isCurrentPlayerChampion = gameState?.getCurrentPlayer().name === champion.playerName;
+            const canSelect = humanPlayerState && isCurrentPlayerChampion;
+            // Only show as selected if it's the selected champion AND belongs to current player
+            const isSelected = humanPlayerState?.selectedChampionId === champion.id && isCurrentPlayerChampion;
+
+            return (
+              <ChampionComponent
+                key={champion.id}
+                champion={champion}
+                getPlayerColor={getPlayerColor}
+                isSelected={isSelected}
+                onSelect={canSelect ? () => humanPlayerState.onChampionSelect(champion.id) : undefined}
+                allowDragging={allowDragging}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      {/* Movement path indicator */}
+      {isInMovementPath && pathIndex >= 0 && (
+        <div
+          style={{
+            position: "absolute",
+            top: "4px",
+            right: "4px",
+            backgroundColor: "#FFD700",
+            color: "#000",
+            borderRadius: "50%",
+            width: "20px",
+            height: "20px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "12px",
+            fontWeight: "bold",
+            zIndex: 15,
+          }}
+        >
+          {pathIndex + 1}
         </div>
       )}
 

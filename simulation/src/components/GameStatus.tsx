@@ -7,9 +7,15 @@ interface GameStatusProps {
   gameState: GameState;
   simulationState: SimulationState;
   actionLogLength: number;
+  humanPlayerWaiting?: boolean;
 }
 
-export const GameStatus: React.FC<GameStatusProps> = ({ gameState, simulationState, actionLogLength }) => {
+export const GameStatus: React.FC<GameStatusProps> = ({
+  gameState,
+  simulationState,
+  actionLogLength,
+  humanPlayerWaiting,
+}) => {
   return (
     <div style={{ marginTop: "10px", fontSize: "14px", color: "#666" }}>
       <div>
@@ -33,6 +39,23 @@ export const GameStatus: React.FC<GameStatusProps> = ({ gameState, simulationSta
       {actionLogLength > 0 && (
         <div>
           <strong>Total Turns:</strong> {actionLogLength}
+        </div>
+      )}
+      {humanPlayerWaiting && (
+        <div
+          style={{
+            color: "#007bff",
+            fontWeight: "bold",
+            fontSize: "16px",
+            marginTop: "8px",
+            padding: "8px",
+            backgroundColor: "#e7f3ff",
+            borderRadius: "4px",
+            border: "1px solid #007bff",
+          }}
+        >
+          🎮 Waiting for human player action - Click on a champion to select it, then click on adjacent tiles or use
+          WASD keys to move!
         </div>
       )}
     </div>

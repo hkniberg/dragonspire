@@ -4,12 +4,21 @@ import { OceanZoneComponent, oceanZones } from "./OceanZone";
 import { PlayerInfoBox } from "./PlayerInfoBox";
 import { TileComponent } from "./Tile";
 
+interface HumanPlayerState {
+  selectedChampionId: number | null;
+  championMovementPath: { row: number; col: number }[];
+  onChampionSelect: (championId: number) => void;
+  onTileClick: (row: number, col: number) => void;
+}
+
 interface GameBoardProps {
   gameState: GameState;
   debugMode?: boolean;
+  allowDragging?: boolean;
   playerConfigs?: { name: string; type: string }[]; // Player configurations to determine types
   onExtraInstructionsChange?: (playerName: string, instructions: string) => void; // Callback for updating extra instructions
   onGameStateUpdate?: (newGameState: GameState) => void; // Callback for updating game state
+  humanPlayerState?: HumanPlayerState; // Human player interaction state
 }
 
 // Player color scheme - uses the color stored in the player's profile
@@ -34,9 +43,11 @@ const getPlayerColor = (playerName: string, gameState: GameState): { main: strin
 export const GameBoard = ({
   gameState,
   debugMode = false,
+  allowDragging = false,
   playerConfigs,
   onExtraInstructionsChange,
   onGameStateUpdate,
+  humanPlayerState,
 }: GameBoardProps) => {
   const currentPlayer = gameState.players[gameState.currentPlayerIndex];
 
@@ -176,10 +187,12 @@ export const GameBoard = ({
                   tile={tile}
                   champions={gameState.players.flatMap((player) => player.champions)}
                   debugMode={debugMode}
+                  allowDragging={allowDragging}
                   getPlayerColor={getPlayerColorWithState}
                   onChampionDrop={handleChampionDrop}
                   onChampionDragOver={handleChampionDragOver}
                   gameState={gameState}
+                  humanPlayerState={humanPlayerState}
                 />
               )),
             )}
