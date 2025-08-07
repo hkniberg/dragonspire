@@ -8,6 +8,7 @@ import { TileComponent } from "./Tile";
 interface HumanPlayerState {
   selectedChampionId: number | null;
   championMovementPath: { row: number; col: number }[];
+  selectedHarvestTiles?: { row: number; col: number }[];
   onChampionSelect: (championId: number) => void;
   onTileClick: (row: number, col: number) => void;
   hasSelectedDie: boolean;

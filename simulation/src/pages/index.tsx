@@ -73,15 +73,15 @@ export default function GameSimulation() {
     }
   }, []);
 
-  // Keyboard handler for WASD movement
+  // Keyboard handler for WASD movement and harvest actions
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        movementAndDice.selectedChampionId !== null &&
-        humanPlayer.humanDiceActionContext &&
-        movementAndDice.championMovementPath.length > 0 &&
-        movementAndDice.selectedDieIndex !== null
-      ) {
+      if (!humanPlayer.humanDiceActionContext || movementAndDice.selectedDieIndex === null) {
+        return;
+      }
+
+      // Handle champion movement (WASD)
+      if (movementAndDice.selectedChampionId !== null && movementAndDice.championMovementPath.length > 0) {
         switch (event.key.toLowerCase()) {
           case "w":
           case "s":
@@ -108,6 +108,27 @@ export default function GameSimulation() {
             break;
         }
       }
+      // Handle harvest tile selection
+      else if (movementAndDice.selectedChampionId === null && movementAndDice.selectedHarvestTiles.length > 0) {
+        switch (event.key.toLowerCase()) {
+          case "enter":
+            // Complete the harvest action
+            event.preventDefault();
+            console.log("⏎ Enter pressed - completing harvest");
+            const resolver = humanPlayer.humanDiceActionContext?.resolver;
+            const onAllDiceUsed = () => {
+              humanPlayer.setHumanDiceActionContext(null);
+            };
+            movementAndDice.handleHarvestAction(gameSession.gameState || undefined, resolver, onAllDiceUsed);
+            break;
+          case "escape":
+            // Cancel the harvest tile selection
+            event.preventDefault();
+            console.log("⎋ Escape pressed - canceling harvest selection");
+            movementAndDice.setSelectedHarvestTiles([]);
+            break;
+        }
+      }
     };
 
     document.addEventListener("keydown", handleKeyDown);
@@ -117,6 +138,7 @@ export default function GameSimulation() {
     humanPlayer.humanDiceActionContext,
     movementAndDice.championMovementPath,
     movementAndDice.selectedDieIndex,
+    movementAndDice.selectedHarvestTiles,
     movementAndDice,
     gameSession.gameState,
   ]);
@@ -163,6 +185,10 @@ export default function GameSimulation() {
 
   const enhancedChampionSelection = (championId: number) => {
     movementAndDice.handleChampionSelection(championId, gameSession.gameState || undefined);
+  };
+
+  const enhancedTileClick = (row: number, col: number) => {
+    movementAndDice.handleTileClick(row, col, gameSession.gameState || undefined);
   };
 
   const enhancedMovementDone = () => {
@@ -462,6 +488,7 @@ export default function GameSimulation() {
                 selectedDieIndex={movementAndDice.selectedDieIndex}
                 selectedChampionId={movementAndDice.selectedChampionId}
                 championMovementPath={movementAndDice.championMovementPath}
+                selectedHarvestTiles={movementAndDice.selectedHarvestTiles}
               />
             )}
 
@@ -530,8 +557,9 @@ export default function GameSimulation() {
                     ? {
                         selectedChampionId: movementAndDice.selectedChampionId,
                         championMovementPath: movementAndDice.championMovementPath,
+                        selectedHarvestTiles: movementAndDice.selectedHarvestTiles,
                         onChampionSelect: enhancedChampionSelection,
-                        onTileClick: movementAndDice.handleTileClick,
+                        onTileClick: enhancedTileClick,
                         hasSelectedDie: movementAndDice.selectedDieIndex !== null,
                       }
                     : undefined

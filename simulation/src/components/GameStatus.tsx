@@ -11,6 +11,7 @@ interface GameStatusProps {
   selectedDieIndex?: number | null;
   selectedChampionId?: number | null;
   championMovementPath?: Array<{ row: number; col: number }>;
+  selectedHarvestTiles?: Array<{ row: number; col: number }>;
 }
 
 export const GameStatus: React.FC<GameStatusProps> = ({
@@ -21,6 +22,7 @@ export const GameStatus: React.FC<GameStatusProps> = ({
   selectedDieIndex,
   selectedChampionId,
   championMovementPath,
+  selectedHarvestTiles,
 }) => {
   // Function to determine what instruction to show based on current state
   const getHumanPlayerInstruction = () => {
@@ -29,9 +31,14 @@ export const GameStatus: React.FC<GameStatusProps> = ({
       return "🎲 Click on a dice to use it";
     }
 
-    // Step 2: Die selected but no champion selected
-    if (selectedChampionId === null) {
-      return "👤 Click on a knight to move it";
+    // Step 2: Die selected but no champion selected and no harvest tiles selected
+    if (selectedChampionId === null && (!selectedHarvestTiles || selectedHarvestTiles.length === 0)) {
+      return "👤 Click on a knight to move it, or click on tiles to harvest from";
+    }
+
+    // Step 2b: Die selected and harvest tiles selected but no champion
+    if (selectedChampionId === null && selectedHarvestTiles && selectedHarvestTiles.length > 0) {
+      return `🌾 ${selectedHarvestTiles.length} tile(s) selected for harvest → Enter to confirm / Esc to cancel`;
     }
 
     // Step 3: Champion selected and ready to move
