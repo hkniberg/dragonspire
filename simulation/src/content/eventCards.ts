@@ -94,6 +94,7 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
       "The Dragon flies in the skies above, scouring for resources. Each Lord must count their claimed tiles. *3 or more tiles* = `+1 fame`. *5 or more tiles* = `+1 fame, +1 might`. *7 or more tiles* = `+1 fame, +1 might, +3 gold`.",
     count: 1,
     theme: "beast",
+    imagePromptGuidance: "A dragon flying in the sky, scouring for resources. Dont make the landscape look like boardgame tiles.",
   },
   {
     id: "blessing-of-the-lonesome",

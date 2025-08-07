@@ -30,10 +30,8 @@ type ExtendedCard = (
 };
 
 export default function CardsPage() {
-  const [allFlipped, setAllFlipped] = useState(false);
   const [compactMode, setCompactMode] = useState(false);
   const [hideDuplicates, setHideDuplicates] = useState(false);
-  const [individualFlips, setIndividualFlips] = useState<Record<string, boolean>>({});
   const [cardTypeFilter, setCardTypeFilter] = useState<ExtendedCardType | "all">("all");
   const [tierFilter, setTierFilter] = useState<number | "all">("all");
   const [themeFilter, setThemeFilter] = useState<string | "all">("all");
@@ -103,23 +101,6 @@ export default function CardsPage() {
     return matchesType && matchesTier && matchesTheme;
   });
 
-  const handleFlipAll = () => {
-    setAllFlipped(!allFlipped);
-    setIndividualFlips({}); // Reset individual flips when doing global flip
-  };
-
-  const handleCardClick = (cardId: string) => {
-    setIndividualFlips((prev) => ({
-      ...prev,
-      [cardId]: !prev[cardId],
-    }));
-  };
-
-  const isCardFlipped = (cardId: string) => {
-    // If there's an individual flip state, use that, otherwise use global state
-    return individualFlips[cardId] !== undefined ? individualFlips[cardId] : allFlipped;
-  };
-
   const renderCard = (card: ExtendedCard) => {
     if (!card.originalData) {
       return null; // Skip cards without original data
@@ -131,23 +112,11 @@ export default function CardsPage() {
       name: card.originalData.name,
       compactMode,
       disabled: false, //card.originalData.disabled,
+      enlargeOnClick: true,
       title: `${card.type.charAt(0).toUpperCase() + card.type.slice(1)}: ${
         card.originalData.name
       } (Tier ${card.tier}, ${card.theme})${card.originalData.disabled ? " [DISABLED]" : ""}`,
     };
-
-    if (isCardFlipped(card.id)) {
-      return (
-        <CardComponent
-          {...commonProps}
-          showBackside={true}
-          backsideImageUrl={`/cardBacksides/${card.type === "trader" ? "trader" : card.theme}.png`}
-          backsideLabel={card.type === "trader" ? "TRADER" : "ADVENTURE"}
-          showTier={card.type !== "trader"}
-          disabled={false} //{card.originalData.disabled}
-        />
-      );
-    }
 
     switch (card.type) {
       case "monster":
@@ -319,31 +288,6 @@ export default function CardsPage() {
           </label>
         </div>
 
-        {/* Flip All Button */}
-        <button
-          onClick={handleFlipAll}
-          style={{
-            padding: "10px 20px",
-            fontSize: "14px",
-            fontWeight: "bold",
-            backgroundColor: allFlipped ? "#dc3545" : "#007bff",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
-            cursor: "pointer",
-            transition: "background-color 0.2s ease",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = allFlipped ? "#c82333" : "#0056b3";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = allFlipped ? "#dc3545" : "#007bff";
-          }}
-        >
-          {allFlipped ? "Show Fronts" : "Show Backs"}
-        </button>
-
         {/* Compact Mode Toggle */}
         <button
           onClick={() => setCompactMode(!compactMode)}
@@ -393,23 +337,7 @@ export default function CardsPage() {
         }}
       >
         {filteredCards.map((card) => (
-          <div
-            key={card.id}
-            style={{
-              transition: "transform 0.2s ease",
-              cursor: "pointer",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "scale(1.05)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "scale(1)";
-            }}
-            onClick={() => handleCardClick(card.id)}
-            title="Click to flip card"
-          >
-            {renderCard(card)}
-          </div>
+          <div key={card.id}>{renderCard(card)}</div>
         ))}
       </div>
 
