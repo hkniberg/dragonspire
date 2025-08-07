@@ -34,10 +34,19 @@ Spend \`2 ore\` to gain \`+1 might\``,
     id: "rusty-sword",
     name: "Rusty sword",
     tier: 1,
-    description: "Gain `+2 might`. This **item breaks** after *one fight*.",
+    description: "Gain `+2 might` for this battle. This **item breaks** after *one use*.",
     count: 2,
     carriable: true,
     theme: "grove"
+  },
+    {
+    id: "trollsbane",
+    name: "Trollsbane",
+    tier: 1,
+    description: "A cursed axe, forged with fury towards `trolls`and their ilk. When fighting one, you may pay `-1 fame` to gain `+1 might`for this battle.",
+    count: 1,
+    carriable: true,
+    theme: "cave"
   },
   {
     id: "mysterious-ring",
@@ -77,10 +86,10 @@ Spend \`2 ore\` to gain \`+1 might\``,
     id: "sword-in-stone",
     name: "Sword in a stone",
     tier: 2,
-    description: `Attempt to pull the sword! Roll \`D3\`:
-**(1)** It breaks off. You get **half a sword** which gives \`+2 might\`
-**(2)** Card goes back to the top of the deck where it came from.
-**(3)** You gain **Cloudslicer** which gives \`+4 might\``,
+    description: `Attempt to pull the sword! Roll \`2x D3\`:
+**(2)** It breaks off. You get **half a sword** which gives \`+2 might\`
+**(3-5)** The Card remains on this tile untill the sword has been pulled out.
+**(6)** You gain **Cloudslicer** which gives \`+4 might\``,
     count: 1,
     theme: "beast",
     carriable: false, // This stays on the tile until someone pulls it out
@@ -93,7 +102,7 @@ Spend \`2 ore\` to gain \`+1 might\``,
 **(1)** Steal it (lose \`2 fame\`). The staff protects all neighbouring tiles, even diagonally.
 **(2)** Give him \`2 food\` (earn \`1 fame\`)
 **(3)** Move on`,
-    count: 2,
+    count: 1,
     theme: "cave",
     carriable: true,
   },
