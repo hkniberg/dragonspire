@@ -8,6 +8,7 @@ import { PlayerAgent } from "../players/PlayerAgent";
 import { RandomPlayerAgent } from "../players/RandomPlayerAgent";
 import { DecisionContext, GameLogEntry, TurnContext } from "../lib/types";
 import { DiceAction } from "../lib/actionTypes";
+import { TraderContext, TraderDecision } from "../lib/traderTypes";
 
 type PlayerType = "random" | "claude" | "human";
 
@@ -55,6 +56,11 @@ interface UseGameSetupReturn {
         gameLog: readonly GameLogEntry[],
         decisionContext: DecisionContext,
       ) => Promise<{ choice: string }>;
+      onTraderDecisionNeeded: (
+        gameState: import("../game/GameState").GameState,
+        gameLog: readonly GameLogEntry[],
+        traderContext: TraderContext,
+      ) => Promise<TraderDecision>;
     },
   ) => Promise<PlayerAgent>;
   startNewGame: (
@@ -76,6 +82,11 @@ interface UseGameSetupReturn {
         gameLog: readonly GameLogEntry[],
         decisionContext: DecisionContext,
       ) => Promise<{ choice: string }>;
+      onTraderDecisionNeeded: (
+        gameState: import("../game/GameState").GameState,
+        gameLog: readonly GameLogEntry[],
+        traderContext: TraderContext,
+      ) => Promise<TraderDecision>;
     },
   ) => Promise<void>;
   hasClaudePlayers: boolean;
@@ -123,6 +134,11 @@ export function useGameSetup(): UseGameSetupReturn {
         gameLog: readonly GameLogEntry[],
         decisionContext: DecisionContext,
       ) => Promise<{ choice: string }>;
+      onTraderDecisionNeeded: (
+        gameState: import("../game/GameState").GameState,
+        gameLog: readonly GameLogEntry[],
+        traderContext: TraderContext,
+      ) => Promise<TraderDecision>;
     },
   ): Promise<PlayerAgent> => {
     switch (config.type) {
@@ -168,6 +184,11 @@ export function useGameSetup(): UseGameSetupReturn {
         gameLog: readonly GameLogEntry[],
         decisionContext: DecisionContext,
       ) => Promise<{ choice: string }>;
+      onTraderDecisionNeeded: (
+        gameState: import("../game/GameState").GameState,
+        gameLog: readonly GameLogEntry[],
+        traderContext: TraderContext,
+      ) => Promise<TraderDecision>;
     },
   ) => {
     try {

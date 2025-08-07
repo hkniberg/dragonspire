@@ -19,6 +19,11 @@ export class HumanPlayer implements PlayerAgent {
     gameLog: readonly GameLogEntry[],
     decisionContext: DecisionContext
   ) => Promise<Decision>;
+  private onTraderDecisionNeeded?: (
+    gameState: GameState,
+    gameLog: readonly GameLogEntry[],
+    traderContext: TraderContext
+  ) => Promise<TraderDecision>;
 
   constructor(
     name: string,
@@ -33,11 +38,17 @@ export class HumanPlayer implements PlayerAgent {
         gameLog: readonly GameLogEntry[],
         decisionContext: DecisionContext
       ) => Promise<Decision>;
+      onTraderDecisionNeeded?: (
+        gameState: GameState,
+        gameLog: readonly GameLogEntry[],
+        traderContext: TraderContext
+      ) => Promise<TraderDecision>;
     }
   ) {
     this.playerName = name;
     this.onDiceActionNeeded = callbacks?.onDiceActionNeeded;
     this.onDecisionNeeded = callbacks?.onDecisionNeeded;
+    this.onTraderDecisionNeeded = callbacks?.onTraderDecisionNeeded;
   }
 
   getName(): string {
@@ -85,11 +96,17 @@ export class HumanPlayer implements PlayerAgent {
     traderContext: TraderContext,
     thinkingLogger?: (content: string) => void
   ): Promise<TraderDecision> {
-    // Return empty decision for now
-    return {
-      actions: [],
-      reasoning: "Human player - trader decisions not implemented yet"
-    };
+    return new Promise((resolve) => {
+      if (this.onTraderDecisionNeeded) {
+        this.onTraderDecisionNeeded(gameState, gameLog, traderContext).then(resolve);
+      } else {
+        // Fallback to empty decision if no handler is set
+        resolve({
+          actions: [],
+          reasoning: "Human player - no trader decision handler set"
+        });
+      }
+    });
   }
 
   async useBuilding(
@@ -116,8 +133,14 @@ export class HumanPlayer implements PlayerAgent {
       gameLog: readonly GameLogEntry[],
       decisionContext: DecisionContext
     ) => Promise<Decision>;
+    onTraderDecisionNeeded?: (
+      gameState: GameState,
+      gameLog: readonly GameLogEntry[],
+      traderContext: TraderContext
+    ) => Promise<TraderDecision>;
   }): void {
     this.onDiceActionNeeded = callbacks.onDiceActionNeeded;
     this.onDecisionNeeded = callbacks.onDecisionNeeded;
+    this.onTraderDecisionNeeded = callbacks.onTraderDecisionNeeded;
   }
 }

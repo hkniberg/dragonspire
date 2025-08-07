@@ -8,7 +8,8 @@ import { GameLog } from "../components/GameLog";
 import { GameStatus } from "../components/GameStatus";
 import DicePanel from "../components/DicePanel";
 import { HumanPlayerModal } from "../components/HumanPlayerModal";
-import MovementIndicator from "../components/MovementIndicator";
+import HumanPlayerStatus from "../components/HumanPlayerStatus";
+import { TraderModal } from "../components/TraderModal";
 import { PlayerConfigurationPanel } from "../components/PlayerConfigurationPanel";
 import { SettingsMenu } from "../components/SettingsMenu";
 import { StatisticsView } from "../components/StatisticsView";
@@ -19,6 +20,7 @@ import { useGameSession } from "../hooks/useGameSession";
 import { useGameSetup } from "../hooks/useGameSetup";
 import { useHumanPlayer } from "../hooks/useHumanPlayer";
 import { useMovementAndDice } from "../hooks/useMovementAndDice";
+import { useTraderModal } from "../hooks/useTraderModal";
 
 // Simple spinner for loading states (used only in main component now)
 const Spinner = ({ size = 20 }: { size?: number }) => (
@@ -62,6 +64,7 @@ export default function GameSimulation() {
   const gameSetup = useGameSetup();
   const humanPlayer = useHumanPlayer();
   const movementAndDice = useMovementAndDice();
+  const traderModal = useTraderModal();
 
   // Initialize component only on client side
   useEffect(() => {
@@ -191,6 +194,18 @@ export default function GameSimulation() {
     movementAndDice.handleTileClick(row, col, gameSession.gameState || undefined);
   };
 
+  const enhancedHarvestAction = () => {
+    const resolver = humanPlayer.humanDiceActionContext?.resolver;
+    const onAllDiceUsed = () => {
+      humanPlayer.setHumanDiceActionContext(null);
+    };
+    movementAndDice.handleHarvestAction(gameSession.gameState || undefined, resolver, onAllDiceUsed);
+  };
+
+  const enhancedHarvestCancel = () => {
+    movementAndDice.setSelectedHarvestTiles([]);
+  };
+
   const enhancedMovementDone = () => {
     const resolver = humanPlayer.humanDiceActionContext?.resolver;
     const onAllDiceUsed = () => {
@@ -221,6 +236,7 @@ export default function GameSimulation() {
       {
         onDiceActionNeeded: enhancedHumanDiceAction,
         onDecisionNeeded: humanPlayer.handleHumanDecision,
+        onTraderDecisionNeeded: traderModal.openTraderModal,
       },
     );
   };
@@ -484,11 +500,6 @@ export default function GameSimulation() {
                 gameState={gameSession.gameState}
                 simulationState={gameSession.simulationState}
                 actionLogLength={gameSession.actionLog.length}
-                humanPlayerWaiting={humanPlayer.humanDiceActionContext !== null}
-                selectedDieIndex={movementAndDice.selectedDieIndex}
-                selectedChampionId={movementAndDice.selectedChampionId}
-                championMovementPath={movementAndDice.championMovementPath}
-                selectedHarvestTiles={movementAndDice.selectedHarvestTiles}
               />
             )}
 
@@ -521,14 +532,48 @@ export default function GameSimulation() {
                   />
                 )}
 
-                {/* Movement Indicator - Middle */}
-                {movementAndDice.selectedChampionId !== null && movementAndDice.championMovementPath.length > 0 && (
-                  <MovementIndicator
-                    championId={movementAndDice.selectedChampionId}
-                    onCancel={movementAndDice.handleMovementCancel}
-                    onDone={enhancedMovementDone}
-                    canCancel={movementAndDice.championMovementPath.length > 0}
-                  />
+                {/* Human Player Status - Always show when human player is active */}
+                {humanPlayer.humanDiceActionContext && (
+                  <>
+                    {/* Movement */}
+                    {movementAndDice.selectedChampionId !== null && movementAndDice.championMovementPath.length > 0 && (
+                      <HumanPlayerStatus
+                        actionType="movement"
+                        championId={movementAndDice.selectedChampionId}
+                        onCancel={movementAndDice.handleMovementCancel}
+                        onDone={enhancedMovementDone}
+                        canCancel={movementAndDice.championMovementPath.length > 0}
+                        canConfirm={movementAndDice.championMovementPath.length > 1}
+                      />
+                    )}
+
+                    {/* Harvest */}
+                    {movementAndDice.selectedChampionId === null &&
+                      movementAndDice.selectedHarvestTiles.length > 0 &&
+                      movementAndDice.selectedDieIndex !== null && (
+                        <HumanPlayerStatus
+                          actionType="harvest"
+                          selectedTileCount={movementAndDice.selectedHarvestTiles.length}
+                          maxTiles={movementAndDice.diceValues[movementAndDice.selectedDieIndex]}
+                          onCancel={enhancedHarvestCancel}
+                          onDone={enhancedHarvestAction}
+                          canCancel={true}
+                          canConfirm={movementAndDice.selectedHarvestTiles.length > 0}
+                        />
+                      )}
+
+                    {/* Dice Selection - show when no specific action is happening */}
+                    {movementAndDice.selectedChampionId === null &&
+                      movementAndDice.selectedHarvestTiles.length === 0 && (
+                        <HumanPlayerStatus
+                          actionType="diceSelection"
+                          onCancel={() => {}} // No cancel for dice selection
+                          onDone={() => {}} // No done for dice selection
+                          canCancel={false}
+                          canConfirm={false}
+                        />
+                      )}
+                  </>
                 )}
 
                 {/* Card Decks - Right Side */}
@@ -611,6 +656,16 @@ export default function GameSimulation() {
             isOpen={true}
             decisionContext={humanPlayer.humanDecisionContext}
             onDecision={humanPlayer.humanDecisionResolver}
+          />
+        )}
+
+        {/* Trader Modal */}
+        {traderModal.isTraderModalOpen && traderModal.traderContext && (
+          <TraderModal
+            isOpen={traderModal.isTraderModalOpen}
+            traderContext={traderModal.traderContext}
+            onConfirm={traderModal.handleTraderDecision}
+            onCancel={() => traderModal.handleTraderDecision({ actions: [], reasoning: "Cancelled by user" })}
           />
         )}
 
