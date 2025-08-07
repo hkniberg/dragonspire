@@ -84,7 +84,7 @@ export const CardComponent = ({
   content,
   bottomTag,
   title,
-  contentFontSize = "7px",
+  contentFontSize = "8px",
   printMode = false,
   disabled = false,
   enlargeOnClick = false,
@@ -370,7 +370,7 @@ export const CardComponent = ({
                         padding: "1px 3px",
                         borderRadius: "2px",
                         fontFamily: "monospace",
-                        fontSize: "9px",
+                        fontSize: contentFontSize,
                         color: "#d63384",
                       }}
                     >
