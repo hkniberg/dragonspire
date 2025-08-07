@@ -43,7 +43,7 @@ Spend \`2 ore\` to gain \`+1 might\``,
     id: "trollsbane",
     name: "Trollsbane",
     tier: 1,
-    description: "A cursed axe, forged with fury towards `trolls`and their ilk. When fighting one, you may pay `-1 fame` to gain `+1 might`for this battle.",
+    description: "A cursed axe, forged with fury towards `trolls`and their ilk. When fighting one, you may pay `-1 fame` to gain `+2 might`for this battle.",
     count: 1,
     carriable: true,
     theme: "cave"
