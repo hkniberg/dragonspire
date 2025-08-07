@@ -1,7 +1,5 @@
-import { TemplateProcessor } from "@/lib/templateProcessor";
-import { Claude } from "@/llm/claude";
 import Head from "next/head";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ApiKeyModal } from "../components/ApiKeyModal";
 import { CardDecks } from "../components/CardDecks";
 import { ControlPanel } from "../components/ControlPanel";
@@ -11,19 +9,16 @@ import { GameStatus } from "../components/GameStatus";
 import DicePanel from "../components/DicePanel";
 import { HumanPlayerModal } from "../components/HumanPlayerModal";
 import MovementIndicator from "../components/MovementIndicator";
+import { PlayerConfigurationPanel } from "../components/PlayerConfigurationPanel";
 import { SettingsMenu } from "../components/SettingsMenu";
-import { TileActionModal } from "../components/TileActionModal";
 import { StatisticsView } from "../components/StatisticsView";
+import { TileActionModal } from "../components/TileActionModal";
 import { TokenUsage } from "../components/TokenUsage";
-import { GameMaster, GameMasterConfig } from "../engine/GameMaster";
-import { GameState } from "../game/GameState";
 import { stringifyGameState } from "../game/gameStateStringifier";
-import { DiceAction } from "../lib/actionTypes";
-import { DecisionContext, GameLogEntry, Position, Tile, TurnContext, TurnStatistics } from "../lib/types";
-import { ClaudePlayerAgent } from "../players/ClaudePlayer";
-import { HumanPlayer } from "../players/HumanPlayer";
-import { PlayerAgent } from "../players/PlayerAgent";
-import { RandomPlayerAgent } from "../players/RandomPlayerAgent";
+import { useGameSession } from "../hooks/useGameSession";
+import { useGameSetup } from "../hooks/useGameSetup";
+import { useHumanPlayer } from "../hooks/useHumanPlayer";
+import { useMovementAndDice } from "../hooks/useMovementAndDice";
 
 // Simple spinner for loading states (used only in main component now)
 const Spinner = ({ size = 20 }: { size?: number }) => (
@@ -48,106 +43,25 @@ const spinnerStyles = `
   }
 `;
 
-type SimulationState = "setup" | "playing" | "finished";
-type PlayerType = "random" | "claude" | "human";
 type ViewType = "game" | "statistics";
-
-interface PlayerConfig {
-  name: string;
-  type: PlayerType;
-}
-
-interface GameConfig {
-  startFame: number;
-  startMight: number;
-  startFood: number;
-  startWood: number;
-  startOre: number;
-  startGold: number;
-  seed: number;
-  maxRounds: number;
-}
 
 export default function GameSimulation() {
   // Client-side rendering state
   const [mounted, setMounted] = useState(false);
 
-  // Game simulation state
-  const [gameSession, setGameSession] = useState<GameMaster | null>(null);
-  const [gameState, setGameState] = useState<GameState | null>(null);
-  const [simulationState, setSimulationState] = useState<SimulationState>("setup");
-  const [actionLog, setActionLog] = useState<any[]>([]);
+  // View state
   const [currentView, setCurrentView] = useState<ViewType>("game");
-  const [statistics, setStatistics] = useState<readonly TurnStatistics[]>([]);
-
-  // Player configuration state
-  const [playerConfigs, setPlayerConfigs] = useState<PlayerConfig[]>([
-    { name: "Alice", type: "human" },
-    { name: "Bob", type: "random" },
-    { name: "Charlie", type: "random" },
-    { name: "Diana", type: "random" },
-  ]);
-  const [gameConfig, setGameConfig] = useState<GameConfig>({
-    startFame: 0,
-    startMight: 0,
-    startFood: 0,
-    startWood: 0,
-    startOre: 0,
-    startGold: 2,
-    seed: 0,
-    maxRounds: 30,
-  });
-  const [apiKey, setApiKey] = useState("");
-  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
-
-  // UI state
-  const [isExecutingTurn, setIsExecutingTurn] = useState(false);
-  const [autoPlay, setAutoPlay] = useState(false);
-  const [autoPlaySpeed, setAutoPlaySpeed] = useState(1000); // ms between turns
   const [showActionLog, setShowActionLog] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const [allowDragging, setAllowDragging] = useState(false);
-  const [isStartingGame, setIsStartingGame] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [forceRender, setForceRender] = useState(0);
   const [copyGamestateSuccess, setCopyGamestateSuccess] = useState(false);
 
-  // Human player interaction state
-  const [humanDecisionContext, setHumanDecisionContext] = useState<DecisionContext | null>(null);
-  const [humanDecisionResolver, setHumanDecisionResolver] = useState<((choice: string) => void) | null>(null);
-  const [humanDiceActionContext, setHumanDiceActionContext] = useState<{
-    gameState: GameState;
-    gameLog: readonly GameLogEntry[];
-    turnContext: TurnContext;
-    resolver: (action: DiceAction) => void;
-  } | null>(null);
-  const [selectedChampionId, setSelectedChampionId] = useState<number | null>(null);
-  const [championMovementPath, setChampionMovementPath] = useState<{ row: number; col: number }[]>([]);
-
-  // Tile action modal state
-  const [tileActionModalOpen, setTileActionModalOpen] = useState(false);
-  const [pendingChampionAction, setPendingChampionAction] = useState<{
-    diceValue: number;
-    championId: number;
-    movementPath: { row: number; col: number }[];
-    destinationTile: Tile;
-  } | null>(null);
-
-  // Dice state
-  const [diceValues, setDiceValues] = useState<number[]>([]);
-  const [usedDiceIndices, setUsedDiceIndices] = useState<number[]>([]);
-  const [selectedDieIndex, setSelectedDieIndex] = useState<number | null>(null);
-  const [isDiceRolling, setIsDiceRolling] = useState(false);
-
-  // Ref to hold the autoplay timeout
-  const autoPlayTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // Ref to always get current autoPlay state (avoids closure issues)
-  const autoPlayRef = useRef(autoPlay);
-
-  // Keep autoPlayRef in sync with autoPlay state
-  useEffect(() => {
-    autoPlayRef.current = autoPlay;
-  }, [autoPlay]);
+  // Use custom hooks
+  const gameSession = useGameSession();
+  const gameSetup = useGameSetup();
+  const humanPlayer = useHumanPlayer();
+  const movementAndDice = useMovementAndDice();
 
   // Initialize component only on client side
   useEffect(() => {
@@ -155,7 +69,7 @@ export default function GameSimulation() {
     // Load API key from localStorage if available
     const storedKey = localStorage.getItem("anthropic-api-key");
     if (storedKey) {
-      setApiKey(storedKey);
+      gameSetup.setApiKey(storedKey);
     }
   }, []);
 
@@ -163,478 +77,122 @@ export default function GameSimulation() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
-        selectedChampionId !== null &&
-        humanDiceActionContext &&
-        championMovementPath.length > 0 &&
-        selectedDieIndex !== null
+        movementAndDice.selectedChampionId !== null &&
+        humanPlayer.humanDiceActionContext &&
+        movementAndDice.championMovementPath.length > 0 &&
+        movementAndDice.selectedDieIndex !== null
       ) {
-        const currentPos = championMovementPath[championMovementPath.length - 1];
-        let newPos: { row: number; col: number } | null = null;
-
         switch (event.key.toLowerCase()) {
           case "w":
-            newPos = { row: currentPos.row - 1, col: currentPos.col };
-            break;
           case "s":
-            newPos = { row: currentPos.row + 1, col: currentPos.col };
-            break;
           case "a":
-            newPos = { row: currentPos.row, col: currentPos.col - 1 };
-            break;
           case "d":
-            newPos = { row: currentPos.row, col: currentPos.col + 1 };
+            event.preventDefault();
+            movementAndDice.handleWASDMovement(event.key);
             break;
           case "enter":
             // Complete the movement (like Done button)
             event.preventDefault();
             console.log("⏎ Enter pressed - completing movement");
-            handleMovementDone();
-            return;
+            movementAndDice.handleMovementDone(gameSession.gameState || undefined);
+            break;
           case "escape":
             // Cancel the entire movement and deselect champion
             event.preventDefault();
             console.log("⎋ Escape pressed - canceling entire movement");
-            handleMovementCancel();
-            return;
-        }
-
-        if (newPos && newPos.row >= 0 && newPos.row < 8 && newPos.col >= 0 && newPos.col < 8) {
-          event.preventDefault();
-
-          console.log("⌨️ WASD key pressed:", event.key, "Moving to:", newPos, "Current path:", championMovementPath);
-
-          // Check if this position is already in the path (backtracking)
-          const existingIndex = championMovementPath.findIndex(
-            (pos) => pos.row === newPos.row && pos.col === newPos.col,
-          );
-
-          if (existingIndex !== -1) {
-            console.log(
-              "🔙 WASD Backtracking to index:",
-              existingIndex,
-              "Truncating path from",
-              championMovementPath.length,
-              "to",
-              existingIndex + 1,
-            );
-            // Backtracking: truncate path to this position
-            setChampionMovementPath(championMovementPath.slice(0, existingIndex + 1));
-          } else {
-            // Check if we can move forward (dice value restriction)
-            const selectedDieValue = diceValues[selectedDieIndex];
-            const currentPathLength = championMovementPath.length - 1; // Subtract 1 because first position is starting position
-
-            if (currentPathLength >= selectedDieValue) {
-              console.log(
-                "❌ Cannot move further - dice value limit reached:",
-                selectedDieValue,
-                "steps already taken:",
-                currentPathLength,
-              );
-              return;
-            }
-
-            console.log(
-              "➡️ WASD Moving forward to:",
-              newPos,
-              "Steps taken:",
-              currentPathLength,
-              "Dice value:",
-              selectedDieValue,
-            );
-            // Moving forward: add new position to path
-            setChampionMovementPath([...championMovementPath, newPos]);
-          }
+            movementAndDice.handleMovementCancel();
+            break;
         }
       }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedChampionId, humanDiceActionContext, championMovementPath, selectedDieIndex]);
+  }, [
+    movementAndDice.selectedChampionId,
+    humanPlayer.humanDiceActionContext,
+    movementAndDice.championMovementPath,
+    movementAndDice.selectedDieIndex,
+    movementAndDice,
+    gameSession.gameState,
+  ]);
 
-  // Autoplay effect - starts initial autoplay and cleans up on changes
-  useEffect(() => {
-    // Clear any existing timeout when autoplay settings change
-    if (autoPlayTimeout.current) {
-      clearTimeout(autoPlayTimeout.current);
-      autoPlayTimeout.current = null;
-    }
+  // Enhanced human player handlers with dice state management
+  const enhancedHumanDiceAction = async (
+    gameState: import("../game/GameState").GameState,
+    gameLog: readonly import("../lib/types").GameLogEntry[],
+    turnContext: import("../lib/types").TurnContext,
+  ) => {
+    // Only initialize dice state if this is the first action of the turn
+    const isFirstActionOfTurn = turnContext.remainingDiceValues.length === turnContext.diceRolled.length;
 
-    // Start initial autoplay turn if enabled and ready
-    if (autoPlayRef.current && simulationState === "playing" && !isExecutingTurn) {
-      autoPlayTimeout.current = setTimeout(() => {
-        executeNextTurn();
-      }, autoPlaySpeed);
-    }
-
-    // Cleanup function
-    return () => {
-      if (autoPlayTimeout.current) {
-        clearTimeout(autoPlayTimeout.current);
-        autoPlayTimeout.current = null;
-      }
-    };
-  }, [autoPlay, simulationState, autoPlaySpeed]);
-
-  // Cleanup timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (autoPlayTimeout.current) {
-        clearTimeout(autoPlayTimeout.current);
-        autoPlayTimeout.current = null;
-      }
-    };
-  }, []);
-
-  const executeNextTurn = async () => {
-    if (!gameSession || simulationState !== "playing" || isExecutingTurn) {
-      return;
-    }
-
-    setIsExecutingTurn(true);
-
-    try {
-      // Create callback for step updates during turn execution
-      const onStepUpdate = () => {
-        const updatedGameState = gameSession.getGameState();
-        const updatedGameLog = gameSession.getGameLog();
-        const updatedStatistics = gameSession.getStatistics();
-
-        setGameState(updatedGameState);
-        setActionLog(Array.from(updatedGameLog));
-        setStatistics(updatedStatistics);
-      };
-
-      // Execute turn with step update callback
-      await gameSession.executeTurn(onStepUpdate);
-
-      // Final update after turn completion
-      const updatedGameState = gameSession.getGameState();
-      const updatedGameLog = gameSession.getGameLog();
-      const updatedStatistics = gameSession.getStatistics();
-
-      setGameState(updatedGameState);
-      setActionLog(Array.from(updatedGameLog));
-      setStatistics(updatedStatistics);
-
-      // Check if game is finished
-      if (gameSession.getMasterState() === "finished") {
-        setSimulationState("finished");
-        setAutoPlay(false);
-        console.log("Game finished!");
-      }
-    } catch (error) {
-      console.error("Error executing turn:", error);
-      setAutoPlay(false);
-    } finally {
-      setIsExecutingTurn(false);
-
-      // Schedule next autoplay turn if still enabled and game is still playing
-      // Use ref to get current autoPlay state (avoids closure issues)
-      if (autoPlayRef.current && simulationState === "playing" && gameSession?.getMasterState() !== "finished") {
-        autoPlayTimeout.current = setTimeout(() => {
-          executeNextTurn();
-        }, autoPlaySpeed);
-      }
-    }
-  };
-
-  // Human player interaction handlers
-  const handleHumanDecision = (
-    gameState: GameState,
-    gameLog: readonly GameLogEntry[],
-    decisionContext: DecisionContext,
-  ): Promise<{ choice: string }> => {
-    return new Promise((resolve) => {
-      setHumanDecisionContext(decisionContext);
-      setHumanDecisionResolver(() => (choice: string) => {
-        setHumanDecisionContext(null);
-        setHumanDecisionResolver(null);
-        resolve({ choice });
-      });
+    console.log("🎲 enhancedHumanDiceAction called:", {
+      isFirstActionOfTurn,
+      diceRolled: turnContext.diceRolled,
+      remainingDiceValues: turnContext.remainingDiceValues,
+      currentDiceValues: movementAndDice.diceValues,
+      usedDiceIndices: movementAndDice.usedDiceIndices,
     });
-  };
 
-  const handleHumanDiceAction = (
-    gameState: GameState,
-    gameLog: readonly GameLogEntry[],
-    turnContext: TurnContext,
-  ): Promise<DiceAction> => {
-    return new Promise((resolve) => {
-      // Only initialize dice state if this is the first action of the turn
-      // Check if the remaining dice count equals the total dice rolled (meaning it's the first action)
-      const isFirstActionOfTurn = turnContext.remainingDiceValues.length === turnContext.diceRolled.length;
+    if (isFirstActionOfTurn) {
+      console.log("🎲 Initializing dice state for turn");
+      // Initialize dice state for the turn
+      movementAndDice.setDiceValues(turnContext.diceRolled);
+      movementAndDice.setUsedDiceIndices([]);
+      movementAndDice.setSelectedDieIndex(null);
 
-      console.log("🎲 handleHumanDiceAction called:", {
-        isFirstActionOfTurn,
-        diceRolled: turnContext.diceRolled,
-        remainingDiceValues: turnContext.remainingDiceValues,
-        currentDiceValues: diceValues,
-        usedDiceIndices: usedDiceIndices,
-      });
-
-      if (isFirstActionOfTurn) {
-        console.log("🎲 Initializing dice state for turn");
-        // Initialize dice state for the turn
-        setDiceValues(turnContext.diceRolled);
-        setUsedDiceIndices([]);
-        setSelectedDieIndex(null);
-
-        // Show rolling animation only on first action
-        setIsDiceRolling(true);
-        setTimeout(() => {
-          setIsDiceRolling(false);
-        }, 1000);
-      } else {
-        console.log("🎲 Continuing with existing dice state");
-      }
-
-      // Always reset champion selection for new action
-      setSelectedChampionId(null);
-      setChampionMovementPath([]);
-
-      setHumanDiceActionContext({
-        gameState,
-        gameLog,
-        turnContext,
-        resolver: resolve,
-      });
-    });
-  };
-
-  const handleDieSelection = (dieIndex: number) => {
-    if (usedDiceIndices.includes(dieIndex)) {
-      return; // Can't select used die
-    }
-
-    if (selectedDieIndex === dieIndex) {
-      // Deselect if clicking same die
-      setSelectedDieIndex(null);
+      // Show rolling animation only on first action
+      movementAndDice.setIsDiceRolling(true);
+      setTimeout(() => {
+        movementAndDice.setIsDiceRolling(false);
+      }, 1000);
     } else {
-      // Select new die
-      setSelectedDieIndex(dieIndex);
-      // Clear champion selection when selecting new die
-      setSelectedChampionId(null);
-      setChampionMovementPath([]);
+      console.log("🎲 Continuing with existing dice state");
+    }
+
+    // Always reset champion selection for new action
+    movementAndDice.setSelectedChampionId(null);
+    movementAndDice.setChampionMovementPath([]);
+
+    return humanPlayer.handleHumanDiceAction(gameState, gameLog, turnContext);
+  };
+
+  const enhancedChampionSelection = (championId: number) => {
+    movementAndDice.handleChampionSelection(championId, gameSession.gameState || undefined);
+  };
+
+  const enhancedMovementDone = () => {
+    movementAndDice.handleMovementDone(gameSession.gameState || undefined);
+  };
+
+  const enhancedTileActionConfirm = (tileAction: import("@/lib/actionTypes").TileAction) => {
+    const resolver = humanPlayer.humanDiceActionContext?.resolver;
+    movementAndDice.handleTileActionConfirm(tileAction, resolver);
+
+    // Check if all dice are used
+    if (movementAndDice.usedDiceIndices.length + 1 >= movementAndDice.diceValues.length) {
+      humanPlayer.setHumanDiceActionContext(null);
     }
   };
 
-  const handleChampionSelection = (championId: number) => {
-    // Must have a die selected first
-    if (selectedDieIndex === null) {
-      return;
-    }
-
-    if (selectedChampionId === championId) {
-      // Just deselect the champion (Done button will handle movement completion)
-      setSelectedChampionId(null);
-      setChampionMovementPath([]);
-    } else {
-      // Select new champion
-      setSelectedChampionId(championId);
-      if (humanDiceActionContext) {
-        const champion = humanDiceActionContext.gameState.getChampion(
-          humanDiceActionContext.gameState.getCurrentPlayer().name,
-          championId,
-        );
-        if (champion) {
-          setChampionMovementPath([champion.position]);
-        }
-      }
-    }
-  };
-
-  const handleTileClick = (row: number, col: number) => {
-    // Tile clicking is disabled for movement - use WASD keys instead
-    console.log("🎯 Tile clicked:", { row, col }, "but movement is WASD-only");
-  };
-
-  const handleMovementUndo = () => {
-    if (championMovementPath.length > 1) {
-      // Remove the last position from the path
-      setChampionMovementPath(championMovementPath.slice(0, -1));
-    }
-  };
-
-  const handleMovementCancel = () => {
-    // Cancel entire movement and deselect champion
-    console.log("❌ Canceling entire movement and deselecting champion");
-    setSelectedChampionId(null);
-    setChampionMovementPath([]);
-  };
-
-  const handleMovementDone = () => {
-    if (
-      selectedChampionId !== null &&
-      championMovementPath.length > 1 &&
-      humanDiceActionContext &&
-      selectedDieIndex !== null &&
-      gameState
-    ) {
-      const diceValue = diceValues[selectedDieIndex];
-      const destinationPosition = championMovementPath[championMovementPath.length - 1];
-      const destinationTile = gameState.board.getTileAt(destinationPosition);
-
-      if (!destinationTile) {
-        console.error("Invalid destination tile");
-        return;
-      }
-
-      // Store the pending action and show tile action modal
-      setPendingChampionAction({
-        diceValue,
-        championId: selectedChampionId,
-        movementPath: championMovementPath,
-        destinationTile,
-      });
-      setTileActionModalOpen(true);
-    }
-  };
-
-  const handleTileActionConfirm = (tileAction: import("@/lib/actionTypes").TileAction) => {
-    if (pendingChampionAction && humanDiceActionContext) {
-      const action: DiceAction = {
-        actionType: "championAction",
-        championAction: {
-          diceValueUsed: pendingChampionAction.diceValue,
-          championId: pendingChampionAction.championId,
-          movementPathIncludingStartPosition: pendingChampionAction.movementPath,
-          tileAction,
-        },
-        reasoning: "Human player champion movement with tile actions",
-      };
-
-      // Mark die as used and reset state
-      setUsedDiceIndices([...usedDiceIndices, selectedDieIndex!]);
-      setSelectedDieIndex(null);
-      setSelectedChampionId(null);
-      setChampionMovementPath([]);
-      setPendingChampionAction(null);
-      setTileActionModalOpen(false);
-
-      // Check if all dice are used
-      if (usedDiceIndices.length + 1 >= diceValues.length) {
-        setHumanDiceActionContext(null);
-      }
-
-      // Resolve the action
-      humanDiceActionContext.resolver(action);
-    }
-  };
-
-  const handleTileActionCancel = () => {
-    setTileActionModalOpen(false);
-    setPendingChampionAction(null);
-    // Don't reset other state - let player continue moving or cancel movement manually
-  };
-
-  const createPlayer = async (
-    config: PlayerConfig,
-    tokenUsageTracker?: import("@/lib/TokenUsageTracker").TokenUsageTracker,
-  ): Promise<PlayerAgent> => {
-    switch (config.type) {
-      case "random":
-        return new RandomPlayerAgent(config.name);
-      case "claude":
-        if (!apiKey.trim()) {
-          throw new Error("API key is required for Claude players");
-        }
-        // Create template processor for web usage (uses fetch)
-        const templateProcessor = new TemplateProcessor();
-        // Get the system message for Claude
-        const systemMessage = await templateProcessor.processTemplate("SystemPrompt", {});
-        const claude = new Claude(apiKey.trim(), systemMessage, undefined, tokenUsageTracker);
-        return new ClaudePlayerAgent(config.name, claude, templateProcessor);
-      case "human":
-        const humanPlayer = new HumanPlayer(config.name);
-        humanPlayer.setCallbacks({
-          onDiceActionNeeded: handleHumanDiceAction,
-          onDecisionNeeded: handleHumanDecision,
-        });
-        return humanPlayer;
-      default:
-        throw new Error(`Unknown player type: ${config.type}`);
-    }
-  };
-
-  const startNewGame = async () => {
-    try {
-      // Check if Claude players need API key
-      const hasClaudePlayers = playerConfigs.some((config) => config.type === "claude");
-      if (hasClaudePlayers && !apiKey.trim()) {
-        setShowApiKeyModal(true);
-        return;
-      }
-
-      setIsStartingGame(true);
-
-      // Create token usage tracker for Claude players
-      const { TokenUsageTracker } = await import("@/lib/TokenUsageTracker");
-      const tokenUsageTracker = new TokenUsageTracker();
-
-      // Create all players asynchronously
-      const players = await Promise.all(playerConfigs.map((config) => createPlayer(config, tokenUsageTracker)));
-
-      // Validate player names
-      const playerNames = players.map((p) => p.getName());
-      if (new Set(playerNames).size !== playerNames.length) {
-        setErrorMessage("Player names must be unique");
-        return;
-      }
-
-      // Validate player types
-      const hasValidTypes = players.every((p) => ["random", "claude", "human"].includes(p.getType()));
-      if (!hasValidTypes) {
-        setErrorMessage("Invalid player type detected");
-        return;
-      }
-
-      // Create game session
-      const sessionConfig: GameMasterConfig = {
-        players: players,
-        maxRounds: gameConfig.maxRounds,
-        startingValues: {
-          fame: gameConfig.startFame,
-          might: gameConfig.startMight,
-          food: gameConfig.startFood,
-          wood: gameConfig.startWood,
-          ore: gameConfig.startOre,
-          gold: gameConfig.startGold,
-        },
-        seed: gameConfig.seed,
-        tokenUsageTracker: tokenUsageTracker, // Pass the same tracker instance
-      };
-
-      const session = new GameMaster(sessionConfig);
-      session.start();
-
-      setGameSession(session);
-      setGameState(session.getGameState());
-      setSimulationState("playing");
-      setActionLog([]);
-      setStatistics([]);
-      setCurrentView("game");
-      setAutoPlay(false);
-
-      console.log(
-        "New game started with players:",
-        players.map((p) => `${p.getName()} (${p.getType()})`),
-      );
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      alert(`Failed to start game: ${errorMessage}`);
-    } finally {
-      setIsStartingGame(false);
-    }
-  };
-
-  const updatePlayerConfig = (index: number, field: keyof PlayerConfig, value: string) => {
-    setPlayerConfigs((prev) => prev.map((config, i) => (i === index ? { ...config, [field]: value } : config)));
+  const handleStartNewGame = async () => {
+    await gameSetup.startNewGame(
+      gameSession.setGameSession,
+      gameSession.setGameState,
+      gameSession.setSimulationState,
+      gameSession.setActionLog,
+      gameSession.setStatistics,
+      setCurrentView,
+      gameSession.setAutoPlay,
+      {
+        onDiceActionNeeded: enhancedHumanDiceAction,
+        onDecisionNeeded: humanPlayer.handleHumanDecision,
+      },
+    );
   };
 
   const toggleAutoPlay = () => {
-    setAutoPlay(!autoPlay);
+    gameSession.setAutoPlay(!gameSession.autoPlay);
   };
 
   const toggleDebugMode = () => {
@@ -645,37 +203,27 @@ export default function GameSimulation() {
     setAllowDragging(!allowDragging);
   };
 
-  const resetGame = () => {
-    setGameSession(null);
-    setGameState(null);
-    setSimulationState("setup");
-    setActionLog([]);
-    setStatistics([]);
-    setCurrentView("game");
-    setAutoPlay(false);
-  };
-
   const handleExtraInstructionsChange = (playerName: string, instructions: string) => {
-    if (gameState && gameSession) {
-      const player = gameState.getPlayer(playerName);
+    if (gameSession.gameState && gameSession.gameSession) {
+      const player = gameSession.gameState.getPlayer(playerName);
       if (player) {
         player.extraInstructions = instructions;
         // Force a re-render by incrementing counter
         setForceRender((prev) => prev + 1);
         // Update the game session's internal state
-        gameSession.updateGameState(gameState);
+        gameSession.gameSession.updateGameState(gameSession.gameState);
       }
     }
   };
 
   const handleCopyGamestate = async () => {
-    if (!gameState) {
+    if (!gameSession.gameState) {
       alert("No game state available to copy");
       return;
     }
 
     try {
-      const gamestateText = stringifyGameState(gameState);
+      const gamestateText = stringifyGameState(gameSession.gameState);
       await navigator.clipboard.writeText(gamestateText);
       setCopyGamestateSuccess(true);
       setTimeout(() => setCopyGamestateSuccess(false), 2000); // Hide success message after 2 seconds
@@ -684,8 +232,6 @@ export default function GameSimulation() {
       alert("Failed to copy game state to clipboard");
     }
   };
-
-  const hasClaudePlayers = playerConfigs.some((config) => config.type === "claude");
 
   // Show loading state until client-side rendering is ready
   if (!mounted) {
@@ -746,7 +292,7 @@ export default function GameSimulation() {
 
           <div style={{ display: "flex", gap: "15px", alignItems: "center", flexWrap: "wrap" }}>
             {/* View Switching Buttons - Only show when game is active */}
-            {(simulationState === "playing" || simulationState === "finished") && (
+            {(gameSession.simulationState === "playing" || gameSession.simulationState === "finished") && (
               <div style={{ display: "flex", gap: "5px" }}>
                 <button
                   onClick={() => setCurrentView("game")}
@@ -824,10 +370,12 @@ export default function GameSimulation() {
             </div>
 
             {/* Token Usage Widget */}
-            {gameSession && <TokenUsage tokenUsageTracker={gameSession.getTokenUsageTracker()} />}
+            {gameSession.gameSession && (
+              <TokenUsage tokenUsageTracker={gameSession.gameSession.getTokenUsageTracker()} />
+            )}
 
             {/* Copy Gamestate Button */}
-            {gameState && (
+            {gameSession.gameState && (
               <button
                 onClick={handleCopyGamestate}
                 style={{
@@ -865,456 +413,31 @@ export default function GameSimulation() {
         </div>
 
         {/* Player Configuration Panel */}
-        {simulationState === "setup" && (
-          <div
-            style={{
-              backgroundColor: "rgba(255, 255, 255, 0.9)",
-              padding: "20px",
-              borderRadius: "8px",
-              marginBottom: "20px",
-              border: "1px solid #ddd",
-            }}
-          >
-            <h2 style={{ marginBottom: "15px", color: "#2c3e50" }}>Player Configuration</h2>
-
-            {/* API Key Status */}
-            {hasClaudePlayers && (
-              <div style={{ marginBottom: "20px" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    padding: "12px",
-                    backgroundColor: apiKey ? "#d4edda" : "#f8d7da",
-                    border: `1px solid ${apiKey ? "#c3e6cb" : "#f5c6cb"}`,
-                    borderRadius: "4px",
-                  }}
-                >
-                  <span style={{ fontSize: "20px" }}>{apiKey ? "🔑" : "⚠️"}</span>
-                  <div style={{ flex: 1 }}>
-                    <strong style={{ color: apiKey ? "#155724" : "#721c24" }}>
-                      {apiKey ? "API Key Configured" : "API Key Required"}
-                    </strong>
-                    <div
-                      style={{
-                        fontSize: "14px",
-                        color: apiKey ? "#155724" : "#721c24",
-                      }}
-                    >
-                      {apiKey
-                        ? "Claude AI players are ready to play"
-                        : "Configure your Anthropic API key to use Claude players"}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setShowApiKeyModal(true)}
-                    style={{
-                      padding: "6px 12px",
-                      backgroundColor: "#007bff",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      fontSize: "14px",
-                    }}
-                  >
-                    {apiKey ? "Change Key" : "Set API Key"}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Player Type Selectors */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-                gap: "15px",
-              }}
-            >
-              {playerConfigs.map((config, index) => (
-                <div
-                  key={index}
-                  style={{
-                    padding: "15px",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    backgroundColor: "#f8f9fa",
-                  }}
-                >
-                  <h4 style={{ marginBottom: "10px", color: "#2c3e50" }}>Player {index + 1}</h4>
-
-                  <div style={{ marginBottom: "10px" }}>
-                    <label
-                      style={{
-                        display: "block",
-                        marginBottom: "5px",
-                        fontSize: "14px",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Name:
-                    </label>
-                    <input
-                      type="text"
-                      value={config.name}
-                      onChange={(e) => updatePlayerConfig(index, "name", e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "6px",
-                        border: "1px solid #ddd",
-                        borderRadius: "4px",
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label
-                      style={{
-                        display: "block",
-                        marginBottom: "5px",
-                        fontSize: "14px",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      Type:
-                    </label>
-                    <select
-                      value={config.type}
-                      onChange={(e) => updatePlayerConfig(index, "type", e.target.value as PlayerType)}
-                      style={{
-                        width: "100%",
-                        padding: "6px",
-                        border: "1px solid #ddd",
-                        borderRadius: "4px",
-                      }}
-                    >
-                      <option value="random">Random AI</option>
-                      <option value="claude">Claude AI</option>
-                      <option value="human">Human Player</option>
-                    </select>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Game Configuration */}
-            <div style={{ marginTop: "20px" }}>
-              <h3 style={{ marginBottom: "15px", color: "#2c3e50" }}>Game Configuration</h3>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
-                  gap: "12px",
-                  padding: "15px",
-                  border: "1px solid #ddd",
-                  borderRadius: "6px",
-                  backgroundColor: "#f8f9fa",
-                }}
-              >
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "5px",
-                      fontSize: "14px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Start Fame:
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    value={gameConfig.startFame}
-                    onChange={(e) =>
-                      setGameConfig({
-                        ...gameConfig,
-                        startFame: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    style={{
-                      width: "80px",
-                      padding: "4px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "5px",
-                      fontSize: "14px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Start Might:
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    value={gameConfig.startMight}
-                    onChange={(e) =>
-                      setGameConfig({
-                        ...gameConfig,
-                        startMight: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    style={{
-                      width: "80px",
-                      padding: "4px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "5px",
-                      fontSize: "14px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Start Food:
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    value={gameConfig.startFood}
-                    onChange={(e) =>
-                      setGameConfig({
-                        ...gameConfig,
-                        startFood: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    style={{
-                      width: "80px",
-                      padding: "4px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "5px",
-                      fontSize: "14px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Start Wood:
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    value={gameConfig.startWood}
-                    onChange={(e) =>
-                      setGameConfig({
-                        ...gameConfig,
-                        startWood: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    style={{
-                      width: "80px",
-                      padding: "4px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "5px",
-                      fontSize: "14px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Start Ore:
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    value={gameConfig.startOre}
-                    onChange={(e) =>
-                      setGameConfig({
-                        ...gameConfig,
-                        startOre: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    style={{
-                      width: "80px",
-                      padding: "4px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "5px",
-                      fontSize: "14px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Start Gold:
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="20"
-                    value={gameConfig.startGold}
-                    onChange={(e) =>
-                      setGameConfig({
-                        ...gameConfig,
-                        startGold: parseInt(e.target.value) || 0,
-                      })
-                    }
-                    style={{
-                      width: "80px",
-                      padding: "4px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "5px",
-                      fontSize: "14px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Max Rounds:
-                  </label>
-                  <input
-                    type="number"
-                    min="5"
-                    max="100"
-                    value={gameConfig.maxRounds}
-                    onChange={(e) =>
-                      setGameConfig({
-                        ...gameConfig,
-                        maxRounds: parseInt(e.target.value) || 30,
-                      })
-                    }
-                    style={{
-                      width: "80px",
-                      padding: "4px",
-                      border: "1px solid #ddd",
-                      borderRadius: "4px",
-                      fontSize: "14px",
-                    }}
-                    placeholder="30"
-                  />
-                  <small style={{ fontSize: "12px", color: "#666", marginTop: "2px", display: "block" }}>
-                    Maximum number of game rounds before ending.
-                  </small>
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      marginBottom: "5px",
-                      fontSize: "14px",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    Random Seed:
-                  </label>
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    <input
-                      type="number"
-                      value={gameConfig.seed}
-                      onChange={(e) =>
-                        setGameConfig({
-                          ...gameConfig,
-                          seed: parseInt(e.target.value) || 0,
-                        })
-                      }
-                      style={{
-                        width: "100px",
-                        padding: "4px",
-                        border: "1px solid #ddd",
-                        borderRadius: "4px",
-                        fontSize: "14px",
-                      }}
-                      placeholder="0 for default"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setGameConfig({
-                          ...gameConfig,
-                          seed: Math.floor(Math.random() * 1000000),
-                        })
-                      }
-                      style={{
-                        padding: "6px 12px",
-                        backgroundColor: "#6c757d",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                        fontSize: "14px",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      🎲 Random
-                    </button>
-                  </div>
-                  <small style={{ fontSize: "12px", color: "#666", marginTop: "2px", display: "block" }}>
-                    Controls board layout generation. Same seed = same board.
-                  </small>
-                </div>
-              </div>
-            </div>
-          </div>
+        {gameSession.simulationState === "setup" && (
+          <PlayerConfigurationPanel
+            playerConfigs={gameSetup.playerConfigs}
+            gameConfig={gameSetup.gameConfig}
+            apiKey={gameSetup.apiKey}
+            hasClaudePlayers={gameSetup.hasClaudePlayers}
+            onUpdatePlayerConfig={gameSetup.updatePlayerConfig}
+            onUpdateGameConfig={gameSetup.setGameConfig}
+            onShowApiKeyModal={() => gameSetup.setShowApiKeyModal(true)}
+          />
         )}
 
         {/* Control Panel - Always visible */}
         <ControlPanel
-          simulationState={simulationState}
-          isExecutingTurn={isExecutingTurn}
-          autoPlay={autoPlay}
-          autoPlaySpeed={autoPlaySpeed}
+          simulationState={gameSession.simulationState}
+          isExecutingTurn={gameSession.isExecutingTurn}
+          autoPlay={gameSession.autoPlay}
+          autoPlaySpeed={gameSession.autoPlaySpeed}
           showActionLog={showActionLog}
-          isStartingGame={isStartingGame}
-          onStartNewGame={startNewGame}
-          onExecuteNextTurn={executeNextTurn}
+          isStartingGame={gameSetup.isStartingGame}
+          onStartNewGame={handleStartNewGame}
+          onExecuteNextTurn={gameSession.executeNextTurn}
           onToggleAutoPlay={toggleAutoPlay}
-          onSetAutoPlaySpeed={setAutoPlaySpeed}
-          onResetGame={resetGame}
+          onSetAutoPlaySpeed={gameSession.setAutoPlaySpeed}
+          onResetGame={gameSession.resetGame}
           onToggleActionLog={() => setShowActionLog(!showActionLog)}
         />
 
@@ -1322,23 +445,27 @@ export default function GameSimulation() {
         {currentView === "game" ? (
           <>
             {/* Game Status */}
-            {gameState && (
+            {gameSession.gameState && (
               <GameStatus
-                gameState={gameState}
-                simulationState={simulationState}
-                actionLogLength={actionLog.length}
-                humanPlayerWaiting={humanDiceActionContext !== null}
-                selectedDieIndex={selectedDieIndex}
-                selectedChampionId={selectedChampionId}
-                championMovementPath={championMovementPath}
+                gameState={gameSession.gameState}
+                simulationState={gameSession.simulationState}
+                actionLogLength={gameSession.actionLog.length}
+                humanPlayerWaiting={humanPlayer.humanDiceActionContext !== null}
+                selectedDieIndex={movementAndDice.selectedDieIndex}
+                selectedChampionId={movementAndDice.selectedChampionId}
+                championMovementPath={movementAndDice.championMovementPath}
               />
             )}
 
             {/* Action Log */}
-            <GameLog gameLog={actionLog} isVisible={showActionLog} players={gameState?.players || []} />
+            <GameLog
+              gameLog={gameSession.actionLog}
+              isVisible={showActionLog}
+              players={gameSession.gameState?.players || []}
+            />
 
             {/* Dice Panel and Card Decks Row */}
-            {gameState && (
+            {gameSession.gameState && (
               <div
                 style={{
                   marginTop: "20px",
@@ -1349,60 +476,60 @@ export default function GameSimulation() {
                 }}
               >
                 {/* Human Player Dice Panel - Left Side */}
-                {humanDiceActionContext && diceValues.length > 0 && (
+                {humanPlayer.humanDiceActionContext && movementAndDice.diceValues.length > 0 && (
                   <DicePanel
-                    diceValues={diceValues}
-                    usedDice={usedDiceIndices}
-                    selectedDieIndex={selectedDieIndex}
-                    onDieSelect={handleDieSelection}
-                    isRolling={isDiceRolling}
+                    diceValues={movementAndDice.diceValues}
+                    usedDice={movementAndDice.usedDiceIndices}
+                    selectedDieIndex={movementAndDice.selectedDieIndex}
+                    onDieSelect={movementAndDice.handleDieSelection}
+                    isRolling={movementAndDice.isDiceRolling}
                   />
                 )}
 
                 {/* Movement Indicator - Middle */}
-                {selectedChampionId !== null && championMovementPath.length > 0 && (
+                {movementAndDice.selectedChampionId !== null && movementAndDice.championMovementPath.length > 0 && (
                   <MovementIndicator
-                    championId={selectedChampionId}
-                    onCancel={handleMovementCancel}
-                    onDone={handleMovementDone}
-                    canCancel={championMovementPath.length > 0}
+                    championId={movementAndDice.selectedChampionId}
+                    onCancel={movementAndDice.handleMovementCancel}
+                    onDone={enhancedMovementDone}
+                    canCancel={movementAndDice.championMovementPath.length > 0}
                   />
                 )}
 
                 {/* Card Decks - Right Side */}
                 <div style={{ flex: 1 }}>
-                  <CardDecks gameSession={gameSession} />
+                  <CardDecks gameSession={gameSession.gameSession} />
                 </div>
               </div>
             )}
 
             {/* Game Board */}
-            {gameState ? (
+            {gameSession.gameState ? (
               <GameBoard
-                gameState={gameState}
+                gameState={gameSession.gameState}
                 debugMode={debugMode}
                 allowDragging={allowDragging}
-                playerConfigs={playerConfigs}
+                playerConfigs={gameSetup.playerConfigs}
                 onExtraInstructionsChange={handleExtraInstructionsChange}
                 onGameStateUpdate={(newGameState) => {
-                  setGameState(newGameState);
-                  if (gameSession) {
-                    gameSession.updateGameState(newGameState);
+                  gameSession.setGameState(newGameState);
+                  if (gameSession.gameSession) {
+                    gameSession.gameSession.updateGameState(newGameState);
                   }
                 }}
                 humanPlayerState={
-                  humanDiceActionContext
+                  humanPlayer.humanDiceActionContext
                     ? {
-                        selectedChampionId,
-                        championMovementPath,
-                        onChampionSelect: handleChampionSelection,
-                        onTileClick: handleTileClick,
-                        hasSelectedDie: selectedDieIndex !== null,
+                        selectedChampionId: movementAndDice.selectedChampionId,
+                        championMovementPath: movementAndDice.championMovementPath,
+                        onChampionSelect: enhancedChampionSelection,
+                        onTileClick: movementAndDice.handleTileClick,
+                        hasSelectedDie: movementAndDice.selectedDieIndex !== null,
                       }
                     : undefined
                 }
               />
-            ) : simulationState === "setup" ? (
+            ) : gameSession.simulationState === "setup" ? (
               <div
                 style={{
                   padding: "60px",
@@ -1430,33 +557,37 @@ export default function GameSimulation() {
           </>
         ) : currentView === "statistics" ? (
           <div style={{ marginTop: "20px" }}>
-            <StatisticsView statistics={statistics} />
+            <StatisticsView statistics={gameSession.statistics} />
           </div>
         ) : null}
 
         {/* API Key Modal */}
         <ApiKeyModal
-          isOpen={showApiKeyModal}
-          onClose={() => setShowApiKeyModal(false)}
-          apiKey={apiKey}
-          onApiKeyChange={setApiKey}
+          isOpen={gameSetup.showApiKeyModal}
+          onClose={() => gameSetup.setShowApiKeyModal(false)}
+          apiKey={gameSetup.apiKey}
+          onApiKeyChange={gameSetup.setApiKey}
         />
 
         {/* Human Player Decision Modal */}
-        {humanDecisionContext && humanDecisionResolver && (
-          <HumanPlayerModal isOpen={true} decisionContext={humanDecisionContext} onDecision={humanDecisionResolver} />
+        {humanPlayer.humanDecisionContext && humanPlayer.humanDecisionResolver && (
+          <HumanPlayerModal
+            isOpen={true}
+            decisionContext={humanPlayer.humanDecisionContext}
+            onDecision={humanPlayer.humanDecisionResolver}
+          />
         )}
 
         {/* Tile Action Modal */}
-        {tileActionModalOpen && pendingChampionAction && gameState && (
+        {movementAndDice.tileActionModalOpen && movementAndDice.pendingChampionAction && gameSession.gameState && (
           <TileActionModal
-            isOpen={tileActionModalOpen}
-            gameState={gameState}
-            tile={pendingChampionAction.destinationTile}
-            player={gameState.getCurrentPlayer()}
-            championId={pendingChampionAction.championId}
-            onConfirm={handleTileActionConfirm}
-            onCancel={handleTileActionCancel}
+            isOpen={movementAndDice.tileActionModalOpen}
+            gameState={gameSession.gameState}
+            tile={movementAndDice.pendingChampionAction.destinationTile}
+            player={gameSession.gameState.getCurrentPlayer()}
+            championId={movementAndDice.pendingChampionAction.championId}
+            onConfirm={enhancedTileActionConfirm}
+            onCancel={movementAndDice.handleTileActionCancel}
           />
         )}
       </div>
