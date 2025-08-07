@@ -4,12 +4,12 @@ import React from "react";
 
 interface MovementIndicatorProps {
   championId: number;
-  onUndo: () => void;
+  onCancel: () => void;
   onDone: () => void;
-  canUndo: boolean;
+  canCancel: boolean;
 }
 
-const MovementIndicator: React.FC<MovementIndicatorProps> = ({ championId, onUndo, onDone, canUndo }) => {
+const MovementIndicator: React.FC<MovementIndicatorProps> = ({ championId, onCancel, onDone, canCancel }) => {
   return (
     <div
       style={{
@@ -39,25 +39,25 @@ const MovementIndicator: React.FC<MovementIndicatorProps> = ({ championId, onUnd
           alignItems: "center",
         }}
       >
-        {/* Undo Button */}
+        {/* Cancel Button */}
         <button
-          onClick={onUndo}
-          disabled={!canUndo}
+          onClick={onCancel}
+          disabled={!canCancel}
           style={{
-            backgroundColor: canUndo ? "#e74c3c" : "#bdc3c7",
+            backgroundColor: canCancel ? "#e74c3c" : "#bdc3c7",
             color: "white",
             border: "none",
             borderRadius: "8px",
             padding: "8px 12px",
             fontSize: "12px",
             fontWeight: "bold",
-            cursor: canUndo ? "pointer" : "not-allowed",
+            cursor: canCancel ? "pointer" : "not-allowed",
             transition: "all 0.2s ease",
-            opacity: canUndo ? 1 : 0.6,
+            opacity: canCancel ? 1 : 0.6,
           }}
-          title="Undo last move"
+          title="Cancel entire movement (Esc key)"
         >
-          ↶ Undo
+          ✖ Cancel
         </button>
 
         {/* Done Button */}
@@ -74,7 +74,7 @@ const MovementIndicator: React.FC<MovementIndicatorProps> = ({ championId, onUnd
             cursor: "pointer",
             transition: "all 0.2s ease",
           }}
-          title="Finish moving champion"
+          title="Finish moving champion (Enter key)"
         >
           ✓ Done
         </button>

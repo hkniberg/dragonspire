@@ -81,7 +81,7 @@ export default function GameSimulation() {
 
   // Player configuration state
   const [playerConfigs, setPlayerConfigs] = useState<PlayerConfig[]>([
-    { name: "Alice", type: "random" },
+    { name: "Alice", type: "human" },
     { name: "Bob", type: "random" },
     { name: "Charlie", type: "random" },
     { name: "Diana", type: "random" },
@@ -174,11 +174,67 @@ export default function GameSimulation() {
           case "d":
             newPos = { row: currentPos.row, col: currentPos.col + 1 };
             break;
+          case "enter":
+            // Complete the movement (like Done button)
+            event.preventDefault();
+            console.log("⏎ Enter pressed - completing movement");
+            handleMovementDone();
+            return;
+          case "escape":
+            // Cancel the entire movement and deselect champion
+            event.preventDefault();
+            console.log("⎋ Escape pressed - canceling entire movement");
+            handleMovementCancel();
+            return;
         }
 
         if (newPos && newPos.row >= 0 && newPos.row < 8 && newPos.col >= 0 && newPos.col < 8) {
           event.preventDefault();
-          setChampionMovementPath([...championMovementPath, newPos]);
+
+          console.log("⌨️ WASD key pressed:", event.key, "Moving to:", newPos, "Current path:", championMovementPath);
+
+          // Check if this position is already in the path (backtracking)
+          const existingIndex = championMovementPath.findIndex(
+            (pos) => pos.row === newPos.row && pos.col === newPos.col,
+          );
+
+          if (existingIndex !== -1) {
+            console.log(
+              "🔙 WASD Backtracking to index:",
+              existingIndex,
+              "Truncating path from",
+              championMovementPath.length,
+              "to",
+              existingIndex + 1,
+            );
+            // Backtracking: truncate path to this position
+            setChampionMovementPath(championMovementPath.slice(0, existingIndex + 1));
+          } else {
+            // Check if we can move forward (dice value restriction)
+            const selectedDieValue = diceValues[selectedDieIndex];
+            const currentPathLength = championMovementPath.length - 1; // Subtract 1 because first position is starting position
+
+            if (currentPathLength >= selectedDieValue) {
+              console.log(
+                "❌ Cannot move further - dice value limit reached:",
+                selectedDieValue,
+                "steps already taken:",
+                currentPathLength,
+              );
+              return;
+            }
+
+            console.log(
+              "➡️ WASD Moving forward to:",
+              newPos,
+              "Steps taken:",
+              currentPathLength,
+              "Dice value:",
+              selectedDieValue,
+            );
+            // Moving forward: add new position to path
+            setChampionMovementPath([...championMovementPath, newPos]);
+          }
         }
       }
     };
@@ -380,20 +436,8 @@ export default function GameSimulation() {
   };
 
   const handleTileClick = (row: number, col: number) => {
-    if (selectedChampionId !== null && humanDiceActionContext && championMovementPath.length > 0) {
-      const currentPos = championMovementPath[championMovementPath.length - 1];
-      const newPos = { row, col };
-
-      // Check if this is a neighboring tile (simple adjacency check)
-      const isAdjacent =
-        Math.abs(currentPos.row - newPos.row) <= 1 &&
-        Math.abs(currentPos.col - newPos.col) <= 1 &&
-        !(currentPos.row === newPos.row && currentPos.col === newPos.col);
-
-      if (isAdjacent) {
-        setChampionMovementPath([...championMovementPath, newPos]);
-      }
-    }
+    // Tile clicking is disabled for movement - use WASD keys instead
+    console.log("🎯 Tile clicked:", { row, col }, "but movement is WASD-only");
   };
 
   const handleMovementUndo = () => {
@@ -401,6 +445,13 @@ export default function GameSimulation() {
       // Remove the last position from the path
       setChampionMovementPath(championMovementPath.slice(0, -1));
     }
+  };
+
+  const handleMovementCancel = () => {
+    // Cancel entire movement and deselect champion
+    console.log("❌ Canceling entire movement and deselecting champion");
+    setSelectedChampionId(null);
+    setChampionMovementPath([]);
   };
 
   const handleMovementDone = () => {
@@ -1237,6 +1288,9 @@ export default function GameSimulation() {
                 simulationState={simulationState}
                 actionLogLength={actionLog.length}
                 humanPlayerWaiting={humanDiceActionContext !== null}
+                selectedDieIndex={selectedDieIndex}
+                selectedChampionId={selectedChampionId}
+                championMovementPath={championMovementPath}
               />
             )}
 
@@ -1269,9 +1323,9 @@ export default function GameSimulation() {
                 {selectedChampionId !== null && championMovementPath.length > 0 && (
                   <MovementIndicator
                     championId={selectedChampionId}
-                    onUndo={handleMovementUndo}
+                    onCancel={handleMovementCancel}
                     onDone={handleMovementDone}
-                    canUndo={championMovementPath.length > 1}
+                    canCancel={championMovementPath.length > 0}
                   />
                 )}
 
