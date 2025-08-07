@@ -144,7 +144,7 @@ export default function CardsPage() {
           backsideImageUrl={`/cardBacksides/${card.type === "trader" ? "trader" : card.theme}.png`}
           backsideLabel={card.type === "trader" ? "TRADER" : "ADVENTURE"}
           showTier={card.type !== "trader"}
-          disabled={card.originalData.disabled}
+          disabled={false} //{card.originalData.disabled}
         />
       );
     }

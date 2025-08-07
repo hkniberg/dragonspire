@@ -291,42 +291,42 @@ function buildCardDeck(includeDisabled: boolean = false): Card[] {
     }
   });
 
-  // Auto-generate treasure cards from TREASURES array with random  themes
+  // Auto-generate treasure cards from TREASURES array with theme from card or random
   TREASURE_CARDS.forEach((treasure) => {
     if ((includeDisabled || !treasure.disabled) && (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(treasure.id))) {
       for (let i = 0; i < treasure.count; i++) {
         deck.addToTop({
           type: "treasure",
           tier: ONLY_INCLUDE_CARDS ? 1 : treasure.tier,
-          theme: getRandomTheme(),
+          theme: treasure.theme || getRandomTheme(),
           id: treasure.id,
         });
       }
     }
   });
 
-  // Auto-generate encounter cards from ENCOUNTERS array with random themes
+  // Auto-generate encounter cards from ENCOUNTERS array with theme from card or random
   ENCOUNTERS.forEach((encounter) => {
     if ((includeDisabled || !encounter.disabled) && (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(encounter.id))) {
       for (let i = 0; i < encounter.count; i++) {
         deck.addToTop({
           type: "encounter",
           tier: ONLY_INCLUDE_CARDS ? 1 : encounter.tier,
-          theme: getRandomTheme(), // Random theme assignment
+          theme: encounter.theme || getRandomTheme(),
           id: encounter.id,
         });
       }
     }
   });
 
-  // Auto-generate event cards from EVENTS array with random themes
+  // Auto-generate event cards from EVENTS array with theme from card or random
   EVENT_CARDS.forEach((event) => {
     if ((includeDisabled || !event.disabled) && (!ONLY_INCLUDE_CARDS || ONLY_INCLUDE_CARDS.includes(event.id))) {
       for (let i = 0; i < event.count; i++) {
         deck.addToTop({
           type: "event",
           tier: ONLY_INCLUDE_CARDS ? 1 : event.tier,
-          theme: getRandomTheme(), // Random theme assignment
+          theme: event.theme || getRandomTheme(),
           id: event.id,
         });
       }
