@@ -87,6 +87,24 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
     theme: "grove",
   },
   {
+    id: "dragon-hunger",
+    name: "Dragon hunger",
+    tier: 2,
+    description:
+      "The Dragon flies in the skies above, scouring for resources. Each Lord must count their claimed tiles. *3 or more tiles* = `+1 fame`. *5 or more tiles* = `+1 fame, +1 might`. *7 or more tiles* = `+1 fame, +1 might, +3 gold`",
+    count: 1,
+    theme: "beast",
+  },
+    {
+    id: "blessing-of-the-lonesome",
+    name: "Blessing of the lonesome",
+    tier: 2,
+    description:
+      "**Pick one of the following:** Lords with only *1x knight* in play gain another, those with *2x knights* or more gain `2 gold` for each knight. \ Lords with a lone knight gain +1 might, those with two or more gain +1 fame. \ The blessing turns into curse as *Foodtax is doubled next turn*",
+    count: 1,
+    theme: "beast",
+  },
+  {
     id: "temple-trial",
     name: "Temple Trial",
     tier: 1,
