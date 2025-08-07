@@ -40,9 +40,9 @@ export const ENCOUNTERS: Encounter[] = [
     id: "priestess",
     name: "Priestess",
     tier: 1,
-    description: "**Heals** you for *free* if you lose a fight.",
+    description: "**Heals** you for *free* if you lose a fight against any wild creature.",
     follower: true,
-    count: 2,
+    count: 1,
   },
   {
     disabled: true,
@@ -61,7 +61,7 @@ export const ENCOUNTERS: Encounter[] = [
     tier: 1,
     description: "Every time your *champion* supports another player in battle, you get `1 fame`.",
     follower: true,
-    count: 2,
+    count: 1,
     theme: "grove",
   },
 
@@ -75,6 +75,7 @@ export const ENCOUNTERS: Encounter[] = [
     description: "Each **combat** you may pay `3x gold` and gain temporary `+2 might`.",
     follower: true,
     count: 1,
+    theme: "beast",
   },
   {
     disabled: true,
@@ -84,6 +85,7 @@ export const ENCOUNTERS: Encounter[] = [
     description: "Each **combat** you may feed him `3x food` and gain temporary `+2 might`.",
     follower: true,
     count: 1,
+    theme: "cave",
   },
   {
     disabled: true,
@@ -96,6 +98,7 @@ export const ENCOUNTERS: Encounter[] = [
 **(3)** \`+2 might\``,
     follower: true,
     count: 1,
+    theme: "grove",
   },
 
   // Tier 3 Encounter Cards
@@ -108,6 +111,7 @@ export const ENCOUNTERS: Encounter[] = [
     follower: false,
     imagePromptGuidance: "White robe, blue stripe, and cane, like an Age of Empires monk",
     count: 1,
+    theme: "beast",
   },
 ];
 
