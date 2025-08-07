@@ -1,4 +1,4 @@
-import { TileTier } from "../lib/types";
+import { AdventureThemeType, TileTier } from "../lib/types";
 
 export interface TreasureCard {
   id: string;
@@ -9,6 +9,7 @@ export interface TreasureCard {
   carriable: boolean; // Whether this treasure can be carried as an item
   disabled?: boolean; // If true, card is not added to deck but still shown in UI
   imagePromptGuidance?: string; // If provided, this will be used to generate the image for the card
+  theme?: AdventureThemeType;
 }
 
 export function getTreasureCardById(id: string): TreasureCard | undefined {
