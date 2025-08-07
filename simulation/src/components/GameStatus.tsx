@@ -54,8 +54,7 @@ export const GameStatus: React.FC<GameStatusProps> = ({
             border: "1px solid #007bff",
           }}
         >
-          🎮 Waiting for human player action - Click on a champion to select it, then click on adjacent tiles or use
-          WASD keys to move!
+          🎮 Waiting for human player action - First select a die, then click on a champion to move!
         </div>
       )}
     </div>

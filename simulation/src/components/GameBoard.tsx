@@ -1,5 +1,6 @@
 import { GameState } from "../game/GameState";
 import type { Champion, Tile } from "../lib/types";
+import ArrowPath from "./ArrowPath";
 import { OceanZoneComponent, oceanZones } from "./OceanZone";
 import { PlayerInfoBox } from "./PlayerInfoBox";
 import { TileComponent } from "./Tile";
@@ -9,6 +10,7 @@ interface HumanPlayerState {
   championMovementPath: { row: number; col: number }[];
   onChampionSelect: (championId: number) => void;
   onTileClick: (row: number, col: number) => void;
+  hasSelectedDie: boolean;
 }
 
 interface GameBoardProps {
@@ -195,6 +197,18 @@ export const GameBoard = ({
                   humanPlayerState={humanPlayerState}
                 />
               )),
+            )}
+
+          {/* Arrow Path Overlay for Human Player Movement */}
+          {humanPlayerState?.championMovementPath &&
+            humanPlayerState.championMovementPath.length > 1 &&
+            humanPlayerState.selectedChampionId !== null && (
+              <ArrowPath
+                path={humanPlayerState.championMovementPath}
+                playerColor={getPlayerColorWithState(currentPlayer.name).main}
+                tileSize={126} // (1040px - 16px padding * 2 - 2px gap * 7) / 8 tiles = ~126px per tile
+                boardOffset={{ x: 16, y: 16 }} // Account for padding
+              />
             )}
         </div>
       </div>

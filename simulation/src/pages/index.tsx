@@ -8,7 +8,9 @@ import { ControlPanel } from "../components/ControlPanel";
 import { GameBoard } from "../components/GameBoard";
 import { GameLog } from "../components/GameLog";
 import { GameStatus } from "../components/GameStatus";
+import DicePanel from "../components/DicePanel";
 import { HumanPlayerModal } from "../components/HumanPlayerModal";
+import MovementIndicator from "../components/MovementIndicator";
 import { SettingsMenu } from "../components/SettingsMenu";
 import { StatisticsView } from "../components/StatisticsView";
 import { TokenUsage } from "../components/TokenUsage";
@@ -121,6 +123,12 @@ export default function GameSimulation() {
   const [selectedChampionId, setSelectedChampionId] = useState<number | null>(null);
   const [championMovementPath, setChampionMovementPath] = useState<{ row: number; col: number }[]>([]);
 
+  // Dice state
+  const [diceValues, setDiceValues] = useState<number[]>([]);
+  const [usedDiceIndices, setUsedDiceIndices] = useState<number[]>([]);
+  const [selectedDieIndex, setSelectedDieIndex] = useState<number | null>(null);
+  const [isDiceRolling, setIsDiceRolling] = useState(false);
+
   // Ref to hold the autoplay timeout
   const autoPlayTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Ref to always get current autoPlay state (avoids closure issues)
@@ -144,7 +152,12 @@ export default function GameSimulation() {
   // Keyboard handler for WASD movement
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (selectedChampionId !== null && humanDiceActionContext && championMovementPath.length > 0) {
+      if (
+        selectedChampionId !== null &&
+        humanDiceActionContext &&
+        championMovementPath.length > 0 &&
+        selectedDieIndex !== null
+      ) {
         const currentPos = championMovementPath[championMovementPath.length - 1];
         let newPos: { row: number; col: number } | null = null;
 
@@ -172,7 +185,7 @@ export default function GameSimulation() {
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedChampionId, humanDiceActionContext, championMovementPath]);
+  }, [selectedChampionId, humanDiceActionContext, championMovementPath, selectedDieIndex]);
 
   // Autoplay effect - starts initial autoplay and cleans up on changes
   useEffect(() => {
@@ -283,6 +296,38 @@ export default function GameSimulation() {
     turnContext: TurnContext,
   ): Promise<DiceAction> => {
     return new Promise((resolve) => {
+      // Only initialize dice state if this is the first action of the turn
+      // Check if the remaining dice count equals the total dice rolled (meaning it's the first action)
+      const isFirstActionOfTurn = turnContext.remainingDiceValues.length === turnContext.diceRolled.length;
+
+      console.log("🎲 handleHumanDiceAction called:", {
+        isFirstActionOfTurn,
+        diceRolled: turnContext.diceRolled,
+        remainingDiceValues: turnContext.remainingDiceValues,
+        currentDiceValues: diceValues,
+        usedDiceIndices: usedDiceIndices,
+      });
+
+      if (isFirstActionOfTurn) {
+        console.log("🎲 Initializing dice state for turn");
+        // Initialize dice state for the turn
+        setDiceValues(turnContext.diceRolled);
+        setUsedDiceIndices([]);
+        setSelectedDieIndex(null);
+
+        // Show rolling animation only on first action
+        setIsDiceRolling(true);
+        setTimeout(() => {
+          setIsDiceRolling(false);
+        }, 1000);
+      } else {
+        console.log("🎲 Continuing with existing dice state");
+      }
+
+      // Always reset champion selection for new action
+      setSelectedChampionId(null);
+      setChampionMovementPath([]);
+
       setHumanDiceActionContext({
         gameState,
         gameLog,
@@ -292,33 +337,33 @@ export default function GameSimulation() {
     });
   };
 
+  const handleDieSelection = (dieIndex: number) => {
+    if (usedDiceIndices.includes(dieIndex)) {
+      return; // Can't select used die
+    }
+
+    if (selectedDieIndex === dieIndex) {
+      // Deselect if clicking same die
+      setSelectedDieIndex(null);
+    } else {
+      // Select new die
+      setSelectedDieIndex(dieIndex);
+      // Clear champion selection when selecting new die
+      setSelectedChampionId(null);
+      setChampionMovementPath([]);
+    }
+  };
+
   const handleChampionSelection = (championId: number) => {
+    // Must have a die selected first
+    if (selectedDieIndex === null) {
+      return;
+    }
+
     if (selectedChampionId === championId) {
-      // Deselect the champion and create action if there's a movement path
-      if (championMovementPath.length > 1 && humanDiceActionContext) {
-        const action: DiceAction = {
-          actionType: "championAction",
-          championAction: {
-            diceValueUsed: humanDiceActionContext.turnContext.remainingDiceValues[0],
-            championId: championId,
-            movementPathIncludingStartPosition: championMovementPath,
-            tileAction: {}, // Empty tile action for now
-          },
-          reasoning: "Human player champion movement",
-        };
-
-        // Reset state
-        setSelectedChampionId(null);
-        setChampionMovementPath([]);
-        setHumanDiceActionContext(null);
-
-        // Resolve the action
-        humanDiceActionContext.resolver(action);
-      } else {
-        // Just deselect
-        setSelectedChampionId(null);
-        setChampionMovementPath([]);
-      }
+      // Just deselect the champion (Done button will handle movement completion)
+      setSelectedChampionId(null);
+      setChampionMovementPath([]);
     } else {
       // Select new champion
       setSelectedChampionId(championId);
@@ -348,6 +393,48 @@ export default function GameSimulation() {
       if (isAdjacent) {
         setChampionMovementPath([...championMovementPath, newPos]);
       }
+    }
+  };
+
+  const handleMovementUndo = () => {
+    if (championMovementPath.length > 1) {
+      // Remove the last position from the path
+      setChampionMovementPath(championMovementPath.slice(0, -1));
+    }
+  };
+
+  const handleMovementDone = () => {
+    if (
+      selectedChampionId !== null &&
+      championMovementPath.length > 1 &&
+      humanDiceActionContext &&
+      selectedDieIndex !== null
+    ) {
+      const diceValue = diceValues[selectedDieIndex];
+      const action: DiceAction = {
+        actionType: "championAction",
+        championAction: {
+          diceValueUsed: diceValue,
+          championId: selectedChampionId,
+          movementPathIncludingStartPosition: championMovementPath,
+          tileAction: {}, // Empty tile action for now
+        },
+        reasoning: "Human player champion movement",
+      };
+
+      // Mark die as used and reset state
+      setUsedDiceIndices([...usedDiceIndices, selectedDieIndex]);
+      setSelectedDieIndex(null);
+      setSelectedChampionId(null);
+      setChampionMovementPath([]);
+
+      // Check if all dice are used
+      if (usedDiceIndices.length + 1 >= diceValues.length) {
+        setHumanDiceActionContext(null);
+      }
+
+      // Resolve the action
+      humanDiceActionContext.resolver(action);
     }
   };
 
@@ -1156,10 +1243,42 @@ export default function GameSimulation() {
             {/* Action Log */}
             <GameLog gameLog={actionLog} isVisible={showActionLog} players={gameState?.players || []} />
 
-            {/* Card Decks */}
+            {/* Dice Panel and Card Decks Row */}
             {gameState && (
-              <div style={{ marginTop: "20px" }}>
-                <CardDecks gameSession={gameSession} />
+              <div
+                style={{
+                  marginTop: "20px",
+                  display: "flex",
+                  gap: "20px",
+                  alignItems: "flex-start",
+                  justifyContent: "flex-start",
+                }}
+              >
+                {/* Human Player Dice Panel - Left Side */}
+                {humanDiceActionContext && diceValues.length > 0 && (
+                  <DicePanel
+                    diceValues={diceValues}
+                    usedDice={usedDiceIndices}
+                    selectedDieIndex={selectedDieIndex}
+                    onDieSelect={handleDieSelection}
+                    isRolling={isDiceRolling}
+                  />
+                )}
+
+                {/* Movement Indicator - Middle */}
+                {selectedChampionId !== null && championMovementPath.length > 0 && (
+                  <MovementIndicator
+                    championId={selectedChampionId}
+                    onUndo={handleMovementUndo}
+                    onDone={handleMovementDone}
+                    canUndo={championMovementPath.length > 1}
+                  />
+                )}
+
+                {/* Card Decks - Right Side */}
+                <div style={{ flex: 1 }}>
+                  <CardDecks gameSession={gameSession} />
+                </div>
               </div>
             )}
 
@@ -1184,6 +1303,7 @@ export default function GameSimulation() {
                         championMovementPath,
                         onChampionSelect: handleChampionSelection,
                         onTileClick: handleTileClick,
+                        hasSelectedDie: selectedDieIndex !== null,
                       }
                     : undefined
                 }
