@@ -1,4 +1,4 @@
-import { TileTier } from "../lib/types";
+import { AdventureThemeType, TileTier } from "../lib/types";
 
 export interface EventCard {
   id: string;
@@ -8,6 +8,7 @@ export interface EventCard {
   count: number; // How many cards of this event to include in deck
   disabled?: boolean; // If true, card is not added to deck but still shown in UI
   imagePromptGuidance?: string; // If provided, this will be used to generate the image for the card
+  theme?: AdventureThemeType;
 }
 
 // Helper function to get event by ID
@@ -30,7 +31,7 @@ export const EVENT_CARDS: EventCard[] = [
     name: "Market day",
     tier: 1,
     description: `Decide if today is **Market Day**.  
-If so, *every player* must send **1 champion** to the trader, or refuse and pay \`1 gold\` in tax.`,
+If so, *every player* must send **1 champion** to the trader, or refuse and pay \`1 gold\` in tax. Everyone visiting the trader may trade any resource 1:1 until harvest.`,
     count: 2,
   },
   {
@@ -81,7 +82,7 @@ If so, *every player* must send **1 champion** to the trader, or refuse and pay 
   {
     id: "temple-trial",
     name: "Temple Trial",
-    tier: 2,
+    tier: 1,
     description: `An ancient *temple priest* tests your worthiness before the gods.  
 **Make an offering**: give \`1 resource\` to any player. **Gain \`1 fame\`.**  
 **or** **Commit sacrilege**: take \`1 resource\` from any player. **Lose \`1 fame\`.**`,

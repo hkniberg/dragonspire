@@ -1,4 +1,4 @@
-import { TileTier } from "../lib/types";
+import { AdventureThemeType, TileTier } from "../lib/types";
 
 export interface Encounter {
   id: string;
@@ -9,6 +9,7 @@ export interface Encounter {
   count: number; // How many cards of this encounter to include in deck
   disabled?: boolean; // If true, card is not added to deck but still shown in UI
   imagePromptGuidance?: string; // If provided, this will be used to generate the image for the card
+  theme?: AdventureThemeType;
 }
 
 // All encounter cards in the game
@@ -19,9 +20,10 @@ export const ENCOUNTERS: Encounter[] = [
     id: "angry-dog",
     name: "Angry dog",
     tier: 1,
-    description: "Give it `1 food` or get **chased home**.",
+    description: "Give it `2 food`: the dog joins as a **follower** and grants `+1 might`. If you can't feed it, you are **chased home**.",
     follower: false,
-    count: 2,
+    count: 1,
+    theme: "beast",
   },
   {
     disabled: true,
@@ -30,7 +32,8 @@ export const ENCOUNTERS: Encounter[] = [
     tier: 1,
     description: 'Refuses to leave until you pay him `1 gold`. Can be **passed** to any *champion* you walk "through".',
     follower: true,
-    count: 2,
+    count: 1,
+    theme: "beast",
   },
   {
     disabled: true,
@@ -48,7 +51,8 @@ export const ENCOUNTERS: Encounter[] = [
     tier: 1,
     description: "Max movement `2` per action die. The mule can carry `2 items`.",
     follower: true,
-    count: 2,
+    count: 1,
+    theme: "grove",
   },
   {
     disabled: true,
@@ -58,6 +62,7 @@ export const ENCOUNTERS: Encounter[] = [
     description: "Every time your *champion* supports another player in battle, you get `1 fame`.",
     follower: true,
     count: 2,
+    theme: "grove",
   },
 
 
