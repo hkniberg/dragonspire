@@ -16,6 +16,59 @@ interface TileActionModalProps {
   onCancel: () => void;
 }
 
+// Helper function to check if any tile actions are available
+export const hasAnyTileActions = (gameState: GameState, tile: Tile, player: Player, championId: number): boolean => {
+  // Check if can claim tile
+  const canClaimTile =
+    tile.tileType === "resource" &&
+    tile.claimedBy === undefined &&
+    gameState.board.findTiles((t) => t.claimedBy === player.name).length < player.maxClaims;
+
+  // Check if can conquer tile
+  const canConquerTile =
+    tile.tileType === "resource" &&
+    tile.claimedBy !== undefined &&
+    tile.claimedBy !== player.name &&
+    player.might >= GameSettings.CONQUEST_MIGHT_COST &&
+    !gameState.isClaimProtected(tile) &&
+    gameState.getOpposingChampionsAtPosition(player.name, tile.position).length === 0;
+
+  // Check if can incite revolt
+  const canInciteRevolt =
+    tile.tileType === "resource" &&
+    tile.claimedBy !== undefined &&
+    tile.claimedBy !== player.name &&
+    player.fame >= GameSettings.REVOLT_FAME_COST &&
+    !gameState.isClaimProtected(tile) &&
+    gameState.getOpposingChampionsAtPosition(player.name, tile.position).length === 0;
+
+  // Check if can use trader
+  const canUseTrader = tile.tileType === "trader";
+
+  // Check if can use mercenary
+  const canUseMercenary = tile.tileType === "mercenary" && player.resources.gold >= GameSettings.MERCENARY_GOLD_COST;
+
+  // Check if can use temple
+  const canUseTemple = tile.tileType === "temple" && player.fame >= GameSettings.TEMPLE_FAME_COST;
+
+  // Check if there are items to pick up
+  const hasItemsToPickUp = (tile.items || []).length > 0;
+
+  // Check if champion has items to drop
+  const hasItemsToDrop = (gameState.getChampion(player.name, championId)?.items || []).length > 0;
+
+  return (
+    canClaimTile ||
+    canConquerTile ||
+    canInciteRevolt ||
+    canUseTrader ||
+    canUseMercenary ||
+    canUseTemple ||
+    hasItemsToPickUp ||
+    hasItemsToDrop
+  );
+};
+
 export const TileActionModal: React.FC<TileActionModalProps> = ({
   isOpen,
   gameState,

@@ -94,7 +94,11 @@ export default function GameSimulation() {
             // Complete the movement (like Done button)
             event.preventDefault();
             console.log("⏎ Enter pressed - completing movement");
-            movementAndDice.handleMovementDone(gameSession.gameState || undefined);
+            const resolver = humanPlayer.humanDiceActionContext?.resolver;
+            const onAllDiceUsed = () => {
+              humanPlayer.setHumanDiceActionContext(null);
+            };
+            movementAndDice.handleMovementDone(gameSession.gameState || undefined, resolver, onAllDiceUsed);
             break;
           case "escape":
             // Cancel the entire movement and deselect champion
@@ -162,7 +166,11 @@ export default function GameSimulation() {
   };
 
   const enhancedMovementDone = () => {
-    movementAndDice.handleMovementDone(gameSession.gameState || undefined);
+    const resolver = humanPlayer.humanDiceActionContext?.resolver;
+    const onAllDiceUsed = () => {
+      humanPlayer.setHumanDiceActionContext(null);
+    };
+    movementAndDice.handleMovementDone(gameSession.gameState || undefined, resolver, onAllDiceUsed);
   };
 
   const enhancedTileActionConfirm = (tileAction: import("@/lib/actionTypes").TileAction) => {

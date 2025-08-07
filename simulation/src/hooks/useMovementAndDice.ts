@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Tile } from "../lib/types";
 import { GameState } from "../game/GameState";
 import { DiceAction, TileAction } from "../lib/actionTypes";
+import { hasAnyTileActions } from "../components/TileActionModal";
 
 interface UseMovementAndDiceReturn {
   selectedChampionId: number | null;
@@ -35,7 +36,7 @@ interface UseMovementAndDiceReturn {
   handleTileClick: (row: number, col: number) => void;
   handleMovementUndo: () => void;
   handleMovementCancel: () => void;
-  handleMovementDone: (gameState?: GameState) => void;
+  handleMovementDone: (gameState?: GameState, resolver?: (action: DiceAction) => void, onAllDiceUsed?: () => void) => void;
   handleTileActionConfirm: (tileAction: TileAction, resolver?: (action: DiceAction) => void) => void;
   handleTileActionCancel: () => void;
   handleWASDMovement: (key: string) => void;
@@ -117,7 +118,7 @@ export function useMovementAndDice(): UseMovementAndDiceReturn {
     setChampionMovementPath([]);
   }, []);
 
-  const handleMovementDone = useCallback((gameState?: GameState) => {
+  const handleMovementDone = useCallback((gameState?: GameState, resolver?: (action: DiceAction) => void, onAllDiceUsed?: () => void) => {
     if (
       selectedChampionId !== null &&
       championMovementPath.length > 1 &&
@@ -133,6 +134,41 @@ export function useMovementAndDice(): UseMovementAndDiceReturn {
         return;
       }
 
+      const currentPlayer = gameState.getCurrentPlayer();
+
+      // Check if there are any available tile actions
+      if (!hasAnyTileActions(gameState, destinationTile, currentPlayer, selectedChampionId)) {
+        // No actions available, submit immediately with empty tile action
+        if (resolver) {
+          const action: DiceAction = {
+            actionType: "championAction",
+            championAction: {
+              diceValueUsed: diceValue,
+              championId: selectedChampionId,
+              movementPathIncludingStartPosition: championMovementPath,
+              tileAction: {}, // Empty tile action
+            },
+            reasoning: "Human player champion movement with no tile actions available",
+          };
+
+          // Mark die as used and reset state
+          const newUsedDiceIndices = [...usedDiceIndices, selectedDieIndex];
+          setUsedDiceIndices(newUsedDiceIndices);
+          setSelectedDieIndex(null);
+          setSelectedChampionId(null);
+          setChampionMovementPath([]);
+
+          // Resolve the action
+          resolver(action);
+
+          // Check if all dice are used and call callback
+          if (newUsedDiceIndices.length >= diceValues.length && onAllDiceUsed) {
+            onAllDiceUsed();
+          }
+        }
+        return;
+      }
+
       // Store the pending action and show tile action modal
       setPendingChampionAction({
         diceValue,
@@ -142,7 +178,7 @@ export function useMovementAndDice(): UseMovementAndDiceReturn {
       });
       setTileActionModalOpen(true);
     }
-  }, [selectedChampionId, championMovementPath, selectedDieIndex, diceValues]);
+  }, [selectedChampionId, championMovementPath, selectedDieIndex, diceValues, usedDiceIndices]);
 
   const handleTileActionConfirm = useCallback((tileAction: TileAction, resolver?: (action: DiceAction) => void) => {
     if (pendingChampionAction && resolver) {
