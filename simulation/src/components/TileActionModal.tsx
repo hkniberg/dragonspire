@@ -83,13 +83,10 @@ export const TileActionModal: React.FC<TileActionModalProps> = ({
     const defaults: TileAction = {};
 
     // Default to claiming unclaimed resource tiles
-    if (
-      tile.tileType === "resource" &&
-      tile.claimedBy === undefined &&
-      gameState.board.findTiles((t) => t.claimedBy === player.name).length < player.maxClaims
-    ) {
-      defaults.claimTile = true;
-    }
+    defaults.claimTile = true;
+    defaults.useTrader = true;
+    defaults.useMercenary = true;
+    defaults.useTemple = true;
 
     return defaults;
   };

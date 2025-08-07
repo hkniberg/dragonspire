@@ -212,7 +212,7 @@ export function useMovementAndDice(): UseMovementAndDiceReturn {
   const handleMovementDone = useCallback((gameState?: GameState, resolver?: (action: DiceAction) => void, onAllDiceUsed?: () => void) => {
     if (
       selectedChampionId !== null &&
-      championMovementPath.length > 1 &&
+      championMovementPath.length >= 1 &&
       selectedDieIndex !== null &&
       gameState
     ) {
