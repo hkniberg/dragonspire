@@ -28,6 +28,7 @@ Gain \`+1 ore\`, **OR**
 Spend \`2 ore\` to gain \`+1 might\``,
     count: 2,
     carriable: false,
+    theme: "beast"
   },
   {
     id: "rusty-sword",
@@ -36,17 +37,19 @@ Spend \`2 ore\` to gain \`+1 might\``,
     description: "Gain `+2 might`. This **item breaks** after *one fight*.",
     count: 2,
     carriable: true,
+    theme: "grove"
   },
   {
     id: "mysterious-ring",
     name: "Mysterious Ring",
     tier: 1,
     description: `Roll \`1d3\`:
-**(1)** The ring does nothing and is *stuck* on your knight
+**(1)** The ring does nothing and is *stuck* on your knight untill you visit the **temple**.
 **(2)** **Swap** location with any knight, then the ring breaks.
 **(3)** \`+3 might\` against **dragons**`,
-    count: 2,
+    count: 1,
     carriable: true,
+    theme: "cave"
   },
 
   // Tier 2 Treasure Cards
@@ -54,9 +57,10 @@ Spend \`2 ore\` to gain \`+1 might\``,
     id: "long-sword",
     name: "Löng Swörd",
     tier: 2,
-    description: "It's a **löng swörd**. Gain `+2 might`.",
-    count: 1,
+    description: "It's a **löng swörd**. Gives `+2 might`, but takes up `2x item slots`.",
+    count: 2,
     carriable: true,
+    theme: "cave",
     imagePromptGuidance: "Make it long, to distinguish it from a short sword.",
   },
   {
@@ -66,6 +70,7 @@ Spend \`2 ore\` to gain \`+1 might\``,
     description: "If the opponent has **more might**, this *shield* grants `+2 might`.",
     count: 1,
     carriable: true,
+    theme: "grove",
     imagePromptGuidance: "A spiky shield, not the animal",
   },
   {
@@ -77,6 +82,7 @@ Spend \`2 ore\` to gain \`+1 might\``,
 **(2)** Card goes back to the top of the deck where it came from.
 **(3)** You gain **Cloudslicer** which gives \`+4 might\``,
     count: 1,
+    theme: "beast",
     carriable: false, // This stays on the tile until someone pulls it out
   },
   {
@@ -88,6 +94,7 @@ Spend \`2 ore\` to gain \`+1 might\``,
 **(2)** Give him \`2 food\` (earn \`1 fame\`)
 **(3)** Move on`,
     count: 2,
+    theme: "cave",
     carriable: true,
   },
 ];
