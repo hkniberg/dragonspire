@@ -1,4 +1,8 @@
-# LORDS OF DOOMSPIRE - Rulebook
+# LORDS OF DOOMSPIRE - Rulebook (AI Version)
+
+**Note for AI Players:** This document contains all game rules. However, player-to-player interactions (knight combat, trading, territory disputes) are only allowed starting from Round 2. In Round 1, focus on exploration, monster combat, claiming tiles, and building your economy.
+
+---
 
 You are all Lords who have since long established forts on islands neighboring the resource rich land of **Doomspire** - named so after the fierce mountain range, and the dragon nesting within, guarding the domain.
 
@@ -89,7 +93,7 @@ Use a dice to move one knight up to that number of steps, and interact with the 
 - Can only use one knight per die action
 - Can move fewer steps than the die value, or even move zero steps to interact with your current tile.
 - Stop when entering unexplored tiles or tile with monster on it.
-- Can pass through opposing knights, but opposing player may force you to stop and fight.
+- Can pass through opposing knights, but opposing player may force you to stop and fight (only starting from Round 2).
 - Cannot stop in the same tile as another knight, except in special tiles (see Special Tiles).
 
 **Multiple movements**:
@@ -138,14 +142,14 @@ When a knight is moved (or uses a knight movement action without moving), a Tile
 - **Explore**: If you enter an unexplored tile you will explore it, flipping it to reveal the contents.
   - Earn 1 fame for exploring any tile.
   - If it is a bear's den or a resource tile, add a Bear to it. Tier 2 resource tiles are always guarded by a bear.
-- **Combat**: If a monster or opposing knight is on the tile, combat will happen. See Combat section below. Note that dragon combat is voluntary.
+- **Combat**: If a monster or opposing knight is on the tile, combat will happen. See Combat section below. Note that dragon combat is voluntary. Knight vs knight combat only allowed from Round 2.
 - **Impress the dragon**: If you enter Doomspire, you must impress the dragon or be eaten. See Doomspire section below.
 - **Adventure**: If you enter an adventure tile that has remaining adventure tokens, you must draw a card. See Adventure Cards section below.
 
 **Voluntary interactions**:
 
 - Use a **special location** - trader/mercenary/temple. See Special Locations section.
-- Interact with a **resource tile** - claim, blockade, conquer, or incite revolt. See Resource System section.
+- Interact with a **resource tile** - claim, blockade, conquer, or incite revolt. See Resource System section. (Blockade/conquer/revolt only from Round 2)
 - Pick up or drop **items** in a tile
 
 **Multiple interactions**:
@@ -285,6 +289,12 @@ If you lose, your knight must go home and heal.
 - Move the knight back to your home tile
 - Lose 1 resource of your choice. If you have none, then lose 1 fame (unless fame is already 0).
 
+### Combat Support
+
+- In combat, support can be received from other players' neighbouring knights/warships, if they choose to support you.
+- Support from other players is announced after the combat dice roll. This opens up for collaboration, diplomacy, and treachery ("Hey, you said you would support me!". "Sorry, I lied.")
+- Monsters cannot receive support.
+
 For dragon combat, see the Doomspire section.
 
 > Example: Calculating the odds of winning
@@ -295,7 +305,7 @@ For dragon combat, see the Doomspire section.
 > - +1 might gives 2, 3 or 4.
 > - Bob needs 3 or more to win, so 67% chance (rolls of 2 or 3 succeed). Worth trying!
 
-> Example: Support
+> Example: Support in action
 >
 > Alice has 1 might, 2 knights, and the warship upgrade. She wants to attack a bear with 5 might. The bear is in a coastal tile.
 >
@@ -314,12 +324,6 @@ This is similar to monster combat, with some differences:
 - Highest value wins. Ties are rerolled until someone wins.
 - The winner gains 1 fame and gets to steal a resource or item of their choice from the loser (if available).
 - The loser goes home, but doesn't need to pay for healing.
-
-### Support from other players
-
-- In combat, support can be received from other players' neighbouring knights/warships, if they choose to support you.
-- Support from other players is announced after the combat dice roll. This opens up for collaboration, diplomacy, and treachery ("Hey, you said you would support me!". "Sorry, I lied.")
-- Monsters cannot receive support.
 
 ---
 
@@ -465,6 +469,8 @@ Owning resource tiles let you build a sustainable economy. They can also be used
 ---
 
 ## Trading between players
+
+**Note: Trading only allowed starting from Round 2**
 
 - Freely trade resources (food, wood, ore, gold) with other players anytime
 - Items cannot be directly traded (only indirectly via drop/pickup)
