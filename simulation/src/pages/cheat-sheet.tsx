@@ -73,11 +73,11 @@ export default function CheatSheet() {
               <ul className={styles.bulletList}>
                 <li>Horizontal/vertical only (no diagonal)</li>
                 <li>Must stop when entering unexplored tile or tile with monster</li>
-                <li>Cannot stop in same tile as other knights (except non-combat zones)</li>
+                <li>Cannot stop in same tile as other knights (except special tiles)</li>
                 <li>Cannot pass through monster tiles</li>
                 <li>Can pass through other knights (they may force combat)</li>
                 <li>Cannot enter enemy home tiles</li>
-                <li>One action per knight per turn</li>
+                <li>One tile interaction per knight per turn</li>
               </ul>
             </section>
 
@@ -98,8 +98,8 @@ export default function CheatSheet() {
                 <ul className={styles.bulletList}>
                   <li>Both roll 2D3 + Might + adjacent support</li>
                   <li>Winner gains 1 Fame, stays in tile</li>
-                  <li>Loser returns home (no resource cost to heal)</li>
                   <li>Winner may steal 1 resource OR 1 item</li>
+                  <li>Loser returns home</li>
                 </ul>
               </div>
 
@@ -112,9 +112,6 @@ export default function CheatSheet() {
               <h3 className={styles.sectionTitle}>FLEEING COMBAT</h3>
               <ul className={styles.bulletList}>
                 <li>
-                  <strong>Cannot flee</strong> if combat was chosen deliberately
-                </li>
-                <li>
                   <strong>Roll 1D3</strong>: 1=fail (fight), 2=flee to closest owned tile + lose 1 resource, 3=flee home
                   (no loss)
                 </li>
@@ -125,13 +122,14 @@ export default function CheatSheet() {
           {/* Right Column */}
           <div className={styles.side}>
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>RESOURCE TILE ACTIONS</h3>
+              <h3 className={styles.sectionTitle}>TERRITORIAL DISPUTES</h3>
               <div className={styles.buildingList}>
-                <div className={styles.building}>
-                  <strong>Claim Tile</strong>: Free (unclaimed tiles only)
+                <div className={styles.supportNote}>
+                  <strong>Protection:</strong> Tiles with adjacent knights cannot be blockaded, conquered, or revolted
                 </div>
+
                 <div className={styles.building}>
-                  <strong>Blockade Tile</strong>: Place knight on enemy tile → harvest from it instead of owner
+                  <strong>Blockade Tile</strong>: Place knight on enemy tile → can harvest from it instead of owner
                 </div>
                 <div className={styles.building}>
                   <strong>Incite Revolt</strong>: 1 Fame → Remove enemy claim (tile becomes unclaimed)
@@ -140,17 +138,14 @@ export default function CheatSheet() {
                   <strong>Conquer Tile</strong>: 1 Might → Take over enemy tile
                 </div>
               </div>
-              <div className={styles.supportNote}>
-                <strong>Protection:</strong> Tiles with adjacent knights cannot be blockaded, conquered, or revolted
-              </div>
             </section>
 
             <section className={styles.section}>
               <h3 className={styles.sectionTitle}>TILE INTERACTION</h3>
               <ul className={styles.bulletList}>
                 <li>
-                  <strong>Forced</strong>: Explore unexplored tiles (+1 Fame), combat monsters/knights, draw adventure
-                  cards
+                  <strong>Automatic</strong>: Explore unexplored tiles (+1 Fame), combat monsters/knights, draw
+                  adventure cards
                 </li>
                 <li>
                   <strong>Voluntary</strong>: Use special locations, claim/blockade/conquer resource tiles, pick up/drop
@@ -166,12 +161,8 @@ export default function CheatSheet() {
             </section>
 
             <section className={styles.section}>
-              <h3 className={styles.sectionTitle}>DRAGON IMPRESSION CONDITIONS</h3>
-              <p className={styles.note}>Reach Doomspire with ANY of these to impress the dragon:</p>
+              <h3 className={styles.sectionTitle}>IMPRESSING THE DRAGON</h3>
               <ul className={styles.victoryList}>
-                <li>
-                  <strong>Combat</strong>: Defeat the Dragon (8 + 1D3 Might)
-                </li>
                 <li>
                   <strong>Fame</strong>: Have 15+ Fame
                 </li>
@@ -181,35 +172,31 @@ export default function CheatSheet() {
                 <li>
                   <strong>Gold</strong>: Have 12+ Gold
                 </li>
+                <li>
+                  <strong>Combat</strong>: Defeat the Dragon (8 + 2D3 Might)
+                </li>
               </ul>
-              <div className={styles.supportNote}>
-                <strong>Dragon Combat:</strong> Lose = knight gets eaten (removed from game)
-              </div>
+              <div className={styles.supportNote}>Failure = knight gets eaten</div>
+              <div className={styles.supportNote}>Success = take treasure, fly home. Win if last treasure taken.</div>
             </section>
 
             <section className={styles.section}>
               <h3 className={styles.sectionTitle}>VICTORY & FINAL RANKING</h3>
-              <p className={styles.note}>Game ends when dragon has been impressed 3 times total:</p>
-              <ul className={styles.bulletList}>
-                <li>
-                  <strong>King of Doomspire</strong>: 3rd player to impress dragon (WINNER)
-                </li>
-                <li>
-                  <strong>1st & 2nd impressions</strong>: Get 2 resources of choice, flown home
-                </li>
-              </ul>
-              <p className={styles.note}>Remaining players ranked by:</p>
-              <ul className={styles.bulletList}>
-                <li>
-                  <strong>Hand of the King</strong>: Most resource tiles (tiebreaker: starred tiles, then gold)
-                </li>
-                <li>
-                  <strong>Master of Coin</strong>: Most gold (tiebreaker: total resource value)
-                </li>
-                <li>
-                  <strong>Court Jester</strong>: The remaining player (cleans up the game!)
-                </li>
-              </ul>
+              <div className={styles.buildingList}>
+                <div className={styles.building}>
+                  <strong>1. King of Doomspire</strong>: 3rd player to impress dragon
+                </div>
+                <div className={styles.building}>
+                  <strong>2. Hand of the King</strong>: Most resource tiles (tiebreaker: starred tiles)
+                </div>
+                <div className={styles.building}>
+                  <strong>3. Master of Coin</strong>: Most gold (tiebreaker: total resources)
+                </div>
+                <div className={styles.building}>
+                  <strong>4. Court Jester</strong>: The remaining player (cleans up the game!)
+                </div>
+              </div>
+              <div className={styles.supportNote}>Unresolved ties are decided by the King.</div>
             </section>
           </div>
         </div>
