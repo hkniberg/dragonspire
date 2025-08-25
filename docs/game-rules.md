@@ -35,6 +35,7 @@ Players can impress the dragon by reaching **Doomspire** (hidden in the center o
 - **Economy**: Own 4+ starred resource tiles. The dragon is impressed by your territorial dominance.
 - **Gold**: Have 12+ Gold. The dragon is impressed by your wealth.
 - **Combat**: Defeat the dragon in battle. The dragon is impressed by your might.
+- **Rings**: During your adventures you may find rings that are very impressive to the dragon.
 
 Failure to impress means becoming the dragon's next meal.
 
